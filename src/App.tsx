@@ -1,4 +1,3 @@
-
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,7 +6,7 @@ import { DashboardLayout } from "./components/layout/DashboardLayout";
 // Import pages
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
-import SciTaskboard from "./pages/sci/Taskboard";
+import Taskboard from "./pages/sci/Taskboard";
 import CrcTratamento from "./pages/crc/Tratamento";
 import DisDados from "./pages/dis/Dados";
 import EasyVistaDashboards from "./pages/easyvista/Dashboards";
@@ -27,7 +26,7 @@ const App = () => (
           
           {/* SCI Routes */}
           <Route path="/sci" element={<Navigate to="/sci/taskboard" replace />} />
-          <Route path="/sci/taskboard" element={<DashboardLayout><SciTaskboard /></DashboardLayout>} />
+          <Route path="/sci/taskboard" element={<DashboardLayout><Taskboard /></DashboardLayout>} />
           
           {/* CRC Routes */}
           <Route path="/crc" element={<Navigate to="/crc/tratamento" replace />} />
