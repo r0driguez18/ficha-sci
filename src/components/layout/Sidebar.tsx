@@ -10,7 +10,7 @@ import {
   ClipboardCheck,
   Database,
   FileText,
-  Link,
+  LayoutDashboard,
   PieChart,
   Settings
 } from 'lucide-react';
@@ -51,8 +51,8 @@ const SidebarItem = ({ icon: Icon, label, to, collapsed, subItems }: SidebarItem
                 className={({ isActive }) => cn(
                   "flex items-center px-3 py-2 rounded-md text-sm transition-colors",
                   isActive 
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground" 
-                    : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                    ? "bg-white/20 text-white" 
+                    : "text-white/70 hover:text-white hover:bg-white/10"
                 )}
               >
                 {LinkContent}
@@ -69,8 +69,8 @@ const SidebarItem = ({ icon: Icon, label, to, collapsed, subItems }: SidebarItem
           className={({ isActive }) => cn(
             "flex items-center px-3 py-2 rounded-md text-sm transition-colors",
             isActive 
-              ? "bg-sidebar-primary text-sidebar-primary-foreground" 
-              : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+              ? "bg-white/20 text-white" 
+              : "text-white/70 hover:text-white hover:bg-white/10"
           )}
           onClick={() => subItems && setOpen(!open)}
         >
@@ -88,8 +88,8 @@ const SidebarItem = ({ icon: Icon, label, to, collapsed, subItems }: SidebarItem
               className={({ isActive }) => cn(
                 "flex items-center px-3 py-2 rounded-md text-sm transition-colors",
                 isActive 
-                  ? "bg-sidebar-accent text-sidebar-foreground" 
-                  : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                  ? "bg-white/20 text-white" 
+                  : "text-white/60 hover:text-white hover:bg-white/10"
               )}
             >
               {subItem.label}
@@ -105,20 +105,29 @@ export function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
   return (
     <div 
       className={cn(
-        "fixed inset-y-0 left-0 z-10 flex flex-col bg-sidebar-background border-r border-sidebar-border transition-all duration-300 ease-in-out",
+        "fixed inset-y-0 left-0 z-10 flex flex-col bg-[#18467e] border-r border-blue-800 transition-all duration-300 ease-in-out",
         collapsed ? "w-20" : "w-64"
       )}
     >
-      <div className="flex h-16 items-center justify-between px-4 py-6">
-        {!collapsed && (
+      <div className="flex h-16 items-center justify-between px-4 py-6 border-b border-blue-800">
+        {!collapsed ? (
           <div className="flex items-center">
-            <span className="text-xl font-semibold text-sidebar-foreground">Admin</span>
+            <div className="h-8 w-8 rounded-md bg-white flex items-center justify-center text-[#18467e] font-bold mr-2">
+              A
+            </div>
+            <span className="text-xl font-semibold text-white">Admin</span>
+          </div>
+        ) : (
+          <div className="mx-auto">
+            <div className="h-8 w-8 rounded-md bg-white flex items-center justify-center text-[#18467e] font-bold">
+              A
+            </div>
           </div>
         )}
         <Button
           variant="ghost"
           size="icon"
-          className="ml-auto text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+          className="text-white/70 hover:text-white hover:bg-white/10"
           onClick={() => setCollapsed(!collapsed)}
         >
           {collapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
@@ -128,7 +137,7 @@ export function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
       <div className="flex-1 overflow-auto py-4 px-4">
         <nav className="space-y-6">
           <div>
-            <div className={cn("mb-2", collapsed ? "px-2 sr-only" : "px-3 text-xs font-semibold text-sidebar-foreground/40 uppercase")}>
+            <div className={cn("mb-2", collapsed ? "px-2 sr-only" : "px-3 text-xs font-semibold text-white/40 uppercase")}>
               Main
             </div>
             <SidebarItem
@@ -141,7 +150,7 @@ export function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
               ]}
             />
             <SidebarItem
-              icon={Link}
+              icon={LayoutDashboard}
               label="CRC"
               to="/crc"
               collapsed={collapsed}
@@ -170,7 +179,7 @@ export function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
           </div>
           
           <div>
-            <div className={cn("mb-2", collapsed ? "px-2 sr-only" : "px-3 text-xs font-semibold text-sidebar-foreground/40 uppercase")}>
+            <div className={cn("mb-2", collapsed ? "px-2 sr-only" : "px-3 text-xs font-semibold text-white/40 uppercase")}>
               System
             </div>
             <SidebarItem
@@ -189,15 +198,21 @@ export function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
         </nav>
       </div>
       
-      <div className="p-4 border-t border-sidebar-border">
-        {!collapsed && (
+      <div className="p-4 border-t border-blue-800">
+        {!collapsed ? (
           <div className="flex items-center">
-            <div className="h-8 w-8 rounded-full bg-sidebar-primary flex items-center justify-center text-white font-semibold">
+            <div className="h-8 w-8 rounded-full bg-white flex items-center justify-center text-[#18467e] font-semibold">
               A
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium text-sidebar-foreground">Admin User</p>
-              <p className="text-xs text-sidebar-foreground/60">admin@example.com</p>
+              <p className="text-sm font-medium text-white">Admin User</p>
+              <p className="text-xs text-white/60">admin@example.com</p>
+            </div>
+          </div>
+        ) : (
+          <div className="flex justify-center">
+            <div className="h-8 w-8 rounded-full bg-white flex items-center justify-center text-[#18467e] font-semibold">
+              A
             </div>
           </div>
         )}
