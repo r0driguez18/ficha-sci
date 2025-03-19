@@ -1,378 +1,207 @@
-
 import React, { useState } from 'react';
-import { PageHeader } from '@/components/layout/PageHeader';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { 
-  Table, 
-  TableBody, 
-  TableCaption, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
-import { FileDown, Plus, Trash2, Edit, Save, Search, Filter } from 'lucide-react';
-import { toast } from 'sonner';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { PlusCircle, Download, Trash2, Edit, Save } from "lucide-react";
+import { cn } from '@/lib/utils';
+import * as XLSX from 'xlsx';
 
-interface DataEntry {
-  id: string;
-  name: string;
-  category: string;
-  status: string;
-  date: string;
-}
-
-const DisTable = () => {
-  const categories = ['Comercial', 'Técnico', 'Administrativo', 'Financeiro'];
-  const statuses = ['Ativo', 'Inativo', 'Pendente'];
-  
-  const [entries, setEntries] = useState<DataEntry[]>([
-    { id: '1', name: 'Documento A', category: 'Comercial', status: 'Ativo', date: '2023-05-15' },
-    { id: '2', name: 'Relatório B', category: 'Técnico', status: 'Pendente', date: '2023-06-20' },
-    { id: '3', name: 'Formulário C', category: 'Administrativo', status: 'Inativo', date: '2023-07-05' },
-    { id: '4', name: 'Contrato D', category: 'Financeiro', status: 'Ativo', date: '2023-08-10' },
-    { id: '5', name: 'Apresentação E', category: 'Comercial', status: 'Pendente', date: '2023-09-15' },
+const DisDados = () => {
+  const [data, setData] = useState([
+    { id: 1, name: "John Doe", age: 30, city: "New York" },
+    { id: 2, name: "Jane Smith", age: 25, city: "Los Angeles" },
+    { id: 3, name: "Mike Johnson", age: 35, city: "Chicago" },
   ]);
-  
-  const [newEntry, setNewEntry] = useState<DataEntry>({ id: '', name: '', category: '', status: '', date: '' });
-  const [editEntry, setEditEntry] = useState<DataEntry | null>(null);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterCategory, setFilterCategory] = useState<string>('');
+  const [newItem, setNewItem] = useState({ id: 4, name: "", age: 0, city: "" });
+  const [editItem, setEditItem] = useState(null);
+  const [editedValues, setEditedValues] = useState({ name: "", age: 0, city: "" });
+  const [open, setOpen] = useState(false);
 
-  const filteredEntries = entries.filter(entry => {
-    const matchesSearch = entry.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          entry.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          entry.status.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesCategory = filterCategory ? entry.category === filterCategory : true;
-    
-    return matchesSearch && matchesCategory;
-  });
-
-  const addEntry = () => {
-    if (!newEntry.name || !newEntry.category || !newEntry.status || !newEntry.date) {
-      toast.error('Preencha todos os campos');
-      return;
-    }
-    
-    const entry: DataEntry = {
-      id: Date.now().toString(),
-      name: newEntry.name,
-      category: newEntry.category,
-      status: newEntry.status,
-      date: newEntry.date
-    };
-    
-    setEntries([...entries, entry]);
-    setNewEntry({ id: '', name: '', category: '', status: '', date: '' });
-    setIsAddDialogOpen(false);
-    toast.success('Registro adicionado com sucesso!');
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewItem(prevState => ({ ...prevState, [name]: value }));
   };
 
-  const startEdit = (entry: DataEntry) => {
-    setEditEntry({...entry});
-    setIsEditDialogOpen(true);
+  const handleEditInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditedValues(prevState => ({ ...prevState, [name]: value }));
   };
 
-  const saveEdit = () => {
-    if (!editEntry) return;
-    
-    setEntries(entries.map(entry => 
-      entry.id === editEntry.id ? editEntry : entry
-    ));
-    setIsEditDialogOpen(false);
-    toast.success('Registro atualizado com sucesso!');
+  const handleAddItem = () => {
+    setData(prevData => [...prevData, newItem]);
+    setNewItem({ id: newItem.id + 1, name: "", age: 0, city: "" });
+    setOpen(false);
   };
 
-  const deleteEntry = (id: string) => {
-    setEntries(entries.filter(entry => entry.id !== id));
-    toast.success('Registro removido com sucesso!');
+  const handleEditItem = (item) => {
+    setEditItem(item);
+    setEditedValues({ name: item.name, age: item.age, city: item.city });
   };
 
-  const exportToExcel = () => {
-    // In a real application, you would use a library like xlsx.js to create an Excel file
-    // For now, we'll simulate the export with a JSON transformation and download
-    
-    try {
-      // Convert data to CSV format
-      const header = ['Nome', 'Categoria', 'Status', 'Data'];
-      const csvData = [
-        header.join(','),
-        ...filteredEntries.map(entry => 
-          [entry.name, entry.category, entry.status, entry.date].join(',')
-        )
-      ].join('\n');
-      
-      // Create a Blob and download link
-      const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.setAttribute('href', url);
-      link.setAttribute('download', 'dados_dis.csv');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      toast.success('Dados exportados com sucesso!');
-    } catch (error) {
-      console.error('Export error:', error);
-      toast.error('Erro ao exportar os dados');
-    }
+  const handleSaveEdit = () => {
+    setData(prevData =>
+      prevData.map(item =>
+        item.id === editItem.id
+          ? { ...item, ...editedValues }
+          : item
+      )
+    );
+    setEditItem(null);
+    setEditedValues({ name: "", age: 0, city: "" });
+  };
+
+  const handleDeleteItem = (id) => {
+    setData(prevData => prevData.filter(item => item.id !== id));
+  };
+
+  const handleDownload = () => {
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(data);
+    XLSX.utils.book_append_sheet(wb, ws, "Data");
+    XLSX.writeFile(wb, "data.xlsx");
   };
 
   return (
-    <div className="animate-fade-in">
-      <PageHeader 
-        title="DIS - Dados" 
-        subtitle="Gerenciamento de dados do sistema"
-      >
-        <Button onClick={exportToExcel} className="bg-green-600 hover:bg-green-700">
-          <FileDown className="mr-2 h-4 w-4" />
-          Exportar Excel
-        </Button>
-      </PageHeader>
+    <Card>
+      <CardHeader>
+        <CardTitle>Dados</CardTitle>
+        <CardDescription>Gerenciar dados na tabela abaixo.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="mb-4">
+          <Button onClick={handleDownload}><Download className="mr-2 h-4 w-4" /> Download XLSX</Button>
+        </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>ID</TableHead>
+              <TableHead>Name</TableHead>
+              <TableHead>Age</TableHead>
+              <TableHead>City</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data.map((item) => (
+              <TableRow key={item.id}>
+                <TableCell>{item.id}</TableCell>
+                <TableCell>{item.name}</TableCell>
+                <TableCell>{item.age}</TableCell>
+                <TableCell>{item.city}</TableCell>
+                <TableCell className="text-right">
+                  <Button variant="ghost" size="sm" onClick={() => handleEditItem(item)}>
+                    <Edit className="mr-2 h-4 w-4" />Edit
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => handleDeleteItem(item.id)}>
+                    <Trash2 className="mr-2 h-4 w-4" />Delete
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+      <CardFooter className="flex justify-between">
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button type="button" variant="outline">
+              <PlusCircle className="mr-2 h-4 w-4" />Add Item
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Add New Item</DialogTitle>
+              <DialogDescription>
+                Add a new item to the table.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="name" className="text-right">
+                  Name
+                </Label>
+                <Input id="name" name="name" value={newItem.name} onChange={handleInputChange} className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="age" className="text-right">
+                  Age
+                </Label>
+                <Input type="number" id="age" name="age" value={newItem.age} onChange={handleInputChange} className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="city" className="text-right">
+                  City
+                </Label>
+                <Input id="city" name="city" value={newItem.city} onChange={handleInputChange} className="col-span-3" />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" onClick={handleAddItem}>
+                Save
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>Tabela de Dados</CardTitle>
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-[#18467e] hover:bg-[#123761]">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Adicionar
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Adicionar novo registro</DialogTitle>
-                  <DialogDescription>
-                    Preencha os campos para adicionar um novo registro à tabela.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div>
-                    <Label htmlFor="name">Nome</Label>
-                    <Input 
-                      id="name"
-                      placeholder="Nome do registro" 
-                      value={newEntry.name} 
-                      onChange={(e) => setNewEntry({...newEntry, name: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="category">Categoria</Label>
-                    <Select 
-                      onValueChange={(value) => setNewEntry({...newEntry, category: value})}
-                      value={newEntry.category}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione a categoria" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category} value={category}>{category}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="status">Status</Label>
-                    <Select 
-                      onValueChange={(value) => setNewEntry({...newEntry, status: value})}
-                      value={newEntry.status}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {statuses.map((status) => (
-                          <SelectItem key={status} value={status}>{status}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="date">Data</Label>
-                    <Input 
-                      id="date"
-                      type="date" 
-                      value={newEntry.date} 
-                      onChange={(e) => setNewEntry({...newEntry, date: e.target.value})}
-                    />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancelar</Button>
-                  <Button onClick={addEntry} className="bg-[#18467e] hover:bg-[#123761]">Adicionar</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input 
-                placeholder="Buscar..." 
-                value={searchTerm} 
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-            <div className="w-full md:w-64">
-              <Select 
-                onValueChange={(value) => setFilterCategory(value)}
-                value={filterCategory}
-              >
-                <SelectTrigger>
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Filtrar por categoria" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Todas as categorias</SelectItem>
-                  {categories.map((category) => (
-                    <SelectItem key={category} value={category}>{category}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Categoria</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Data</TableHead>
-                  <TableHead className="w-[100px]">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredEntries.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center">
-                      Nenhum registro encontrado
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredEntries.map(entry => (
-                    <TableRow key={entry.id}>
-                      <TableCell className="font-medium">{entry.name}</TableCell>
-                      <TableCell>{entry.category}</TableCell>
-                      <TableCell>
-                        <span className={cn(
-                          "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
-                          entry.status === 'Ativo' ? "bg-green-100 text-green-800" :
-                          entry.status === 'Inativo' ? "bg-red-100 text-red-800" :
-                          "bg-yellow-100 text-yellow-800"
-                        )}>
-                          {entry.status}
-                        </span>
-                      </TableCell>
-                      <TableCell>{new Date(entry.date).toLocaleDateString()}</TableCell>
-                      <TableCell>
-                        <div className="flex space-x-1">
-                          <Button variant="ghost" size="icon" onClick={() => startEdit(entry)} className="text-blue-600 hover:text-blue-800 hover:bg-blue-100">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => deleteEntry(entry.id)} className="text-red-600 hover:text-red-800 hover:bg-red-100">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-          
-          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-            <DialogContent>
+        {editItem && (
+          <Dialog open={!!editItem} onOpenChange={() => setEditItem(null)}>
+            <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
-                <DialogTitle>Editar registro</DialogTitle>
+                <DialogTitle>Edit Item</DialogTitle>
                 <DialogDescription>
-                  Edite os campos do registro selecionado.
+                  Edit the values for the selected item.
                 </DialogDescription>
               </DialogHeader>
-              {editEntry && (
-                <div className="grid gap-4 py-4">
-                  <div>
-                    <Label htmlFor="editName">Nome</Label>
-                    <Input 
-                      id="editName"
-                      placeholder="Nome do registro" 
-                      value={editEntry.name} 
-                      onChange={(e) => setEditEntry({...editEntry, name: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="editCategory">Categoria</Label>
-                    <Select 
-                      onValueChange={(value) => setEditEntry({...editEntry, category: value})}
-                      value={editEntry.category}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione a categoria" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category} value={category}>{category}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="editStatus">Status</Label>
-                    <Select 
-                      onValueChange={(value) => setEditEntry({...editEntry, status: value})}
-                      value={editEntry.status}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {statuses.map((status) => (
-                          <SelectItem key={status} value={status}>{status}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="editDate">Data</Label>
-                    <Input 
-                      id="editDate"
-                      type="date" 
-                      value={editEntry.date} 
-                      onChange={(e) => setEditEntry({...editEntry, date: e.target.value})}
-                    />
-                  </div>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="name" className="text-right">
+                    Name
+                  </Label>
+                  <Input id="name" name="name" value={editedValues.name} onChange={handleEditInputChange} className="col-span-3" />
                 </div>
-              )}
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="age" className="text-right">
+                    Age
+                  </Label>
+                  <Input type="number" id="age" name="age" value={editedValues.age} onChange={handleEditInputChange} className="col-span-3" />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="city" className="text-right">
+                    City
+                  </Label>
+                  <Input id="city" name="city" value={editedValues.city} onChange={handleEditInputChange} className="col-span-3" />
+                </div>
+              </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancelar</Button>
-                <Button onClick={saveEdit} className="bg-[#18467e] hover:bg-[#123761]">
-                  <Save className="h-4 w-4 mr-2" />
-                  Salvar
+                <Button type="button" onClick={handleSaveEdit}>
+                  Save
                 </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
-        </CardContent>
-      </Card>
-    </div>
+        )}
+      </CardFooter>
+    </Card>
   );
 };
 
-export default DisTable;
+export default DisDados;
