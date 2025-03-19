@@ -7,7 +7,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { FileDown, Plus, Trash2, Edit, Save } from 'lucide-react';
+import { 
+  Table, 
+  TableBody, 
+  TableCaption, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '@/components/ui/table';
+import { FileDown, Plus, Trash2, Edit, Save, Search, Filter } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface DataEntry {
@@ -26,6 +35,8 @@ const DisTable = () => {
     { id: '1', name: 'Documento A', category: 'Comercial', status: 'Ativo', date: '2023-05-15' },
     { id: '2', name: 'Relatório B', category: 'Técnico', status: 'Pendente', date: '2023-06-20' },
     { id: '3', name: 'Formulário C', category: 'Administrativo', status: 'Inativo', date: '2023-07-05' },
+    { id: '4', name: 'Contrato D', category: 'Financeiro', status: 'Ativo', date: '2023-08-10' },
+    { id: '5', name: 'Apresentação E', category: 'Comercial', status: 'Pendente', date: '2023-09-15' },
   ]);
   
   const [newEntry, setNewEntry] = useState<DataEntry>({ id: '', name: '', category: '', status: '', date: '' });
@@ -86,11 +97,34 @@ const DisTable = () => {
   };
 
   const exportToExcel = () => {
-    toast.success('Exportando para Excel...');
-    // In a real scenario, this would connect to an Excel export service
-    setTimeout(() => {
+    // In a real application, you would use a library like xlsx.js to create an Excel file
+    // For now, we'll simulate the export with a JSON transformation and download
+    
+    try {
+      // Convert data to CSV format
+      const header = ['Nome', 'Categoria', 'Status', 'Data'];
+      const csvData = [
+        header.join(','),
+        ...filteredEntries.map(entry => 
+          [entry.name, entry.category, entry.status, entry.date].join(',')
+        )
+      ].join('\n');
+      
+      // Create a Blob and download link
+      const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', 'dados_dis.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
       toast.success('Dados exportados com sucesso!');
-    }, 1500);
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Erro ao exportar os dados');
+    }
   };
 
   return (
@@ -99,7 +133,7 @@ const DisTable = () => {
         title="DIS - Dados" 
         subtitle="Gerenciamento de dados do sistema"
       >
-        <Button onClick={exportToExcel}>
+        <Button onClick={exportToExcel} className="bg-green-600 hover:bg-green-700">
           <FileDown className="mr-2 h-4 w-4" />
           Exportar Excel
         </Button>
@@ -111,7 +145,7 @@ const DisTable = () => {
             <CardTitle>Tabela de Dados</CardTitle>
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
-                <Button>
+                <Button className="bg-[#18467e] hover:bg-[#123761]">
                   <Plus className="h-4 w-4 mr-2" />
                   Adicionar
                 </Button>
@@ -177,7 +211,7 @@ const DisTable = () => {
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancelar</Button>
-                  <Button onClick={addEntry}>Adicionar</Button>
+                  <Button onClick={addEntry} className="bg-[#18467e] hover:bg-[#123761]">Adicionar</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -185,11 +219,13 @@ const DisTable = () => {
         </CardHeader>
         <CardContent>
           <div className="flex flex-col md:flex-row gap-4 mb-6">
-            <div className="flex-1">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
                 placeholder="Buscar..." 
                 value={searchTerm} 
                 onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9"
               />
             </div>
             <div className="w-full md:w-64">
@@ -198,6 +234,7 @@ const DisTable = () => {
                 value={filterCategory}
               >
                 <SelectTrigger>
+                  <Filter className="h-4 w-4 mr-2" />
                   <SelectValue placeholder="Filtrar por categoria" />
                 </SelectTrigger>
                 <SelectContent>
@@ -210,46 +247,55 @@ const DisTable = () => {
             </div>
           </div>
           
-          <div className="border rounded-md overflow-hidden">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Nome</th>
-                  <th>Categoria</th>
-                  <th>Status</th>
-                  <th>Data</th>
-                  <th className="w-24">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Categoria</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Data</TableHead>
+                  <TableHead className="w-[100px]">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {filteredEntries.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="text-center py-4 text-muted-foreground">
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center">
                       Nenhum registro encontrado
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ) : (
                   filteredEntries.map(entry => (
-                    <tr key={entry.id}>
-                      <td>{entry.name}</td>
-                      <td>{entry.category}</td>
-                      <td>{entry.status}</td>
-                      <td>{entry.date}</td>
-                      <td>
+                    <TableRow key={entry.id}>
+                      <TableCell className="font-medium">{entry.name}</TableCell>
+                      <TableCell>{entry.category}</TableCell>
+                      <TableCell>
+                        <span className={cn(
+                          "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
+                          entry.status === 'Ativo' ? "bg-green-100 text-green-800" :
+                          entry.status === 'Inativo' ? "bg-red-100 text-red-800" :
+                          "bg-yellow-100 text-yellow-800"
+                        )}>
+                          {entry.status}
+                        </span>
+                      </TableCell>
+                      <TableCell>{new Date(entry.date).toLocaleDateString()}</TableCell>
+                      <TableCell>
                         <div className="flex space-x-1">
-                          <Button variant="ghost" size="icon" onClick={() => startEdit(entry)}>
+                          <Button variant="ghost" size="icon" onClick={() => startEdit(entry)} className="text-blue-600 hover:text-blue-800 hover:bg-blue-100">
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" onClick={() => deleteEntry(entry.id)}>
+                          <Button variant="ghost" size="icon" onClick={() => deleteEntry(entry.id)} className="text-red-600 hover:text-red-800 hover:bg-red-100">
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))
                 )}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
           
           <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
@@ -316,7 +362,7 @@ const DisTable = () => {
               )}
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancelar</Button>
-                <Button onClick={saveEdit}>
+                <Button onClick={saveEdit} className="bg-[#18467e] hover:bg-[#123761]">
                   <Save className="h-4 w-4 mr-2" />
                   Salvar
                 </Button>
