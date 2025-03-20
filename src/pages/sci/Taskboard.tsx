@@ -23,6 +23,9 @@ export interface TableRow {
   executado: string;
 }
 
+// Define types for the turnKey and tasks
+type TurnKey = 'turno1' | 'turno2' | 'turno3';
+
 const Taskboard = () => {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [tableRows, setTableRows] = useState<TableRow[]>([
@@ -181,7 +184,7 @@ const Taskboard = () => {
     doc.text(`Data: ${date}`, pageWidth - 50, y);
     y += 10;
     
-    const turnKeys = ['turno1', 'turno2', 'turno3'] as const;
+    const turnKeys: TurnKey[] = ['turno1', 'turno2', 'turno3'];
     const turnNames = ['Turno 1', 'Turno 2', 'Turno 3'];
     
     turnKeys.forEach((turnKey, index) => {
