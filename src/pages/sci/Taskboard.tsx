@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -205,70 +206,186 @@ const Taskboard = () => {
         y += 8;
       }
       
-      Object.entries(tasks[turnKey]).forEach(([taskKey, checked]) => {
+      // Special handling for grouped tasks
+      const processTask = (taskKey: string, taskText: string, checked: boolean) => {
         y = checkPageSpace(y, 8);
-        
         drawCheckbox(15, y - 3, checked);
-        
-        const taskTexts: Record<string, string> = {
-          datacenter: "Verificar DATA CENTER",
-          sistemas: "Verificar Sistemas: BCACV1/BCACV2",
-          servicos: "Verificar Serviços: Vinti24/BCADireto/Replicação/Servidor MIA",
-          abrirServidores: "Abrir Servidores (SWIFT, OPDIF, TRMSG, CDGOV, AML)",
-          percurso76931: "Percurso 76931 - Atualiza os alertas nos clientes com dados desatualizados",
-          enviar: "Enviar:",
-          etr: "ETR",
-          impostos: "Impostos",
-          inpsExtrato: "INPS/Extrato",
-          vistoUsa: "Visto USA",
-          ben: "BEN",
-          bcta: "BCTA",
-          verificarDebitos: "Verificar Débitos/Créditos aplicados no dia Anterior",
-          processarTef: "Processar ficheiros TEF - ERR/RTR/RCT",
-          processarTelecomp: "Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR",
-          verificarReportes: "Verificar envio de reportes(INPS, VISTO USA, BCV, IMPC)",
-          inpsProcessar: "Processar",
-          inpsEnviarRetorno: "Enviar Retorno",
-          enviarEci: "ECI",
-          enviarEdv: "EDV",
-          validarSaco: "Validar Saco 1935",
-          verificarPendentes: "Verificar Pendentes dos Balcões",
-          fecharBalcoes: "Fechar os Balcoes Centrais",
-          tratarTapes: "Tratar e trocar Tapes BM, BMBCK – percurso 7622",
-          fecharServidores: "Fechar Servidores Teste e Produção",
-          fecharImpressoras: "Fechar Impressoras e balcões centrais abertos exceto 14 - DSI",
-          userFecho: "User Fecho Executar o percurso 7624 Save SYS1OB",
-          validarFicheiro: "Validar ficheiro CCLN - 76853",
-          bmjrn: "BMJRN (2 tapes/alterar 1 por mês/inicializar no início do mês)",
-          grjrcv: "GRJRCV (1 tape)",
-          aujrn: "AUJRN (1 tape)",
-          mvdia1: "MVDIA1 (eliminar obj. após save N)",
-          mvdia2: "MVDIA2 (eliminar obj. após save S)",
-          brjrn: "BRJRN (1 tape)"
-        };
-        
-        const taskText = taskTexts[taskKey] || taskKey;
         
         const xPos = ['etr', 'impostos', 'inpsExtrato', 'vistoUsa', 'ben', 'bcta', 'inpsProcessar', 'inpsEnviarRetorno', 'enviarEci', 'enviarEdv'].includes(taskKey) ? 25 : 20;
         
         doc.setFontSize(10);
         doc.text(taskText, xPos, y);
         y += 6;
+      };
+      
+      // Special handling for "Enviar" group in turno1
+      if (turnKey === 'turno1' && tasks[turnKey].enviar) {
+        y = checkPageSpace(y, 8);
         
-        if (turnKey === 'turno3') {
-          if (taskKey === 'validarFicheiro') {
-            y = checkPageSpace(y, 8);
-            doc.setFont("helvetica", "bold");
-            doc.text("Depois do Fecho", 15, y);
-            y += 8;
-          } else if (taskKey === 'bmjrn') {
-            y = checkPageSpace(y, 8);
-            doc.setFont("helvetica", "bold");
-            doc.text("Backups Diferidos", 15, y);
-            y += 8;
+        drawCheckbox(15, y - 3, tasks[turnKey].enviar);
+        doc.setFontSize(10);
+        doc.text("Enviar:", 20, y);
+        
+        // Draw the sub-items on the same line
+        let xOffset = 40;
+        const subItems = [
+          { key: 'etr', text: 'ETR' },
+          { key: 'impostos', text: 'Impostos' },
+          { key: 'inpsExtrato', text: 'INPS/Extrato' },
+          { key: 'vistoUsa', text: 'Visto USA' },
+          { key: 'ben', text: 'BEN' },
+          { key: 'bcta', text: 'BCTA' }
+        ];
+        
+        subItems.forEach(item => {
+          drawCheckbox(xOffset, y - 3, tasks[turnKey][item.key as keyof typeof tasks[turnKey]] as boolean);
+          doc.text(item.text, xOffset + 5, y);
+          xOffset += doc.getTextWidth(item.text) + 20;
+        });
+        
+        y += 8;
+      }
+      
+      // Special handling for INPS in turno2
+      else if (turnKey === 'turno2') {
+        // First, process regular tasks until we hit special groups
+        const regularTasksToProcess = ['datacenter', 'sistemas', 'servicos', 'verificarReportes'];
+        
+        regularTasksToProcess.forEach(taskKey => {
+          const taskTexts: Record<string, string> = {
+            datacenter: "Verificar DATA CENTER",
+            sistemas: "Verificar Sistemas: BCACV1/BCACV2",
+            servicos: "Verificar Serviços: Vinti24/BCADireto/Replicação/Servidor MIA",
+            verificarReportes: "Verificar envio de reportes(INPS, VISTO USA, BCV, IMPC)"
+          };
+          
+          processTask(taskKey, taskTexts[taskKey], tasks[turnKey][taskKey as keyof typeof tasks[turnKey]] as boolean);
+        });
+        
+        // Handle INPS group
+        y = checkPageSpace(y, 8);
+        doc.setFontSize(10);
+        doc.text("Ficheiros INPS:", 20, y);
+        
+        let xOffset = 60;
+        drawCheckbox(xOffset, y - 3, tasks[turnKey].inpsProcessar);
+        doc.text("Processar", xOffset + 5, y);
+        
+        xOffset += 40;
+        drawCheckbox(xOffset, y - 3, tasks[turnKey].inpsEnviarRetorno);
+        doc.text("Enviar Retorno", xOffset + 5, y);
+        
+        y += 8;
+        
+        // Process regular tasks again until next special group
+        const middleTasksToProcess = ['processarTef', 'processarTelecomp'];
+        
+        middleTasksToProcess.forEach(taskKey => {
+          const taskTexts: Record<string, string> = {
+            processarTef: "Processar ficheiros TEF - ERR/RTR/RCT",
+            processarTelecomp: "Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR"
+          };
+          
+          processTask(taskKey, taskTexts[taskKey], tasks[turnKey][taskKey as keyof typeof tasks[turnKey]] as boolean);
+        });
+        
+        // Handle Enviar Ficheiro group
+        y = checkPageSpace(y, 8);
+        doc.setFontSize(10);
+        doc.text("Enviar Ficheiro:", 20, y);
+        
+        xOffset = 60;
+        drawCheckbox(xOffset, y - 3, tasks[turnKey].enviarEci);
+        doc.text("ECI", xOffset + 5, y);
+        
+        xOffset += 25;
+        drawCheckbox(xOffset, y - 3, tasks[turnKey].enviarEdv);
+        doc.text("EDV", xOffset + 5, y);
+        
+        y += 8;
+        
+        // Process remaining regular tasks
+        const finalTasksToProcess = ['validarSaco', 'verificarPendentes', 'fecharBalcoes'];
+        
+        finalTasksToProcess.forEach(taskKey => {
+          const taskTexts: Record<string, string> = {
+            validarSaco: "Validar Saco 1935",
+            verificarPendentes: "Verificar Pendentes dos Balcões",
+            fecharBalcoes: "Fechar os Balcoes Centrais"
+          };
+          
+          processTask(taskKey, taskTexts[taskKey], tasks[turnKey][taskKey as keyof typeof tasks[turnKey]] as boolean);
+        });
+      }
+      
+      // For turno3 or any other tasks, continue with normal processing
+      else {
+        // Skip the special tasks we handled above
+        const skipTasks = turnKey === 'turno1' 
+          ? ['enviar', 'etr', 'impostos', 'inpsExtrato', 'vistoUsa', 'ben', 'bcta']
+          : [];
+        
+        Object.entries(tasks[turnKey]).forEach(([taskKey, checked]) => {
+          // Skip tasks we've already processed
+          if (skipTasks.includes(taskKey)) return;
+          
+          y = checkPageSpace(y, 8);
+          
+          drawCheckbox(15, y - 3, checked as boolean);
+          
+          const taskTexts: Record<string, string> = {
+            datacenter: "Verificar DATA CENTER",
+            sistemas: "Verificar Sistemas: BCACV1/BCACV2",
+            servicos: "Verificar Serviços: Vinti24/BCADireto/Replicação/Servidor MIA",
+            abrirServidores: "Abrir Servidores (SWIFT, OPDIF, TRMSG, CDGOV, AML)",
+            percurso76931: "Percurso 76931 - Atualiza os alertas nos clientes com dados desatualizados",
+            verificarDebitos: "Verificar Débitos/Créditos aplicados no dia Anterior",
+            processarTef: "Processar ficheiros TEF - ERR/RTR/RCT",
+            processarTelecomp: "Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR",
+            verificarReportes: "Verificar envio de reportes(INPS, VISTO USA, BCV, IMPC)",
+            inpsProcessar: "Processar",
+            inpsEnviarRetorno: "Enviar Retorno",
+            enviarEci: "ECI",
+            enviarEdv: "EDV",
+            validarSaco: "Validar Saco 1935",
+            verificarPendentes: "Verificar Pendentes dos Balcões",
+            fecharBalcoes: "Fechar os Balcoes Centrais",
+            tratarTapes: "Tratar e trocar Tapes BM, BMBCK – percurso 7622",
+            fecharServidores: "Fechar Servidores Teste e Produção",
+            fecharImpressoras: "Fechar Impressoras e balcões centrais abertos exceto 14 - DSI",
+            userFecho: "User Fecho Executar o percurso 7624 Save SYS1OB",
+            validarFicheiro: "Validar ficheiro CCLN - 76853",
+            bmjrn: "BMJRN (2 tapes/alterar 1 por mês/inicializar no início do mês)",
+            grjrcv: "GRJRCV (1 tape)",
+            aujrn: "AUJRN (1 tape)",
+            mvdia1: "MVDIA1 (eliminar obj. após save N)",
+            mvdia2: "MVDIA2 (eliminar obj. após save S)",
+            brjrn: "BRJRN (1 tape)"
+          };
+          
+          const taskText = taskTexts[taskKey] || taskKey;
+          
+          const xPos = ['etr', 'impostos', 'inpsExtrato', 'vistoUsa', 'ben', 'bcta', 'inpsProcessar', 'inpsEnviarRetorno', 'enviarEci', 'enviarEdv'].includes(taskKey) ? 25 : 20;
+          
+          doc.setFontSize(10);
+          doc.text(taskText, xPos, y);
+          y += 6;
+          
+          if (turnKey === 'turno3') {
+            if (taskKey === 'validarFicheiro') {
+              y = checkPageSpace(y, 8);
+              doc.setFont("helvetica", "bold");
+              doc.text("Depois do Fecho", 15, y);
+              y += 8;
+            } else if (taskKey === 'bmjrn') {
+              y = checkPageSpace(y, 8);
+              doc.setFont("helvetica", "bold");
+              doc.text("Backups Diferidos", 15, y);
+              y += 8;
+            }
           }
-        }
-      });
+        });
+      }
       
       y = checkPageSpace(y, 25);
       doc.setFont("helvetica", "bold");
