@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -11,6 +10,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { PlusCircle, Trash2, Save, FileDown } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export interface TableRow {
   id: number;
@@ -27,14 +28,12 @@ const Taskboard = () => {
     { id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '' }
   ]);
 
-  // Operator states for each turn
   const [turnData, setTurnData] = useState({
     turno1: { operator: '', entrada: '', saida: '', observations: '' },
     turno2: { operator: '', entrada: '', saida: '', observations: '' },
     turno3: { operator: '', entrada: '', saida: '', observations: '' }
   });
 
-  // Tasks states (checkboxes)
   const [tasks, setTasks] = useState({
     turno1: {
       datacenter: false,
@@ -84,7 +83,6 @@ const Taskboard = () => {
     }
   });
 
-  // Update task state
   const handleTaskChange = (turno: 'turno1' | 'turno2' | 'turno3', task: string, checked: boolean) => {
     setTasks({
       ...tasks,
@@ -95,7 +93,6 @@ const Taskboard = () => {
     });
   };
 
-  // Update turn data
   const handleTurnDataChange = (turno: 'turno1' | 'turno2' | 'turno3', field: string, value: string) => {
     setTurnData({
       ...turnData,
@@ -133,22 +130,186 @@ const Taskboard = () => {
   };
 
   const handleSave = () => {
-    // In a real app, this would save to a database or API
     toast.success('Ficha de procedimentos salva com sucesso!');
   };
 
   const generatePDF = () => {
-    // This would be the PDF generation logic
-    // For now, we'll just simulate it with a toast message
-    toast.success('PDF gerado com sucesso!');
+    const doc = new jsPDF();
     
-    // In a real implementation, this would use a library like jspdf and jspdf-autotable
-    // Similar to what the original script was doing
-    console.log('Data that would go into the PDF:');
-    console.log('Date:', date);
-    console.log('Turn data:', turnData);
-    console.log('Tasks:', tasks);
-    console.log('Table rows:', tableRows);
+    const currentDate = new Date();
+    const formattedDate = currentDate.toISOString().split('T')[0].replace(/-/g, '');
+    
+    const pageWidth = doc.internal.pageSize.width;
+    const pageHeight = doc.internal.pageSize.height;
+    let y = 20;
+    
+    const centerText = (text: string, y: number) => {
+      const textWidth = doc.getTextWidth(text);
+      const x = (pageWidth - textWidth) / 2;
+      doc.text(text, x, y);
+    };
+    
+    const drawCheckbox = (x: number, y: number, checked: boolean) => {
+      doc.rect(x, y, 3, 3);
+      if (checked) {
+        doc.line(x, y, x + 3, y + 3);
+        doc.line(x + 3, y, x, y + 3);
+      }
+    };
+    
+    const checkPageSpace = (y: number, requiredSpace: number): number => {
+      if (y + requiredSpace > pageHeight - 20) {
+        doc.addPage();
+        return 20;
+      }
+      return y;
+    };
+    
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    centerText("CENTRO INFORMÁTICA", y);
+    y += 10;
+    
+    doc.setFontSize(16);
+    centerText("Ficha de Procedimentos", y);
+    y += 15;
+    
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text("Processamentos Diários", 15, y);
+    doc.text(`Data: ${date}`, pageWidth - 50, y);
+    y += 10;
+    
+    const turnKeys = ['turno1', 'turno2', 'turno3'] as const;
+    const turnNames = ['Turno 1', 'Turno 2', 'Turno 3'];
+    
+    turnKeys.forEach((turnKey, index) => {
+      const turnName = turnNames[index];
+      const turn = turnData[turnKey];
+      
+      y = checkPageSpace(y, 30);
+      
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.text(`${turnName}:`, 15, y);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Operador: ${turn.operator}`, 40, y);
+      doc.text(`Entrada: ${turn.entrada}`, 100, y);
+      doc.text(`Saída: ${turn.saida}`, 150, y);
+      y += 10;
+      
+      if (turnKey === 'turno3') {
+        y = checkPageSpace(y, 8);
+        doc.setFont("helvetica", "bold");
+        doc.text("Antes do Fecho", 15, y);
+        y += 8;
+      }
+      
+      Object.entries(tasks[turnKey]).forEach(([taskKey, checked]) => {
+        y = checkPageSpace(y, 8);
+        
+        drawCheckbox(15, y - 3, checked);
+        
+        const taskTexts: Record<string, string> = {
+          datacenter: "Verificar DATA CENTER",
+          sistemas: "Verificar Sistemas: BCACV1/BCACV2",
+          servicos: "Verificar Serviços: Vinti24/BCADireto/Replicação/Servidor MIA",
+          abrirServidores: "Abrir Servidores (SWIFT, OPDIF, TRMSG, CDGOV, AML)",
+          percurso76931: "Percurso 76931 - Atualiza os alertas nos clientes com dados desatualizados",
+          enviar: "Enviar:",
+          etr: "ETR",
+          impostos: "Impostos",
+          inpsExtrato: "INPS/Extrato",
+          vistoUsa: "Visto USA",
+          ben: "BEN",
+          bcta: "BCTA",
+          verificarDebitos: "Verificar Débitos/Créditos aplicados no dia Anterior",
+          processarTef: "Processar ficheiros TEF - ERR/RTR/RCT",
+          processarTelecomp: "Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR",
+          verificarReportes: "Verificar envio de reportes(INPS, VISTO USA, BCV, IMPC)",
+          inpsProcessar: "Processar",
+          inpsEnviarRetorno: "Enviar Retorno",
+          enviarEci: "ECI",
+          enviarEdv: "EDV",
+          validarSaco: "Validar Saco 1935",
+          verificarPendentes: "Verificar Pendentes dos Balcões",
+          fecharBalcoes: "Fechar os Balcoes Centrais",
+          tratarTapes: "Tratar e trocar Tapes BM, BMBCK – percurso 7622",
+          fecharServidores: "Fechar Servidores Teste e Produção",
+          fecharImpressoras: "Fechar Impressoras e balcões centrais abertos exceto 14 - DSI",
+          userFecho: "User Fecho Executar o percurso 7624 Save SYS1OB",
+          validarFicheiro: "Validar ficheiro CCLN - 76853",
+          bmjrn: "BMJRN (2 tapes/alterar 1 por mês/inicializar no início do mês)",
+          grjrcv: "GRJRCV (1 tape)",
+          aujrn: "AUJRN (1 tape)",
+          mvdia1: "MVDIA1 (eliminar obj. após save N)",
+          mvdia2: "MVDIA2 (eliminar obj. após save S)",
+          brjrn: "BRJRN (1 tape)"
+        };
+        
+        const taskText = taskTexts[taskKey] || taskKey;
+        
+        const xPos = ['etr', 'impostos', 'inpsExtrato', 'vistoUsa', 'ben', 'bcta', 'inpsProcessar', 'inpsEnviarRetorno', 'enviarEci', 'enviarEdv'].includes(taskKey) ? 25 : 20;
+        
+        doc.setFontSize(10);
+        doc.text(taskText, xPos, y);
+        y += 6;
+        
+        if (turnKey === 'turno3') {
+          if (taskKey === 'validarFicheiro') {
+            y = checkPageSpace(y, 8);
+            doc.setFont("helvetica", "bold");
+            doc.text("Depois do Fecho", 15, y);
+            y += 8;
+          } else if (taskKey === 'bmjrn') {
+            y = checkPageSpace(y, 8);
+            doc.setFont("helvetica", "bold");
+            doc.text("Backups Diferidos", 15, y);
+            y += 8;
+          }
+        }
+      });
+      
+      y = checkPageSpace(y, 25);
+      doc.setFont("helvetica", "bold");
+      doc.text("Outras Intervenções/Ocorrências:", 15, y);
+      y += 7;
+      doc.setFont("helvetica", "normal");
+      const observations = turn.observations;
+      if (observations) {
+        const observationLines = doc.splitTextToSize(observations, pageWidth - 30);
+        doc.text(observationLines, 15, y);
+        y += observationLines.length * 5 + 10;
+      } else {
+        y += 15;
+      }
+    });
+    
+    y = checkPageSpace(y, 10);
+    doc.setFont("helvetica", "bold");
+    doc.text("Processamento de Ficheiros", 15, y);
+    y += 10;
+    
+    const tableData = tableRows.map(row => [
+      row.hora,
+      row.tarefa,
+      row.nomeAs,
+      row.operacao,
+      row.executado
+    ]);
+    
+    autoTable(doc, {
+      startY: y,
+      head: [['HORA', 'TAREFAS', 'NOME AS/400', 'Nº OPERAÇÃO', 'EXECUTADO POR']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [24, 70, 126], textColor: 255 },
+      margin: { left: 15, right: 15 }
+    });
+    
+    doc.save(`FD${formattedDate}.pdf`);
+    
+    toast.success('PDF gerado com sucesso!');
   };
 
   return (
@@ -180,7 +341,6 @@ const Taskboard = () => {
             <TabsTrigger value="turno3">Turno 3</TabsTrigger>
           </TabsList>
           
-          {/* Turno 1 */}
           <TabsContent value="turno1">
             <div className="p-4 border rounded-md mb-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -365,7 +525,6 @@ const Taskboard = () => {
             </div>
           </TabsContent>
           
-          {/* Turno 2 */}
           <TabsContent value="turno2">
             <div className="p-4 border rounded-md mb-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -540,7 +699,6 @@ const Taskboard = () => {
             </div>
           </TabsContent>
           
-          {/* Turno 3 */}
           <TabsContent value="turno3">
             <div className="p-4 border rounded-md mb-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
