@@ -23,8 +23,64 @@ export interface TableRow {
   executado: string;
 }
 
-// Define types for the turnKey and tasks
+// Define types for turnKey and tasks
 type TurnKey = 'turno1' | 'turno2' | 'turno3';
+
+// Define interfaces for our task and turn data types
+interface TasksType {
+  turno1: {
+    datacenter: boolean;
+    sistemas: boolean;
+    servicos: boolean;
+    abrirServidores: boolean;
+    percurso76931: boolean;
+    enviar: boolean;
+    etr: boolean;
+    impostos: boolean;
+    inpsExtrato: boolean;
+    vistoUsa: boolean;
+    ben: boolean;
+    bcta: boolean;
+    verificarDebitos: boolean;
+    processarTef: boolean;
+    processarTelecomp: boolean;
+  };
+  turno2: {
+    datacenter: boolean;
+    sistemas: boolean;
+    servicos: boolean;
+    verificarReportes: boolean;
+    inpsProcessar: boolean;
+    inpsEnviarRetorno: boolean;
+    processarTef: boolean;
+    processarTelecomp: boolean;
+    enviarEci: boolean;
+    enviarEdv: boolean;
+    validarSaco: boolean;
+    verificarPendentes: boolean;
+    fecharBalcoes: boolean;
+  };
+  turno3: {
+    verificarDebitos: boolean;
+    tratarTapes: boolean;
+    fecharServidores: boolean;
+    fecharImpressoras: boolean;
+    userFecho: boolean;
+    validarFicheiro: boolean;
+    bmjrn: boolean;
+    grjrcv: boolean;
+    aujrn: boolean;
+    mvdia1: boolean;
+    mvdia2: boolean;
+    brjrn: boolean;
+  };
+}
+
+interface TurnDataType {
+  turno1: { operator: string; entrada: string; saida: string; observations: string };
+  turno2: { operator: string; entrada: string; saida: string; observations: string };
+  turno3: { operator: string; entrada: string; saida: string; observations: string };
+}
 
 const Taskboard = () => {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -32,13 +88,13 @@ const Taskboard = () => {
     { id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '' }
   ]);
 
-  const [turnData, setTurnData] = useState({
+  const [turnData, setTurnData] = useState<TurnDataType>({
     turno1: { operator: '', entrada: '', saida: '', observations: '' },
     turno2: { operator: '', entrada: '', saida: '', observations: '' },
     turno3: { operator: '', entrada: '', saida: '', observations: '' }
   });
 
-  const [tasks, setTasks] = useState({
+  const [tasks, setTasks] = useState<TasksType>({
     turno1: {
       datacenter: false,
       sistemas: false,
@@ -87,7 +143,7 @@ const Taskboard = () => {
     }
   });
 
-  const handleTaskChange = (turno: 'turno1' | 'turno2' | 'turno3', task: string, checked: boolean) => {
+  const handleTaskChange = (turno: TurnKey, task: string, checked: boolean) => {
     setTasks({
       ...tasks,
       [turno]: {
@@ -97,7 +153,7 @@ const Taskboard = () => {
     });
   };
 
-  const handleTurnDataChange = (turno: 'turno1' | 'turno2' | 'turno3', field: string, value: string) => {
+  const handleTurnDataChange = (turno: TurnKey, field: string, value: string) => {
     setTurnData({
       ...turnData,
       [turno]: {
@@ -241,7 +297,9 @@ const Taskboard = () => {
         ];
         
         subItems.forEach(item => {
-          drawCheckbox(xOffset, y - 3, tasks[turnKey][item.key as keyof typeof tasks[turnKey]] as boolean);
+          // Use type assertion to safely access property
+          const itemKey = item.key as keyof typeof tasks[typeof turnKey]['turno1'];
+          drawCheckbox(xOffset, y - 3, tasks[turnKey][itemKey] as boolean);
           doc.text(item.text, xOffset + 5, y);
           xOffset += doc.getTextWidth(item.text) + 20;
         });
@@ -262,7 +320,9 @@ const Taskboard = () => {
             verificarReportes: "Verificar envio de reportes(INPS, VISTO USA, BCV, IMPC)"
           };
           
-          processTask(taskKey, taskTexts[taskKey], tasks[turnKey][taskKey as keyof typeof tasks[turnKey]] as boolean);
+          // Use type assertion to safely access property
+          const typedTaskKey = taskKey as keyof typeof tasks[typeof turnKey]['turno2'];
+          processTask(taskKey, taskTexts[taskKey], tasks[turnKey][typedTaskKey] as boolean);
         });
         
         // Handle INPS group
@@ -289,7 +349,9 @@ const Taskboard = () => {
             processarTelecomp: "Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR"
           };
           
-          processTask(taskKey, taskTexts[taskKey], tasks[turnKey][taskKey as keyof typeof tasks[turnKey]] as boolean);
+          // Use type assertion to safely access property
+          const typedTaskKey = taskKey as keyof typeof tasks[typeof turnKey]['turno2'];
+          processTask(taskKey, taskTexts[taskKey], tasks[turnKey][typedTaskKey] as boolean);
         });
         
         // Handle Enviar Ficheiro group
@@ -317,7 +379,9 @@ const Taskboard = () => {
             fecharBalcoes: "Fechar os Balcoes Centrais"
           };
           
-          processTask(taskKey, taskTexts[taskKey], tasks[turnKey][taskKey as keyof typeof tasks[turnKey]] as boolean);
+          // Use type assertion to safely access property
+          const typedTaskKey = taskKey as keyof typeof tasks[typeof turnKey]['turno2'];
+          processTask(taskKey, taskTexts[taskKey], tasks[turnKey][typedTaskKey] as boolean);
         });
       }
       
@@ -328,53 +392,41 @@ const Taskboard = () => {
           ? ['enviar', 'etr', 'impostos', 'inpsExtrato', 'vistoUsa', 'ben', 'bcta']
           : [];
         
-        Object.entries(tasks[turnKey]).forEach(([taskKey, checked]) => {
-          // Skip tasks we've already processed
-          if (skipTasks.includes(taskKey)) return;
+        // Handle turno3 tasks which have a different structure
+        if (turnKey === 'turno3') {
+          const turno3Tasks = Object.entries(tasks.turno3);
           
-          y = checkPageSpace(y, 8);
-          
-          drawCheckbox(15, y - 3, checked as boolean);
-          
-          const taskTexts: Record<string, string> = {
-            datacenter: "Verificar DATA CENTER",
-            sistemas: "Verificar Sistemas: BCACV1/BCACV2",
-            servicos: "Verificar Serviços: Vinti24/BCADireto/Replicação/Servidor MIA",
-            abrirServidores: "Abrir Servidores (SWIFT, OPDIF, TRMSG, CDGOV, AML)",
-            percurso76931: "Percurso 76931 - Atualiza os alertas nos clientes com dados desatualizados",
-            verificarDebitos: "Verificar Débitos/Créditos aplicados no dia Anterior",
-            processarTef: "Processar ficheiros TEF - ERR/RTR/RCT",
-            processarTelecomp: "Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR",
-            verificarReportes: "Verificar envio de reportes(INPS, VISTO USA, BCV, IMPC)",
-            inpsProcessar: "Processar",
-            inpsEnviarRetorno: "Enviar Retorno",
-            enviarEci: "ECI",
-            enviarEdv: "EDV",
-            validarSaco: "Validar Saco 1935",
-            verificarPendentes: "Verificar Pendentes dos Balcões",
-            fecharBalcoes: "Fechar os Balcoes Centrais",
-            tratarTapes: "Tratar e trocar Tapes BM, BMBCK – percurso 7622",
-            fecharServidores: "Fechar Servidores Teste e Produção",
-            fecharImpressoras: "Fechar Impressoras e balcões centrais abertos exceto 14 - DSI",
-            userFecho: "User Fecho Executar o percurso 7624 Save SYS1OB",
-            validarFicheiro: "Validar ficheiro CCLN - 76853",
-            bmjrn: "BMJRN (2 tapes/alterar 1 por mês/inicializar no início do mês)",
-            grjrcv: "GRJRCV (1 tape)",
-            aujrn: "AUJRN (1 tape)",
-            mvdia1: "MVDIA1 (eliminar obj. após save N)",
-            mvdia2: "MVDIA2 (eliminar obj. após save S)",
-            brjrn: "BRJRN (1 tape)"
-          };
-          
-          const taskText = taskTexts[taskKey] || taskKey;
-          
-          const xPos = ['etr', 'impostos', 'inpsExtrato', 'vistoUsa', 'ben', 'bcta', 'inpsProcessar', 'inpsEnviarRetorno', 'enviarEci', 'enviarEdv'].includes(taskKey) ? 25 : 20;
-          
-          doc.setFontSize(10);
-          doc.text(taskText, xPos, y);
-          y += 6;
-          
-          if (turnKey === 'turno3') {
+          turno3Tasks.forEach(([taskKey, checked]) => {
+            // Skip tasks we've already processed
+            if (skipTasks.includes(taskKey)) return;
+            
+            y = checkPageSpace(y, 8);
+            
+            drawCheckbox(15, y - 3, checked as boolean);
+            
+            const taskTexts: Record<string, string> = {
+              verificarDebitos: "Verificar Débitos/Créditos Aplicados no Turno Anterior",
+              tratarTapes: "Tratar e trocar Tapes BM, BMBCK – percurso 7622",
+              fecharServidores: "Fechar Servidores Teste e Produção",
+              fecharImpressoras: "Fechar Impressoras e balcões centrais abertos exceto 14 - DSI",
+              userFecho: "User Fecho Executar o percurso 7624 Save SYS1OB",
+              validarFicheiro: "Validar ficheiro CCLN - 76853",
+              bmjrn: "BMJRN (2 tapes/alterar 1 por mês/inicializar no início do mês)",
+              grjrcv: "GRJRCV (1 tape)",
+              aujrn: "AUJRN (1 tape)",
+              mvdia1: "MVDIA1 (eliminar obj. após save N)",
+              mvdia2: "MVDIA2 (eliminar obj. após save S)",
+              brjrn: "BRJRN (1 tape)"
+            };
+            
+            const taskText = taskTexts[taskKey] || taskKey;
+            
+            const xPos = ['etr', 'impostos', 'inpsExtrato', 'vistoUsa', 'ben', 'bcta', 'inpsProcessar', 'inpsEnviarRetorno', 'enviarEci', 'enviarEdv'].includes(taskKey) ? 25 : 20;
+            
+            doc.setFontSize(10);
+            doc.text(taskText, xPos, y);
+            y += 6;
+            
             if (taskKey === 'validarFicheiro') {
               y = checkPageSpace(y, 8);
               doc.setFont("helvetica", "bold");
@@ -386,8 +438,35 @@ const Taskboard = () => {
               doc.text("Backups Diferidos", 15, y);
               y += 8;
             }
-          }
-        });
+          });
+        } else if (turnKey === 'turno1') {
+          // Handle turno1 tasks (skipping the ones we already processed)
+          Object.entries(tasks.turno1).forEach(([taskKey, checked]) => {
+            // Skip tasks we've already processed
+            if (skipTasks.includes(taskKey)) return;
+            
+            y = checkPageSpace(y, 8);
+            
+            drawCheckbox(15, y - 3, checked as boolean);
+            
+            const taskTexts: Record<string, string> = {
+              datacenter: "Verificar DATA CENTER",
+              sistemas: "Verificar Sistemas: BCACV1/BCACV2",
+              servicos: "Verificar Serviços: Vinti24/BCADireto/Replicação/Servidor MIA",
+              abrirServidores: "Abrir Servidores (SWIFT, OPDIF, TRMSG, CDGOV, AML)",
+              percurso76931: "Percurso 76931 - Atualiza os alertas nos clientes com dados desatualizados",
+              verificarDebitos: "Verificar Débitos/Créditos aplicados no dia Anterior",
+              processarTef: "Processar ficheiros TEF - ERR/RTR/RCT",
+              processarTelecomp: "Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR"
+            };
+            
+            const taskText = taskTexts[taskKey] || taskKey;
+            
+            doc.setFontSize(10);
+            doc.text(taskText, 20, y);
+            y += 6;
+          });
+        }
       }
       
       y = checkPageSpace(y, 25);
