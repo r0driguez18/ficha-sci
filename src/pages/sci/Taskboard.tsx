@@ -435,7 +435,7 @@ const Taskboard = () => {
                     />
                     <Label htmlFor="tarefa1-6-enviar" className="cursor-pointer font-medium">Enviar:</Label>
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2 ml-6">
+                  <div className="flex flex-wrap gap-4 mt-2 ml-6">
                     <div className="flex items-center space-x-2">
                       <Checkbox 
                         id="tarefa1-6-1"
@@ -602,7 +602,7 @@ const Taskboard = () => {
                 
                 <div className="border rounded-md p-3 bg-gray-50 mt-2">
                   <Label className="font-medium mb-2 block">Ficheiros INPS:</Label>
-                  <div className="grid grid-cols-2 gap-2 ml-6">
+                  <div className="flex flex-wrap gap-4 ml-6">
                     <div className="flex items-center space-x-2">
                       <Checkbox 
                         id="tarefa2-5-1"
@@ -641,7 +641,7 @@ const Taskboard = () => {
                 
                 <div className="border rounded-md p-3 bg-gray-50 mt-2">
                   <Label className="font-medium mb-2 block">Enviar Ficheiro:</Label>
-                  <div className="grid grid-cols-2 gap-2 ml-6">
+                  <div className="flex flex-wrap gap-4 ml-6">
                     <div className="flex items-center space-x-2">
                       <Checkbox 
                         id="tarefa2-8-1"
