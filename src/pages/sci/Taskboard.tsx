@@ -276,11 +276,8 @@ const Taskboard = () => {
       const processTask = (taskKey: string, taskText: string, checked: boolean) => {
         y = checkPageSpace(y, 8);
         drawCheckbox(15, y - 3, checked);
-        
-        const xPos = ['etr', 'impostos', 'inpsExtrato', 'vistoUsa', 'ben', 'bcta', 'inpsProcessar', 'inpsEnviarRetorno', 'enviarEci', 'enviarEdv'].includes(taskKey) ? 25 : 20;
-        
         doc.setFontSize(10);
-        doc.text(taskText, xPos, y);
+        doc.text(taskText, 20, y);
         y += 6;
       };
       
@@ -308,8 +305,8 @@ const Taskboard = () => {
         doc.setFontSize(10);
         doc.text("Enviar:", 20, y);
         
-        // Draw the sub-items on the same line
-        let xOffset = 40;
+        // Draw the sub-items on the same line with reduced spacing
+        let xOffset = 35;
         const subItems = [
           { key: 'etr', text: 'ETR' },
           { key: 'impostos', text: 'Impostos' },
@@ -321,9 +318,10 @@ const Taskboard = () => {
         
         subItems.forEach(item => {
           const itemKey = item.key as keyof Turno1Tasks;
+          // Add checkbox for each sub-item
           drawCheckbox(xOffset, y - 3, tasks.turno1[itemKey]);
           doc.text(item.text, xOffset + 5, y);
-          xOffset += doc.getTextWidth(item.text) + 20;
+          xOffset += doc.getTextWidth(item.text) + 15; // Reduced spacing
         });
         
         y += 8;
@@ -365,11 +363,16 @@ const Taskboard = () => {
         doc.setFontSize(10);
         doc.text("Ficheiros INPS:", 20, y);
         
-        let xOffset = 60;
+        // Added checkboxes for INPS items with reduced spacing
+        let xOffset = 55;
+        
+        // Draw checkbox for "Processar"
         drawCheckbox(xOffset, y - 3, tasks.turno2.inpsProcessar);
         doc.text("Processar", xOffset + 5, y);
         
-        xOffset += 40;
+        xOffset += 35; // Reduced spacing
+        
+        // Draw checkbox for "Enviar Retorno"
         drawCheckbox(xOffset, y - 3, tasks.turno2.inpsEnviarRetorno);
         doc.text("Enviar Retorno", xOffset + 5, y);
         
@@ -393,11 +396,16 @@ const Taskboard = () => {
         doc.setFontSize(10);
         doc.text("Enviar Ficheiro:", 20, y);
         
-        xOffset = 60;
+        // Added checkboxes for Enviar Ficheiro items with reduced spacing
+        xOffset = 55;
+        
+        // Draw checkbox for "ECI"
         drawCheckbox(xOffset, y - 3, tasks.turno2.enviarEci);
         doc.text("ECI", xOffset + 5, y);
         
-        xOffset += 25;
+        xOffset += 20; // Reduced spacing
+        
+        // Draw checkbox for "EDV"
         drawCheckbox(xOffset, y - 3, tasks.turno2.enviarEdv);
         doc.text("EDV", xOffset + 5, y);
         
@@ -466,6 +474,7 @@ const Taskboard = () => {
         });
       }
       
+      // Include observations text area in PDF
       y = checkPageSpace(y, 25);
       doc.setFont("helvetica", "bold");
       doc.text("Outras Intervenções/Ocorrências:", 15, y);
