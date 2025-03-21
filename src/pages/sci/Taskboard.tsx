@@ -479,14 +479,29 @@ const Taskboard = () => {
       doc.setFont("helvetica", "bold");
       doc.text("Outras Intervenções/Ocorrências:", 15, y);
       y += 7;
+      
+      // Add text from the observations textarea
       doc.setFont("helvetica", "normal");
       const observations = turn.observations;
-      if (observations) {
-        const observationLines = doc.splitTextToSize(observations, pageWidth - 30);
-        doc.text(observationLines, 15, y);
-        y += observationLines.length * 5 + 10;
+      
+      if (observations && observations.trim() !== '') {
+        // Draw a rectangle to simulate the textarea
+        doc.setDrawColor(150, 150, 150);
+        doc.setFillColor(255, 255, 255);
+        const textAreaHeight = 20;
+        doc.rect(15, y, pageWidth - 30, textAreaHeight, 'S');
+        
+        // Add the text content inside the rectangle
+        const observationLines = doc.splitTextToSize(observations, pageWidth - 35);
+        doc.text(observationLines, 17, y + 5); // Add a small padding inside the rectangle
+        y += textAreaHeight + 10;
       } else {
-        y += 15;
+        // If no observations, still draw an empty textarea
+        doc.setDrawColor(150, 150, 150);
+        doc.setFillColor(255, 255, 255);
+        const textAreaHeight = 20;
+        doc.rect(15, y, pageWidth - 30, textAreaHeight, 'S');
+        y += textAreaHeight + 10;
       }
     });
     
