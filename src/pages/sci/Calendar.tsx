@@ -12,6 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { DayContent, DayPicker } from 'react-day-picker';
 
 interface Event {
   id: string;
@@ -181,27 +182,35 @@ const CalendarPage = () => {
     toast.success('Nota removida com sucesso');
   };
 
-  const getDayContent = (day: Date) => {
-    const eventsOnDay = events.filter(
-      event => event.date.toDateString() === day.toDateString()
+  // Custom component for day cell content
+  const CustomDayContent = (props: React.ComponentProps<typeof DayContent>) => {
+    const { date, ...restProps } = props;
+    
+    if (!date) return null;
+    
+    const dayEvents = events.filter(
+      event => event.date.toDateString() === date.toDateString()
     );
-
-    if (eventsOnDay.length === 0) return null;
-
+    
     return (
-      <div className="absolute bottom-0 left-0 right-0 flex justify-center">
-        <div className="flex gap-0.5">
-          {eventsOnDay.slice(0, 3).map((event, i) => (
-            <div 
-              key={i} 
-              className="h-1.5 w-1.5 rounded-full" 
-              style={{ backgroundColor: event.color }}
-            />
-          ))}
-          {eventsOnDay.length > 3 && (
-            <div className="h-1.5 w-1.5 rounded-full bg-gray-400" />
-          )}
-        </div>
+      <div className="relative h-full w-full">
+        <div>{date.getDate()}</div>
+        {dayEvents.length > 0 && (
+          <div className="absolute bottom-0 left-0 right-0 flex justify-center">
+            <div className="flex gap-0.5">
+              {dayEvents.slice(0, 3).map((event, i) => (
+                <div 
+                  key={i} 
+                  className="h-1.5 w-1.5 rounded-full" 
+                  style={{ backgroundColor: event.color }}
+                />
+              ))}
+              {dayEvents.length > 3 && (
+                <div className="h-1.5 w-1.5 rounded-full bg-gray-400" />
+              )}
+            </div>
+          </div>
+        )}
       </div>
     );
   };
@@ -243,33 +252,7 @@ const CalendarPage = () => {
             onSelect={(date) => date && setSelectedDate(date)}
             className="rounded-md border shadow mx-auto"
             components={{
-              DayContent: ({ day, displayMonth }) => {
-                const dayEvents = events.filter(
-                  event => event.date.toDateString() === day.toDateString()
-                );
-                
-                return (
-                  <div className="relative h-full w-full">
-                    <div>{day.getDate()}</div>
-                    {dayEvents.length > 0 && (
-                      <div className="absolute bottom-0 left-0 right-0 flex justify-center">
-                        <div className="flex gap-0.5">
-                          {dayEvents.slice(0, 3).map((event, i) => (
-                            <div 
-                              key={i} 
-                              className="h-1.5 w-1.5 rounded-full" 
-                              style={{ backgroundColor: event.color }}
-                            />
-                          ))}
-                          {dayEvents.length > 3 && (
-                            <div className="h-1.5 w-1.5 rounded-full bg-gray-400" />
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              }
+              DayContent: CustomDayContent
             }}
           />
         </CardContent>
