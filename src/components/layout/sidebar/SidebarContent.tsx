@@ -8,7 +8,8 @@ import {
   FileText,
   LayoutDashboard,
   PieChart,
-  Settings
+  Settings,
+  Calendar
 } from 'lucide-react';
 
 interface SidebarContentProps {
@@ -29,7 +30,8 @@ export const SidebarContent = ({ collapsed }: SidebarContentProps) => {
             to="/sci"
             collapsed={collapsed}
             subItems={[
-              { label: "Taskboard", to: "/sci/taskboard" }
+              { label: "Taskboard", to: "/sci/taskboard" },
+              { label: "Calendar", to: "/sci/calendar" }
             ]}
           />
           <SidebarItem
