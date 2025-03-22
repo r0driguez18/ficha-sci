@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { CalendarIcon, PlusCircle, Trash2, Save, FileText } from 'lucide-react';
+import { CalendarIcon, PlusCircle, Trash2, Save, FileText, NotebookPen, CalendarRange } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { DayContent, DayPicker } from 'react-day-picker';
+import { DayContent, DayPicker, DayContentProps } from 'react-day-picker';
 
 interface Event {
   id: string;
@@ -220,55 +220,136 @@ const CalendarPage = () => {
   );
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <Card className="lg:col-span-2">
-        <CardHeader className="bg-[#18467e] text-white">
-          <CardTitle className="text-center text-2xl">Calendário SCI</CardTitle>
-          <CardDescription className="text-center text-white">
-            {format(selectedDate, 'MMMM yyyy')}
-          </CardDescription>
+    <div className="flex flex-col gap-6">
+      {/* Notes Section */}
+      <Card className="shadow-lg border-blue-100">
+        <CardHeader className="bg-[#18467e] text-white flex flex-row items-center">
+          <div className="flex items-center">
+            <NotebookPen className="mr-2 h-6 w-6" />
+            <CardTitle className="text-center">Notas</CardTitle>
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="ml-auto text-white border-white hover:bg-white/20 hover:text-white"
+            onClick={() => {
+              setSelectedNote(null);
+              setNewNote({
+                title: '',
+                content: '',
+                date: new Date()
+              });
+              setIsNoteDialogOpen(true);
+            }}
+          >
+            <PlusCircle className="h-4 w-4 mr-2" /> Nova Nota
+          </Button>
         </CardHeader>
         <CardContent className="p-4">
-          <div className="flex justify-end mb-4">
-            <Button 
-              onClick={() => {
-                setSelectedEvent(null);
-                setNewEvent({
-                  title: '',
-                  date: selectedDate,
-                  description: '',
-                  color: '#18467e'
-                });
-                setIsEventDialogOpen(true);
-              }}
-            >
-              <PlusCircle className="h-4 w-4 mr-2" /> Novo Evento
-            </Button>
-          </div>
-          
-          <Calendar
-            mode="single"
-            selected={selectedDate}
-            onSelect={(date) => date && setSelectedDate(date)}
-            className="rounded-md border shadow mx-auto"
-            components={{
-              DayContent: CustomDayContent
-            }}
-          />
+          {notes.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <FileText className="mx-auto h-12 w-12 opacity-20 mb-2" />
+              Não há notas salvas
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {notes.map((note) => (
+                <div 
+                  key={note.id} 
+                  className="border rounded-md p-3 relative hover:bg-gray-50 cursor-pointer shadow-sm transition-all hover:shadow"
+                  onClick={() => handleEditNote(note)}
+                >
+                  <div className="pr-16">
+                    <div className="font-medium mb-1">{note.title}</div>
+                    <div className="text-xs text-gray-500 mb-1">
+                      {format(note.date, 'dd/MM/yyyy')}
+                    </div>
+                    <p className="text-sm text-gray-600 line-clamp-2">
+                      {note.content}
+                    </p>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-6 w-6 text-red-500 absolute top-2 right-2"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteNote(note.id);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      <div className="flex flex-col gap-6">
-        <Card>
+      {/* Calendar Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="lg:col-span-2 shadow-lg border-blue-100">
           <CardHeader className="bg-[#18467e] text-white">
-            <CardTitle className="text-center">Eventos do Dia</CardTitle>
+            <div className="flex items-center">
+              <CalendarRange className="mr-2 h-6 w-6" />
+              <CardTitle className="text-center text-2xl">Calendário</CardTitle>
+            </div>
+            <CardDescription className="text-center text-white">
+              {format(selectedDate, 'MMMM yyyy')}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-4">
+            <div className="flex justify-end mb-4">
+              <Button 
+                onClick={() => {
+                  setSelectedEvent(null);
+                  setNewEvent({
+                    title: '',
+                    date: selectedDate,
+                    description: '',
+                    color: '#18467e'
+                  });
+                  setIsEventDialogOpen(true);
+                }}
+                className="bg-[#18467e] hover:bg-[#113256]"
+              >
+                <PlusCircle className="h-4 w-4 mr-2" /> Novo Evento
+              </Button>
+            </div>
+            
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={(date) => date && setSelectedDate(date)}
+              className="rounded-md border shadow mx-auto p-2 bg-white"
+              components={{
+                DayContent: CustomDayContent
+              }}
+              classNames={{
+                day_today: "bg-[#18467e]/15 text-[#18467e] font-bold",
+                day_selected: "bg-[#18467e] text-white hover:bg-[#113256] hover:text-white focus:bg-[#113256] focus:text-white",
+                caption: "font-medium text-[#18467e]",
+                nav_button: "border border-gray-200 bg-white hover:bg-gray-50",
+                head_cell: "text-[#18467e] font-medium"
+              }}
+            />
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-lg border-blue-100">
+          <CardHeader className="bg-[#18467e] text-white">
+            <CardTitle className="text-center flex items-center">
+              <CalendarIcon className="mr-2 h-5 w-5" />
+              Eventos do Dia
+            </CardTitle>
             <CardDescription className="text-center text-white">
               {format(selectedDate, 'dd/MM/yyyy')}
             </CardDescription>
           </CardHeader>
           <CardContent className="p-4">
             {eventsForSelectedDate.length === 0 ? (
-              <div className="text-center py-4 text-gray-500">
+              <div className="text-center py-12 text-gray-500">
+                <CalendarIcon className="mx-auto h-12 w-12 opacity-20 mb-2" />
                 Não há eventos para esta data
               </div>
             ) : (
@@ -276,7 +357,7 @@ const CalendarPage = () => {
                 {eventsForSelectedDate.map((event) => (
                   <div 
                     key={event.id} 
-                    className="border rounded-md p-3 relative"
+                    className="border rounded-md p-3 relative shadow-sm transition-all hover:shadow"
                     style={{ borderLeftColor: event.color, borderLeftWidth: '4px' }}
                   >
                     <div className="font-medium mb-1">{event.title}</div>
@@ -301,68 +382,6 @@ const CalendarPage = () => {
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="bg-[#18467e] text-white">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-center">Notas</CardTitle>
-              <Button 
-                variant="outline" 
-                size="sm"
-                className="text-white border-white hover:bg-white/20 hover:text-white"
-                onClick={() => {
-                  setSelectedNote(null);
-                  setNewNote({
-                    title: '',
-                    content: '',
-                    date: new Date()
-                  });
-                  setIsNoteDialogOpen(true);
-                }}
-              >
-                <PlusCircle className="h-4 w-4 mr-2" /> Nova Nota
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="p-4">
-            {notes.length === 0 ? (
-              <div className="text-center py-4 text-gray-500">
-                Não há notas salvas
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {notes.map((note) => (
-                  <div 
-                    key={note.id} 
-                    className="border rounded-md p-3 relative hover:bg-gray-50 cursor-pointer"
-                    onClick={() => handleEditNote(note)}
-                  >
-                    <div className="pr-16">
-                      <div className="font-medium mb-1">{note.title}</div>
-                      <div className="text-xs text-gray-500 mb-1">
-                        {format(note.date, 'dd/MM/yyyy')}
-                      </div>
-                      <p className="text-sm text-gray-600 line-clamp-2">
-                        {note.content}
-                      </p>
-                    </div>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-6 w-6 text-red-500 absolute top-2 right-2"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteNote(note.id);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
                   </div>
                 ))}
               </div>
