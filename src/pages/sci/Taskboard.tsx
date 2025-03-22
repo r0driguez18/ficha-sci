@@ -7,11 +7,12 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PlusCircle, Trash2, Save, FileDown, RotateCcw } from 'lucide-react';
+import { PlusCircle, Trash2, Save, FileDown, RotateCcw, Calendar as CalendarIcon } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { useNavigate } from 'react-router-dom';
 
 export interface TableRow {
   id: number;
@@ -86,6 +87,8 @@ interface TurnDataType {
 }
 
 const Taskboard = () => {
+  const navigate = useNavigate();
+  
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [tableRows, setTableRows] = useState<TableRow[]>([
     { id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '' }
@@ -595,6 +598,13 @@ const Taskboard = () => {
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-xl font-semibold">Processamentos Diários</h3>
           <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/sci/calendar')}
+              className="mr-2"
+            >
+              <CalendarIcon className="h-4 w-4 mr-2" /> Calendário
+            </Button>
             <Label htmlFor="date" className="whitespace-nowrap">Data:</Label>
             <Input
               type="date"
