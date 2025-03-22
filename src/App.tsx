@@ -12,6 +12,7 @@ import DisDados from "./pages/dis/Dados";
 import EasyVistaDashboards from "./pages/easyvista/Dashboards";
 import Settings from "./pages/Settings";
 import Documentation from "./pages/Documentation";
+import CalendarPage from './pages/sci/Calendar';
 
 const queryClient = new QueryClient();
 
@@ -27,6 +28,7 @@ const App = () => (
           {/* SCI Routes */}
           <Route path="/sci" element={<Navigate to="/sci/taskboard" replace />} />
           <Route path="/sci/taskboard" element={<DashboardLayout><Taskboard /></DashboardLayout>} />
+          <Route path="/sci/calendar" element={<CalendarPage />} />
           
           {/* CRC Routes */}
           <Route path="/crc" element={<Navigate to="/crc/tratamento" replace />} />
