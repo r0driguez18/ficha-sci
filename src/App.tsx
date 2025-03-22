@@ -1,3 +1,4 @@
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -28,7 +29,7 @@ const App = () => (
           {/* SCI Routes */}
           <Route path="/sci" element={<Navigate to="/sci/taskboard" replace />} />
           <Route path="/sci/taskboard" element={<DashboardLayout><Taskboard /></DashboardLayout>} />
-          <Route path="/sci/calendar" element={<CalendarPage />} />
+          <Route path="/sci/calendar" element={<DashboardLayout><CalendarPage /></DashboardLayout>} />
           
           {/* CRC Routes */}
           <Route path="/crc" element={<Navigate to="/crc/tratamento" replace />} />
