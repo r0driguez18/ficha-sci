@@ -13,16 +13,20 @@ export const SidebarHeader = ({ collapsed, setCollapsed }: SidebarHeaderProps) =
     <div className="flex h-16 items-center justify-between px-4 py-6 border-b border-blue-800">
       {!collapsed ? (
         <div className="flex items-center">
-          <div className="h-8 w-8 rounded-md bg-white flex items-center justify-center text-[#18467e] font-bold mr-2">
-            A
-          </div>
-          <span className="text-xl font-semibold text-white">Admin</span>
+          <img 
+            src="/lovable-uploads/e9c60d16-29f0-415b-8024-2888c0e9f536.png" 
+            alt="BCA Logo" 
+            className="h-8 mr-2"
+          />
+          <span className="text-xl font-semibold text-white">BCA</span>
         </div>
       ) : (
         <div className="mx-auto">
-          <div className="h-8 w-8 rounded-md bg-white flex items-center justify-center text-[#18467e] font-bold">
-            A
-          </div>
+          <img 
+            src="/lovable-uploads/e9c60d16-29f0-415b-8024-2888c0e9f536.png" 
+            alt="BCA Logo" 
+            className="h-8"
+          />
         </div>
       )}
       <Button
