@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -8,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PlusCircle, Trash2, Save, FileDown } from 'lucide-react';
+import { PlusCircle, Trash2, Save, FileDown, RotateCcw } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { jsPDF } from 'jspdf';
@@ -23,10 +22,8 @@ export interface TableRow {
   executado: string;
 }
 
-// Define types for turnKey and tasks
 type TurnKey = 'turno1' | 'turno2' | 'turno3';
 
-// Define the task type for each shift
 interface Turno1Tasks {
   datacenter: boolean;
   sistemas: boolean;
@@ -76,7 +73,6 @@ interface Turno3Tasks {
   brjrn: boolean;
 }
 
-// Define interfaces for our task and turn data types
 interface TasksType {
   turno1: Turno1Tasks;
   turno2: Turno2Tasks;
@@ -150,6 +146,25 @@ const Taskboard = () => {
     }
   });
 
+  useEffect(() => {
+    const savedDate = localStorage.getItem('taskboard-date');
+    const savedTurnData = localStorage.getItem('taskboard-turnData');
+    const savedTasks = localStorage.getItem('taskboard-tasks');
+    const savedTableRows = localStorage.getItem('taskboard-tableRows');
+
+    if (savedDate) setDate(savedDate);
+    if (savedTurnData) setTurnData(JSON.parse(savedTurnData));
+    if (savedTasks) setTasks(JSON.parse(savedTasks));
+    if (savedTableRows) setTableRows(JSON.parse(savedTableRows));
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('taskboard-date', date);
+    localStorage.setItem('taskboard-turnData', JSON.stringify(turnData));
+    localStorage.setItem('taskboard-tasks', JSON.stringify(tasks));
+    localStorage.setItem('taskboard-tableRows', JSON.stringify(tableRows));
+  }, [date, turnData, tasks, tableRows]);
+
   const handleTaskChange = (turno: TurnKey, task: string, checked: boolean) => {
     setTasks({
       ...tasks,
@@ -198,6 +213,71 @@ const Taskboard = () => {
 
   const handleSave = () => {
     toast.success('Ficha de procedimentos salva com sucesso!');
+  };
+
+  const resetForm = () => {
+    setDate(new Date().toISOString().split('T')[0]);
+    setTurnData({
+      turno1: { operator: '', entrada: '', saida: '', observations: '' },
+      turno2: { operator: '', entrada: '', saida: '', observations: '' },
+      turno3: { operator: '', entrada: '', saida: '', observations: '' }
+    });
+    setTasks({
+      turno1: {
+        datacenter: false,
+        sistemas: false,
+        servicos: false,
+        abrirServidores: false,
+        percurso76931: false,
+        enviar: false,
+        etr: false,
+        impostos: false,
+        inpsExtrato: false,
+        vistoUsa: false,
+        ben: false,
+        bcta: false,
+        verificarDebitos: false,
+        processarTef: false,
+        processarTelecomp: false
+      },
+      turno2: {
+        datacenter: false,
+        sistemas: false,
+        servicos: false,
+        verificarReportes: false,
+        inpsProcessar: false,
+        inpsEnviarRetorno: false,
+        processarTef: false,
+        processarTelecomp: false,
+        enviarEci: false,
+        enviarEdv: false,
+        validarSaco: false,
+        verificarPendentes: false,
+        fecharBalcoes: false
+      },
+      turno3: {
+        verificarDebitos: false,
+        tratarTapes: false,
+        fecharServidores: false,
+        fecharImpressoras: false,
+        userFecho: false,
+        validarFicheiro: false,
+        bmjrn: false,
+        grjrcv: false,
+        aujrn: false,
+        mvdia1: false,
+        mvdia2: false,
+        brjrn: false
+      }
+    });
+    setTableRows([{ id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '' }]);
+    
+    localStorage.removeItem('taskboard-date');
+    localStorage.removeItem('taskboard-turnData');
+    localStorage.removeItem('taskboard-tasks');
+    localStorage.removeItem('taskboard-tableRows');
+    
+    toast.success('Formulário reiniciado com sucesso!');
   };
 
   const generatePDF = () => {
@@ -272,7 +352,6 @@ const Taskboard = () => {
         y += 8;
       }
       
-      // Special handling for grouped tasks
       const processTask = (taskKey: string, taskText: string, checked: boolean) => {
         y = checkPageSpace(y, 8);
         drawCheckbox(15, y - 3, checked);
@@ -281,9 +360,7 @@ const Taskboard = () => {
         y += 6;
       };
       
-      // Special handling for "Enviar" group in turno1
       if (turnKey === 'turno1') {
-        // Process regular tasks first
         const regularTasksToProcess = ['datacenter', 'sistemas', 'servicos', 'abrirServidores', 'percurso76931'];
         
         regularTasksToProcess.forEach(taskKey => {
@@ -299,13 +376,11 @@ const Taskboard = () => {
           processTask(taskKey, taskTexts[taskKey], tasks.turno1[typedTaskKey]);
         });
         
-        // Handle "Enviar" group - all on the same line
         y = checkPageSpace(y, 8);
         drawCheckbox(15, y - 3, tasks.turno1.enviar);
         doc.setFontSize(10);
         doc.text("Enviar:", 20, y);
         
-        // Draw the sub-items on the same line with reduced spacing
         let xOffset = 35;
         const subItems = [
           { key: 'etr', text: 'ETR' },
@@ -318,15 +393,13 @@ const Taskboard = () => {
         
         subItems.forEach(item => {
           const itemKey = item.key as keyof Turno1Tasks;
-          // Add checkbox for each sub-item
           drawCheckbox(xOffset, y - 3, tasks.turno1[itemKey]);
           doc.text(item.text, xOffset + 5, y);
-          xOffset += doc.getTextWidth(item.text) + 15; // Reduced spacing
+          xOffset += doc.getTextWidth(item.text) + 15;
         });
         
         y += 8;
         
-        // Process remaining tasks
         const remainingTasks = ['verificarDebitos', 'processarTef', 'processarTelecomp'];
         
         remainingTasks.forEach(taskKey => {
@@ -341,9 +414,7 @@ const Taskboard = () => {
         });
       }
       
-      // Special handling for turno2
-      else if (turnKey === 'turno2') {
-        // First, process regular tasks until we hit special groups
+      if (turnKey === 'turno2') {
         const regularTasksToProcess = ['datacenter', 'sistemas', 'servicos', 'verificarReportes'];
         
         regularTasksToProcess.forEach(taskKey => {
@@ -358,27 +429,22 @@ const Taskboard = () => {
           processTask(taskKey, taskTexts[taskKey], tasks.turno2[typedTaskKey]);
         });
         
-        // Handle INPS group - all on the same line
         y = checkPageSpace(y, 8);
         doc.setFontSize(10);
         doc.text("Ficheiros INPS:", 20, y);
         
-        // Added checkboxes for INPS items with reduced spacing
         let xOffset = 55;
         
-        // Draw checkbox for "Processar"
         drawCheckbox(xOffset, y - 3, tasks.turno2.inpsProcessar);
         doc.text("Processar", xOffset + 5, y);
         
-        xOffset += 35; // Reduced spacing
+        xOffset += 35;
         
-        // Draw checkbox for "Enviar Retorno"
         drawCheckbox(xOffset, y - 3, tasks.turno2.inpsEnviarRetorno);
         doc.text("Enviar Retorno", xOffset + 5, y);
         
         y += 8;
         
-        // Process regular tasks again until next special group
         const middleTasksToProcess = ['processarTef', 'processarTelecomp'];
         
         middleTasksToProcess.forEach(taskKey => {
@@ -391,27 +457,22 @@ const Taskboard = () => {
           processTask(taskKey, taskTexts[taskKey], tasks.turno2[typedTaskKey]);
         });
         
-        // Handle Enviar Ficheiro group - all on the same line
         y = checkPageSpace(y, 8);
         doc.setFontSize(10);
         doc.text("Enviar Ficheiro:", 20, y);
         
-        // Added checkboxes for Enviar Ficheiro items with reduced spacing
         xOffset = 55;
         
-        // Draw checkbox for "ECI"
         drawCheckbox(xOffset, y - 3, tasks.turno2.enviarEci);
         doc.text("ECI", xOffset + 5, y);
         
-        xOffset += 20; // Reduced spacing
+        xOffset += 20;
         
-        // Draw checkbox for "EDV"
         drawCheckbox(xOffset, y - 3, tasks.turno2.enviarEdv);
         doc.text("EDV", xOffset + 5, y);
         
         y += 8;
         
-        // Process remaining regular tasks
         const finalTasksToProcess = ['validarSaco', 'verificarPendentes', 'fecharBalcoes'];
         
         finalTasksToProcess.forEach(taskKey => {
@@ -426,8 +487,7 @@ const Taskboard = () => {
         });
       }
       
-      // Handle turno3 tasks
-      else if (turnKey === 'turno3') {
+      if (turnKey === 'turno3') {
         const beforeCloseTasks = ['verificarDebitos', 'tratarTapes', 'fecharServidores', 'fecharImpressoras', 'userFecho', 'validarFicheiro'];
         
         beforeCloseTasks.forEach(taskKey => {
@@ -451,7 +511,6 @@ const Taskboard = () => {
           }
         });
         
-        // Handle "Backups Diferidos" section
         y = checkPageSpace(y, 8);
         doc.setFont("helvetica", "bold");
         doc.text("Backups Diferidos", 15, y);
@@ -474,29 +533,23 @@ const Taskboard = () => {
         });
       }
       
-      // Include observations text area in PDF
       y = checkPageSpace(y, 25);
       doc.setFont("helvetica", "bold");
       doc.text("Outras Intervenções/Ocorrências:", 15, y);
       y += 7;
       
-      // Add text from the observations textarea
-      doc.setFont("helvetica", "normal");
       const observations = turn.observations;
       
       if (observations && observations.trim() !== '') {
-        // Draw a rectangle to simulate the textarea
         doc.setDrawColor(150, 150, 150);
         doc.setFillColor(255, 255, 255);
         const textAreaHeight = 20;
         doc.rect(15, y, pageWidth - 30, textAreaHeight, 'S');
         
-        // Add the text content inside the rectangle
         const observationLines = doc.splitTextToSize(observations, pageWidth - 35);
-        doc.text(observationLines, 17, y + 5); // Add a small padding inside the rectangle
+        doc.text(observationLines, 17, y + 5);
         y += textAreaHeight + 10;
       } else {
-        // If no observations, still draw an empty textarea
         doc.setDrawColor(150, 150, 150);
         doc.setFillColor(255, 255, 255);
         const textAreaHeight = 20;
@@ -1154,6 +1207,9 @@ const Taskboard = () => {
         </Card>
         
         <div className="flex justify-end mt-6 gap-4">
+          <Button onClick={resetForm} type="button" variant="destructive">
+            <RotateCcw className="h-4 w-4 mr-2" /> Limpar Tudo
+          </Button>
           <Button onClick={handleSave} type="button">
             <Save className="h-4 w-4 mr-2" /> Salvar
           </Button>
