@@ -1,18 +1,23 @@
-
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { CalendarIcon, PlusCircle, Trash2, Save, FileText, NotebookPen, CalendarRange } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { 
+  CalendarIcon, 
+  PlusCircle, 
+  Trash2, 
+  FileText, 
+  NotebookPen, 
+  CalendarRange 
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { DayContent, DayPicker, DayContentProps } from 'react-day-picker';
 
 interface Event {
   id: string;
@@ -91,7 +96,6 @@ const CalendarPage = () => {
     }
 
     if (selectedEvent) {
-      // Update existing event
       setEvents(events.map(event => 
         event.id === selectedEvent.id 
           ? { ...newEvent, id: selectedEvent.id } 
@@ -99,7 +103,6 @@ const CalendarPage = () => {
       ));
       toast.success('Evento atualizado com sucesso');
     } else {
-      // Add new event
       const event = {
         ...newEvent,
         id: Date.now().toString()
@@ -125,7 +128,6 @@ const CalendarPage = () => {
     }
 
     if (selectedNote) {
-      // Update existing note
       setNotes(notes.map(note => 
         note.id === selectedNote.id 
           ? { ...newNote, id: selectedNote.id } 
@@ -133,7 +135,6 @@ const CalendarPage = () => {
       ));
       toast.success('Nota atualizada com sucesso');
     } else {
-      // Add new note
       const note = {
         ...newNote,
         id: Date.now().toString()
@@ -182,9 +183,8 @@ const CalendarPage = () => {
     toast.success('Nota removida com sucesso');
   };
 
-  // Custom component for day cell content
-  const CustomDayContent = (props: React.ComponentProps<typeof DayContent>) => {
-    const { date, ...restProps } = props;
+  const CustomDayContent = (props: React.ComponentProps<typeof Calendar>) => {
+    const { date } = props;
     
     if (!date) return null;
     
@@ -220,18 +220,17 @@ const CalendarPage = () => {
   );
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Notes Section */}
+    <div className="container mx-auto p-4 space-y-6">
       <Card className="shadow-lg border-blue-100">
-        <CardHeader className="bg-[#18467e] text-white flex flex-row items-center">
+        <CardHeader className="bg-[#18467e] text-white flex flex-row items-center justify-between">
           <div className="flex items-center">
             <NotebookPen className="mr-2 h-6 w-6" />
-            <CardTitle className="text-center">Notas</CardTitle>
+            <CardTitle>Notas</CardTitle>
           </div>
           <Button 
             variant="outline" 
             size="sm"
-            className="ml-auto text-white border-white hover:bg-white/20 hover:text-white"
+            className="text-white border-white hover:bg-white/20 hover:text-white"
             onClick={() => {
               setSelectedNote(null);
               setNewNote({
@@ -245,7 +244,7 @@ const CalendarPage = () => {
             <PlusCircle className="h-4 w-4 mr-2" /> Nova Nota
           </Button>
         </CardHeader>
-        <CardContent className="p-4">
+        <CardContent className="p-6">
           {notes.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <FileText className="mx-auto h-12 w-12 opacity-20 mb-2" />
@@ -286,20 +285,14 @@ const CalendarPage = () => {
         </CardContent>
       </Card>
 
-      {/* Calendar Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2 shadow-lg border-blue-100">
           <CardHeader className="bg-[#18467e] text-white">
-            <div className="flex items-center">
-              <CalendarRange className="mr-2 h-6 w-6" />
-              <CardTitle className="text-center text-2xl">Calendário</CardTitle>
-            </div>
-            <CardDescription className="text-center text-white">
-              {format(selectedDate, 'MMMM yyyy')}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-4">
-            <div className="flex justify-end mb-4">
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center">
+                <CalendarRange className="mr-2 h-6 w-6" />
+                <CardTitle>Calendário</CardTitle>
+              </div>
               <Button 
                 onClick={() => {
                   setSelectedEvent(null);
@@ -311,26 +304,35 @@ const CalendarPage = () => {
                   });
                   setIsEventDialogOpen(true);
                 }}
-                className="bg-[#18467e] hover:bg-[#113256]"
+                variant="outline"
+                size="sm"
+                className="text-white border-white hover:bg-white/20 hover:text-white"
               >
                 <PlusCircle className="h-4 w-4 mr-2" /> Novo Evento
               </Button>
             </div>
-            
+            <CardDescription className="text-white mt-2">
+              {format(selectedDate, 'MMMM yyyy')}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-6">
             <Calendar
               mode="single"
               selected={selectedDate}
               onSelect={(date) => date && setSelectedDate(date)}
-              className="rounded-md border shadow mx-auto p-2 bg-white"
+              className="rounded-md border shadow mx-auto p-3 bg-white pointer-events-auto"
               components={{
-                DayContent: CustomDayContent
+                DayContent: CustomDayContent as any
               }}
               classNames={{
                 day_today: "bg-[#18467e]/15 text-[#18467e] font-bold",
                 day_selected: "bg-[#18467e] text-white hover:bg-[#113256] hover:text-white focus:bg-[#113256] focus:text-white",
                 caption: "font-medium text-[#18467e]",
                 nav_button: "border border-gray-200 bg-white hover:bg-gray-50",
-                head_cell: "text-[#18467e] font-medium"
+                head_cell: "text-[#18467e] font-medium",
+                table: "w-full border-collapse space-y-1",
+                cell: "text-center relative p-0 focus-within:relative focus-within:z-20",
+                day: "h-9 w-9 p-0 font-normal rounded-md aria-selected:opacity-100"
               }}
             />
           </CardContent>
@@ -338,15 +340,15 @@ const CalendarPage = () => {
 
         <Card className="shadow-lg border-blue-100">
           <CardHeader className="bg-[#18467e] text-white">
-            <CardTitle className="text-center flex items-center">
+            <CardTitle className="flex items-center">
               <CalendarIcon className="mr-2 h-5 w-5" />
               Eventos do Dia
             </CardTitle>
-            <CardDescription className="text-center text-white">
+            <CardDescription className="text-white mt-1">
               {format(selectedDate, 'dd/MM/yyyy')}
             </CardDescription>
           </CardHeader>
-          <CardContent className="p-4">
+          <CardContent className="p-6">
             {eventsForSelectedDate.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
                 <CalendarIcon className="mx-auto h-12 w-12 opacity-20 mb-2" />
@@ -390,7 +392,6 @@ const CalendarPage = () => {
         </Card>
       </div>
 
-      {/* Event Dialog */}
       <Dialog open={isEventDialogOpen} onOpenChange={setIsEventDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
@@ -462,7 +463,6 @@ const CalendarPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Note Dialog */}
       <Dialog open={isNoteDialogOpen} onOpenChange={setIsNoteDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
