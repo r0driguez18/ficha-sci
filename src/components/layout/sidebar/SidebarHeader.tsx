@@ -11,28 +11,17 @@ interface SidebarHeaderProps {
 export const SidebarHeader = ({ collapsed, setCollapsed }: SidebarHeaderProps) => {
   return (
     <div className="flex h-16 items-center justify-between px-4 py-6 border-b border-blue-800">
-      {!collapsed ? (
-        <div className="flex items-center">
-          <img 
-            src="/lovable-uploads/e9c60d16-29f0-415b-8024-2888c0e9f536.png" 
-            alt="BCA Logo" 
-            className="h-8 mr-2"
-          />
-          <span className="text-xl font-semibold text-white">BCA</span>
-        </div>
-      ) : (
-        <div className="mx-auto">
-          <img 
-            src="/lovable-uploads/e9c60d16-29f0-415b-8024-2888c0e9f536.png" 
-            alt="BCA Logo" 
-            className="h-8"
-          />
-        </div>
-      )}
+      <div className={collapsed ? "mx-auto" : ""}>
+        <img 
+          src="/lovable-uploads/e9c60d16-29f0-415b-8024-2888c0e9f536.png" 
+          alt="BCA Logo" 
+          className="h-8"
+        />
+      </div>
       <Button
         variant="ghost"
         size="icon"
-        className="text-white/70 hover:text-white hover:bg-white/10"
+        className={`text-white/70 hover:text-white hover:bg-white/10 ${collapsed ? "" : "ml-auto"}`}
         onClick={() => setCollapsed(!collapsed)}
       >
         {collapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
