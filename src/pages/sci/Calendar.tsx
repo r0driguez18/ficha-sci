@@ -18,6 +18,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { type DayContentProps } from 'react-day-picker';
 
 interface Event {
   id: string;
@@ -183,18 +184,18 @@ const CalendarPage = () => {
     toast.success('Nota removida com sucesso');
   };
 
-  const CustomDayContent = (props: React.ComponentProps<typeof Calendar>) => {
-    const { date } = props;
+  const CustomDayContent = (props: DayContentProps) => {
+    const day = props.date;
     
-    if (!date) return null;
+    if (!day) return null;
     
     const dayEvents = events.filter(
-      event => event.date.toDateString() === date.toDateString()
+      event => event.date.toDateString() === day.toDateString()
     );
     
     return (
       <div className="relative h-full w-full">
-        <div>{date.getDate()}</div>
+        <div>{day.getDate()}</div>
         {dayEvents.length > 0 && (
           <div className="absolute bottom-0 left-0 right-0 flex justify-center">
             <div className="flex gap-0.5">
@@ -322,7 +323,7 @@ const CalendarPage = () => {
               onSelect={(date) => date && setSelectedDate(date)}
               className="rounded-md border shadow mx-auto p-3 bg-white pointer-events-auto"
               components={{
-                DayContent: CustomDayContent as any
+                DayContent: CustomDayContent
               }}
               classNames={{
                 day_today: "bg-[#18467e]/15 text-[#18467e] font-bold",
