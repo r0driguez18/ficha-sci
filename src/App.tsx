@@ -1,54 +1,58 @@
 
-import { useState, useEffect } from 'react';
-import './App.css';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as SonnerToaster } from "@/components/ui/sonner";
-import { ThemeProvider } from "@/components/ui/theme-provider";
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import Dashboard from '@/pages/Dashboard';
-import Documentation from '@/pages/Documentation';
-import Settings from '@/pages/Settings';
-import Index from '@/pages/Index';
-import NotFound from '@/pages/NotFound';
-import Taskboard from '@/pages/sci/Taskboard';
-import Calendar from '@/pages/sci/Calendar';
-import Dados from '@/pages/dis/Dados';
-import Tratamento from '@/pages/crc/Tratamento';
-import Dashboards from '@/pages/easyvista/Dashboards';
-import { NotificationProvider } from '@/contexts/NotificationContext';
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { DashboardLayout } from "./components/layout/DashboardLayout";
 
-function App() {
-  // Initialize collapsed state from localStorage if available
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
-    const savedState = localStorage.getItem('sidebar-collapsed');
-    return savedState ? JSON.parse(savedState) : false;
-  });
+// Import pages
+import Dashboard from "./pages/Dashboard";
+import NotFound from "./pages/NotFound";
+import Taskboard from "./pages/sci/Taskboard";
+import CrcTratamento from "./pages/crc/Tratamento";
+import DisDados from "./pages/dis/Dados";
+import EasyVistaDashboards from "./pages/easyvista/Dashboards";
+import Settings from "./pages/Settings";
+import Documentation from "./pages/Documentation";
+import CalendarPage from './pages/sci/Calendar';
 
-  return (
-    <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-      <NotificationProvider>
-        <Router>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route element={<DashboardLayout collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />}>
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/docs" element={<Documentation />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/sci/taskboard" element={<Taskboard />} />
-              <Route path="/sci/calendar" element={<Calendar />} />
-              <Route path="/dis/dados" element={<Dados />} />
-              <Route path="/crc/tratamento" element={<Tratamento />} />
-              <Route path="/easyvista/dashboards" element={<Dashboards />} />
-            </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Router>
-        <Toaster />
-        <SonnerToaster />
-      </NotificationProvider>
-    </ThemeProvider>
-  );
-}
+const queryClient = new QueryClient();
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Navigate to="/sci/taskboard" replace />} />
+          
+          <Route path="/" element={<DashboardLayout><Dashboard /></DashboardLayout>} />
+          
+          {/* SCI Routes */}
+          <Route path="/sci" element={<Navigate to="/sci/taskboard" replace />} />
+          <Route path="/sci/taskboard" element={<DashboardLayout><Taskboard /></DashboardLayout>} />
+          <Route path="/sci/calendar" element={<DashboardLayout><CalendarPage /></DashboardLayout>} />
+          
+          {/* CRC Routes */}
+          <Route path="/crc" element={<Navigate to="/crc/tratamento" replace />} />
+          <Route path="/crc/tratamento" element={<DashboardLayout><CrcTratamento /></DashboardLayout>} />
+          
+          {/* DIS Routes */}
+          <Route path="/dis" element={<Navigate to="/dis/dados" replace />} />
+          <Route path="/dis/dados" element={<DashboardLayout><DisDados /></DashboardLayout>} />
+          
+          {/* EasyVista Routes */}
+          <Route path="/easyvista" element={<Navigate to="/easyvista/dashboards" replace />} />
+          <Route path="/easyvista/dashboards" element={<DashboardLayout><EasyVistaDashboards /></DashboardLayout>} />
+          
+          {/* System Routes */}
+          <Route path="/settings" element={<DashboardLayout><Settings /></DashboardLayout>} />
+          <Route path="/docs" element={<DashboardLayout><Documentation /></DashboardLayout>} />
+          
+          {/* 404 Route */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
 
 export default App;
