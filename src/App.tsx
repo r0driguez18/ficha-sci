@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './App.css';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
@@ -19,7 +19,11 @@ import Dashboards from '@/pages/easyvista/Dashboards';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 
 function App() {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  // Initialize collapsed state from localStorage if available
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    const savedState = localStorage.getItem('sidebar-collapsed');
+    return savedState ? JSON.parse(savedState) : false;
+  });
 
   return (
     <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
