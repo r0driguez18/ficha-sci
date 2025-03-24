@@ -1,21 +1,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { Sidebar } from './Sidebar';
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
+import { Outlet } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
 interface DashboardLayoutProps {
-  children: React.ReactNode;
+  collapsed: boolean;
+  setCollapsed: (collapsed: boolean) => void;
 }
 
-export function DashboardLayout({ children }: DashboardLayoutProps) {
-  // Initialize collapsed state from localStorage if available
-  const [collapsed, setCollapsed] = useState(() => {
-    const savedState = localStorage.getItem('sidebar-collapsed');
-    return savedState ? JSON.parse(savedState) : false;
-  });
-
+export function DashboardLayout({ collapsed, setCollapsed }: DashboardLayoutProps) {
   // Save collapsed state to localStorage when it changes
   useEffect(() => {
     localStorage.setItem('sidebar-collapsed', JSON.stringify(collapsed));
@@ -32,12 +26,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           )}
         >
           <div className="container py-6 h-full animate-fade-in">
-            {children}
+            <Outlet />
           </div>
         </main>
       </div>
-      <Toaster />
-      <Sonner />
     </div>
   );
 }
