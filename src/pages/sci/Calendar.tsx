@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
+import { pt } from 'date-fns/locale';
 import { 
   CalendarIcon, 
   PlusCircle, 
@@ -325,6 +326,7 @@ const CalendarPage = () => {
               components={{
                 DayContent: CustomDayContent
               }}
+              locale={pt}
               classNames={{
                 day_today: "bg-[#18467e]/15 text-[#18467e] font-bold",
                 day_selected: "bg-[#18467e] text-white hover:bg-[#113256] hover:text-white focus:bg-[#113256] focus:text-white",
@@ -505,3 +507,4 @@ const CalendarPage = () => {
 };
 
 export default CalendarPage;
+
