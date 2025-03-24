@@ -5,8 +5,7 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/ui/theme-provider";
-
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import Dashboard from '@/pages/Dashboard';
 import Documentation from '@/pages/Documentation';
 import Settings from '@/pages/Settings';
