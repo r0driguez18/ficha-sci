@@ -226,7 +226,7 @@ const CalendarPage = () => {
             <Button 
               variant="outline" 
               size="sm" 
-              className="text-white border-white hover:bg-white/20 hover:text-white"
+              className="text-[#18467e] border-[#18467e] hover:bg-[#18467e]/10"
               onClick={() => changeMonth(-1)}
             >
               <ChevronLeft className="h-4 w-4" />
@@ -234,7 +234,7 @@ const CalendarPage = () => {
             <Button 
               variant="outline" 
               size="sm" 
-              className="text-white border-white hover:bg-white/20 hover:text-white"
+              className="text-[#18467e] border-[#18467e] hover:bg-[#18467e]/10"
               onClick={goToToday}
             >
               Hoje
@@ -242,7 +242,7 @@ const CalendarPage = () => {
             <Button 
               variant="outline" 
               size="sm" 
-              className="text-white border-white hover:bg-white/20 hover:text-white"
+              className="text-[#18467e] border-[#18467e] hover:bg-[#18467e]/10"
               onClick={() => changeMonth(1)}
             >
               <ChevronRight className="h-4 w-4" />
@@ -254,7 +254,7 @@ const CalendarPage = () => {
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="text-white border-white hover:bg-white/20 hover:text-white"
+                    className="text-[#18467e] border-[#18467e] hover:bg-[#18467e]/10"
                   >
                     {viewMode === 'month' ? 'Mês' : 'Semana'}
                   </Button>
@@ -292,7 +292,7 @@ const CalendarPage = () => {
                 });
                 setIsEventDialogOpen(true);
               }}
-              className="bg-indigo-600 hover:bg-indigo-700 ml-2"
+              className="bg-[#ea384c] hover:bg-[#ea384c]/90 ml-2 text-white"
             >
               <PlusCircle className="h-4 w-4 mr-2" /> Novo Evento
             </Button>
@@ -542,3 +542,4 @@ const CalendarPage = () => {
 };
 
 export default CalendarPage;
+
