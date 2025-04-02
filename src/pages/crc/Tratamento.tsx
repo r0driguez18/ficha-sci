@@ -179,7 +179,7 @@ const CrcTratamento = () => {
                     type="file"
                     accept=".xml"
                     onChange={handleFileChange}
-                    className="flex-1"
+                    className="flex-1 file:bg-[#8B5CF6] file:text-white file:border-none file:rounded-md file:px-4 file:py-2 file:mr-4 hover:file:bg-[#7C3AED] file:transition-colors file:cursor-pointer"
                   />
                 </div>
                 {file && (
