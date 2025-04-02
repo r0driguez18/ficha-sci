@@ -8,6 +8,7 @@ import { DashboardLayout } from "./components/layout/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 import Taskboard from "./pages/sci/Taskboard";
+import Procedimentos from "./pages/sci/Procedimentos";
 import CrcTratamento from "./pages/crc/Tratamento";
 import DisDados from "./pages/dis/Dados";
 import EasyVistaDashboards from "./pages/easyvista/Dashboards";
@@ -22,12 +23,13 @@ const App = () => (
     <TooltipProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Navigate to="/sci/taskboard" replace />} />
+          <Route path="/" element={<Navigate to="/sci/procedimentos" replace />} />
           
           <Route path="/" element={<DashboardLayout><Dashboard /></DashboardLayout>} />
           
           {/* SCI Routes */}
-          <Route path="/sci" element={<Navigate to="/sci/taskboard" replace />} />
+          <Route path="/sci" element={<Navigate to="/sci/procedimentos" replace />} />
+          <Route path="/sci/procedimentos" element={<DashboardLayout><Procedimentos /></DashboardLayout>} />
           <Route path="/sci/taskboard" element={<DashboardLayout><Taskboard /></DashboardLayout>} />
           <Route path="/sci/calendar" element={<DashboardLayout><CalendarPage /></DashboardLayout>} />
           
