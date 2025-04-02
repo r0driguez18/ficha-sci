@@ -14,16 +14,16 @@ const Procedimentos = () => {
   };
 
   return (
-    <div className="animate-fade-in">
+    <div className="animate-fade-in container mx-auto px-4">
       <PageHeader 
         title="Ficha de Procedimentos" 
         subtitle="Selecione o tipo de ficha de procedimentos"
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="p-6">
+      <div className="flex justify-center items-center">
+        <Card className="p-6 w-full max-w-md">
           <CardContent className="p-0 flex flex-col space-y-4">
-            <h3 className="text-xl font-semibold mb-4">Selecione o tipo de procedimento</h3>
+            <h3 className="text-xl font-semibold mb-4 text-center">Selecione o tipo de procedimento</h3>
             
             <Button 
               variant="outline" 
