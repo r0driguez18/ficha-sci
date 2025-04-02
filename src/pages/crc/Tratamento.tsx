@@ -5,128 +5,207 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Plus, Trash2 } from 'lucide-react';
+import { Upload } from 'lucide-react';
 import { toast } from 'sonner';
 
-interface Reference {
-  id: string;
-  code: string;
-  description: string;
-}
-
 const CrcTratamento = () => {
-  const [references, setReferences] = useState<Reference[]>([
-    { id: '1', code: 'REF-001', description: 'Documento de Referência 1' },
-    { id: '2', code: 'REF-002', description: 'Documento de Referência 2' },
-  ]);
-  
-  const [newReference, setNewReference] = useState<Reference>({ id: '', code: '', description: '' });
+  const [references, setReferences] = useState<string>('');
+  const [file, setFile] = useState<File | null>(null);
+  const [status, setStatus] = useState<{ message: string, isError: boolean } | null>(null);
 
-  const addReference = () => {
-    if (!newReference.code || !newReference.description) {
-      toast.error('Preencha todos os campos');
-      return;
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setFile(e.target.files[0]);
     }
-    
-    // Check if code already exists
-    if (references.some(ref => ref.code === newReference.code)) {
-      toast.error('Referência já existente');
-      return;
-    }
-    
-    const reference: Reference = {
-      id: Date.now().toString(),
-      code: newReference.code,
-      description: newReference.description
-    };
-    
-    setReferences([...references, reference]);
-    setNewReference({ id: '', code: '', description: '' });
-    toast.success('Referência adicionada com sucesso!');
   };
 
-  const deleteReference = (id: string) => {
-    setReferences(references.filter(ref => ref.id !== id));
-    toast.success('Referência removida com sucesso!');
+  const removerReferencias = () => {
+    if (!file) {
+      toast.error('Por favor, selecione um arquivo XML.');
+      return;
+    }
+
+    const referenciasParaEliminar = references.split(/[,\s]+/).map(item => 
+      item.trim()).filter(Boolean);
+    
+    if (referenciasParaEliminar.length === 0) {
+      toast.error('Por favor, insira pelo menos uma referência para eliminar.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        if (!e.target?.result) {
+          throw new Error('Não foi possível ler o arquivo');
+        }
+        
+        const xmlString = e.target.result as string;
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(xmlString, 'text/xml');
+        
+        // Verificar se é um XML válido
+        const parserError = xmlDoc.querySelector('parsererror');
+        if (parserError) {
+          throw new Error('O arquivo selecionado não é um XML válido.');
+        }
+
+        const referenciasExistentes = Array.from(xmlDoc.querySelectorAll('CD'))
+          .map(cd => cd.getAttribute('C_RefIF')?.trim() || '');
+
+        const referenciasNaoEncontradas: string[] = [];
+
+        // Remover referências
+        for (let i = referenciasParaEliminar.length - 1; i >= 0; i--) {
+          const referenciaParaEliminar = referenciasParaEliminar[i];
+          
+          if (!referenciasExistentes.includes(referenciaParaEliminar)) {
+            referenciasNaoEncontradas.push(referenciaParaEliminar);
+            continue;
+          }
+          
+          const cds = xmlDoc.getElementsByTagName('CD');
+          for (let j = cds.length - 1; j >= 0; j--) {
+            const referencia = cds[j].getAttribute('C_RefIF')?.replace(/\s+/g, '') || '';
+            if (referencia === referenciaParaEliminar) {
+              cds[j].parentNode?.removeChild(cds[j]);
+            }
+          }
+        }
+
+        // Atualizar total
+        const totalEnviadoElement = xmlDoc.querySelector('N_TotalEnviado');
+        if (totalEnviadoElement) {
+          const novoTotal = xmlDoc.createElement('N_TotalEnviado');
+          novoTotal.textContent = String(
+            referenciasExistentes.length - 
+            (referenciasParaEliminar.length - referenciasNaoEncontradas.length)
+          );
+          totalEnviadoElement.parentNode?.replaceChild(novoTotal, totalEnviadoElement);
+        }
+
+        // Serializar de volta para string
+        const serializer = new XMLSerializer();
+        let novoXmlString = serializer.serializeToString(xmlDoc);
+        novoXmlString = novoXmlString.replace(/\n\s*\n/g, '\n');
+
+        // Download
+        downloadFile(
+          novoXmlString, 
+          file.name.replace('.xml', '_sem_referencia.xml'), 
+          'text/xml'
+        );
+
+        // Mostrar status
+        if (referenciasNaoEncontradas.length === 0) {
+          setStatus({
+            message: 'Referências removidas com sucesso.',
+            isError: false
+          });
+          toast.success('Referências removidas com sucesso.');
+        } else {
+          setStatus({
+            message: `As seguintes referências não foram encontradas: ${referenciasNaoEncontradas.join(', ')}`,
+            isError: true
+          });
+          toast.warning('Algumas referências não foram encontradas.');
+        }
+      } catch (error) {
+        console.error('Erro ao processar XML:', error);
+        setStatus({
+          message: `Erro ao processar o arquivo: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
+          isError: true
+        });
+        toast.error('Erro ao processar o arquivo XML.');
+      }
+    };
+
+    reader.onerror = () => {
+      setStatus({
+        message: 'Erro ao ler o arquivo.',
+        isError: true
+      });
+      toast.error('Erro ao ler o arquivo.');
+    };
+
+    reader.readAsText(file);
+  };
+
+  const downloadFile = (content: string, filename: string, contentType: string) => {
+    const a = document.createElement('a');
+    const blob = new Blob([content], {type: contentType});
+    const url = URL.createObjectURL(blob);
+    
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 0);
   };
 
   return (
     <div className="animate-fade-in">
       <PageHeader 
         title="CRC - Tratamento de Ficheiros" 
-        subtitle="Gerenciamento de referências de documentos"
+        subtitle="Remoção de referências em arquivos XML"
       />
 
-      <div className="grid grid-cols-1 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Adicionar Referência</CardTitle>
+      <div className="grid grid-cols-1 gap-6 max-w-3xl mx-auto">
+        <Card className="shadow-md">
+          <CardHeader className="bg-[#18467e]/5">
+            <CardTitle className="text-[#18467e]">Remover Referências de COM</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <div>
-                <Label htmlFor="code">Código</Label>
-                <Input 
-                  id="code"
-                  placeholder="Ex: REF-003" 
-                  value={newReference.code} 
-                  onChange={(e) => setNewReference({...newReference, code: e.target.value})}
+          <CardContent className="pt-6">
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="referencia">Referências para eliminar (separadas por vírgula ou espaço):</Label>
+                <Input
+                  id="referencia"
+                  placeholder="Ex: REF001, REF002, REF003"
+                  value={references}
+                  onChange={(e) => setReferences(e.target.value)}
                 />
               </div>
-              <div>
-                <Label htmlFor="description">Descrição</Label>
-                <Input 
-                  id="description"
-                  placeholder="Descrição da referência" 
-                  value={newReference.description} 
-                  onChange={(e) => setNewReference({...newReference, description: e.target.value})}
-                />
+              
+              <div className="space-y-2">
+                <Label htmlFor="fileInput">Selecionar arquivo XML:</Label>
+                <div className="flex items-center gap-3">
+                  <Input
+                    id="fileInput"
+                    type="file"
+                    accept=".xml"
+                    onChange={handleFileChange}
+                    className="flex-1"
+                  />
+                </div>
+                {file && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Arquivo selecionado: {file.name}
+                  </p>
+                )}
               </div>
-            </div>
-            
-            <Button onClick={addReference}>
-              <Plus className="h-4 w-4 mr-2" />
-              Adicionar Referência
-            </Button>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle>Lista de Referências</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="border rounded-md overflow-hidden">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Código</th>
-                    <th>Descrição</th>
-                    <th className="w-20">Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {references.length === 0 ? (
-                    <tr>
-                      <td colSpan={3} className="text-center py-4 text-muted-foreground">
-                        Nenhuma referência encontrada
-                      </td>
-                    </tr>
-                  ) : (
-                    references.map(ref => (
-                      <tr key={ref.id}>
-                        <td className="font-medium">{ref.code}</td>
-                        <td>{ref.description}</td>
-                        <td>
-                          <Button variant="ghost" size="icon" onClick={() => deleteReference(ref.id)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+              
+              <Button 
+                onClick={removerReferencias} 
+                className="w-full bg-[#004279] hover:bg-[#002b49] text-white"
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                Remover Referências
+              </Button>
+              
+              {status && (
+                <div 
+                  className={`mt-4 p-3 rounded-md ${
+                    status.isError ? 'bg-destructive/10 text-destructive' : 'bg-green-50 text-green-600'
+                  }`}
+                >
+                  {status.message}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
