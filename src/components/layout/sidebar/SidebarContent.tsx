@@ -30,7 +30,7 @@ export const SidebarContent = ({ collapsed }: SidebarContentProps) => {
             to="/sci"
             collapsed={collapsed}
             subItems={[
-              { label: "Taskboard", to: "/sci/taskboard" },
+              { label: "Ficha de Procedimentos", to: "/sci/procedimentos" },
               { label: "Calendar", to: "/sci/calendar" }
             ]}
           />

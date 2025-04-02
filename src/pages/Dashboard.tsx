@@ -11,7 +11,7 @@ const Dashboard = () => {
       title: 'SCI',
       description: 'Sistema de Controle Interno',
       icon: ClipboardCheck,
-      path: '/sci/taskboard',
+      path: '/sci/procedimentos',
       color: 'bg-blue-500'
     },
     {
