@@ -9,10 +9,80 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      file_processes: {
+        Row: {
+          as400_name: string
+          created_at: string | null
+          date_registered: string
+          executed_by: string | null
+          id: string
+          is_salary: boolean | null
+          operation_number: string | null
+          task: string
+          time_registered: string
+        }
+        Insert: {
+          as400_name: string
+          created_at?: string | null
+          date_registered?: string
+          executed_by?: string | null
+          id?: string
+          is_salary?: boolean | null
+          operation_number?: string | null
+          task: string
+          time_registered: string
+        }
+        Update: {
+          as400_name?: string
+          created_at?: string | null
+          date_registered?: string
+          executed_by?: string | null
+          id?: string
+          is_salary?: boolean | null
+          operation_number?: string | null
+          task?: string
+          time_registered?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      salary_processes: {
+        Row: {
+          as400_name: string | null
+          created_at: string | null
+          date_registered: string | null
+          executed_by: string | null
+          id: string | null
+          is_salary: boolean | null
+          operation_number: string | null
+          task: string | null
+          time_registered: string | null
+        }
+        Insert: {
+          as400_name?: string | null
+          created_at?: string | null
+          date_registered?: string | null
+          executed_by?: string | null
+          id?: string | null
+          is_salary?: boolean | null
+          operation_number?: string | null
+          task?: string | null
+          time_registered?: string | null
+        }
+        Update: {
+          as400_name?: string | null
+          created_at?: string | null
+          date_registered?: string | null
+          executed_by?: string | null
+          id?: string | null
+          is_salary?: boolean | null
+          operation_number?: string | null
+          task?: string | null
+          time_registered?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
