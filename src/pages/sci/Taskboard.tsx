@@ -227,6 +227,7 @@ const Taskboard = () => {
       }
       
       let savedCount = 0;
+      let duplicateCount = 0;
       
       for (const row of rowsToSave) {
         const result = await saveFileProcess({
@@ -239,22 +240,28 @@ const Taskboard = () => {
         
         if (!result.error) {
           savedCount++;
+        } else if (result.error.message && result.error.message.includes("já existe")) {
+          duplicateCount++;
         }
       }
       
-      console.log(`Salvos ${savedCount} registros no Supabase`);
-      return savedCount;
+      console.log(`Salvos ${savedCount} registros e ignorados ${duplicateCount} registros duplicados no Supabase`);
+      return { savedCount, duplicateCount };
     } catch (error) {
       console.error('Erro ao salvar dados no Supabase:', error);
-      return 0;
+      return { savedCount: 0, duplicateCount: 0 };
     }
   };
 
   const handleSave = async () => {
-    const savedCount = await saveTableRowsToSupabase();
+    const { savedCount, duplicateCount } = await saveTableRowsToSupabase();
     
     if (savedCount > 0) {
       toast.success(`${savedCount} processamentos salvos com sucesso!`);
+      
+      if (duplicateCount > 0) {
+        toast.info(`${duplicateCount} processamentos foram ignorados por já existirem no sistema.`);
+      }
       
       toast.message(
         "Dados salvos com sucesso!",
@@ -265,6 +272,8 @@ const Taskboard = () => {
           }
         }
       );
+    } else if (duplicateCount > 0) {
+      toast.info(`Todos os ${duplicateCount} processamentos já existem no sistema.`);
     } else {
       toast.error('Nenhum processamento foi salvo. Verifique os dados.');
     }

@@ -18,6 +18,23 @@ export const saveFileProcess = async (process: FileProcess): Promise<{ error: an
   try {
     console.log("Tentando salvar processo:", { ...process, is_salary: isSalary });
     
+    // Check if a process with this operation number already exists
+    if (process.operation_number) {
+      const { data: existingProcess } = await supabase
+        .from("file_processes")
+        .select("*")
+        .eq("operation_number", process.operation_number)
+        .maybeSingle();
+      
+      if (existingProcess) {
+        console.log("Processo com número de operação já existe:", existingProcess);
+        return { 
+          data: [existingProcess], 
+          error: { message: "Processo com este número de operação já existe." } 
+        };
+      }
+    }
+    
     const { data, error } = await supabase
       .from("file_processes")
       .insert({
