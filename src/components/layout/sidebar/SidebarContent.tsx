@@ -58,7 +58,8 @@ export const SidebarContent = ({ collapsed }: SidebarContentProps) => {
             to="/easyvista"
             collapsed={collapsed}
             subItems={[
-              { label: "Dashboards", to: "/easyvista/dashboards" }
+              { label: "Dashboards", to: "/easyvista/dashboards" },
+              { label: "Estatísticas", to: "/easyvista/estatisticas" }
             ]}
           />
         </div>

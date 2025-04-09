@@ -1,14 +1,42 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart, LineChart, PieChart, AreaChart, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Bar, Line, Pie, Area, Cell } from 'recharts';
+import ProcessesBarChart from '@/components/charts/ProcessesBarChart';
+import ProcessesTable from '@/components/charts/ProcessesTable';
+import { getFileProcesses, getSalaryProcesses, getProcessesStatsByMonth } from '@/services/fileProcessService';
+import { Loader2 } from 'lucide-react';
 
 const EasyVistaDashboards = () => {
   const [activeTab, setActiveTab] = useState('summary');
+  const [processesData, setProcessesData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [recentProcesses, setRecentProcesses] = useState<any[]>([]);
+  const [salaryProcesses, setSalaryProcesses] = useState<any[]>([]);
   
-  // Sample data for charts
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        const stats = await getProcessesStatsByMonth();
+        setProcessesData(stats);
+        
+        const processes = await getFileProcesses();
+        setRecentProcesses(processes.slice(0, 10));
+        
+        const salaries = await getSalaryProcesses();
+        setSalaryProcesses(salaries.slice(0, 10));
+      } catch (error) {
+        console.error("Erro ao carregar dados:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadData();
+  }, []);
+  
   const incidentData = [
     { name: 'Jan', planned: 65, actual: 78 },
     { name: 'Fev', planned: 59, actual: 63 },
@@ -55,14 +83,14 @@ const EasyVistaDashboards = () => {
       />
 
       <Tabs defaultValue="summary" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-2">
+        <TabsList className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-5 gap-2">
           <TabsTrigger value="summary">Resumo</TabsTrigger>
           <TabsTrigger value="incidents">Incidentes</TabsTrigger>
           <TabsTrigger value="performance">Performance</TabsTrigger>
           <TabsTrigger value="trends">Tendências</TabsTrigger>
+          <TabsTrigger value="processes">Processamentos</TabsTrigger>
         </TabsList>
         
-        {/* Summary Tab */}
         <TabsContent value="summary" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card>
@@ -120,7 +148,6 @@ const EasyVistaDashboards = () => {
           </div>
         </TabsContent>
         
-        {/* Incidents Tab */}
         <TabsContent value="incidents" className="space-y-4">
           <Card>
             <CardHeader>
@@ -147,7 +174,6 @@ const EasyVistaDashboards = () => {
           </Card>
         </TabsContent>
         
-        {/* Performance Tab */}
         <TabsContent value="performance" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card>
@@ -205,7 +231,6 @@ const EasyVistaDashboards = () => {
           </div>
         </TabsContent>
         
-        {/* Trends Tab */}
         <TabsContent value="trends" className="space-y-4">
           <Card>
             <CardHeader>
@@ -228,6 +253,34 @@ const EasyVistaDashboards = () => {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+        
+        <TabsContent value="processes" className="space-y-4">
+          {loading ? (
+            <div className="flex justify-center items-center h-80">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-2">Carregando dados...</span>
+            </div>
+          ) : (
+            <>
+              <ProcessesBarChart 
+                data={processesData} 
+                title="Processamentos por Mês (Salários vs Outros)" 
+              />
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <ProcessesTable 
+                  processes={recentProcesses} 
+                  title="Processamentos Recentes" 
+                />
+                
+                <ProcessesTable 
+                  processes={salaryProcesses} 
+                  title="Processamentos de Salários (SA)" 
+                />
+              </div>
+            </>
+          )}
         </TabsContent>
       </Tabs>
     </div>
