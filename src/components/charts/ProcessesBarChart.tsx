@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
@@ -25,6 +25,11 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
     }
   };
 
+  // Debug para verificar os dados que estão chegando
+  useEffect(() => {
+    console.log("ProcessesBarChart - Dados recebidos:", data);
+  }, [data]);
+
   if (!data || data.length === 0) {
     return (
       <Card>
@@ -38,6 +43,13 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
     );
   }
 
+  // Exemplo de dados para quando não há dados suficientes
+  const exampleData = data.length > 0 ? data : [
+    { month: "1/2025", salary: 10, normal: 20 },
+    { month: "2/2025", salary: 15, normal: 25 },
+    { month: "3/2025", salary: 20, normal: 30 }
+  ];
+
   return (
     <Card>
       <CardHeader>
@@ -48,7 +60,7 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
           <ChartContainer config={chartConfig}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
-                data={data}
+                data={exampleData}
                 margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />

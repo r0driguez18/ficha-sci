@@ -17,6 +17,8 @@ export const saveFileProcess = async (process: FileProcess): Promise<{ error: an
   const isSalary = process.as400_name.startsWith("SA");
   
   try {
+    console.log("Salvando processo:", { ...process, is_salary: isSalary });
+    
     const { data, error } = await supabase
       .from("file_processes")
       .insert({
@@ -29,6 +31,12 @@ export const saveFileProcess = async (process: FileProcess): Promise<{ error: an
       })
       .select();
     
+    if (error) {
+      console.error("Erro ao salvar processo:", error);
+    } else {
+      console.log("Processo salvo com sucesso:", data);
+    }
+    
     return { data, error };
   } catch (error) {
     console.error("Erro ao salvar processo:", error);
@@ -38,6 +46,8 @@ export const saveFileProcess = async (process: FileProcess): Promise<{ error: an
 
 export const getFileProcesses = async (): Promise<FileProcess[]> => {
   try {
+    console.log("Buscando todos os processos...");
+    
     const { data, error } = await supabase
       .from("file_processes")
       .select("*")
@@ -48,6 +58,7 @@ export const getFileProcesses = async (): Promise<FileProcess[]> => {
       return [];
     }
     
+    console.log(`Encontrados ${data?.length || 0} processos`);
     return data || [];
   } catch (error) {
     console.error("Erro ao buscar processos:", error);
@@ -57,6 +68,8 @@ export const getFileProcesses = async (): Promise<FileProcess[]> => {
 
 export const getSalaryProcesses = async (): Promise<FileProcess[]> => {
   try {
+    console.log("Buscando processos de salário...");
+    
     const { data, error } = await supabase
       .from("file_processes")
       .select("*")
@@ -68,6 +81,7 @@ export const getSalaryProcesses = async (): Promise<FileProcess[]> => {
       return [];
     }
     
+    console.log(`Encontrados ${data?.length || 0} processos de salário`);
     return data || [];
   } catch (error) {
     console.error("Erro ao buscar salários:", error);
@@ -77,6 +91,8 @@ export const getSalaryProcesses = async (): Promise<FileProcess[]> => {
 
 export const getProcessesStatsByMonth = async (): Promise<any[]> => {
   try {
+    console.log("Buscando estatísticas por mês...");
+    
     const { data, error } = await supabase
       .from("file_processes")
       .select("*")
@@ -108,7 +124,7 @@ export const getProcessesStatsByMonth = async (): Promise<any[]> => {
     });
     
     // Converter o Map para array e ordenar por data
-    return Array.from(statsMap.values())
+    const result = Array.from(statsMap.values())
       .sort((a, b) => {
         const [aMonth, aYear] = a.month.split('/').map(Number);
         const [bMonth, bYear] = b.month.split('/').map(Number);
@@ -116,6 +132,9 @@ export const getProcessesStatsByMonth = async (): Promise<any[]> => {
         if (aYear !== bYear) return aYear - bYear;
         return aMonth - bMonth;
       });
+    
+    console.log("Estatísticas por mês:", result);
+    return result;
   } catch (error) {
     console.error("Erro ao buscar estatísticas:", error);
     return [];
