@@ -778,4 +778,4 @@ const Taskboard = () => {
                         checked={tasks.turno1.inpsExtrato}
                         onCheckedChange={(checked) => handleTaskChange('turno1', 'inpsExtrato', !!checked)}
                       />
-                      <Label htmlFor="tarefa1-6-3" className="cursor-pointer">IN
+                      <Label htmlFor="tarefa1-6-3" className="cursor-
