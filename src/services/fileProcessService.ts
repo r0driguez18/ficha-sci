@@ -103,10 +103,16 @@ export const getProcessesStatsByMonth = async (): Promise<any[]> => {
       throw error;
     }
     
+    console.log("Dados recebidos para estatísticas:", data);
+    if (!data || data.length === 0) {
+      console.warn("Nenhum dado encontrado para gerar estatísticas");
+      return [];
+    }
+    
     // Agrupar por mês e contar processos normais vs salários
     const statsMap = new Map();
     
-    data?.forEach(process => {
+    data.forEach(process => {
       const date = new Date(process.date_registered);
       const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`;
       

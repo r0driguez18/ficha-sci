@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -6,8 +6,9 @@ import { BarChart, LineChart, PieChart, AreaChart, ResponsiveContainer, XAxis, Y
 import ProcessesBarChart from '@/components/charts/ProcessesBarChart';
 import ProcessesTable from '@/components/charts/ProcessesTable';
 import { getFileProcesses, getSalaryProcesses, getProcessesStatsByMonth } from '@/services/fileProcessService';
-import { Loader2 } from 'lucide-react';
+import { Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 
 const EasyVistaDashboards = () => {
   const [activeTab, setActiveTab] = useState('summary');
@@ -16,35 +17,40 @@ const EasyVistaDashboards = () => {
   const [recentProcesses, setRecentProcesses] = useState<any[]>([]);
   const [salaryProcesses, setSalaryProcesses] = useState<any[]>([]);
   
-  useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      try {
-        const stats = await getProcessesStatsByMonth();
-        console.log("Estatísticas carregadas:", stats);
-        setProcessesData(stats);
-        
-        const processes = await getFileProcesses();
-        console.log("Processos carregados:", processes);
-        setRecentProcesses(processes.slice(0, 10));
-        
-        const salaries = await getSalaryProcesses();
-        console.log("Processos de salário carregados:", salaries);
-        setSalaryProcesses(salaries.slice(0, 10));
-        
-        if (stats.length === 0 && processes.length === 0) {
-          toast.info("Nenhum dado de processamento disponível. Adicione alguns processos para visualizá-los aqui.");
-        }
-      } catch (error) {
-        console.error("Erro ao carregar dados:", error);
-        toast.error("Erro ao carregar dados. Por favor, tente novamente.");
-      } finally {
-        setLoading(false);
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const stats = await getProcessesStatsByMonth();
+      console.log("Estatísticas carregadas (Dashboard):", stats);
+      setProcessesData(stats);
+      
+      const processes = await getFileProcesses();
+      console.log("Processos carregados (Dashboard):", processes);
+      setRecentProcesses(processes.slice(0, 10));
+      
+      const salaries = await getSalaryProcesses();
+      console.log("Processos de salário carregados (Dashboard):", salaries);
+      setSalaryProcesses(salaries.slice(0, 10));
+      
+      if (stats.length === 0 && processes.length === 0) {
+        toast.info("Nenhum dado de processamento disponível. Adicione alguns processos para visualizá-los aqui.");
       }
-    };
-    
-    loadData();
+    } catch (error) {
+      console.error("Erro ao carregar dados:", error);
+      toast.error("Erro ao carregar dados. Por favor, tente novamente.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
+  
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+  
+  const handleRefresh = () => {
+    toast.info("Atualizando dados...");
+    loadData();
+  };
   
   const incidentData = [
     { name: 'Jan', planned: 65, actual: 78 },
@@ -265,6 +271,13 @@ const EasyVistaDashboards = () => {
         </TabsContent>
         
         <TabsContent value="processes" className="space-y-4">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">Dados de Processamento</h3>
+            <Button onClick={handleRefresh} variant="outline" size="sm">
+              <RefreshCw className="h-4 w-4 mr-2" /> Atualizar Dados
+            </Button>
+          </div>
+          
           {loading ? (
             <div className="flex justify-center items-center h-80">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
