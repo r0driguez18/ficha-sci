@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getFileProcesses, getSalaryProcesses, getProcessesStatsByMonth } from '@/services/fileProcessService';
 import { format } from 'date-fns';
 import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import ProcessesTable from '@/components/charts/ProcessesTable';
 import ProcessesBarChart from '@/components/charts/ProcessesBarChart';
 
@@ -22,17 +23,25 @@ const EasyVistaEstatisticas = () => {
       try {
         // Carregar estatísticas agrupadas por mês
         const stats = await getProcessesStatsByMonth();
+        console.log("Estatísticas carregadas (página Estatisticas):", stats);
         setProcessesData(stats);
         
         // Carregar todos os processos
         const processes = await getFileProcesses();
+        console.log("Processos carregados (página Estatisticas):", processes);
         setAllProcesses(processes);
         
         // Carregar processos de salário
         const salaries = await getSalaryProcesses();
+        console.log("Processos de salário carregados (página Estatisticas):", salaries);
         setSalaryProcesses(salaries);
+        
+        if (stats.length === 0 && processes.length === 0) {
+          toast.info("Nenhum dado de processamento disponível. Adicione alguns processos para visualizá-los aqui.");
+        }
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
+        toast.error("Erro ao carregar dados. Por favor, tente novamente.");
       } finally {
         setLoading(false);
       }
