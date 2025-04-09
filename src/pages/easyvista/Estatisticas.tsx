@@ -4,9 +4,9 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getFileProcesses, getSalaryProcesses, getProcessesStatsByMonth } from '@/services/fileProcessService';
-import { format } from 'date-fns';
-import { Loader2 } from 'lucide-react';
+import { Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 import ProcessesTable from '@/components/charts/ProcessesTable';
 import ProcessesBarChart from '@/components/charts/ProcessesBarChart';
 
@@ -16,6 +16,7 @@ const EasyVistaEstatisticas = () => {
   const [loading, setLoading] = useState(true);
   const [allProcesses, setAllProcesses] = useState<any[]>([]);
   const [salaryProcesses, setSalaryProcesses] = useState<any[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
   const loadData = async () => {
     setLoading(true);
@@ -43,6 +44,7 @@ const EasyVistaEstatisticas = () => {
       toast.error("Erro ao carregar dados. Por favor, tente novamente.");
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -57,12 +59,28 @@ const EasyVistaEstatisticas = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const handleRefresh = () => {
+    setRefreshing(true);
+    loadData();
+  };
+
   return (
-    <div className="animate-fade-in">
-      <PageHeader 
-        title="EasyVista - Estatísticas" 
-        subtitle="Visualização detalhada dos dados de processamento"
-      />
+    <div className="animate-fade-in space-y-6">
+      <div className="flex justify-between items-center">
+        <PageHeader 
+          title="EasyVista - Estatísticas" 
+          subtitle="Visualização detalhada dos dados de processamento"
+        />
+        <Button 
+          variant="outline" 
+          onClick={handleRefresh} 
+          disabled={loading || refreshing}
+          className="gap-2"
+        >
+          <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+          Atualizar
+        </Button>
+      </div>
 
       {loading ? (
         <div className="flex justify-center items-center h-80">
@@ -70,7 +88,7 @@ const EasyVistaEstatisticas = () => {
           <span className="ml-2">Carregando dados...</span>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-6">
           <ProcessesBarChart 
             data={processesData} 
             title="Processamentos por Mês (Salários vs Outros)" 

@@ -32,7 +32,7 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
 
   if (!data || data.length === 0) {
     return (
-      <Card>
+      <Card className="mb-6">
         <CardHeader>
           <CardTitle>{title}</CardTitle>
         </CardHeader>
@@ -44,7 +44,7 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
   }
 
   return (
-    <Card>
+    <Card className="mb-6">
       <CardHeader>
         <CardTitle>{title}</CardTitle>
       </CardHeader>
