@@ -1,8 +1,8 @@
-
 import React, { useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { Loader2 } from 'lucide-react';
 
 interface ProcessesChartProps {
   data: Array<{
@@ -25,30 +25,35 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
     }
   };
 
-  // Debug para verificar os dados que estão chegando
   useEffect(() => {
     console.log("ProcessesBarChart - Dados recebidos:", data);
   }, [data]);
 
-  if (!data || data.length === 0) {
+  if (!data) {
     return (
       <Card>
         <CardHeader>
           <CardTitle>{title}</CardTitle>
         </CardHeader>
         <CardContent className="flex items-center justify-center h-80">
-          <p className="text-gray-500">Sem dados disponíveis</p>
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </CardContent>
       </Card>
     );
   }
 
-  // Exemplo de dados para quando não há dados suficientes
-  const exampleData = data.length > 0 ? data : [
-    { month: "1/2025", salary: 10, normal: 20 },
-    { month: "2/2025", salary: 15, normal: 25 },
-    { month: "3/2025", salary: 20, normal: 30 }
-  ];
+  if (data.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>{title}</CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center h-80">
+          <p className="text-gray-500">Nenhum dado disponível. Adicione alguns processos para visualizá-los aqui.</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -60,7 +65,7 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
           <ChartContainer config={chartConfig}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
-                data={exampleData}
+                data={data}
                 margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />

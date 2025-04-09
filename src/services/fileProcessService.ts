@@ -13,11 +13,10 @@ export interface FileProcess {
 }
 
 export const saveFileProcess = async (process: FileProcess): Promise<{ error: any; data: any }> => {
-  // Verificar se o processo é um salário (começa com SA)
   const isSalary = process.as400_name.startsWith("SA");
   
   try {
-    console.log("Salvando processo:", { ...process, is_salary: isSalary });
+    console.log("Tentando salvar processo:", { ...process, is_salary: isSalary });
     
     const { data, error } = await supabase
       .from("file_processes")
@@ -33,6 +32,7 @@ export const saveFileProcess = async (process: FileProcess): Promise<{ error: an
     
     if (error) {
       console.error("Erro ao salvar processo:", error);
+      throw error;
     } else {
       console.log("Processo salvo com sucesso:", data);
     }
@@ -55,10 +55,10 @@ export const getFileProcesses = async (): Promise<FileProcess[]> => {
     
     if (error) {
       console.error("Erro ao buscar processos:", error);
-      return [];
+      throw error;
     }
     
-    console.log(`Encontrados ${data?.length || 0} processos`);
+    console.log(`Encontrados ${data?.length || 0} processos:`, data);
     return data || [];
   } catch (error) {
     console.error("Erro ao buscar processos:", error);
@@ -78,10 +78,10 @@ export const getSalaryProcesses = async (): Promise<FileProcess[]> => {
     
     if (error) {
       console.error("Erro ao buscar salários:", error);
-      return [];
+      throw error;
     }
     
-    console.log(`Encontrados ${data?.length || 0} processos de salário`);
+    console.log(`Encontrados ${data?.length || 0} processos de salário:`, data);
     return data || [];
   } catch (error) {
     console.error("Erro ao buscar salários:", error);
@@ -100,7 +100,7 @@ export const getProcessesStatsByMonth = async (): Promise<any[]> => {
     
     if (error) {
       console.error("Erro ao buscar estatísticas:", error);
-      return [];
+      throw error;
     }
     
     // Agrupar por mês e contar processos normais vs salários
@@ -133,7 +133,7 @@ export const getProcessesStatsByMonth = async (): Promise<any[]> => {
         return aMonth - bMonth;
       });
     
-    console.log("Estatísticas por mês:", result);
+    console.log("Estatísticas agrupadas por mês:", result);
     return result;
   } catch (error) {
     console.error("Erro ao buscar estatísticas:", error);
