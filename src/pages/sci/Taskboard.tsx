@@ -222,29 +222,52 @@ const Taskboard = () => {
       );
       
       if (rowsToSave.length === 0) {
+        toast.error("Nenhum dado válido para salvar. Preencha pelo menos um processamento.");
         return;
       }
       
+      let savedCount = 0;
+      
       for (const row of rowsToSave) {
-        await saveFileProcess({
+        const result = await saveFileProcess({
           time_registered: row.hora,
           task: row.tarefa,
           as400_name: row.nomeAs,
           operation_number: row.operacao,
           executed_by: row.executado
         });
+        
+        if (!result.error) {
+          savedCount++;
+        }
       }
       
-      console.log('Dados salvos no Supabase com sucesso!');
+      console.log(`Salvos ${savedCount} registros no Supabase`);
+      return savedCount;
     } catch (error) {
       console.error('Erro ao salvar dados no Supabase:', error);
+      return 0;
     }
   };
 
   const handleSave = async () => {
-    await saveTableRowsToSupabase();
+    const savedCount = await saveTableRowsToSupabase();
     
-    toast.success('Ficha de procedimentos salva com sucesso!');
+    if (savedCount > 0) {
+      toast.success(`${savedCount} processamentos salvos com sucesso!`);
+      
+      toast.message(
+        "Dados salvos com sucesso!",
+        {
+          action: {
+            label: "Ver Gráficos",
+            onClick: () => navigate("/easyvista/dashboards")
+          }
+        }
+      );
+    } else {
+      toast.error('Nenhum processamento foi salvo. Verifique os dados.');
+    }
   };
 
   const resetForm = () => {
