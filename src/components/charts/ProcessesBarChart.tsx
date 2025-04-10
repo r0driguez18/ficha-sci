@@ -32,11 +32,11 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
 
   if (!data || data.length === 0) {
     return (
-      <Card className="mb-6">
+      <Card className="w-full mb-6">
         <CardHeader>
           <CardTitle>{title}</CardTitle>
         </CardHeader>
-        <CardContent className="flex items-center justify-center h-64">
+        <CardContent className="flex items-center justify-center h-48">
           <p className="text-gray-500">Nenhum dado disponível. Adicione alguns processos para visualizá-los aqui.</p>
         </CardContent>
       </Card>
@@ -44,20 +44,20 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
   }
 
   return (
-    <Card className="mb-6">
-      <CardHeader>
+    <Card className="w-full mb-6">
+      <CardHeader className="pb-2">
         <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-64">
+        <div className="h-[250px]">
           <ChartContainer config={chartConfig}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={data}
-                margin={{ top: 10, right: 30, left: 20, bottom: 5 }}
+                margin={{ top: 10, right: 30, left: 20, bottom: 25 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
+                <XAxis dataKey="month" padding={{ left: 10, right: 10 }} />
                 <YAxis />
                 <ChartTooltip
                   content={({ active, payload }) => {
@@ -72,7 +72,7 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
                     return null;
                   }}
                 />
-                <Legend />
+                <Legend wrapperStyle={{ paddingTop: 10 }} />
                 <Bar dataKey="salary" fill={chartConfig.salary.color} name={chartConfig.salary.label} />
                 <Bar dataKey="normal" fill={chartConfig.normal.color} name={chartConfig.normal.label} />
               </BarChart>
