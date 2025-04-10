@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -293,22 +292,10 @@ const EasyVistaDashboards = () => {
             <h3 className="text-lg font-semibold">Dados de Processamento</h3>
             <div className="flex flex-wrap gap-3">
               <Button 
-                onClick={handleCleanupData} 
-                variant="destructive" 
-                size="sm"
-                disabled={cleaningData || loading}
-              >
-                {cleaningData ? (
-                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Limpando...</>
-                ) : (
-                  "Limpar Duplicados"
-                )}
-              </Button>
-              <Button 
                 onClick={handleRefresh} 
                 variant="outline" 
                 size="sm"
-                disabled={cleaningData || loading}
+                disabled={loading}
               >
                 <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} /> 
                 Atualizar Dados
@@ -323,14 +310,14 @@ const EasyVistaDashboards = () => {
             </div>
           ) : (
             <div className="space-y-8">
-              <div className="w-full h-[350px] mb-4">
+              <div className="w-full">
                 <ProcessesBarChart 
                   data={processesData} 
                   title="Processamentos por Mês (Salários vs Outros)" 
                 />
               </div>
               
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <ProcessesTable 
                   processes={recentProcesses} 
                   title="Processamentos Recentes" 
