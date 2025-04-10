@@ -5,18 +5,28 @@ export interface FileProcess {
   id?: string;
   date_registered?: string;
   time_registered: string;
-  task: string;
-  as400_name: string;
-  operation_number: string;
-  executed_by: string;
+  task?: string;
+  as400_name?: string;
+  operation_number?: string;
+  executed_by?: string;
   is_salary?: boolean;
 }
 
 export const saveFileProcess = async (process: FileProcess): Promise<{ error: any; data: any }> => {
-  const isSalary = process.as400_name.startsWith("SA");
+  // Consider process as salary if the AS400 name starts with "SA"
+  const isSalary = process.as400_name?.startsWith("SA") || false;
   
   try {
     console.log("Tentando salvar processo:", { ...process, is_salary: isSalary });
+    
+    // Ensure at least one of task or as400_name is provided
+    if (!process.task && !process.as400_name) {
+      console.error("Erro: É necessário fornecer pelo menos o nome da tarefa ou o nome do AS400");
+      return { 
+        data: null, 
+        error: { message: "É necessário fornecer pelo menos o nome da tarefa ou o nome do AS400." } 
+      };
+    }
     
     // Check if a process with this operation number already exists
     if (process.operation_number) {
@@ -39,10 +49,10 @@ export const saveFileProcess = async (process: FileProcess): Promise<{ error: an
       .from("file_processes")
       .insert({
         time_registered: process.time_registered,
-        task: process.task,
-        as400_name: process.as400_name,
-        operation_number: process.operation_number,
-        executed_by: process.executed_by,
+        task: process.task || null,
+        as400_name: process.as400_name || null,
+        operation_number: process.operation_number || null,
+        executed_by: process.executed_by || null,
         is_salary: isSalary
       })
       .select();

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -52,6 +53,7 @@ const EasyVistaDashboards = () => {
     loadData();
   };
   
+  // Data for other charts
   const incidentData = [
     { name: 'Jan', planned: 65, actual: 78 },
     { name: 'Fev', planned: 59, actual: 63 },
@@ -91,13 +93,13 @@ const EasyVistaDashboards = () => {
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
   
   return (
-    <div className="animate-fade-in">
+    <div className="animate-fade-in space-y-6">
       <PageHeader 
         title="EasyVista - Dashboards" 
         subtitle="Visualização de métricas e indicadores"
       />
 
-      <Tabs defaultValue="summary" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+      <Tabs defaultValue="summary" value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-5 gap-2">
           <TabsTrigger value="summary">Resumo</TabsTrigger>
           <TabsTrigger value="incidents">Incidentes</TabsTrigger>
@@ -106,14 +108,14 @@ const EasyVistaDashboards = () => {
           <TabsTrigger value="processes">Processamentos</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="summary" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <TabsContent value="summary" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
                 <CardTitle>Distribuição por Categoria</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-80">
+                <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -142,7 +144,7 @@ const EasyVistaDashboards = () => {
                 <CardTitle>Incidentes por Status</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-80">
+                <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       data={statusData}
@@ -163,13 +165,13 @@ const EasyVistaDashboards = () => {
           </div>
         </TabsContent>
         
-        <TabsContent value="incidents" className="space-y-4">
+        <TabsContent value="incidents" className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Incidentes Planejados vs Reais</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-96">
+              <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
                     data={incidentData}
@@ -189,14 +191,14 @@ const EasyVistaDashboards = () => {
           </Card>
         </TabsContent>
         
-        <TabsContent value="performance" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <TabsContent value="performance" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
                 <CardTitle>Performance por Categoria</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-80">
+                <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       data={categoryData}
@@ -219,7 +221,7 @@ const EasyVistaDashboards = () => {
                 <CardTitle>Distribuição de Status</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-80">
+                <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -246,13 +248,13 @@ const EasyVistaDashboards = () => {
           </div>
         </TabsContent>
         
-        <TabsContent value="trends" className="space-y-4">
+        <TabsContent value="trends" className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Tendências por Hora do Dia</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-96">
+              <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart
                     data={timeData}
@@ -270,7 +272,7 @@ const EasyVistaDashboards = () => {
           </Card>
         </TabsContent>
         
-        <TabsContent value="processes" className="space-y-4">
+        <TabsContent value="processes" className="space-y-6">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold">Dados de Processamento</h3>
             <Button onClick={handleRefresh} variant="outline" size="sm">
@@ -279,18 +281,18 @@ const EasyVistaDashboards = () => {
           </div>
           
           {loading ? (
-            <div className="flex justify-center items-center h-80">
+            <div className="flex justify-center items-center h-64">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
               <span className="ml-2">Carregando dados...</span>
             </div>
           ) : (
-            <>
+            <div className="space-y-6">
               <ProcessesBarChart 
                 data={processesData} 
                 title="Processamentos por Mês (Salários vs Outros)" 
               />
               
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <ProcessesTable 
                   processes={recentProcesses} 
                   title="Processamentos Recentes" 
@@ -301,7 +303,7 @@ const EasyVistaDashboards = () => {
                   title="Processamentos de Salários (SA)" 
                 />
               </div>
-            </>
+            </div>
           )}
         </TabsContent>
       </Tabs>
