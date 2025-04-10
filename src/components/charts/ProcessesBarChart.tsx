@@ -31,11 +31,11 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
 
   if (!data || data.length === 0) {
     return (
-      <Card className="w-full h-full mb-6">
+      <Card className="w-full mb-6">
         <CardHeader>
           <CardTitle>{title}</CardTitle>
         </CardHeader>
-        <CardContent className="flex items-center justify-center h-48">
+        <CardContent className="flex items-center justify-center h-80">
           <p className="text-gray-500">Nenhum dado disponível. Adicione alguns processos para visualizá-los aqui.</p>
         </CardContent>
       </Card>
@@ -43,17 +43,17 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
   }
 
   return (
-    <Card className="w-full h-full mb-6">
+    <Card className="w-full mb-6">
       <CardHeader className="pb-2">
         <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent className="pt-2">
-        <div className="h-[300px]">
+        <div className="h-[350px]">
           <ChartContainer config={chartConfig}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={data}
-                margin={{ top: 15, right: 30, left: 20, bottom: 30 }}
+                margin={{ top: 20, right: 30, left: 20, bottom: 30 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis 
