@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -53,7 +52,6 @@ const EasyVistaDashboards = () => {
     loadData();
   };
   
-  // Data for other charts
   const incidentData = [
     { name: 'Jan', planned: 65, actual: 78 },
     { name: 'Fev', planned: 59, actual: 63 },
@@ -272,7 +270,7 @@ const EasyVistaDashboards = () => {
           </Card>
         </TabsContent>
         
-        <TabsContent value="processes" className="space-y-6">
+        <TabsContent value="processes" className="space-y-8">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold">Dados de Processamento</h3>
             <Button onClick={handleRefresh} variant="outline" size="sm">
@@ -286,13 +284,15 @@ const EasyVistaDashboards = () => {
               <span className="ml-2">Carregando dados...</span>
             </div>
           ) : (
-            <div className="space-y-6">
-              <ProcessesBarChart 
-                data={processesData} 
-                title="Processamentos por Mês (Salários vs Outros)" 
-              />
+            <div className="space-y-8">
+              <div className="w-full">
+                <ProcessesBarChart 
+                  data={processesData} 
+                  title="Processamentos por Mês (Salários vs Outros)" 
+                />
+              </div>
               
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
                 <ProcessesTable 
                   processes={recentProcesses} 
                   title="Processamentos Recentes" 
