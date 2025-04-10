@@ -43,12 +43,12 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
   }
 
   return (
-    <Card className="w-full mb-6">
+    <Card className="w-full mb-6 overflow-hidden">
       <CardHeader className="pb-2">
         <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent className="pt-2">
-        <div className="h-[350px]">
+        <div className="h-[350px] w-full">
           <ChartContainer config={chartConfig}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart

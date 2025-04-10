@@ -31,7 +31,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             collapsed ? "ml-20" : "ml-64"
           )}
         >
-          <div className="container py-6 h-full animate-fade-in">
+          <div className="container py-6 h-full animate-fade-in overflow-visible">
             {children}
           </div>
         </main>
