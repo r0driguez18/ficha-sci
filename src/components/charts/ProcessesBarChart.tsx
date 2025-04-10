@@ -3,7 +3,6 @@ import React, { useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { Loader2 } from 'lucide-react';
 
 interface ProcessesChartProps {
   data: Array<{
@@ -32,7 +31,7 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
 
   if (!data || data.length === 0) {
     return (
-      <Card className="w-full mb-6">
+      <Card className="w-full h-full mb-6">
         <CardHeader>
           <CardTitle>{title}</CardTitle>
         </CardHeader>
@@ -44,21 +43,26 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
   }
 
   return (
-    <Card className="w-full mb-6">
+    <Card className="w-full h-full mb-6">
       <CardHeader className="pb-2">
         <CardTitle>{title}</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="h-[250px]">
+      <CardContent className="pt-2">
+        <div className="h-[300px]">
           <ChartContainer config={chartConfig}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={data}
-                margin={{ top: 10, right: 30, left: 20, bottom: 25 }}
+                margin={{ top: 15, right: 30, left: 20, bottom: 30 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" padding={{ left: 10, right: 10 }} />
-                <YAxis />
+                <XAxis 
+                  dataKey="month" 
+                  padding={{ left: 20, right: 20 }}
+                  tick={{ fontSize: 12 }}
+                  height={50}
+                />
+                <YAxis tick={{ fontSize: 12 }} />
                 <ChartTooltip
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
@@ -72,9 +76,25 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
                     return null;
                   }}
                 />
-                <Legend wrapperStyle={{ paddingTop: 10 }} />
-                <Bar dataKey="salary" fill={chartConfig.salary.color} name={chartConfig.salary.label} />
-                <Bar dataKey="normal" fill={chartConfig.normal.color} name={chartConfig.normal.label} />
+                <Legend 
+                  wrapperStyle={{ paddingTop: 15, fontSize: 12 }} 
+                  verticalAlign="bottom"
+                  height={36}
+                />
+                <Bar 
+                  dataKey="salary" 
+                  fill={chartConfig.salary.color} 
+                  name={chartConfig.salary.label}
+                  animationDuration={800}
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar 
+                  dataKey="normal" 
+                  fill={chartConfig.normal.color} 
+                  name={chartConfig.normal.label}
+                  animationDuration={800}
+                  radius={[4, 4, 0, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           </ChartContainer>

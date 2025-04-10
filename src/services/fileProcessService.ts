@@ -45,6 +45,24 @@ export const saveFileProcess = async (process: FileProcess): Promise<{ error: an
       }
     }
     
+    // If no operation number but has task and as400_name, check for duplicate by those
+    if (!process.operation_number && process.task && process.as400_name) {
+      const { data: existingByTaskAndName } = await supabase
+        .from("file_processes")
+        .select("*")
+        .eq("task", process.task)
+        .eq("as400_name", process.as400_name)
+        .maybeSingle();
+        
+      if (existingByTaskAndName) {
+        console.log("Processo com mesma tarefa e AS400 já existe:", existingByTaskAndName);
+        return { 
+          data: [existingByTaskAndName], 
+          error: { message: "Processo com mesma tarefa e nome AS400 já existe." } 
+        };
+      }
+    }
+    
     const { data, error } = await supabase
       .from("file_processes")
       .insert({
@@ -113,6 +131,77 @@ export const getSalaryProcesses = async (): Promise<FileProcess[]> => {
   } catch (error) {
     console.error("Erro ao buscar salários:", error);
     return [];
+  }
+};
+
+export const cleanupDuplicateProcesses = async (): Promise<{ removed: number }> => {
+  try {
+    console.log("Iniciando limpeza de processos duplicados...");
+    
+    // 1. Primeiro, obter todos os processos
+    const { data: allProcesses, error: fetchError } = await supabase
+      .from("file_processes")
+      .select("*")
+      .order("created_at", { ascending: true });
+    
+    if (fetchError) {
+      console.error("Erro ao buscar processos para limpeza:", fetchError);
+      throw fetchError;
+    }
+    
+    if (!allProcesses || allProcesses.length === 0) {
+      console.log("Nenhum processo encontrado para limpeza");
+      return { removed: 0 };
+    }
+    
+    // 2. Identificar duplicados por operation_number
+    const seenOperationNumbers = new Set();
+    const seenTaskAndName = new Set();
+    const duplicateIds: string[] = [];
+    
+    for (const process of allProcesses) {
+      // Verificar duplicados por número de operação
+      if (process.operation_number) {
+        if (seenOperationNumbers.has(process.operation_number)) {
+          if (process.id) duplicateIds.push(process.id);
+        } else {
+          seenOperationNumbers.add(process.operation_number);
+        }
+      } 
+      // Verificar duplicados por task+as400_name quando não há operation_number
+      else if (process.task && process.as400_name) {
+        const key = `${process.task}|${process.as400_name}`;
+        if (seenTaskAndName.has(key)) {
+          if (process.id) duplicateIds.push(process.id);
+        } else {
+          seenTaskAndName.add(key);
+        }
+      }
+    }
+    
+    console.log(`Encontrados ${duplicateIds.length} processos duplicados para remoção:`, duplicateIds);
+    
+    if (duplicateIds.length === 0) {
+      return { removed: 0 };
+    }
+    
+    // 3. Remover duplicados
+    const { error: deleteError } = await supabase
+      .from("file_processes")
+      .delete()
+      .in("id", duplicateIds);
+    
+    if (deleteError) {
+      console.error("Erro ao excluir processos duplicados:", deleteError);
+      throw deleteError;
+    }
+    
+    console.log(`${duplicateIds.length} processos duplicados removidos com sucesso`);
+    return { removed: duplicateIds.length };
+    
+  } catch (error) {
+    console.error("Erro ao limpar processos duplicados:", error);
+    throw error;
   }
 };
 

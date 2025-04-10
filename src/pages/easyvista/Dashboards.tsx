@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -5,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart, LineChart, PieChart, AreaChart, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Bar, Line, Pie, Area, Cell } from 'recharts';
 import ProcessesBarChart from '@/components/charts/ProcessesBarChart';
 import ProcessesTable from '@/components/charts/ProcessesTable';
-import { getFileProcesses, getSalaryProcesses, getProcessesStatsByMonth } from '@/services/fileProcessService';
+import { getFileProcesses, getSalaryProcesses, getProcessesStatsByMonth, cleanupDuplicateProcesses } from '@/services/fileProcessService';
 import { Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -16,6 +17,7 @@ const EasyVistaDashboards = () => {
   const [loading, setLoading] = useState(true);
   const [recentProcesses, setRecentProcesses] = useState<any[]>([]);
   const [salaryProcesses, setSalaryProcesses] = useState<any[]>([]);
+  const [cleaningData, setCleaningData] = useState(false);
   
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -50,6 +52,22 @@ const EasyVistaDashboards = () => {
   const handleRefresh = () => {
     toast.info("Atualizando dados...");
     loadData();
+  };
+
+  const handleCleanupData = async () => {
+    setCleaningData(true);
+    toast.info("Iniciando limpeza dos dados duplicados...");
+    
+    try {
+      const { removed } = await cleanupDuplicateProcesses();
+      toast.success(`Limpeza concluída! ${removed} registros duplicados foram removidos.`);
+      loadData(); // Recarregar dados após a limpeza
+    } catch (error) {
+      console.error("Erro ao limpar dados:", error);
+      toast.error("Erro ao limpar dados duplicados. Por favor, tente novamente.");
+    } finally {
+      setCleaningData(false);
+    }
   };
   
   const incidentData = [
@@ -271,11 +289,31 @@ const EasyVistaDashboards = () => {
         </TabsContent>
         
         <TabsContent value="processes" className="space-y-8">
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
             <h3 className="text-lg font-semibold">Dados de Processamento</h3>
-            <Button onClick={handleRefresh} variant="outline" size="sm">
-              <RefreshCw className="h-4 w-4 mr-2" /> Atualizar Dados
-            </Button>
+            <div className="flex flex-wrap gap-3">
+              <Button 
+                onClick={handleCleanupData} 
+                variant="destructive" 
+                size="sm"
+                disabled={cleaningData || loading}
+              >
+                {cleaningData ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Limpando...</>
+                ) : (
+                  "Limpar Duplicados"
+                )}
+              </Button>
+              <Button 
+                onClick={handleRefresh} 
+                variant="outline" 
+                size="sm"
+                disabled={cleaningData || loading}
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} /> 
+                Atualizar Dados
+              </Button>
+            </div>
           </div>
           
           {loading ? (
@@ -285,7 +323,7 @@ const EasyVistaDashboards = () => {
             </div>
           ) : (
             <div className="space-y-8">
-              <div className="w-full">
+              <div className="w-full h-[350px] mb-4">
                 <ProcessesBarChart 
                   data={processesData} 
                   title="Processamentos por Mês (Salários vs Outros)" 
