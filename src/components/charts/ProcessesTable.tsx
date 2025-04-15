@@ -11,6 +11,19 @@ interface ProcessesTableProps {
 }
 
 const ProcessesTable: React.FC<ProcessesTableProps> = ({ processes, title = "Últimos Processamentos" }) => {
+  const getProcessType = (process: FileProcess) => {
+    if (process.as400_name) {
+      if (process.as400_name.startsWith("SA")) {
+        return { label: 'Salários', classes: 'bg-orange-100 text-orange-800' };
+      } else {
+        return { label: 'Processamentos de Empresas', classes: 'bg-blue-100 text-blue-800' };
+      }
+    } else if (process.task) {
+      return { label: 'Outros Processamentos', classes: 'bg-green-100 text-green-800' };
+    }
+    return { label: 'Desconhecido', classes: 'bg-gray-100 text-gray-800' };
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -32,29 +45,28 @@ const ProcessesTable: React.FC<ProcessesTableProps> = ({ processes, title = "Úl
             </TableHeader>
             <TableBody>
               {processes.length > 0 ? (
-                processes.map((process) => (
-                  <TableRow key={process.id}>
-                    <TableCell>
-                      {process.date_registered ? format(new Date(process.date_registered), 'dd/MM/yyyy') : ''}
-                    </TableCell>
-                    <TableCell>{process.time_registered}</TableCell>
-                    <TableCell>{process.task}</TableCell>
-                    <TableCell>{process.as400_name}</TableCell>
-                    <TableCell>{process.operation_number}</TableCell>
-                    <TableCell>{process.executed_by}</TableCell>
-                    <TableCell>
-                      <span 
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          process.is_salary 
-                            ? 'bg-orange-100 text-orange-800' 
-                            : 'bg-blue-100 text-blue-800'
-                        }`}
-                      >
-                        {process.is_salary ? 'Salário' : 'Débitos e Créditos'}
-                      </span>
-                    </TableCell>
-                  </TableRow>
-                ))
+                processes.map((process) => {
+                  const processType = getProcessType(process);
+                  return (
+                    <TableRow key={process.id}>
+                      <TableCell>
+                        {process.date_registered ? format(new Date(process.date_registered), 'dd/MM/yyyy') : ''}
+                      </TableCell>
+                      <TableCell>{process.time_registered}</TableCell>
+                      <TableCell>{process.task}</TableCell>
+                      <TableCell>{process.as400_name}</TableCell>
+                      <TableCell>{process.operation_number}</TableCell>
+                      <TableCell>{process.executed_by}</TableCell>
+                      <TableCell>
+                        <span 
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${processType.classes}`}
+                        >
+                          {processType.label}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               ) : (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-4 text-gray-500">

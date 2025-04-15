@@ -13,7 +13,10 @@ export interface FileProcess {
 }
 
 export const saveFileProcess = async (process: FileProcess): Promise<{ error: any; data: any }> => {
-  // Consider process as salary if the AS400 name starts with "SA"
+  // Determine process type based on the rules:
+  // 1. If AS400 name starts with "SA", it's a salary process
+  // 2. If AS400 name is provided but doesn't start with "SA", it's a company process
+  // 3. If only task is provided (no AS400 name), it's other type of process
   const isSalary = process.as400_name?.startsWith("SA") || false;
   
   try {

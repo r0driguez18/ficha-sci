@@ -20,7 +20,7 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
       color: "#FF8042"
     },
     debit_credit: {
-      label: "Débitos e Créditos",
+      label: "Processamentos de Empresas",
       color: "#0088FE"
     }
   };
