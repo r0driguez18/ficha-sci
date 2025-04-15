@@ -97,7 +97,7 @@ const EasyVistaEstatisticas = () => {
         <div className="space-y-6">
           <ProcessesBarChart 
             data={processesData} 
-            title="Processamentos por Mês (Salários vs Débitos e Créditos)" 
+            title="Processamentos por Mês (Salários vs Processamentos de Empresas)" 
           />
           
           <Card>
@@ -126,7 +126,7 @@ const EasyVistaEstatisticas = () => {
                 
                 <Card className="bg-green-50">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">Débitos e Créditos</CardTitle>
+                    <CardTitle className="text-lg">Processamentos de Empresas</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-3xl font-bold">{debitCreditProcesses.length}</p>
@@ -140,7 +140,7 @@ const EasyVistaEstatisticas = () => {
             <TabsList className="grid grid-cols-1 md:grid-cols-3 gap-2">
               <TabsTrigger value="all">Todos os Processamentos</TabsTrigger>
               <TabsTrigger value="salary">Processamentos de Salário</TabsTrigger>
-              <TabsTrigger value="debit_credit">Débitos e Créditos</TabsTrigger>
+              <TabsTrigger value="debit_credit">Processamentos de Empresas</TabsTrigger>
             </TabsList>
             
             <TabsContent value="all">
@@ -160,7 +160,7 @@ const EasyVistaEstatisticas = () => {
             <TabsContent value="debit_credit">
               <ProcessesTable 
                 processes={debitCreditProcesses} 
-                title="Processamentos de Débitos e Créditos" 
+                title="Processamentos de Empresas" 
               />
             </TabsContent>
           </Tabs>
