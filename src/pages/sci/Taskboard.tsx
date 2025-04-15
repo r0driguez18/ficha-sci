@@ -218,11 +218,11 @@ const Taskboard = () => {
   const saveTableRowsToSupabase = async () => {
     try {
       const rowsToSave = tableRows.filter(
-        row => row.hora.trim() !== '' && row.tarefa.trim() !== '' && row.nomeAs.trim() !== ''
+        row => row.hora.trim() !== '' && (row.tarefa.trim() !== '' || row.nomeAs.trim() !== '')
       );
       
       if (rowsToSave.length === 0) {
-        toast.error("Nenhum dado válido para salvar. Preencha pelo menos um processamento.");
+        toast.error("Nenhum dado válido para salvar. Preencha pelo menos a hora e a tarefa ou o nome do AS400.");
         return;
       }
       
@@ -232,10 +232,10 @@ const Taskboard = () => {
       for (const row of rowsToSave) {
         const result = await saveFileProcess({
           time_registered: row.hora,
-          task: row.tarefa,
-          as400_name: row.nomeAs,
-          operation_number: row.operacao,
-          executed_by: row.executado
+          task: row.tarefa || undefined,
+          as400_name: row.nomeAs || undefined,
+          operation_number: row.operacao || undefined,
+          executed_by: row.executado || undefined
         });
         
         if (!result.error) {
