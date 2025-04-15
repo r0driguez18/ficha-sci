@@ -9,6 +9,7 @@ interface ProcessesChartProps {
     month: string;
     salary: number;
     debit_credit: number;
+    other: number;
   }>;
   title?: string;
 }
@@ -22,6 +23,10 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
     debit_credit: {
       label: "Processamentos de Empresas",
       color: "#0088FE"
+    },
+    other: {
+      label: "Outros Processamentos",
+      color: "#00C49F"
     }
   };
 
@@ -93,6 +98,13 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
                   dataKey="debit_credit" 
                   fill={chartConfig.debit_credit.color} 
                   name={chartConfig.debit_credit.label}
+                  animationDuration={800}
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar 
+                  dataKey="other" 
+                  fill={chartConfig.other.color} 
+                  name={chartConfig.other.label}
                   animationDuration={800}
                   radius={[4, 4, 0, 0]}
                 />

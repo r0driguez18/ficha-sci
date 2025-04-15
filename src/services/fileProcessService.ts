@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface FileProcess {
@@ -251,7 +250,7 @@ export const getProcessesStatsByMonth = async (): Promise<any[]> => {
       return [];
     }
     
-    // Agrupar por mês e contar processos de salários vs débitos e créditos
+    // Agrupar por mês e contar processos de salários vs débitos e créditos vs outros
     const statsMap = new Map();
     
     data.forEach(process => {
@@ -259,15 +258,24 @@ export const getProcessesStatsByMonth = async (): Promise<any[]> => {
       const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`;
       
       if (!statsMap.has(monthYear)) {
-        statsMap.set(monthYear, { month: monthYear, salary: 0, debit_credit: 0 });
+        statsMap.set(monthYear, { 
+          month: monthYear, 
+          salary: 0, 
+          debit_credit: 0,
+          other: 0 
+        });
       }
       
       const stats = statsMap.get(monthYear);
       
-      if (process.is_salary) {
-        stats.salary += 1;
-      } else {
-        stats.debit_credit += 1;
+      if (process.as400_name) {
+        if (process.as400_name.startsWith("SA")) {
+          stats.salary += 1;
+        } else {
+          stats.debit_credit += 1;
+        }
+      } else if (process.task) {
+        stats.other += 1;
       }
     });
     
