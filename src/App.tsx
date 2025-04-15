@@ -12,7 +12,6 @@ import Taskboard from "./pages/sci/Taskboard";
 import Procedimentos from "./pages/sci/Procedimentos";
 import CrcTratamento from "./pages/crc/Tratamento";
 import DisDados from "./pages/dis/Dados";
-import EasyVistaDashboards from "./pages/easyvista/Dashboards";
 import EasyVistaEstatisticas from "./pages/easyvista/Estatisticas";
 import Settings from "./pages/Settings";
 import Documentation from "./pages/Documentation";
@@ -43,9 +42,8 @@ const App = () => (
           <Route path="/dis" element={<Navigate to="/dis/dados" replace />} />
           <Route path="/dis/dados" element={<DashboardLayout><DisDados /></DashboardLayout>} />
           
-          {/* EasyVista Routes */}
-          <Route path="/easyvista" element={<Navigate to="/easyvista/dashboards" replace />} />
-          <Route path="/easyvista/dashboards" element={<DashboardLayout><EasyVistaDashboards /></DashboardLayout>} />
+          {/* Processamentos Routes - Previously EasyVista */}
+          <Route path="/easyvista" element={<Navigate to="/easyvista/estatisticas" replace />} />
           <Route path="/easyvista/estatisticas" element={<DashboardLayout><EasyVistaEstatisticas /></DashboardLayout>} />
           
           {/* System Routes */}
