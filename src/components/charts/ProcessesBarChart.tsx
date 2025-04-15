@@ -8,7 +8,7 @@ interface ProcessesChartProps {
   data: Array<{
     month: string;
     salary: number;
-    normal: number;
+    debit_credit: number;
   }>;
   title?: string;
 }
@@ -19,8 +19,8 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
       label: "Salários (SA)",
       color: "#FF8042"
     },
-    normal: {
-      label: "Outros Processos",
+    debit_credit: {
+      label: "Débitos e Créditos",
       color: "#0088FE"
     }
   };
@@ -53,7 +53,7 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={data}
-                margin={{ top: 20, right: 30, left: 20, bottom: 30 }}
+                margin={{ top: 20, right: 30, left: 20, bottom: 40 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis 
@@ -61,6 +61,7 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
                   padding={{ left: 20, right: 20 }}
                   tick={{ fontSize: 12 }}
                   height={50}
+                  tickMargin={10}
                 />
                 <YAxis tick={{ fontSize: 12 }} />
                 <ChartTooltip
@@ -89,9 +90,9 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
                   radius={[4, 4, 0, 0]}
                 />
                 <Bar 
-                  dataKey="normal" 
-                  fill={chartConfig.normal.color} 
-                  name={chartConfig.normal.label}
+                  dataKey="debit_credit" 
+                  fill={chartConfig.debit_credit.color} 
+                  name={chartConfig.debit_credit.label}
                   animationDuration={800}
                   radius={[4, 4, 0, 0]}
                 />

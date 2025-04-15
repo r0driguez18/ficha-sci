@@ -50,7 +50,7 @@ const ProcessesTable: React.FC<ProcessesTableProps> = ({ processes, title = "Úl
                             : 'bg-blue-100 text-blue-800'
                         }`}
                       >
-                        {process.is_salary ? 'Salário' : 'Normal'}
+                        {process.is_salary ? 'Salário' : 'Débitos e Créditos'}
                       </span>
                     </TableCell>
                   </TableRow>

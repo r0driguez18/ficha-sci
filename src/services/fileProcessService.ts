@@ -134,6 +134,29 @@ export const getSalaryProcesses = async (): Promise<FileProcess[]> => {
   }
 };
 
+export const getDebitCreditProcesses = async (): Promise<FileProcess[]> => {
+  try {
+    console.log("Buscando processos de débito e crédito...");
+    
+    const { data, error } = await supabase
+      .from("file_processes")
+      .select("*")
+      .eq("is_salary", false)
+      .order("date_registered", { ascending: false });
+    
+    if (error) {
+      console.error("Erro ao buscar débitos e créditos:", error);
+      throw error;
+    }
+    
+    console.log(`Encontrados ${data?.length || 0} processos de débito e crédito:`, data);
+    return data || [];
+  } catch (error) {
+    console.error("Erro ao buscar débitos e créditos:", error);
+    return [];
+  }
+};
+
 export const cleanupDuplicateProcesses = async (): Promise<{ removed: number }> => {
   try {
     console.log("Iniciando limpeza de processos duplicados...");
@@ -225,7 +248,7 @@ export const getProcessesStatsByMonth = async (): Promise<any[]> => {
       return [];
     }
     
-    // Agrupar por mês e contar processos normais vs salários
+    // Agrupar por mês e contar processos de salários vs débitos e créditos
     const statsMap = new Map();
     
     data.forEach(process => {
@@ -233,7 +256,7 @@ export const getProcessesStatsByMonth = async (): Promise<any[]> => {
       const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`;
       
       if (!statsMap.has(monthYear)) {
-        statsMap.set(monthYear, { month: monthYear, salary: 0, normal: 0 });
+        statsMap.set(monthYear, { month: monthYear, salary: 0, debit_credit: 0 });
       }
       
       const stats = statsMap.get(monthYear);
@@ -241,7 +264,7 @@ export const getProcessesStatsByMonth = async (): Promise<any[]> => {
       if (process.is_salary) {
         stats.salary += 1;
       } else {
-        stats.normal += 1;
+        stats.debit_credit += 1;
       }
     });
     

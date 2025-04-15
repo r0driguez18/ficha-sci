@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { getFileProcesses, getSalaryProcesses, getProcessesStatsByMonth } from '@/services/fileProcessService';
+import { getFileProcesses, getSalaryProcesses, getDebitCreditProcesses, getProcessesStatsByMonth } from '@/services/fileProcessService';
 import { Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,7 @@ const EasyVistaEstatisticas = () => {
   const [loading, setLoading] = useState(true);
   const [allProcesses, setAllProcesses] = useState<any[]>([]);
   const [salaryProcesses, setSalaryProcesses] = useState<any[]>([]);
+  const [debitCreditProcesses, setDebitCreditProcesses] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
   const loadData = async () => {
@@ -35,6 +36,11 @@ const EasyVistaEstatisticas = () => {
       const salaries = await getSalaryProcesses();
       console.log("Processos de salário carregados (página Estatisticas):", salaries);
       setSalaryProcesses(salaries);
+
+      // Carregar processos de débito e crédito
+      const debitCredits = await getDebitCreditProcesses();
+      console.log("Processos de débito e crédito carregados:", debitCredits);
+      setDebitCreditProcesses(debitCredits);
       
       if (stats.length === 0 && processes.length === 0) {
         toast.info("Nenhum dado de processamento disponível. Adicione alguns processos para visualizá-los aqui.");
@@ -68,7 +74,7 @@ const EasyVistaEstatisticas = () => {
     <div className="animate-fade-in space-y-6">
       <div className="flex justify-between items-center">
         <PageHeader 
-          title="EasyVista - Estatísticas" 
+          title="Processamentos - Estatísticas" 
           subtitle="Visualização detalhada dos dados de processamento"
         />
         <Button 
@@ -91,7 +97,7 @@ const EasyVistaEstatisticas = () => {
         <div className="space-y-6">
           <ProcessesBarChart 
             data={processesData} 
-            title="Processamentos por Mês (Salários vs Outros)" 
+            title="Processamentos por Mês (Salários vs Débitos e Créditos)" 
           />
           
           <Card>
@@ -120,10 +126,10 @@ const EasyVistaEstatisticas = () => {
                 
                 <Card className="bg-green-50">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">Outros Processamentos</CardTitle>
+                    <CardTitle className="text-lg">Débitos e Créditos</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-3xl font-bold">{allProcesses.length - salaryProcesses.length}</p>
+                    <p className="text-3xl font-bold">{debitCreditProcesses.length}</p>
                   </CardContent>
                 </Card>
               </div>
@@ -131,9 +137,10 @@ const EasyVistaEstatisticas = () => {
           </Card>
           
           <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-            <TabsList className="grid grid-cols-2 md:grid-cols-2 gap-2">
+            <TabsList className="grid grid-cols-1 md:grid-cols-3 gap-2">
               <TabsTrigger value="all">Todos os Processamentos</TabsTrigger>
               <TabsTrigger value="salary">Processamentos de Salário</TabsTrigger>
+              <TabsTrigger value="debit_credit">Débitos e Créditos</TabsTrigger>
             </TabsList>
             
             <TabsContent value="all">
@@ -147,6 +154,13 @@ const EasyVistaEstatisticas = () => {
               <ProcessesTable 
                 processes={salaryProcesses} 
                 title="Processamentos de Salário" 
+              />
+            </TabsContent>
+
+            <TabsContent value="debit_credit">
+              <ProcessesTable 
+                processes={debitCreditProcesses} 
+                title="Processamentos de Débitos e Créditos" 
               />
             </TabsContent>
           </Tabs>
