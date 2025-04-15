@@ -17,6 +17,7 @@ const EasyVistaEstatisticas = () => {
   const [allProcesses, setAllProcesses] = useState<any[]>([]);
   const [salaryProcesses, setSalaryProcesses] = useState<any[]>([]);
   const [debitCreditProcesses, setDebitCreditProcesses] = useState<any[]>([]);
+  const [otherProcesses, setOtherProcesses] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
   const loadData = async () => {
@@ -41,6 +42,11 @@ const EasyVistaEstatisticas = () => {
       const debitCredits = await getDebitCreditProcesses();
       console.log("Processos de débito e crédito carregados:", debitCredits);
       setDebitCreditProcesses(debitCredits);
+      
+      // Filtrar Outros Processamentos (apenas tarefa, sem AS400)
+      const others = processes.filter(p => !p.as400_name && p.task);
+      console.log("Outros processamentos carregados:", others);
+      setOtherProcesses(others);
       
       if (stats.length === 0 && processes.length === 0) {
         toast.info("Nenhum dado de processamento disponível. Adicione alguns processos para visualizá-los aqui.");
@@ -97,7 +103,7 @@ const EasyVistaEstatisticas = () => {
         <div className="space-y-6">
           <ProcessesBarChart 
             data={processesData} 
-            title="Processamentos por Mês (Salários vs Processamentos de Empresas)" 
+            title="Processamentos por Mês" 
           />
           
           <Card>
@@ -105,7 +111,7 @@ const EasyVistaEstatisticas = () => {
               <CardTitle>Estatísticas de Processamentos</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card className="bg-blue-50">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-lg">Total de Processamentos</CardTitle>
@@ -124,12 +130,21 @@ const EasyVistaEstatisticas = () => {
                   </CardContent>
                 </Card>
                 
-                <Card className="bg-green-50">
+                <Card className="bg-blue-100">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-lg">Processamentos de Empresas</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-3xl font-bold">{debitCreditProcesses.length}</p>
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-green-50">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg">Outros Processamentos</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-3xl font-bold">{otherProcesses.length}</p>
                   </CardContent>
                 </Card>
               </div>
