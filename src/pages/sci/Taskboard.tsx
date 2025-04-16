@@ -243,12 +243,13 @@ const Taskboard = () => {
       let duplicateCount = 0;
       
       for (const row of rowsToSave) {
+        console.log("Processando linha:", row);
         const result = await saveFileProcess({
           time_registered: row.hora,
-          task: row.tarefa || undefined,
-          as400_name: row.nomeAs || undefined,
-          operation_number: row.operacao || undefined,
-          executed_by: row.executado || undefined
+          task: row.tarefa,
+          as400_name: row.nomeAs,
+          operation_number: row.operacao,
+          executed_by: row.executado
         });
         
         if (!result.error) {

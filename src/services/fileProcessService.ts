@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface FileProcess {
@@ -20,7 +19,7 @@ export const saveFileProcess = async (process: FileProcess): Promise<{ error: an
   const isSalary = process.as400_name?.startsWith("SA") || false;
   
   try {
-    console.log("Tentando salvar processo:", { ...process, is_salary: isSalary });
+    console.log("Tentando salvar processo:", process);
     
     // Ensure at least one of task or as400_name is provided
     if (!process.task && !process.as400_name) {
@@ -75,16 +74,33 @@ export const saveFileProcess = async (process: FileProcess): Promise<{ error: an
       }
     }
     
+    // Prepare data for insertion, ensuring we handle the fields correctly
+    let insertData: any = {
+      time_registered: process.time_registered,
+      operation_number: process.operation_number,
+      executed_by: process.executed_by,
+      is_salary: isSalary
+    };
+    
+    // Only add task if it exists
+    if (process.task && process.task.trim() !== '') {
+      insertData.task = process.task;
+    } else {
+      insertData.task = process.task || ''; // Provide empty string instead of null
+    }
+    
+    // Only add as400_name if it exists
+    if (process.as400_name && process.as400_name.trim() !== '') {
+      insertData.as400_name = process.as400_name;
+    } else {
+      insertData.as400_name = process.as400_name || ''; // Provide empty string instead of null
+    }
+    
+    console.log("Dados a inserir:", insertData);
+    
     const { data, error } = await supabase
       .from("file_processes")
-      .insert({
-        time_registered: process.time_registered,
-        task: process.task || null,
-        as400_name: process.as400_name || null,
-        operation_number: process.operation_number || null,
-        executed_by: process.executed_by || null,
-        is_salary: isSalary
-      })
+      .insert(insertData)
       .select();
     
     if (error) {
