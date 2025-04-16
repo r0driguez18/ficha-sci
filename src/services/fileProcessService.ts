@@ -263,7 +263,7 @@ export const getProcessesStatsByMonth = async (): Promise<any[]> => {
     const { data, error } = await supabase
       .from("file_processes")
       .select("*")
-      .order("date_registered", { ascending: false });
+      .order("date_registered", { ascending: true });
     
     if (error) {
       console.error("Erro ao buscar estatísticas:", error);
@@ -280,8 +280,12 @@ export const getProcessesStatsByMonth = async (): Promise<any[]> => {
     const statsMap = new Map();
     
     data.forEach(process => {
+      if (!process.date_registered) return;
+      
       const date = new Date(process.date_registered);
-      const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`;
+      const month = date.getMonth() + 1; // Janeiro é 0
+      const year = date.getFullYear();
+      const monthYear = `${month}/${year}`;
       
       if (!statsMap.has(monthYear)) {
         statsMap.set(monthYear, { 
@@ -305,7 +309,7 @@ export const getProcessesStatsByMonth = async (): Promise<any[]> => {
       }
     });
     
-    // Converter o Map para array e ordenar por data
+    // Converter o Map para array e ordenar por data cronologicamente
     const result = Array.from(statsMap.values())
       .sort((a, b) => {
         const [aMonth, aYear] = a.month.split('/').map(Number);
