@@ -217,13 +217,23 @@ const Taskboard = () => {
 
   const saveTableRowsToSupabase = async () => {
     try {
-      const rowsToSave = tableRows.filter(
-        row => row.hora.trim() !== '' && (row.tarefa.trim() !== '' || row.nomeAs.trim() !== '')
-      );
+      const rowsToSave = tableRows.filter(row => {
+        const option1Valid = row.hora.trim() !== '' && 
+                           row.tarefa.trim() !== '' && 
+                           row.operacao.trim() !== '' && 
+                           row.executado.trim() !== '';
+                           
+        const option2Valid = row.hora.trim() !== '' && 
+                           row.nomeAs.trim() !== '' && 
+                           row.operacao.trim() !== '' && 
+                           row.executado.trim() !== '';
+                           
+        return option1Valid || option2Valid;
+      });
       
       if (rowsToSave.length === 0) {
-        toast.error("Nenhum dado válido para salvar. Preencha pelo menos a hora e a tarefa ou o nome do AS400.");
-        return;
+        toast.error("Nenhum dado válido para salvar. Preencha pelo menos os campos obrigatórios de uma das opções.");
+        return { savedCount: 0, duplicateCount: 0 };
       }
       
       let savedCount = 0;
