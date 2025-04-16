@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export interface FileProcess {
@@ -27,6 +28,15 @@ export const saveFileProcess = async (process: FileProcess): Promise<{ error: an
       return { 
         data: null, 
         error: { message: "É necessário fornecer pelo menos o nome da tarefa ou o nome do AS400." } 
+      };
+    }
+    
+    // Ensure required fields are provided
+    if (!process.time_registered || !process.operation_number || !process.executed_by) {
+      console.error("Erro: Hora, número de operação e executado por são campos obrigatórios");
+      return {
+        data: null,
+        error: { message: "Hora, número de operação e executado por são campos obrigatórios." }
       };
     }
     

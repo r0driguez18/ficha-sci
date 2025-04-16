@@ -218,21 +218,24 @@ const Taskboard = () => {
   const saveTableRowsToSupabase = async () => {
     try {
       const rowsToSave = tableRows.filter(row => {
-        const option1Valid = row.hora.trim() !== '' && 
-                           row.tarefa.trim() !== '' && 
-                           row.operacao.trim() !== '' && 
-                           row.executado.trim() !== '';
+        const hasRequiredCommonFields = 
+          row.hora.trim() !== '' && 
+          row.operacao.trim() !== '' && 
+          row.executado.trim() !== '';
+        
+        const option1Valid = 
+          hasRequiredCommonFields && 
+          row.tarefa.trim() !== '';
                            
-        const option2Valid = row.hora.trim() !== '' && 
-                           row.nomeAs.trim() !== '' && 
-                           row.operacao.trim() !== '' && 
-                           row.executado.trim() !== '';
+        const option2Valid = 
+          hasRequiredCommonFields && 
+          row.nomeAs.trim() !== '';
                            
         return option1Valid || option2Valid;
       });
       
       if (rowsToSave.length === 0) {
-        toast.error("Nenhum dado válido para salvar. Preencha pelo menos os campos obrigatórios de uma das opções.");
+        toast.error("Nenhum dado válido para salvar. Preencha pelo menos Hora, (Tarefa OU Nome AS400), Nº Operação e Executado Por.");
         return { savedCount: 0, duplicateCount: 0 };
       }
       
