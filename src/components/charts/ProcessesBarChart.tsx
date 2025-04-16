@@ -30,9 +30,33 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
     }
   };
 
-  useEffect(() => {
-    console.log("ProcessesBarChart - Dados recebidos:", data);
+  // Format month names for better display
+  const formattedData = React.useMemo(() => {
+    if (!data || data.length === 0) return [];
+    
+    return data.map(item => {
+      // Extract month and year from the "month" string (format: "MM/YYYY")
+      const [month, year] = item.month.split('/');
+      
+      // Get month name
+      const monthNames = [
+        'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 
+        'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'
+      ];
+      
+      const monthName = monthNames[parseInt(month) - 1];
+      const formattedMonth = `${monthName}/${year}`;
+      
+      return {
+        ...item,
+        formattedMonth
+      };
+    });
   }, [data]);
+
+  useEffect(() => {
+    console.log("ProcessesBarChart - Dados formatados:", formattedData);
+  }, [formattedData]);
 
   if (!data || data.length === 0) {
     return (
@@ -57,18 +81,22 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
           <ChartContainer config={chartConfig}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
-                data={data}
+                data={formattedData}
                 margin={{ top: 20, right: 30, left: 20, bottom: 40 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis 
-                  dataKey="month" 
+                  dataKey="formattedMonth" 
                   padding={{ left: 20, right: 20 }}
                   tick={{ fontSize: 12 }}
                   height={50}
                   tickMargin={10}
+                  angle={0}
                 />
-                <YAxis tick={{ fontSize: 12 }} />
+                <YAxis 
+                  tick={{ fontSize: 12 }} 
+                  label={{ value: 'Quantidade', angle: -90, position: 'insideLeft', offset: -5 }}
+                />
                 <ChartTooltip
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
