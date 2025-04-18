@@ -276,22 +276,27 @@ export const getProcessesStatsByMonth = async (): Promise<any[]> => {
       return [];
     }
     
-    // Agrupar por mês e contar processos de salários vs débitos e créditos vs outros
+    // Agrupar por mês e contar processos de cada tipo
     const statsMap = new Map();
     
     data.forEach(process => {
       if (!process.date_registered) return;
       
       const date = new Date(process.date_registered);
-      const month = date.getMonth() + 1; // Janeiro é 0
+      const month = date.getMonth() + 1;
       const year = date.getFullYear();
       const monthYear = `${month}/${year}`;
       
       if (!statsMap.has(monthYear)) {
         statsMap.set(monthYear, { 
           month: monthYear, 
-          salary: 0, 
-          debit_credit: 0,
+          salary: 0,
+          ga_processes: 0,
+          im_processes: 0,
+          ena_processes: 0,
+          inp_processes: 0,
+          bn_processes: 0,
+          fcvt_processes: 0,
           other: 0 
         });
       }
@@ -301,15 +306,27 @@ export const getProcessesStatsByMonth = async (): Promise<any[]> => {
       if (process.as400_name) {
         if (process.as400_name.startsWith("SA")) {
           stats.salary += 1;
+        } else if (process.as400_name.startsWith("GA")) {
+          stats.ga_processes += 1;
+        } else if (process.as400_name.startsWith("IM")) {
+          stats.im_processes += 1;
+        } else if (process.as400_name.startsWith("ENA")) {
+          stats.ena_processes += 1;
+        } else if (process.as400_name.startsWith("INP")) {
+          stats.inp_processes += 1;
+        } else if (process.as400_name.startsWith("BN")) {
+          stats.bn_processes += 1;
+        } else if (process.as400_name.startsWith("FCVT")) {
+          stats.fcvt_processes += 1;
         } else {
-          stats.debit_credit += 1;
+          stats.other += 1;
         }
       } else if (process.task) {
         stats.other += 1;
       }
     });
     
-    // Converter o Map para array e ordenar por data cronologicamente
+    // Converter o Map para array e ordenar por data
     const result = Array.from(statsMap.values())
       .sort((a, b) => {
         const [aMonth, aYear] = a.month.split('/').map(Number);
