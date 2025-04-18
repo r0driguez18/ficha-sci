@@ -14,6 +14,10 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { useNavigate } from 'react-router-dom';
 import { saveFileProcess } from '@/services/fileProcessService';
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 
 export interface TableRow {
   id: number;
@@ -86,6 +90,25 @@ interface TurnDataType {
   turno2: { operator: string; entrada: string; saida: string; observations: string };
   turno3: { operator: string; entrada: string; saida: string; observations: string };
 }
+
+const operatorsList = [
+  { value: "joao", label: "João" },
+  { value: "maria", label: "Maria" },
+  { value: "edelgado", label: "Edelgado" },
+  { value: "etavares", label: "Etavares" },
+  { value: "lspencer", label: "Lspencer" },
+  { value: "sbarbosa", label: "Sbarbosa" },
+  { value: "nalves", label: "Nalves" }
+];
+
+const processFormSchema = z.object({
+  operacao: z.string().regex(/^\d{9}$/, {
+    message: "O número de operação deve conter exatamente 9 dígitos"
+  }),
+  executado: z.string({
+    required_error: "Por favor selecione um operador"
+  })
+});
 
 const Taskboard = () => {
   const navigate = useNavigate();
@@ -208,6 +231,16 @@ const Taskboard = () => {
   };
 
   const handleInputChange = (id: number, field: keyof TableRow, value: string) => {
+    if (field === 'operacao') {
+      const numericValue = value.replace(/\D/g, '').slice(0, 9);
+      setTableRows(
+        tableRows.map(row => 
+          row.id === id ? { ...row, [field]: numericValue } : row
+        )
+      );
+      return;
+    }
+    
     setTableRows(
       tableRows.map(row => 
         row.id === id ? { ...row, [field]: value } : row
@@ -561,7 +594,7 @@ const Taskboard = () => {
           };
           
           const typedTaskKey = taskKey as keyof Turno2Tasks;
-          processTask(taskKey, taskTexts[taskKey], tasks.turno2[typedTaskKey]);
+          processTask(taskKey, taskTexts[typedTaskKey], tasks.turno2[typedTaskKey]);
         });
       }
       
@@ -579,7 +612,7 @@ const Taskboard = () => {
           };
           
           const typedTaskKey = taskKey as keyof Turno3Tasks;
-          processTask(taskKey, taskTexts[taskKey], tasks.turno3[typedTaskKey]);
+          processTask(taskKey, taskTexts[typedTaskKey], tasks.turno3[typedTaskKey]);
           
           if (taskKey === 'validarFicheiro') {
             y = checkPageSpace(y, 8);
@@ -607,7 +640,7 @@ const Taskboard = () => {
           };
           
           const typedTaskKey = taskKey as keyof Turno3Tasks;
-          processTask(taskKey, taskTexts[taskKey], tasks.turno3[typedTaskKey]);
+          processTask(taskKey, taskTexts[typedTaskKey], tasks.turno3[typedTaskKey]);
         });
       }
       
@@ -1120,18 +1153,38 @@ const Taskboard = () => {
                       />
                     </TableCell>
                     <TableCell>
-                      <Input
-                        type="text"
-                        value={row.operacao}
-                        onChange={(e) => handleInputChange(row.id, 'operacao', e.target.value)}
-                      />
+                      <FormItem>
+                        <FormControl>
+                          <Input
+                            type="text"
+                            value={row.operacao}
+                            onChange={(e) => handleInputChange(row.id, 'operacao', e.target.value)}
+                            className={row.operacao && !/^\d{9}$/.test(row.operacao) ? "border-red-500" : ""}
+                          />
+                        </FormControl>
+                        {row.operacao && !/^\d{9}$/.test(row.operacao) && (
+                          <p className="text-sm text-red-500 mt-1">
+                            Digite exatamente 9 dígitos numéricos
+                          </p>
+                        )}
+                      </FormItem>
                     </TableCell>
                     <TableCell>
-                      <Input
-                        type="text"
+                      <Select
                         value={row.executado}
-                        onChange={(e) => handleInputChange(row.id, 'executado', e.target.value)}
-                      />
+                        onValueChange={(value) => handleInputChange(row.id, 'executado', value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o operador" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {operatorsList.map((operator) => (
+                            <SelectItem key={operator.value} value={operator.value}>
+                              {operator.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </TableCell>
                   </TableRow>
                 ))}
