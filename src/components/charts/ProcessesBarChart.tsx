@@ -1,8 +1,8 @@
-
 import React, { useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface ProcessesChartProps {
   data: Array<{
@@ -55,7 +55,6 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
     }
   };
 
-  // Format month names for better display
   const formattedData = React.useMemo(() => {
     if (!data || data.length === 0) return [];
     
@@ -74,6 +73,8 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
       };
     });
   }, [data]);
+
+  const isMobile = useIsMobile();
 
   if (!data || data.length === 0) {
     return (
@@ -94,12 +95,15 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
         <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent className="pt-2">
-        <div className="h-[400px] w-full">
+        <div className="h-[500px] w-full">
           <ChartContainer config={chartConfig}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={formattedData}
-                margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                margin={isMobile ? 
+                  { top: 20, right: 10, left: 0, bottom: 80 } : 
+                  { top: 20, right: 30, left: 20, bottom: 60 }
+                }
               >
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis 
@@ -108,15 +112,22 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
                   textAnchor="end"
                   height={80}
                   interval={0}
-                  tick={{ fontSize: 12 }}
+                  tick={{ 
+                    fontSize: isMobile ? 10 : 12,
+                    dx: isMobile ? -5 : 0
+                  }}
                 />
                 <YAxis 
-                  tick={{ fontSize: 12 }} 
+                  tick={{ fontSize: isMobile ? 10 : 12 }}
+                  width={isMobile ? 35 : 60}
                   label={{ 
                     value: 'Quantidade de Processos', 
                     angle: -90, 
                     position: 'insideLeft',
-                    style: { textAnchor: 'middle' }
+                    style: { 
+                      textAnchor: 'middle',
+                      fontSize: isMobile ? 10 : 12 
+                    }
                   }}
                 />
                 <ChartTooltip
@@ -124,7 +135,7 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
                     if (active && payload && payload.length) {
                       return (
                         <ChartTooltipContent
-                          className="w-64"
+                          className={isMobile ? "w-48" : "w-64"}
                           payload={payload}
                         />
                       );
@@ -133,9 +144,13 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
                   }}
                 />
                 <Legend 
-                  wrapperStyle={{ paddingTop: 15, fontSize: 12 }} 
+                  wrapperStyle={{ 
+                    paddingTop: 15, 
+                    fontSize: isMobile ? 10 : 12,
+                    width: '100%'
+                  }}
                   verticalAlign="bottom"
-                  height={60}
+                  height={isMobile ? 100 : 60}
                 />
                 <Bar 
                   dataKey="salary" 
