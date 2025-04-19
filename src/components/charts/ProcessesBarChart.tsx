@@ -1,5 +1,6 @@
+
 import React, { useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -22,35 +23,27 @@ interface ProcessesChartProps {
 const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Processos por Mês" }) => {
   const chartConfig = {
     salary: {
-      label: "Salários (SA)",
       color: "#FF8042"
     },
     ga_processes: {
-      label: "Processos GA",
       color: "#0088FE"
     },
     im_processes: {
-      label: "Processos IM",
       color: "#00C49F"
     },
     ena_processes: {
-      label: "Processos ENA",
       color: "#FFBB28"
     },
     inp_processes: {
-      label: "Processos INP",
       color: "#FF6B6B"
     },
     bn_processes: {
-      label: "Processos BN",
       color: "#4CAF50"
     },
     fcvt_processes: {
-      label: "Processos FCVT",
       color: "#9C27B0"
     },
     other: {
-      label: "Outros Processamentos",
       color: "#607D8B"
     }
   };
@@ -134,69 +127,55 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
                       return (
-                        <ChartTooltipContent
-                          className={isMobile ? "w-48" : "w-64"}
-                          payload={payload}
-                        />
+                        <div className={`p-2 bg-white border rounded shadow ${isMobile ? "w-24" : "w-32"}`}>
+                          <p className="text-xs font-medium text-center">{payload[0]?.payload.formattedMonth}</p>
+                          <div className="flex justify-between items-center mt-1">
+                            <span className="text-xs text-muted-foreground">Valor:</span>
+                            <span className="text-xs font-medium">{payload[0]?.value?.toLocaleString()}</span>
+                          </div>
+                        </div>
                       );
                     }
                     return null;
                   }}
                 />
-                <Legend 
-                  wrapperStyle={{ 
-                    paddingTop: 15, 
-                    fontSize: isMobile ? 10 : 12,
-                    width: '100%'
-                  }}
-                  verticalAlign="bottom"
-                  height={isMobile ? 100 : 60}
-                />
                 <Bar 
                   dataKey="salary" 
-                  name={chartConfig.salary.label}
                   fill={chartConfig.salary.color} 
                   radius={[4, 4, 0, 0]}
                 />
                 <Bar 
                   dataKey="ga_processes" 
-                  name={chartConfig.ga_processes.label}
                   fill={chartConfig.ga_processes.color} 
                   radius={[4, 4, 0, 0]}
                 />
                 <Bar 
                   dataKey="im_processes" 
-                  name={chartConfig.im_processes.label}
                   fill={chartConfig.im_processes.color} 
                   radius={[4, 4, 0, 0]}
                 />
                 <Bar 
                   dataKey="ena_processes" 
-                  name={chartConfig.ena_processes.label}
                   fill={chartConfig.ena_processes.color} 
                   radius={[4, 4, 0, 0]}
                 />
                 <Bar 
                   dataKey="inp_processes" 
-                  name={chartConfig.inp_processes.label}
                   fill={chartConfig.inp_processes.color} 
                   radius={[4, 4, 0, 0]}
                 />
                 <Bar 
                   dataKey="bn_processes" 
-                  name={chartConfig.bn_processes.label}
                   fill={chartConfig.bn_processes.color} 
                   radius={[4, 4, 0, 0]}
                 />
                 <Bar 
                   dataKey="fcvt_processes" 
-                  name={chartConfig.fcvt_processes.label}
                   fill={chartConfig.fcvt_processes.color} 
                   radius={[4, 4, 0, 0]}
                 />
                 <Bar 
                   dataKey="other" 
-                  name={chartConfig.other.label}
                   fill={chartConfig.other.color} 
                   radius={[4, 4, 0, 0]}
                 />
