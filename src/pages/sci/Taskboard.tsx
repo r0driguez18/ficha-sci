@@ -521,7 +521,7 @@ const Taskboard = () => {
           };
           
           const typedTaskKey = taskKey as keyof Turno1Tasks;
-          processTask(taskKey, taskTexts[taskKey], tasks.turno1[typedTaskKey]);
+          processTask(taskKey, taskTexts[typedTaskKey], tasks.turno1[typedTaskKey]);
         });
       }
       
@@ -1138,6 +1138,7 @@ const Taskboard = () => {
               </div>
               
               <div className="space-y-2">
+                <h4 className="font-medium mb-2">Antes do Fecho:</h4>
                 <div className="flex items-start space-x-2">
                   <Checkbox 
                     id="tarefa3-1" 
@@ -1185,6 +1186,56 @@ const Taskboard = () => {
                     onCheckedChange={(checked) => handleTaskChange('turno3', 'validarFicheiro', !!checked)}
                   />
                   <Label htmlFor="tarefa3-6" className="cursor-pointer">Validar ficheiro CCLN - 76853</Label>
+                </div>
+                
+                <h4 className="font-medium mt-4 mb-2">Backups Diferidos:</h4>
+                <div className="flex items-start space-x-2">
+                  <Checkbox 
+                    id="tarefa3-7"
+                    checked={tasks.turno3.bmjrn}
+                    onCheckedChange={(checked) => handleTaskChange('turno3', 'bmjrn', !!checked)}
+                  />
+                  <Label htmlFor="tarefa3-7" className="cursor-pointer">BMJRN (2 tapes/alterar 1 por mês/inicializar no início do mês)</Label>
+                </div>
+                <div className="flex items-start space-x-2">
+                  <Checkbox 
+                    id="tarefa3-8"
+                    checked={tasks.turno3.grjrcv}
+                    onCheckedChange={(checked) => handleTaskChange('turno3', 'grjrcv', !!checked)}
+                  />
+                  <Label htmlFor="tarefa3-8" className="cursor-pointer">GRJRCV (1 tape)</Label>
+                </div>
+                <div className="flex items-start space-x-2">
+                  <Checkbox 
+                    id="tarefa3-9"
+                    checked={tasks.turno3.aujrn}
+                    onCheckedChange={(checked) => handleTaskChange('turno3', 'aujrn', !!checked)}
+                  />
+                  <Label htmlFor="tarefa3-9" className="cursor-pointer">AUJRN (1 tape)</Label>
+                </div>
+                <div className="flex items-start space-x-2">
+                  <Checkbox 
+                    id="tarefa3-10"
+                    checked={tasks.turno3.mvdia1}
+                    onCheckedChange={(checked) => handleTaskChange('turno3', 'mvdia1', !!checked)}
+                  />
+                  <Label htmlFor="tarefa3-10" className="cursor-pointer">MVDIA1 (eliminar obj. após save N)</Label>
+                </div>
+                <div className="flex items-start space-x-2">
+                  <Checkbox 
+                    id="tarefa3-11"
+                    checked={tasks.turno3.mvdia2}
+                    onCheckedChange={(checked) => handleTaskChange('turno3', 'mvdia2', !!checked)}
+                  />
+                  <Label htmlFor="tarefa3-11" className="cursor-pointer">MVDIA2 (eliminar obj. após save S)</Label>
+                </div>
+                <div className="flex items-start space-x-2">
+                  <Checkbox 
+                    id="tarefa3-12"
+                    checked={tasks.turno3.brjrn}
+                    onCheckedChange={(checked) => handleTaskChange('turno3', 'brjrn', !!checked)}
+                  />
+                  <Label htmlFor="tarefa3-12" className="cursor-pointer">BRJRN (1 tape)</Label>
                 </div>
               </div>
               
