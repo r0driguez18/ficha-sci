@@ -537,7 +537,7 @@ const Taskboard = () => {
           };
           
           const typedTaskKey = taskKey as keyof Turno2Tasks;
-          processTask(taskKey, taskTexts[taskKey], tasks.turno2[typedTaskKey]);
+          processTask(taskKey, taskTexts[typedTaskKey], tasks.turno2[typedTaskKey]);
         });
         
         y = checkPageSpace(y, 8);
@@ -565,7 +565,7 @@ const Taskboard = () => {
           };
           
           const typedTaskKey = taskKey as keyof Turno2Tasks;
-          processTask(taskKey, taskTexts[taskKey], tasks.turno2[typedTaskKey]);
+          processTask(taskKey, taskTexts[typedTaskKey], tasks.turno2[typedTaskKey]);
         });
         
         y = checkPageSpace(y, 8);
@@ -993,6 +993,92 @@ const Taskboard = () => {
                     onCheckedChange={(checked) => handleTaskChange('turno2', 'verificarReportes', !!checked)}
                   />
                   <Label htmlFor="tarefa2-4" className="cursor-pointer">Verificar envio de reportes(INPS, VISTO USA, BCV, IMPC)</Label>
+                </div>
+                
+                <div className="border rounded-md p-3 bg-gray-50">
+                  <h4 className="font-medium mb-2">Ficheiros INPS:</h4>
+                  <div className="ml-4 space-y-2">
+                    <div className="flex items-start space-x-2">
+                      <Checkbox 
+                        id="tarefa2-5"
+                        checked={tasks.turno2.inpsProcessar}
+                        onCheckedChange={(checked) => handleTaskChange('turno2', 'inpsProcessar', !!checked)}
+                      />
+                      <Label htmlFor="tarefa2-5" className="cursor-pointer">Processar</Label>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <Checkbox 
+                        id="tarefa2-6"
+                        checked={tasks.turno2.inpsEnviarRetorno}
+                        onCheckedChange={(checked) => handleTaskChange('turno2', 'inpsEnviarRetorno', !!checked)}
+                      />
+                      <Label htmlFor="tarefa2-6" className="cursor-pointer">Enviar Retorno</Label>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex items-start space-x-2">
+                  <Checkbox 
+                    id="tarefa2-7"
+                    checked={tasks.turno2.processarTef}
+                    onCheckedChange={(checked) => handleTaskChange('turno2', 'processarTef', !!checked)}
+                  />
+                  <Label htmlFor="tarefa2-7" className="cursor-pointer">Processar ficheiros TEF - ERR/RTR/RCT</Label>
+                </div>
+                <div className="flex items-start space-x-2">
+                  <Checkbox 
+                    id="tarefa2-8"
+                    checked={tasks.turno2.processarTelecomp}
+                    onCheckedChange={(checked) => handleTaskChange('turno2', 'processarTelecomp', !!checked)}
+                  />
+                  <Label htmlFor="tarefa2-8" className="cursor-pointer">Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR</Label>
+                </div>
+                
+                <div className="border rounded-md p-3 bg-gray-50">
+                  <h4 className="font-medium mb-2">Enviar Ficheiro:</h4>
+                  <div className="ml-4 space-y-2">
+                    <div className="flex items-start space-x-2">
+                      <Checkbox 
+                        id="tarefa2-9"
+                        checked={tasks.turno2.enviarEci}
+                        onCheckedChange={(checked) => handleTaskChange('turno2', 'enviarEci', !!checked)}
+                      />
+                      <Label htmlFor="tarefa2-9" className="cursor-pointer">ECI</Label>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <Checkbox 
+                        id="tarefa2-10"
+                        checked={tasks.turno2.enviarEdv}
+                        onCheckedChange={(checked) => handleTaskChange('turno2', 'enviarEdv', !!checked)}
+                      />
+                      <Label htmlFor="tarefa2-10" className="cursor-pointer">EDV</Label>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex items-start space-x-2">
+                  <Checkbox 
+                    id="tarefa2-11"
+                    checked={tasks.turno2.validarSaco}
+                    onCheckedChange={(checked) => handleTaskChange('turno2', 'validarSaco', !!checked)}
+                  />
+                  <Label htmlFor="tarefa2-11" className="cursor-pointer">Validar Saco 1935</Label>
+                </div>
+                <div className="flex items-start space-x-2">
+                  <Checkbox 
+                    id="tarefa2-12"
+                    checked={tasks.turno2.verificarPendentes}
+                    onCheckedChange={(checked) => handleTaskChange('turno2', 'verificarPendentes', !!checked)}
+                  />
+                  <Label htmlFor="tarefa2-12" className="cursor-pointer">Verificar Pendentes dos Balcões</Label>
+                </div>
+                <div className="flex items-start space-x-2">
+                  <Checkbox 
+                    id="tarefa2-13"
+                    checked={tasks.turno2.fecharBalcoes}
+                    onCheckedChange={(checked) => handleTaskChange('turno2', 'fecharBalcoes', !!checked)}
+                  />
+                  <Label htmlFor="tarefa2-13" className="cursor-pointer">Fechar os Balcoes Centrais</Label>
                 </div>
               </div>
               
