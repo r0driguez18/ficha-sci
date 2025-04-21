@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PlusCircle, Trash2, Save, FileDown, RotateCcw, Calendar as CalendarIcon } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { toast } from 'sonner';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { Calendar as CalendarIcon, FileDown, PlusCircle, RotateCcw, Save, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 export interface TableRow {
   id: number;
@@ -637,8 +637,6 @@ const Taskboard = () => {
                       <SelectValue placeholder="Selecione o operador" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="joao">João</SelectItem>
-                      <SelectItem value="maria">Maria</SelectItem>
                       <SelectItem value="edelgado">Edelgado</SelectItem>
                       <SelectItem value="etavares">Etavares</SelectItem>
                       <SelectItem value="lspencer">Lspencer</SelectItem>
