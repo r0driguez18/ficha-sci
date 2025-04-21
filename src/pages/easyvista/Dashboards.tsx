@@ -1,14 +1,74 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart, LineChart, PieChart, AreaChart, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Bar, Line, Pie, Area, Cell } from 'recharts';
+import ProcessesBarChart from '@/components/charts/ProcessesBarChart';
+import ProcessesTable from '@/components/charts/ProcessesTable';
+import { getFileProcesses, getSalaryProcesses, getProcessesStatsByMonth, cleanupDuplicateProcesses } from '@/services/fileProcessService';
+import { Loader2, RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 
 const EasyVistaDashboards = () => {
   const [activeTab, setActiveTab] = useState('summary');
+  const [processesData, setProcessesData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [recentProcesses, setRecentProcesses] = useState<any[]>([]);
+  const [salaryProcesses, setSalaryProcesses] = useState<any[]>([]);
+  const [cleaningData, setCleaningData] = useState(false);
   
-  // Sample data for charts
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const stats = await getProcessesStatsByMonth();
+      console.log("Estatísticas carregadas (Dashboard):", stats);
+      setProcessesData(stats);
+      
+      const processes = await getFileProcesses();
+      console.log("Processos carregados (Dashboard):", processes);
+      setRecentProcesses(processes.slice(0, 10));
+      
+      const salaries = await getSalaryProcesses();
+      console.log("Processos de salário carregados (Dashboard):", salaries);
+      setSalaryProcesses(salaries.slice(0, 10));
+      
+      if (stats.length === 0 && processes.length === 0) {
+        toast.info("Nenhum dado de processamento disponível. Adicione alguns processos para visualizá-los aqui.");
+      }
+    } catch (error) {
+      console.error("Erro ao carregar dados:", error);
+      toast.error("Erro ao carregar dados. Por favor, tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+  
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+  
+  const handleRefresh = () => {
+    toast.info("Atualizando dados...");
+    loadData();
+  };
+
+  const handleCleanupData = async () => {
+    setCleaningData(true);
+    toast.info("Iniciando limpeza dos dados duplicados...");
+    
+    try {
+      const { removed } = await cleanupDuplicateProcesses();
+      toast.success(`Limpeza concluída! ${removed} registros duplicados foram removidos.`);
+      loadData(); // Recarregar dados após a limpeza
+    } catch (error) {
+      console.error("Erro ao limpar dados:", error);
+      toast.error("Erro ao limpar dados duplicados. Por favor, tente novamente.");
+    } finally {
+      setCleaningData(false);
+    }
+  };
+  
   const incidentData = [
     { name: 'Jan', planned: 65, actual: 78 },
     { name: 'Fev', planned: 59, actual: 63 },
@@ -48,29 +108,29 @@ const EasyVistaDashboards = () => {
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
   
   return (
-    <div className="animate-fade-in">
+    <div className="animate-fade-in space-y-6">
       <PageHeader 
         title="EasyVista - Dashboards" 
         subtitle="Visualização de métricas e indicadores"
       />
 
-      <Tabs defaultValue="summary" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-2">
+      <Tabs defaultValue="summary" value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-5 gap-2">
           <TabsTrigger value="summary">Resumo</TabsTrigger>
           <TabsTrigger value="incidents">Incidentes</TabsTrigger>
           <TabsTrigger value="performance">Performance</TabsTrigger>
           <TabsTrigger value="trends">Tendências</TabsTrigger>
+          <TabsTrigger value="processes">Processamentos</TabsTrigger>
         </TabsList>
         
-        {/* Summary Tab */}
-        <TabsContent value="summary" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <TabsContent value="summary" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
                 <CardTitle>Distribuição por Categoria</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-80">
+                <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -99,7 +159,7 @@ const EasyVistaDashboards = () => {
                 <CardTitle>Incidentes por Status</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-80">
+                <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       data={statusData}
@@ -120,14 +180,13 @@ const EasyVistaDashboards = () => {
           </div>
         </TabsContent>
         
-        {/* Incidents Tab */}
-        <TabsContent value="incidents" className="space-y-4">
+        <TabsContent value="incidents" className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Incidentes Planejados vs Reais</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-96">
+              <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
                     data={incidentData}
@@ -147,15 +206,14 @@ const EasyVistaDashboards = () => {
           </Card>
         </TabsContent>
         
-        {/* Performance Tab */}
-        <TabsContent value="performance" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <TabsContent value="performance" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
                 <CardTitle>Performance por Categoria</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-80">
+                <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       data={categoryData}
@@ -178,7 +236,7 @@ const EasyVistaDashboards = () => {
                 <CardTitle>Distribuição de Status</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-80">
+                <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -205,14 +263,13 @@ const EasyVistaDashboards = () => {
           </div>
         </TabsContent>
         
-        {/* Trends Tab */}
-        <TabsContent value="trends" className="space-y-4">
+        <TabsContent value="trends" className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Tendências por Hora do Dia</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-96">
+              <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart
                     data={timeData}
@@ -228,6 +285,51 @@ const EasyVistaDashboards = () => {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+        
+        <TabsContent value="processes" className="space-y-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+            <h3 className="text-lg font-semibold">Dados de Processamento</h3>
+            <div className="flex flex-wrap gap-3">
+              <Button 
+                onClick={handleRefresh} 
+                variant="outline" 
+                size="sm"
+                disabled={loading}
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} /> 
+                Atualizar Dados
+              </Button>
+            </div>
+          </div>
+          
+          {loading ? (
+            <div className="flex justify-center items-center h-64">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-2">Carregando dados...</span>
+            </div>
+          ) : (
+            <div className="space-y-8">
+              <div className="w-full">
+                <ProcessesBarChart 
+                  data={processesData} 
+                  title="Processamentos por Mês (Salários vs Outros)" 
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <ProcessesTable 
+                  processes={recentProcesses} 
+                  title="Processamentos Recentes" 
+                />
+                
+                <ProcessesTable 
+                  processes={salaryProcesses} 
+                  title="Processamentos de Salários (SA)" 
+                />
+              </div>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>
