@@ -29,10 +29,10 @@ const Dashboard = () => {
       color: 'bg-orange-500'
     },
     {
-      title: 'Processamentos',
-      description: 'Estatísticas e Relatórios',
+      title: 'EasyVista',
+      description: 'Dashboards e Relatórios',
       icon: PieChart,
-      path: '/easyvista/estatisticas',
+      path: '/easyvista/dashboards',
       color: 'bg-green-500'
     }
   ];
