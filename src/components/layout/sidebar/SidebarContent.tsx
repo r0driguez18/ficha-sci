@@ -54,11 +54,11 @@ export const SidebarContent = ({ collapsed }: SidebarContentProps) => {
           />
           <SidebarItem
             icon={PieChart}
-            label="Processamentos"
+            label="EasyVista"
             to="/easyvista"
             collapsed={collapsed}
             subItems={[
-              { label: "Estatísticas", to: "/easyvista/estatisticas" }
+              { label: "Dashboards", to: "/easyvista/dashboards" }
             ]}
           />
         </div>
