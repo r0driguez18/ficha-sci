@@ -18,6 +18,7 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { Turno1TasksComponent } from '@/components/tasks/Turno1Tasks';
 
 export interface TableRow {
   id: number;
@@ -36,6 +37,8 @@ interface Turno1Tasks {
   servicos: boolean;
   abrirServidores: boolean;
   percurso76931: boolean;
+  verificarCpuMemoria: boolean;
+  enviarSegundoEtr: boolean;
   enviar: boolean;
   etr: boolean;
   impostos: boolean;
@@ -46,6 +49,12 @@ interface Turno1Tasks {
   verificarDebitos: boolean;
   processarTef: boolean;
   processarTelecomp: boolean;
+  enviarFicheiroCom: boolean;
+  dia01: boolean;
+  dia08: boolean;
+  dia16: boolean;
+  dia23: boolean;
+  atualizarCentralRisco: boolean;
 }
 
 interface Turno2Tasks {
@@ -131,6 +140,8 @@ const Taskboard = () => {
       servicos: false,
       abrirServidores: false,
       percurso76931: false,
+      verificarCpuMemoria: false,
+      enviarSegundoEtr: false,
       enviar: false,
       etr: false,
       impostos: false,
@@ -140,7 +151,13 @@ const Taskboard = () => {
       bcta: false,
       verificarDebitos: false,
       processarTef: false,
-      processarTelecomp: false
+      processarTelecomp: false,
+      enviarFicheiroCom: false,
+      dia01: false,
+      dia08: false,
+      dia16: false,
+      dia23: false,
+      atualizarCentralRisco: false
     },
     turno2: {
       datacenter: false,
@@ -337,6 +354,8 @@ const Taskboard = () => {
         servicos: false,
         abrirServidores: false,
         percurso76931: false,
+        verificarCpuMemoria: false,
+        enviarSegundoEtr: false,
         enviar: false,
         etr: false,
         impostos: false,
@@ -346,7 +365,13 @@ const Taskboard = () => {
         bcta: false,
         verificarDebitos: false,
         processarTef: false,
-        processarTelecomp: false
+        processarTelecomp: false,
+        enviarFicheiroCom: false,
+        dia01: false,
+        dia08: false,
+        dia16: false,
+        dia23: false,
+        atualizarCentralRisco: false
       },
       turno2: {
         datacenter: false,
@@ -744,13 +769,11 @@ const Taskboard = () => {
                       <SelectValue placeholder="Selecione o operador" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="joao">João</SelectItem>
-                      <SelectItem value="maria">Maria</SelectItem>
-                      <SelectItem value="edelgado">Edelgado</SelectItem>
-                      <SelectItem value="etavares">Etavares</SelectItem>
-                      <SelectItem value="lspencer">Lspencer</SelectItem>
-                      <SelectItem value="sbarbosa">Sbarbosa</SelectItem>
-                      <SelectItem value="nalves">Nalves</SelectItem>
+                      {operatorsList.map((operator) => (
+                        <SelectItem key={operator.value} value={operator.value}>
+                          {operator.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -774,134 +797,7 @@ const Taskboard = () => {
                 </div>
               </div>
               
-              <div className="space-y-2">
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa1-1" 
-                    checked={tasks.turno1.datacenter}
-                    onCheckedChange={(checked) => handleTaskChange('turno1', 'datacenter', !!checked)}
-                  />
-                  <Label htmlFor="tarefa1-1" className="cursor-pointer">Verificar DATA CENTER</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa1-2"
-                    checked={tasks.turno1.sistemas}
-                    onCheckedChange={(checked) => handleTaskChange('turno1', 'sistemas', !!checked)}
-                  />
-                  <Label htmlFor="tarefa1-2" className="cursor-pointer">Verificar Sistemas: BCACV1/BCACV2</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa1-3"
-                    checked={tasks.turno1.servicos}
-                    onCheckedChange={(checked) => handleTaskChange('turno1', 'servicos', !!checked)}
-                  />
-                  <Label htmlFor="tarefa1-3" className="cursor-pointer">Verificar Serviços: Vinti24/BCADireto/Replicação/Servidor MIA</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa1-4"
-                    checked={tasks.turno1.abrirServidores}
-                    onCheckedChange={(checked) => handleTaskChange('turno1', 'abrirServidores', !!checked)}
-                  />
-                  <Label htmlFor="tarefa1-4" className="cursor-pointer">Abrir Servidores (SWIFT, OPDIF, TRMSG, CDGOV, AML)</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa1-5"
-                    checked={tasks.turno1.percurso76931}
-                    onCheckedChange={(checked) => handleTaskChange('turno1', 'percurso76931', !!checked)}
-                  />
-                  <Label htmlFor="tarefa1-5" className="cursor-pointer">Percurso 76931 - Atualiza os alertas nos clientes com dados desatualizados</Label>
-                </div>
-                
-                <div className="border rounded-md p-3 bg-gray-50">
-                  <div className="flex items-start space-x-2">
-                    <Checkbox 
-                      id="tarefa1-6-enviar"
-                      checked={tasks.turno1.enviar}
-                      onCheckedChange={(checked) => handleTaskChange('turno1', 'enviar', !!checked)}
-                    />
-                    <Label htmlFor="tarefa1-6-enviar" className="cursor-pointer font-medium">Enviar:</Label>
-                  </div>
-                  <div className="flex flex-wrap gap-4 mt-2 ml-6">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="tarefa1-6-1"
-                        checked={tasks.turno1.etr}
-                        onCheckedChange={(checked) => handleTaskChange('turno1', 'etr', !!checked)}
-                      />
-                      <Label htmlFor="tarefa1-6-1" className="cursor-pointer">ETR</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="tarefa1-6-2"
-                        checked={tasks.turno1.impostos}
-                        onCheckedChange={(checked) => handleTaskChange('turno1', 'impostos', !!checked)}
-                      />
-                      <Label htmlFor="tarefa1-6-2" className="cursor-pointer">Impostos</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="tarefa1-6-3"
-                        checked={tasks.turno1.inpsExtrato}
-                        onCheckedChange={(checked) => handleTaskChange('turno1', 'inpsExtrato', !!checked)}
-                      />
-                      <Label htmlFor="tarefa1-6-3" className="cursor-pointer">INPS/Extrato</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="tarefa1-6-4"
-                        checked={tasks.turno1.vistoUsa}
-                        onCheckedChange={(checked) => handleTaskChange('turno1', 'vistoUsa', !!checked)}
-                      />
-                      <Label htmlFor="tarefa1-6-4" className="cursor-pointer">Visto USA</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="tarefa1-6-5"
-                        checked={tasks.turno1.ben}
-                        onCheckedChange={(checked) => handleTaskChange('turno1', 'ben', !!checked)}
-                      />
-                      <Label htmlFor="tarefa1-6-5" className="cursor-pointer">BEN</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="tarefa1-6-6"
-                        checked={tasks.turno1.bcta}
-                        onCheckedChange={(checked) => handleTaskChange('turno1', 'bcta', !!checked)}
-                      />
-                      <Label htmlFor="tarefa1-6-6" className="cursor-pointer">BCTA</Label>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa1-7"
-                    checked={tasks.turno1.verificarDebitos}
-                    onCheckedChange={(checked) => handleTaskChange('turno1', 'verificarDebitos', !!checked)}
-                  />
-                  <Label htmlFor="tarefa1-7" className="cursor-pointer">Verificar Débitos/Créditos aplicados no dia Anterior</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa1-8"
-                    checked={tasks.turno1.processarTef}
-                    onCheckedChange={(checked) => handleTaskChange('turno1', 'processarTef', !!checked)}
-                  />
-                  <Label htmlFor="tarefa1-8" className="cursor-pointer">Processar ficheiros TEF - ERR/RTR/RCT</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa1-9"
-                    checked={tasks.turno1.processarTelecomp}
-                    onCheckedChange={(checked) => handleTaskChange('turno1', 'processarTelecomp', !!checked)}
-                  />
-                  <Label htmlFor="tarefa1-9" className="cursor-pointer">Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR</Label>
-                </div>
-              </div>
+              <Turno1TasksComponent tasks={tasks.turno1} onTaskChange={(task, checked) => handleTaskChange('turno1', task, checked)} />
               
               <div className="mt-4">
                 <Label htmlFor="obs-turno1" className="font-medium">Outras Intervenções/Ocorrências:</Label>
@@ -928,13 +824,11 @@ const Taskboard = () => {
                       <SelectValue placeholder="Selecione o operador" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="joao">João</SelectItem>
-                      <SelectItem value="maria">Maria</SelectItem>
-                      <SelectItem value="edelgado">Edelgado</SelectItem>
-                      <SelectItem value="etavares">Etavares</SelectItem>
-                      <SelectItem value="lspencer">Lspencer</SelectItem>
-                      <SelectItem value="sbarbosa">Sbarbosa</SelectItem>
-                      <SelectItem value="nalves">Nalves</SelectItem>
+                      {operatorsList.map((operator) => (
+                        <SelectItem key={operator.value} value={operator.value}>
+                          {operator.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -1104,13 +998,11 @@ const Taskboard = () => {
                       <SelectValue placeholder="Selecione o operador" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="joao">João</SelectItem>
-                      <SelectItem value="maria">Maria</SelectItem>
-                      <SelectItem value="edelgado">Edelgado</SelectItem>
-                      <SelectItem value="etavares">Etavares</SelectItem>
-                      <SelectItem value="lspencer">Lspencer</SelectItem>
-                      <SelectItem value="sbarbosa">Sbarbosa</SelectItem>
-                      <SelectItem value="nalves">Nalves</SelectItem>
+                      {operatorsList.map((operator) => (
+                        <SelectItem key={operator.value} value={operator.value}>
+                          {operator.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
