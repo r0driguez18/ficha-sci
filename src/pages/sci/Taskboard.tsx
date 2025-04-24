@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -788,4 +789,338 @@ const Taskboard = () => {
             <TabsTrigger value="turno3">Turno 3</TabsTrigger>
           </TabsList>
           
-          <Tabs
+          <TabsContent value="turno1">
+            <div className="grid md:grid-cols-[300px_1fr] gap-6 mt-4">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle>Turno 1</CardTitle>
+                  <CardDescription>Informações do operador</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="operator1">Operador</Label>
+                      <Select
+                        value={turnData.turno1.operator}
+                        onValueChange={(value) => handleTurnDataChange('turno1', 'operator', value)}
+                      >
+                        <SelectTrigger id="operator1">
+                          <SelectValue placeholder="Selecionar operador" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {operatorsList.map((operator) => (
+                            <SelectItem key={operator.value} value={operator.value}>
+                              {operator.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label htmlFor="entrada1">Entrada</Label>
+                        <Input 
+                          id="entrada1" 
+                          type="time"
+                          value={turnData.turno1.entrada}
+                          onChange={(e) => handleTurnDataChange('turno1', 'entrada', e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="saida1">Saída</Label>
+                        <Input 
+                          id="saida1" 
+                          type="time"
+                          value={turnData.turno1.saida}
+                          onChange={(e) => handleTurnDataChange('turno1', 'saida', e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="observacoes1">Observações</Label>
+                      <Textarea 
+                        id="observacoes1"
+                        placeholder="Observações sobre o turno..."
+                        value={turnData.turno1.observations}
+                        onChange={(e) => handleTurnDataChange('turno1', 'observations', e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle>Tarefas</CardTitle>
+                  <CardDescription>Marque as tarefas executadas</CardDescription>
+                </CardHeader>
+                <CardContent className="h-[500px] overflow-y-auto">
+                  <Turno1TasksComponent 
+                    tasks={tasks.turno1} 
+                    onTaskChange={(task, checked) => handleTaskChange('turno1', task, checked)} 
+                  />
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="turno2">
+            <div className="grid md:grid-cols-[300px_1fr] gap-6 mt-4">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle>Turno 2</CardTitle>
+                  <CardDescription>Informações do operador</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="operator2">Operador</Label>
+                      <Select 
+                        value={turnData.turno2.operator}
+                        onValueChange={(value) => handleTurnDataChange('turno2', 'operator', value)}
+                      >
+                        <SelectTrigger id="operator2">
+                          <SelectValue placeholder="Selecionar operador" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {operatorsList.map((operator) => (
+                            <SelectItem key={operator.value} value={operator.value}>
+                              {operator.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label htmlFor="entrada2">Entrada</Label>
+                        <Input 
+                          id="entrada2" 
+                          type="time"
+                          value={turnData.turno2.entrada}
+                          onChange={(e) => handleTurnDataChange('turno2', 'entrada', e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="saida2">Saída</Label>
+                        <Input 
+                          id="saida2" 
+                          type="time"
+                          value={turnData.turno2.saida}
+                          onChange={(e) => handleTurnDataChange('turno2', 'saida', e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="observacoes2">Observações</Label>
+                      <Textarea 
+                        id="observacoes2"
+                        placeholder="Observações sobre o turno..."
+                        value={turnData.turno2.observations}
+                        onChange={(e) => handleTurnDataChange('turno2', 'observations', e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle>Tarefas</CardTitle>
+                  <CardDescription>Marque as tarefas executadas</CardDescription>
+                </CardHeader>
+                <CardContent className="h-[500px] overflow-y-auto">
+                  <Turno2TasksComponent 
+                    tasks={tasks.turno2} 
+                    onTaskChange={(task, checked) => handleTaskChange('turno2', task, checked)} 
+                  />
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="turno3">
+            <div className="grid md:grid-cols-[300px_1fr] gap-6 mt-4">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle>Turno 3</CardTitle>
+                  <CardDescription>Informações do operador</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="operator3">Operador</Label>
+                      <Select
+                        value={turnData.turno3.operator}
+                        onValueChange={(value) => handleTurnDataChange('turno3', 'operator', value)}
+                      >
+                        <SelectTrigger id="operator3">
+                          <SelectValue placeholder="Selecionar operador" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {operatorsList.map((operator) => (
+                            <SelectItem key={operator.value} value={operator.value}>
+                              {operator.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label htmlFor="entrada3">Entrada</Label>
+                        <Input 
+                          id="entrada3" 
+                          type="time"
+                          value={turnData.turno3.entrada}
+                          onChange={(e) => handleTurnDataChange('turno3', 'entrada', e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="saida3">Saída</Label>
+                        <Input 
+                          id="saida3" 
+                          type="time"
+                          value={turnData.turno3.saida}
+                          onChange={(e) => handleTurnDataChange('turno3', 'saida', e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="observacoes3">Observações</Label>
+                      <Textarea 
+                        id="observacoes3"
+                        placeholder="Observações sobre o turno..."
+                        value={turnData.turno3.observations}
+                        onChange={(e) => handleTurnDataChange('turno3', 'observations', e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle>Tarefas</CardTitle>
+                  <CardDescription>Marque as tarefas executadas</CardDescription>
+                </CardHeader>
+                <CardContent className="h-[500px] overflow-y-auto">
+                  <Turno3TasksComponent 
+                    tasks={tasks.turno3} 
+                    onTaskChange={(task, checked) => handleTaskChange('turno3', task, checked)} 
+                  />
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
+
+        <div className="mt-8">
+          <Card className="border-dashed border-2">
+            <CardHeader>
+              <CardTitle>Processamento de Ficheiros</CardTitle>
+              <CardDescription>Registe os ficheiros processados</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Hora</TableHead>
+                    <TableHead>Tarefas</TableHead>
+                    <TableHead>Nome AS/400</TableHead>
+                    <TableHead>Nº Operação</TableHead>
+                    <TableHead>Executado por</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {tableRows.map((row) => (
+                    <TableRow key={row.id}>
+                      <TableCell>
+                        <Input
+                          type="time"
+                          value={row.hora}
+                          onChange={(e) => handleInputChange(row.id, 'hora', e.target.value)}
+                          className="border-none"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="text"
+                          value={row.tarefa}
+                          onChange={(e) => handleInputChange(row.id, 'tarefa', e.target.value)}
+                          className="border-none"
+                          placeholder="Nome da tarefa"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="text"
+                          value={row.nomeAs}
+                          onChange={(e) => handleInputChange(row.id, 'nomeAs', e.target.value)}
+                          className="border-none"
+                          placeholder="Nome AS400"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="text"
+                          value={row.operacao}
+                          onChange={(e) => handleInputChange(row.id, 'operacao', e.target.value)}
+                          className="border-none"
+                          placeholder="Nº Operação (9 dígitos)"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          value={row.executado}
+                          onValueChange={(value) => handleInputChange(row.id, 'executado', value)}
+                        >
+                          <SelectTrigger className="border-none">
+                            <SelectValue placeholder="Selecionar operador" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {operatorsList.map((operator) => (
+                              <SelectItem key={operator.value} value={operator.value}>
+                                {operator.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <div className="flex justify-end gap-2 mt-4">
+                <Button variant="outline" onClick={addTableRow}>
+                  <PlusCircle className="mr-2 h-4 w-4" /> Adicionar
+                </Button>
+                <Button variant="outline" onClick={removeTableRow} disabled={tableRows.length <= 1}>
+                  <Trash2 className="mr-2 h-4 w-4" /> Remover
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <CardFooter className="flex justify-between pt-6">
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={resetForm}>
+              <RotateCcw className="mr-2 h-4 w-4" /> Reiniciar
+            </Button>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={generatePDF}>
+              <FileDown className="mr-2 h-4 w-4" /> Gerar PDF
+            </Button>
+            <Button onClick={handleSave}>
+              <Save className="mr-2 h-4 w-4" /> Salvar
+            </Button>
+          </div>
+        </CardFooter>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default Taskboard;
