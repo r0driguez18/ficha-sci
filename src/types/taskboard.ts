@@ -61,6 +61,7 @@ export interface Turno3Tasks {
   fecharServidores: boolean;
   fecharImpressoras: boolean;
   userFecho: boolean;
+  validarFicheiro: boolean;
   listaRequisicoesCheques: boolean;
   cancelarCartoesClientes: boolean;
   prepararEnviarAsc: boolean;
