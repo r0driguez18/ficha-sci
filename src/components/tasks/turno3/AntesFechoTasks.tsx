@@ -65,7 +65,7 @@ export const AntesFechoTasks: React.FC<AntesFechoTasksProps> = ({ tasks, onTaskC
           checked={tasks.listaRequisicoesCheques}
           onCheckedChange={(checked) => onTaskChange('listaRequisicoesCheques', !!checked)}
         />
-        <Label htmlFor="listaRequisicoesCheques" className="cursor-pointer">Lista requisições de cheques do dia 7633. > do que 5, sem comprov. Estornar, 21911</Label>
+        <Label htmlFor="listaRequisicoesCheques" className="cursor-pointer">Lista requisições de cheques do dia 7633. {'>'}{'>'} do que 5, sem comprov. Estornar, 21911</Label>
       </div>
 
       <div className="flex items-start space-x-2">
