@@ -19,6 +19,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Turno1TasksComponent } from '@/components/tasks/Turno1Tasks';
+import { Turno2TasksComponent } from '@/components/tasks/Turno2Tasks';
+import { TasksType, TurnDataType, TurnKey } from '@/types/taskboard';
 
 export interface TableRow {
   id: number;
@@ -27,77 +29,6 @@ export interface TableRow {
   nomeAs: string;
   operacao: string;
   executado: string;
-}
-
-type TurnKey = 'turno1' | 'turno2' | 'turno3';
-
-interface Turno1Tasks {
-  datacenter: boolean;
-  sistemas: boolean;
-  servicos: boolean;
-  abrirServidores: boolean;
-  percurso76931: boolean;
-  verificarCpuMemoria: boolean;
-  enviarSegundoEtr: boolean;
-  enviar: boolean;
-  etr: boolean;
-  impostos: boolean;
-  inpsExtrato: boolean;
-  vistoUsa: boolean;
-  ben: boolean;
-  bcta: boolean;
-  verificarDebitos: boolean;
-  processarTef: boolean;
-  processarTelecomp: boolean;
-  enviarFicheiroCom: boolean;
-  dia01: boolean;
-  dia08: boolean;
-  dia16: boolean;
-  dia23: boolean;
-  atualizarCentralRisco: boolean;
-}
-
-interface Turno2Tasks {
-  datacenter: boolean;
-  sistemas: boolean;
-  servicos: boolean;
-  verificarReportes: boolean;
-  inpsProcessar: boolean;
-  inpsEnviarRetorno: boolean;
-  processarTef: boolean;
-  processarTelecomp: boolean;
-  enviarEci: boolean;
-  enviarEdv: boolean;
-  validarSaco: boolean;
-  verificarPendentes: boolean;
-  fecharBalcoes: boolean;
-}
-
-interface Turno3Tasks {
-  verificarDebitos: boolean;
-  tratarTapes: boolean;
-  fecharServidores: boolean;
-  fecharImpressoras: boolean;
-  userFecho: boolean;
-  validarFicheiro: boolean;
-  bmjrn: boolean;
-  grjrcv: boolean;
-  aujrn: boolean;
-  mvdia1: boolean;
-  mvdia2: boolean;
-  brjrn: boolean;
-}
-
-interface TasksType {
-  turno1: Turno1Tasks;
-  turno2: Turno2Tasks;
-  turno3: Turno3Tasks;
-}
-
-interface TurnDataType {
-  turno1: { operator: string; entrada: string; saida: string; observations: string };
-  turno2: { operator: string; entrada: string; saida: string; observations: string };
-  turno3: { operator: string; entrada: string; saida: string; observations: string };
 }
 
 const operatorsList = [
@@ -140,8 +71,6 @@ const Taskboard = () => {
       servicos: false,
       abrirServidores: false,
       percurso76931: false,
-      verificarCpuMemoria: false,
-      enviarSegundoEtr: false,
       enviar: false,
       etr: false,
       impostos: false,
@@ -152,26 +81,35 @@ const Taskboard = () => {
       verificarDebitos: false,
       processarTef: false,
       processarTelecomp: false,
+      enviarSegundoEtr: false,
       enviarFicheiroCom: false,
       dia01: false,
       dia08: false,
       dia16: false,
       dia23: false,
-      atualizarCentralRisco: false
+      atualizarCentralRisco: false,
+      bmjrn: false,
+      grjrcv: false,
+      aujrn: false,
+      mvdia1: false,
+      mvdia2: false,
+      brjrn: false
     },
     turno2: {
       datacenter: false,
       sistemas: false,
       servicos: false,
       verificarReportes: false,
+      verificarDebitos: false,
       inpsProcessar: false,
       inpsEnviarRetorno: false,
       processarTef: false,
       processarTelecomp: false,
       enviarEci: false,
       enviarEdv: false,
-      validarSaco: false,
+      confirmarSisp: false,
       verificarPendentes: false,
+      validarSaco: false,
       fecharBalcoes: false
     },
     turno3: {
@@ -181,6 +119,50 @@ const Taskboard = () => {
       fecharImpressoras: false,
       userFecho: false,
       validarFicheiro: false,
+      listaRequisicoesCheques: false,
+      cancelarCartoesClientes: false,
+      prepararEnviarAsc: false,
+      adicionarRegistrosBanka: false,
+      fecharServidoresBanka: false,
+      alterarInternetBanking: false,
+      prepararEnviarCsv: false,
+      fecharRealTime: false,
+      prepararEnviarEtr: false,
+      fazerLoggOffAml: false,
+      aplicarFicheiroErroEtr: false,
+      validarBalcao14: false,
+      fecharBalcao14: false,
+      arranqueManual: false,
+      inicioFecho: false,
+      validarEnvioEmail: false,
+      controlarTrabalhos: false,
+      saveBmbck: false,
+      abrirServidoresInternet: false,
+      imprimirCheques: false,
+      backupBm: false,
+      validarFicheiroCcln: false,
+      aplicarFicheirosCompensacao: false,
+      validarSaldoConta: false,
+      saldoNegativo: false,
+      saldoPositivo: false,
+      abrirRealTime: false,
+      verificarTransacoes: false,
+      aplicarFicheiroVisa: false,
+      cativarCartoes: false,
+      abrirBcaDireto: false,
+      abrirServidoresBanka: false,
+      atualizarTelefonesOffline: false,
+      verificarReplicacao: false,
+      enviarFicheiroCsv: false,
+      transferirFicheirosLiquidity: false,
+      percurso76921: false,
+      percurso76922: false,
+      percurso76923: false,
+      abrirServidoresTesteProducao: false,
+      impressaoCheques: false,
+      arquivarCheques: false,
+      terminoFecho: false,
+      transferirFicheirosDsi: false,
       bmjrn: false,
       grjrcv: false,
       aujrn: false,
@@ -354,8 +336,6 @@ const Taskboard = () => {
         servicos: false,
         abrirServidores: false,
         percurso76931: false,
-        verificarCpuMemoria: false,
-        enviarSegundoEtr: false,
         enviar: false,
         etr: false,
         impostos: false,
@@ -366,26 +346,35 @@ const Taskboard = () => {
         verificarDebitos: false,
         processarTef: false,
         processarTelecomp: false,
+        enviarSegundoEtr: false,
         enviarFicheiroCom: false,
         dia01: false,
         dia08: false,
         dia16: false,
         dia23: false,
-        atualizarCentralRisco: false
+        atualizarCentralRisco: false,
+        bmjrn: false,
+        grjrcv: false,
+        aujrn: false,
+        mvdia1: false,
+        mvdia2: false,
+        brjrn: false
       },
       turno2: {
         datacenter: false,
         sistemas: false,
         servicos: false,
         verificarReportes: false,
+        verificarDebitos: false,
         inpsProcessar: false,
         inpsEnviarRetorno: false,
         processarTef: false,
         processarTelecomp: false,
         enviarEci: false,
         enviarEdv: false,
-        validarSaco: false,
+        confirmarSisp: false,
         verificarPendentes: false,
+        validarSaco: false,
         fecharBalcoes: false
       },
       turno3: {
@@ -395,6 +384,50 @@ const Taskboard = () => {
         fecharImpressoras: false,
         userFecho: false,
         validarFicheiro: false,
+        listaRequisicoesCheques: false,
+        cancelarCartoesClientes: false,
+        prepararEnviarAsc: false,
+        adicionarRegistrosBanka: false,
+        fecharServidoresBanka: false,
+        alterarInternetBanking: false,
+        prepararEnviarCsv: false,
+        fecharRealTime: false,
+        prepararEnviarEtr: false,
+        fazerLoggOffAml: false,
+        aplicarFicheiroErroEtr: false,
+        validarBalcao14: false,
+        fecharBalcao14: false,
+        arranqueManual: false,
+        inicioFecho: false,
+        validarEnvioEmail: false,
+        controlarTrabalhos: false,
+        saveBmbck: false,
+        abrirServidoresInternet: false,
+        imprimirCheques: false,
+        backupBm: false,
+        validarFicheiroCcln: false,
+        aplicarFicheirosCompensacao: false,
+        validarSaldoConta: false,
+        saldoNegativo: false,
+        saldoPositivo: false,
+        abrirRealTime: false,
+        verificarTransacoes: false,
+        aplicarFicheiroVisa: false,
+        cativarCartoes: false,
+        abrirBcaDireto: false,
+        abrirServidoresBanka: false,
+        atualizarTelefonesOffline: false,
+        verificarReplicacao: false,
+        enviarFicheiroCsv: false,
+        transferirFicheirosLiquidity: false,
+        percurso76921: false,
+        percurso76922: false,
+        percurso76923: false,
+        abrirServidoresTesteProducao: false,
+        impressaoCheques: false,
+        arquivarCheques: false,
+        terminoFecho: false,
+        transferirFicheirosDsi: false,
         bmjrn: false,
         grjrcv: false,
         aujrn: false,
@@ -505,7 +538,7 @@ const Taskboard = () => {
             percurso76931: "Percurso 76931 - Atualiza os alertas nos clientes com dados desatualizados"
           };
           
-          const typedTaskKey = taskKey as keyof Turno1Tasks;
+          const typedTaskKey = taskKey as keyof typeof tasks.turno1;
           processTask(taskKey, taskTexts[taskKey], tasks.turno1[typedTaskKey]);
         });
         
@@ -525,7 +558,7 @@ const Taskboard = () => {
         ];
         
         subItems.forEach(item => {
-          const itemKey = item.key as keyof Turno1Tasks;
+          const itemKey = item.key as keyof typeof tasks.turno1;
           drawCheckbox(xOffset, y - 3, tasks.turno1[itemKey]);
           doc.text(item.text, xOffset + 5, y);
           xOffset += doc.getTextWidth(item.text) + 15;
@@ -542,8 +575,8 @@ const Taskboard = () => {
             processarTelecomp: "Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR"
           };
           
-          const typedTaskKey = taskKey as keyof Turno1Tasks;
-          processTask(taskKey, taskTexts[typedTaskKey], tasks.turno1[typedTaskKey]);
+          const typedTaskKey = taskKey as keyof typeof tasks.turno1;
+          processTask(taskKey, taskTexts[taskKey], tasks.turno1[typedTaskKey]);
         });
       }
       
@@ -558,8 +591,8 @@ const Taskboard = () => {
             verificarReportes: "Verificar envio de reportes(INPS, VISTO USA, BCV, IMPC)"
           };
           
-          const typedTaskKey = taskKey as keyof Turno2Tasks;
-          processTask(taskKey, taskTexts[typedTaskKey], tasks.turno2[typedTaskKey]);
+          const typedTaskKey = taskKey as keyof typeof tasks.turno2;
+          processTask(taskKey, taskTexts[taskKey], tasks.turno2[typedTaskKey]);
         });
         
         y = checkPageSpace(y, 8);
@@ -586,8 +619,8 @@ const Taskboard = () => {
             processarTelecomp: "Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR"
           };
           
-          const typedTaskKey = taskKey as keyof Turno2Tasks;
-          processTask(taskKey, taskTexts[typedTaskKey], tasks.turno2[typedTaskKey]);
+          const typedTaskKey = taskKey as keyof typeof tasks.turno2;
+          processTask(taskKey, taskTexts[taskKey], tasks.turno2[typedTaskKey]);
         });
         
         y = checkPageSpace(y, 8);
@@ -615,8 +648,8 @@ const Taskboard = () => {
             fecharBalcoes: "Fechar os Balcoes Centrais"
           };
           
-          const typedTaskKey = taskKey as keyof Turno2Tasks;
-          processTask(taskKey, taskTexts[typedTaskKey], tasks.turno2[typedTaskKey]);
+          const typedTaskKey = taskKey as keyof typeof tasks.turno2;
+          processTask(taskKey, taskTexts[taskKey], tasks.turno2[typedTaskKey]);
         });
       }
       
@@ -633,8 +666,8 @@ const Taskboard = () => {
             validarFicheiro: "Validar ficheiro CCLN - 76853"
           };
           
-          const typedTaskKey = taskKey as keyof Turno3Tasks;
-          processTask(taskKey, taskTexts[typedTaskKey], tasks.turno3[typedTaskKey]);
+          const typedTaskKey = taskKey as keyof typeof tasks.turno3;
+          processTask(taskKey, taskTexts[taskKey], tasks.turno3[typedTaskKey]);
           
           if (taskKey === 'validarFicheiro') {
             y = checkPageSpace(y, 8);
@@ -661,8 +694,8 @@ const Taskboard = () => {
             brjrn: "BRJRN (1 tape)"
           };
           
-          const typedTaskKey = taskKey as keyof Turno3Tasks;
-          processTask(taskKey, taskTexts[typedTaskKey], tasks.turno3[typedTaskKey]);
+          const typedTaskKey = taskKey as keyof typeof tasks.turno3;
+          processTask(taskKey, taskTexts[taskKey], tasks.turno3[typedTaskKey]);
         });
       }
       
@@ -852,126 +885,7 @@ const Taskboard = () => {
                 </div>
               </div>
               
-              <div className="space-y-2">
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa2-1" 
-                    checked={tasks.turno2.datacenter}
-                    onCheckedChange={(checked) => handleTaskChange('turno2', 'datacenter', !!checked)}
-                  />
-                  <Label htmlFor="tarefa2-1" className="cursor-pointer">Verificar DATA CENTER</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa2-2"
-                    checked={tasks.turno2.sistemas}
-                    onCheckedChange={(checked) => handleTaskChange('turno2', 'sistemas', !!checked)}
-                  />
-                  <Label htmlFor="tarefa2-2" className="cursor-pointer">Verificar Sistemas: BCACV1/BCACV2</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa2-3"
-                    checked={tasks.turno2.servicos}
-                    onCheckedChange={(checked) => handleTaskChange('turno2', 'servicos', !!checked)}
-                  />
-                  <Label htmlFor="tarefa2-3" className="cursor-pointer">Verificar Serviços: Vinti24/BCADireto/Replicação/Servidor MIA</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa2-4"
-                    checked={tasks.turno2.verificarReportes}
-                    onCheckedChange={(checked) => handleTaskChange('turno2', 'verificarReportes', !!checked)}
-                  />
-                  <Label htmlFor="tarefa2-4" className="cursor-pointer">Verificar envio de reportes(INPS, VISTO USA, BCV, IMPC)</Label>
-                </div>
-                
-                <div className="border rounded-md p-3 bg-gray-50">
-                  <h4 className="font-medium mb-2">Ficheiros INPS:</h4>
-                  <div className="ml-4 space-y-2">
-                    <div className="flex items-start space-x-2">
-                      <Checkbox 
-                        id="tarefa2-5"
-                        checked={tasks.turno2.inpsProcessar}
-                        onCheckedChange={(checked) => handleTaskChange('turno2', 'inpsProcessar', !!checked)}
-                      />
-                      <Label htmlFor="tarefa2-5" className="cursor-pointer">Processar</Label>
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <Checkbox 
-                        id="tarefa2-6"
-                        checked={tasks.turno2.inpsEnviarRetorno}
-                        onCheckedChange={(checked) => handleTaskChange('turno2', 'inpsEnviarRetorno', !!checked)}
-                      />
-                      <Label htmlFor="tarefa2-6" className="cursor-pointer">Enviar Retorno</Label>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa2-7"
-                    checked={tasks.turno2.processarTef}
-                    onCheckedChange={(checked) => handleTaskChange('turno2', 'processarTef', !!checked)}
-                  />
-                  <Label htmlFor="tarefa2-7" className="cursor-pointer">Processar ficheiros TEF - ERR/RTR/RCT</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa2-8"
-                    checked={tasks.turno2.processarTelecomp}
-                    onCheckedChange={(checked) => handleTaskChange('turno2', 'processarTelecomp', !!checked)}
-                  />
-                  <Label htmlFor="tarefa2-8" className="cursor-pointer">Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR</Label>
-                </div>
-                
-                <div className="border rounded-md p-3 bg-gray-50">
-                  <h4 className="font-medium mb-2">Enviar Ficheiro:</h4>
-                  <div className="ml-4 space-y-2">
-                    <div className="flex items-start space-x-2">
-                      <Checkbox 
-                        id="tarefa2-9"
-                        checked={tasks.turno2.enviarEci}
-                        onCheckedChange={(checked) => handleTaskChange('turno2', 'enviarEci', !!checked)}
-                      />
-                      <Label htmlFor="tarefa2-9" className="cursor-pointer">ECI</Label>
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <Checkbox 
-                        id="tarefa2-10"
-                        checked={tasks.turno2.enviarEdv}
-                        onCheckedChange={(checked) => handleTaskChange('turno2', 'enviarEdv', !!checked)}
-                      />
-                      <Label htmlFor="tarefa2-10" className="cursor-pointer">EDV</Label>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa2-11"
-                    checked={tasks.turno2.validarSaco}
-                    onCheckedChange={(checked) => handleTaskChange('turno2', 'validarSaco', !!checked)}
-                  />
-                  <Label htmlFor="tarefa2-11" className="cursor-pointer">Validar Saco 1935</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa2-12"
-                    checked={tasks.turno2.verificarPendentes}
-                    onCheckedChange={(checked) => handleTaskChange('turno2', 'verificarPendentes', !!checked)}
-                  />
-                  <Label htmlFor="tarefa2-12" className="cursor-pointer">Verificar Pendentes dos Balcões</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa2-13"
-                    checked={tasks.turno2.fecharBalcoes}
-                    onCheckedChange={(checked) => handleTaskChange('turno2', 'fecharBalcoes', !!checked)}
-                  />
-                  <Label htmlFor="tarefa2-13" className="cursor-pointer">Fechar os Balcoes Centrais</Label>
-                </div>
-              </div>
+              <Turno2TasksComponent tasks={tasks.turno2} onTaskChange={(task, checked) => handleTaskChange('turno2', task, checked)} />
               
               <div className="mt-4">
                 <Label htmlFor="obs-turno2" className="font-medium">Outras Intervenções/Ocorrências:</Label>
