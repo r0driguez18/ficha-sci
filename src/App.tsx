@@ -20,6 +20,19 @@ import Settings from "./pages/Settings";
 import Documentation from "./pages/Documentation";
 import CalendarPage from './pages/sci/Calendar';
 
+// Initialize theme from localStorage
+const initTheme = () => {
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme === 'dark' || 
+      (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    document.documentElement.classList.add('dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+  }
+};
+// Execute theme initialization
+initTheme();
+
 const queryClient = new QueryClient();
 
 const App = () => (

@@ -1,12 +1,59 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { useAuth } from '@/components/auth/AuthProvider';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const Settings = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(
+    document.documentElement.classList.contains('dark')
+  );
+  
+  // Function to toggle dark mode
+  const toggleDarkMode = () => {
+    if (isDarkMode) {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    } else {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    }
+    setIsDarkMode(!isDarkMode);
+  };
+  
+  // Initialize theme from localStorage on component mount
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark' || 
+        (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+      setIsDarkMode(true);
+    } else {
+      document.documentElement.classList.remove('dark');
+      setIsDarkMode(false);
+    }
+  }, []);
+  
+  // Logout function
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      toast.success('Logout successful');
+      navigate('/auth/login');
+    } catch (error: any) {
+      toast.error(error.message || 'Error signing out');
+    }
+  };
+  
   return (
     <div className="animate-fade-in">
       <PageHeader 
@@ -26,7 +73,7 @@ const Settings = () => {
                 <Label htmlFor="dark-mode">Modo escuro</Label>
                 <p className="text-sm text-muted-foreground">Ativar tema escuro para interface</p>
               </div>
-              <Switch id="dark-mode" />
+              <Switch id="dark-mode" checked={isDarkMode} onCheckedChange={toggleDarkMode} />
             </div>
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
@@ -53,15 +100,15 @@ const Settings = () => {
           <CardContent className="space-y-4">
             <div className="space-y-1">
               <Label>Email</Label>
-              <p className="text-sm">admin@example.com</p>
+              <p className="text-sm">{user?.email || 'No email available'}</p>
             </div>
             <div className="space-y-1">
               <Label>Nome</Label>
-              <p className="text-sm">Admin User</p>
+              <p className="text-sm">{user?.user_metadata?.name || user?.email || 'User'}</p>
             </div>
             <div className="flex justify-between pt-4">
               <Button variant="outline">Alterar senha</Button>
-              <Button variant="destructive">Sair</Button>
+              <Button variant="destructive" onClick={handleLogout}>Sair</Button>
             </div>
           </CardContent>
         </Card>
