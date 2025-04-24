@@ -144,6 +144,78 @@ export const Turno1TasksComponent: React.FC<Turno1TasksProps> = ({ tasks, onTask
         />
         <Label htmlFor="processarTelecomp" className="cursor-pointer">Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR</Label>
       </div>
+      
+      <div className="flex items-start space-x-2">
+        <Checkbox 
+          id="verificarCpuMemoria"
+          checked={tasks.verificarCpuMemoria}
+          onCheckedChange={(checked) => onTaskChange('verificarCpuMemoria', !!checked)}
+        />
+        <Label htmlFor="verificarCpuMemoria" className="cursor-pointer">Verificar uso de CPU e memória em servidores principais</Label>
+      </div>
+      
+      <div className="flex items-start space-x-2">
+        <Checkbox 
+          id="enviarSegundoEtr"
+          checked={tasks.enviarSegundoEtr}
+          onCheckedChange={(checked) => onTaskChange('enviarSegundoEtr', !!checked)}
+        />
+        <Label htmlFor="enviarSegundoEtr" className="cursor-pointer">Enviar 2º Ficheiro ETR (13h:30)</Label>
+      </div>
+      
+      <div className="border rounded-md p-3 bg-gray-50 dark:bg-gray-800">
+        <div className="flex items-start space-x-2">
+          <Checkbox 
+            id="enviarFicheiroCom"
+            checked={tasks.enviarFicheiroCom}
+            onCheckedChange={(checked) => onTaskChange('enviarFicheiroCom', !!checked)}
+          />
+          <Label htmlFor="enviarFicheiroCom" className="cursor-pointer font-medium">Enviar Ficheiro COM, dias:</Label>
+        </div>
+        <div className="flex flex-wrap gap-4 mt-2 ml-6">
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id="dia01"
+              checked={tasks.dia01}
+              onCheckedChange={(checked) => onTaskChange('dia01', !!checked)}
+            />
+            <Label htmlFor="dia01" className="cursor-pointer">01</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id="dia08"
+              checked={tasks.dia08}
+              onCheckedChange={(checked) => onTaskChange('dia08', !!checked)}
+            />
+            <Label htmlFor="dia08" className="cursor-pointer">08</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id="dia16"
+              checked={tasks.dia16}
+              onCheckedChange={(checked) => onTaskChange('dia16', !!checked)}
+            />
+            <Label htmlFor="dia16" className="cursor-pointer">16</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id="dia23"
+              checked={tasks.dia23}
+              onCheckedChange={(checked) => onTaskChange('dia23', !!checked)}
+            />
+            <Label htmlFor="dia23" className="cursor-pointer">23</Label>
+          </div>
+        </div>
+      </div>
+      
+      <div className="flex items-start space-x-2">
+        <Checkbox 
+          id="atualizarCentralRisco"
+          checked={tasks.atualizarCentralRisco}
+          onCheckedChange={(checked) => onTaskChange('atualizarCentralRisco', !!checked)}
+        />
+        <Label htmlFor="atualizarCentralRisco" className="cursor-pointer">Atualizar Nº Central de Risco (Todas as Sextas-Feiras)</Label>
+      </div>
     </div>
   );
 };
