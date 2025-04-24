@@ -30,16 +30,16 @@ export const saveFileProcess = async (process: FileProcess): Promise<{ error: an
       };
     }
     
-    // Ensure required fields are provided
-    if (!process.time_registered || !process.operation_number || !process.executed_by) {
-      console.error("Erro: Hora, número de operação e executado por são campos obrigatórios");
+    // Ensure required fields are provided - now operation_number is only required if task is not provided
+    if (!process.time_registered || !process.executed_by || (!process.task && !process.operation_number)) {
+      console.error("Erro: Hora, executado por são campos obrigatórios. Número de operação é obrigatório apenas quando a tarefa não é informada.");
       return {
         data: null,
-        error: { message: "Hora, número de operação e executado por são campos obrigatórios." }
+        error: { message: "Hora e executado por são campos obrigatórios. Número de operação é obrigatório apenas quando a tarefa não é informada." }
       };
     }
     
-    // Check if a process with this operation number already exists
+    // Check if a process with this operation number already exists (only if operation_number is provided)
     if (process.operation_number) {
       const { data: existingProcess } = await supabase
         .from("file_processes")
@@ -77,23 +77,29 @@ export const saveFileProcess = async (process: FileProcess): Promise<{ error: an
     // Prepare data for insertion, ensuring we handle the fields correctly
     let insertData: any = {
       time_registered: process.time_registered,
-      operation_number: process.operation_number,
       executed_by: process.executed_by,
       is_salary: isSalary
     };
+    
+    // Add operation_number only if it exists
+    if (process.operation_number && process.operation_number.trim() !== '') {
+      insertData.operation_number = process.operation_number;
+    } else {
+      insertData.operation_number = null; // Set null instead of empty string
+    }
     
     // Only add task if it exists
     if (process.task && process.task.trim() !== '') {
       insertData.task = process.task;
     } else {
-      insertData.task = process.task || ''; // Provide empty string instead of null
+      insertData.task = null; // Set null if empty
     }
     
     // Only add as400_name if it exists
     if (process.as400_name && process.as400_name.trim() !== '') {
       insertData.as400_name = process.as400_name;
     } else {
-      insertData.as400_name = process.as400_name || ''; // Provide empty string instead of null
+      insertData.as400_name = null; // Set null if empty
     }
     
     console.log("Dados a inserir:", insertData);
