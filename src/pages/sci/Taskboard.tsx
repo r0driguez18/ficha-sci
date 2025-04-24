@@ -654,7 +654,7 @@ const Taskboard = () => {
       }
       
       if (turnKey === 'turno3') {
-        const beforeCloseTasks = ['verificarDebitos', 'tratarTapes', 'fecharServidores', 'fecharImpressoras', 'userFecho', 'validarFicheiro'];
+        const beforeCloseTasks = ['verificarDebitos', 'tratarTapes', 'fecharServidores', 'fecharImpressoras', 'userFecho', 'validarFicheiroCcln'];
         
         beforeCloseTasks.forEach(taskKey => {
           const taskTexts: Record<string, string> = {
@@ -663,13 +663,13 @@ const Taskboard = () => {
             fecharServidores: "Fechar Servidores Teste e Produção",
             fecharImpressoras: "Fechar Impressoras e balcões centrais abertos exceto 14 - DSI",
             userFecho: "User Fecho Executar o percurso 7624 Save SYS1OB",
-            validarFicheiro: "Validar ficheiro CCLN - 76853"
+            validarFicheiroCcln: "Validar ficheiro CCLN - 76853"
           };
           
           const typedTaskKey = taskKey as keyof typeof tasks.turno3;
           processTask(taskKey, taskTexts[taskKey], tasks.turno3[typedTaskKey]);
           
-          if (taskKey === 'validarFicheiro') {
+          if (taskKey === 'validarFicheiroCcln') {
             y = checkPageSpace(y, 8);
             doc.setFont("helvetica", "bold");
             doc.text("Depois do Fecho", 15, y);
@@ -985,8 +985,8 @@ const Taskboard = () => {
                 <div className="flex items-start space-x-2">
                   <Checkbox 
                     id="tarefa3-6"
-                    checked={tasks.turno3.validarFicheiro}
-                    onCheckedChange={(checked) => handleTaskChange('turno3', 'validarFicheiro', !!checked)}
+                    checked={tasks.turno3.validarFicheiroCcln}
+                    onCheckedChange={(checked) => handleTaskChange('turno3', 'validarFicheiroCcln', !!checked)}
                   />
                   <Label htmlFor="tarefa3-6" className="cursor-pointer">Validar ficheiro CCLN - 76853</Label>
                 </div>

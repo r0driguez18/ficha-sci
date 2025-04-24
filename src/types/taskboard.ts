@@ -1,3 +1,4 @@
+
 export interface TurnData {
   operator: string;
   entrada: string;
@@ -105,6 +106,10 @@ export interface Turno3Tasks {
   abrirServidoresTesteProducao: boolean;
   impressaoCheques: boolean;
   arquivarCheques: boolean;
+  
+  // Added the missing properties that are referenced in the components
+  terminoFecho: boolean;
+  transferirFicheirosDsi: boolean;
 }
 
 export interface TasksType {
