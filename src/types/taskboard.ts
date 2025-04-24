@@ -1,4 +1,3 @@
-
 export interface TurnData {
   operator: string;
   entrada: string;
@@ -22,7 +21,6 @@ export interface Turno1Tasks {
   verificarDebitos: boolean;
   processarTef: boolean;
   processarTelecomp: boolean;
-  verificarCpuMemoria: boolean;
   enviarSegundoEtr: boolean;
   enviarFicheiroCom: boolean;
   dia01: boolean;
@@ -30,6 +28,12 @@ export interface Turno1Tasks {
   dia16: boolean;
   dia23: boolean;
   atualizarCentralRisco: boolean;
+  bmjrn: boolean;
+  grjrcv: boolean;
+  aujrn: boolean;
+  mvdia1: boolean;
+  mvdia2: boolean;
+  brjrn: boolean;
 }
 
 export interface Turno2Tasks {

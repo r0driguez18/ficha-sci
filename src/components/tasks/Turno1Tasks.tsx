@@ -3,6 +3,7 @@ import React from 'react';
 import { Turno1Tasks } from '@/types/taskboard';
 import { GeneralTasks } from './turno1/GeneralTasks';
 import { EnviarTasks } from './turno1/EnviarTasks';
+import { BackupsDiferidosTasks } from './turno1/BackupsDiferidosTasks';
 import { EnviarComTasks } from './turno1/EnviarComTasks';
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -27,7 +28,11 @@ export const Turno1TasksComponent: React.FC<Turno1TasksProps> = ({ tasks, onTask
           />
           <Label htmlFor="verificarDebitos" className="cursor-pointer">Verificar Débitos/Créditos aplicados no dia Anterior</Label>
         </div>
-        
+      </div>
+      
+      <BackupsDiferidosTasks tasks={tasks} onTaskChange={onTaskChange} />
+      
+      <div className="space-y-2">
         <div className="flex items-start space-x-2">
           <Checkbox 
             id="processarTef"
@@ -44,6 +49,15 @@ export const Turno1TasksComponent: React.FC<Turno1TasksProps> = ({ tasks, onTask
             onCheckedChange={(checked) => onTaskChange('processarTelecomp', !!checked)}
           />
           <Label htmlFor="processarTelecomp" className="cursor-pointer">Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR</Label>
+        </div>
+        
+        <div className="flex items-start space-x-2">
+          <Checkbox 
+            id="enviarSegundoEtr"
+            checked={tasks.enviarSegundoEtr}
+            onCheckedChange={(checked) => onTaskChange('enviarSegundoEtr', !!checked)}
+          />
+          <Label htmlFor="enviarSegundoEtr" className="cursor-pointer">Enviar 2º Ficheiro ETR (13h:30)</Label>
         </div>
       </div>
       
