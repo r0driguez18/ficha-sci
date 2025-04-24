@@ -25,6 +25,7 @@ export const AntesFechoTasks: React.FC<AntesFechoTasksProps> = ({
       <h4 className="font-medium mb-4">Antes do Fecho</h4>
       
       <div className="space-y-2">
+        {/* Basic tasks */}
         <div className="flex items-start space-x-2">
           <Checkbox 
             id="verificarDebitos3" 
@@ -35,7 +36,7 @@ export const AntesFechoTasks: React.FC<AntesFechoTasksProps> = ({
             Verificar Débitos/Créditos Aplicados no Turno Anterior
           </Label>
         </div>
-        
+
         <div className="flex items-start space-x-2">
           <Checkbox 
             id="tratarTapes"
@@ -47,8 +48,7 @@ export const AntesFechoTasks: React.FC<AntesFechoTasksProps> = ({
           </Label>
         </div>
 
-        {/* ... Continue with other checks before Fecho Real-Time */}
-
+        {/* Continue with other checks */}
         <div className="flex items-center gap-4 my-4">
           <Checkbox 
             id="fecharRealTime"
@@ -70,8 +70,6 @@ export const AntesFechoTasks: React.FC<AntesFechoTasksProps> = ({
           </div>
         </div>
 
-        {/* ... Continue with checks between Real-Time and Inicio Fecho */}
-
         <div className="flex items-center gap-4 my-4">
           <Checkbox 
             id="inicioFecho"
@@ -92,8 +90,6 @@ export const AntesFechoTasks: React.FC<AntesFechoTasksProps> = ({
             />
           </div>
         </div>
-
-        {/* ... Continue with remaining checks */}
       </div>
     </div>
   );
