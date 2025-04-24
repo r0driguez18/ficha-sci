@@ -88,14 +88,14 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
         <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent className="pt-2">
-        <div className="h-[500px] w-full">
+        <div className="h-[400px] lg:h-[500px] w-full">
           <ChartContainer config={chartConfig}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={formattedData}
                 margin={isMobile ? 
                   { top: 20, right: 10, left: 0, bottom: 80 } : 
-                  { top: 20, right: 30, left: 20, bottom: 60 }
+                  { top: 20, right: 30, left: 40, bottom: 60 }
                 }
               >
                 <CartesianGrid strokeDasharray="3 3" />
@@ -119,7 +119,8 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
                     position: 'insideLeft',
                     style: { 
                       textAnchor: 'middle',
-                      fontSize: isMobile ? 10 : 12 
+                      fontSize: isMobile ? 10 : 12,
+                      dy: isMobile ? 0 : 50
                     }
                   }}
                 />
