@@ -41,6 +41,15 @@ export const AntesFechoTasks: React.FC<AntesFechoTasksProps> = ({ tasks, onTaskC
         />
         <Label htmlFor="backupBm" className="cursor-pointer">Backup BM – Automático</Label>
       </div>
+      
+      <div className="flex items-start space-x-2">
+        <Checkbox 
+          id="validarFicheiroCcln"
+          checked={tasks.validarFicheiroCcln}
+          onCheckedChange={(checked) => onTaskChange('validarFicheiroCcln', !!checked)}
+        />
+        <Label htmlFor="validarFicheiroCcln" className="cursor-pointer">Validar ficheiro CCLN - 76853</Label>
+      </div>
     </div>
   );
 };
