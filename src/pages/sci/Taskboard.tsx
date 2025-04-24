@@ -251,24 +251,21 @@ const Taskboard = () => {
   const saveTableRowsToSupabase = async () => {
     try {
       const rowsToSave = tableRows.filter(row => {
-        const hasRequiredCommonFields = 
+        const hasCommonRequiredFields = 
           row.hora.trim() !== '' && 
-          row.operacao.trim() !== '' && 
           row.executado.trim() !== '';
         
-        const option1Valid = 
-          hasRequiredCommonFields && 
-          row.tarefa.trim() !== '';
-                           
-        const option2Valid = 
-          hasRequiredCommonFields && 
-          row.nomeAs.trim() !== '';
-                           
-        return option1Valid || option2Valid;
+        if (row.nomeAs.trim() !== '') {
+          return hasCommonRequiredFields && 
+                 row.operacao.trim() !== '' &&
+                 /^\d{9}$/.test(row.operacao);
+        }
+        
+        return hasCommonRequiredFields && row.tarefa.trim() !== '';
       });
       
       if (rowsToSave.length === 0) {
-        toast.error("Nenhum dado válido para salvar. Preencha pelo menos Hora, (Tarefa OU Nome AS400), Nº Operação e Executado Por.");
+        toast.error("Preencha pelo menos: Hora, (Tarefa OU Nome AS400 com Nº Operação) e Executado Por.");
         return { savedCount: 0, duplicateCount: 0 };
       }
       
@@ -1296,10 +1293,10 @@ const Taskboard = () => {
                             type="text"
                             value={row.operacao}
                             onChange={(e) => handleInputChange(row.id, 'operacao', e.target.value)}
-                            className={row.operacao && !/^\d{9}$/.test(row.operacao) ? "border-red-500" : ""}
+                            className={row.nomeAs && row.operacao && !/^\d{9}$/.test(row.operacao) ? "border-red-500" : ""}
                           />
                         </FormControl>
-                        {row.operacao && !/^\d{9}$/.test(row.operacao) && (
+                        {row.nomeAs && row.operacao && !/^\d{9}$/.test(row.operacao) && (
                           <p className="text-sm text-red-500 mt-1">
                             Digite exatamente 9 dígitos numéricos
                           </p>
