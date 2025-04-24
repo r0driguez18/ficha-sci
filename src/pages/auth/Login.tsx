@@ -38,9 +38,13 @@ const Login = () => {
     setLoading(true);
     
     try {
+      // Using signUp with email and password instead of anonymous sign-up
       const { error } = await supabase.auth.signUp({
         email,
-        password
+        password,
+        options: {
+          emailRedirectTo: window.location.origin
+        }
       });
 
       if (error) throw error;
