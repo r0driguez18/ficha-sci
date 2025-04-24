@@ -20,6 +20,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Turno1TasksComponent } from '@/components/tasks/Turno1Tasks';
 import { Turno2TasksComponent } from '@/components/tasks/Turno2Tasks';
+import { Turno3TasksComponent } from '@/components/tasks/Turno3Tasks';
 import { TasksType, TurnDataType, TurnKey } from '@/types/taskboard';
 
 export interface TableRow {
@@ -64,6 +65,7 @@ const Taskboard = () => {
     turno3: { operator: '', entrada: '', saida: '', observations: '' }
   });
 
+  // Updated tasks state to remove references to non-existent properties
   const [tasks, setTasks] = useState<TasksType>({
     turno1: {
       datacenter: false,
@@ -113,6 +115,7 @@ const Taskboard = () => {
       fecharBalcoes: false
     },
     turno3: {
+      // Antes do Fecho
       verificarDebitos: false,
       tratarTapes: false,
       fecharServidores: false,
@@ -139,6 +142,8 @@ const Taskboard = () => {
       abrirServidoresInternet: false,
       imprimirCheques: false,
       backupBm: false,
+      
+      // Depois do Fecho
       validarFicheiroCcln: false,
       aplicarFicheirosCompensacao: false,
       validarSaldoConta: false,
@@ -161,26 +166,34 @@ const Taskboard = () => {
       impressaoCheques: false,
       arquivarCheques: false,
       terminoFecho: false,
-      transferirFicheirosDsi: false,
-      bmjrn: false,
-      grjrcv: false,
-      aujrn: false,
-      mvdia1: false,
-      mvdia2: false,
-      brjrn: false
+      transferirFicheirosDsi: false
     }
   });
+
+  // Time-related states for Turno3
+  const [fechoRealTime, setFechoRealTime] = useState('');
+  const [inicioFecho, setInicioFecho] = useState('');
+  const [aberturaRealTime, setAberturaRealTime] = useState('');
+  const [terminoFecho, setTerminoFecho] = useState('');
 
   useEffect(() => {
     const savedDate = localStorage.getItem('taskboard-date');
     const savedTurnData = localStorage.getItem('taskboard-turnData');
     const savedTasks = localStorage.getItem('taskboard-tasks');
     const savedTableRows = localStorage.getItem('taskboard-tableRows');
+    const savedFechoRealTime = localStorage.getItem('taskboard-fechoRealTime');
+    const savedInicioFecho = localStorage.getItem('taskboard-inicioFecho');
+    const savedAberturaRealTime = localStorage.getItem('taskboard-aberturaRealTime');
+    const savedTerminoFecho = localStorage.getItem('taskboard-terminoFecho');
 
     if (savedDate) setDate(savedDate);
     if (savedTurnData) setTurnData(JSON.parse(savedTurnData));
     if (savedTasks) setTasks(JSON.parse(savedTasks));
     if (savedTableRows) setTableRows(JSON.parse(savedTableRows));
+    if (savedFechoRealTime) setFechoRealTime(savedFechoRealTime);
+    if (savedInicioFecho) setInicioFecho(savedInicioFecho);
+    if (savedAberturaRealTime) setAberturaRealTime(savedAberturaRealTime);
+    if (savedTerminoFecho) setTerminoFecho(savedTerminoFecho);
   }, []);
 
   useEffect(() => {
@@ -188,7 +201,11 @@ const Taskboard = () => {
     localStorage.setItem('taskboard-turnData', JSON.stringify(turnData));
     localStorage.setItem('taskboard-tasks', JSON.stringify(tasks));
     localStorage.setItem('taskboard-tableRows', JSON.stringify(tableRows));
-  }, [date, turnData, tasks, tableRows]);
+    localStorage.setItem('taskboard-fechoRealTime', fechoRealTime);
+    localStorage.setItem('taskboard-inicioFecho', inicioFecho);
+    localStorage.setItem('taskboard-aberturaRealTime', aberturaRealTime);
+    localStorage.setItem('taskboard-terminoFecho', terminoFecho);
+  }, [date, turnData, tasks, tableRows, fechoRealTime, inicioFecho, aberturaRealTime, terminoFecho]);
 
   const handleTaskChange = (turno: TurnKey, task: string, checked: boolean) => {
     setTasks({
@@ -208,6 +225,25 @@ const Taskboard = () => {
         [field]: value
       }
     });
+  };
+
+  const handleTimeChange = (field: string, value: string) => {
+    switch (field) {
+      case 'fechoRealTime':
+        setFechoRealTime(value);
+        break;
+      case 'inicioFecho':
+        setInicioFecho(value);
+        break;
+      case 'aberturaRealTime':
+        setAberturaRealTime(value);
+        break;
+      case 'terminoFecho':
+        setTerminoFecho(value);
+        break;
+      default:
+        break;
+    }
   };
 
   const addTableRow = () => {
@@ -425,21 +461,23 @@ const Taskboard = () => {
         impressaoCheques: false,
         arquivarCheques: false,
         terminoFecho: false,
-        transferirFicheirosDsi: false,
-        bmjrn: false,
-        grjrcv: false,
-        aujrn: false,
-        mvdia1: false,
-        mvdia2: false,
-        brjrn: false
+        transferirFicheirosDsi: false
       }
     });
+    setFechoRealTime('');
+    setInicioFecho('');
+    setAberturaRealTime('');
+    setTerminoFecho('');
     setTableRows([{ id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '' }]);
     
     localStorage.removeItem('taskboard-date');
     localStorage.removeItem('taskboard-turnData');
     localStorage.removeItem('taskboard-tasks');
     localStorage.removeItem('taskboard-tableRows');
+    localStorage.removeItem('taskboard-fechoRealTime');
+    localStorage.removeItem('taskboard-inicioFecho');
+    localStorage.removeItem('taskboard-aberturaRealTime');
+    localStorage.removeItem('taskboard-terminoFecho');
     
     toast.success('Formulário reiniciado com sucesso!');
   };
@@ -675,50 +713,29 @@ const Taskboard = () => {
           }
         });
         
-        y = checkPageSpace(y, 8);
+        y = checkPageSpace(y, 25);
         doc.setFont("helvetica", "bold");
-        doc.text("Backups Diferidos", 15, y);
-        y += 8;
+        doc.text("Outras Intervenções/Ocorrências:", 15, y);
+        y += 7;
         
-        const backupTasks = ['bmjrn', 'grjrcv', 'aujrn', 'mvdia1', 'mvdia2', 'brjrn'];
+        const observations = turn.observations;
         
-        backupTasks.forEach(taskKey => {
-          const taskTexts: Record<string, string> = {
-            bmjrn: "BMJRN (2 tapes/alterar 1 por mês/inicializar no início do mês)",
-            grjrcv: "GRJRCV (1 tape)",
-            aujrn: "AUJRN (1 tape)",
-            mvdia1: "MVDIA1 (eliminar obj. após save N)",
-            mvdia2: "MVDIA2 (eliminar obj. após save S)",
-            brjrn: "BRJRN (1 tape)"
-          };
+        if (observations && observations.trim() !== '') {
+          doc.setDrawColor(150, 150, 150);
+          doc.setFillColor(255, 255, 255);
+          const textAreaHeight = 20;
+          doc.rect(15, y, pageWidth - 30, textAreaHeight, 'S');
           
-          const typedTaskKey = taskKey as keyof typeof tasks.turno3;
-          processTask(taskKey, taskTexts[taskKey], tasks.turno3[typedTaskKey]);
-        });
-      }
-      
-      y = checkPageSpace(y, 25);
-      doc.setFont("helvetica", "bold");
-      doc.text("Outras Intervenções/Ocorrências:", 15, y);
-      y += 7;
-      
-      const observations = turn.observations;
-      
-      if (observations && observations.trim() !== '') {
-        doc.setDrawColor(150, 150, 150);
-        doc.setFillColor(255, 255, 255);
-        const textAreaHeight = 20;
-        doc.rect(15, y, pageWidth - 30, textAreaHeight, 'S');
-        
-        const observationLines = doc.splitTextToSize(observations, pageWidth - 35);
-        doc.text(observationLines, 17, y + 5);
-        y += textAreaHeight + 10;
-      } else {
-        doc.setDrawColor(150, 150, 150);
-        doc.setFillColor(255, 255, 255);
-        const textAreaHeight = 20;
-        doc.rect(15, y, pageWidth - 30, textAreaHeight, 'S');
-        y += textAreaHeight + 10;
+          const observationLines = doc.splitTextToSize(observations, pageWidth - 35);
+          doc.text(observationLines, 17, y + 5);
+          y += textAreaHeight + 10;
+        } else {
+          doc.setDrawColor(150, 150, 150);
+          doc.setFillColor(255, 255, 255);
+          const textAreaHeight = 20;
+          doc.rect(15, y, pageWidth - 30, textAreaHeight, 'S');
+          y += textAreaHeight + 10;
+        }
       }
     });
     
@@ -764,398 +781,3 @@ const Taskboard = () => {
             <Button 
               variant="outline" 
               onClick={() => navigate('/sci/calendar')}
-              className="mr-2"
-            >
-              <CalendarIcon className="h-4 w-4 mr-2" /> Calendário
-            </Button>
-            <Label htmlFor="date" className="whitespace-nowrap">Data:</Label>
-            <Input
-              type="date"
-              id="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="w-auto"
-              required
-            />
-          </div>
-        </div>
-
-        <Tabs defaultValue="turno1" className="w-full">
-          <TabsList className="w-full grid grid-cols-3">
-            <TabsTrigger value="turno1">Turno 1</TabsTrigger>
-            <TabsTrigger value="turno2">Turno 2</TabsTrigger>
-            <TabsTrigger value="turno3">Turno 3</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="turno1">
-            <div className="p-4 border rounded-md mb-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div>
-                  <Label htmlFor="operador-turno1">Operador:</Label>
-                  <Select 
-                    value={turnData.turno1.operator}
-                    onValueChange={(value) => handleTurnDataChange('turno1', 'operator', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o operador" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {operatorsList.map((operator) => (
-                        <SelectItem key={operator.value} value={operator.value}>
-                          {operator.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="entrada-turno1">Entrada:</Label>
-                  <Input 
-                    type="time" 
-                    id="entrada-turno1" 
-                    value={turnData.turno1.entrada}
-                    onChange={(e) => handleTurnDataChange('turno1', 'entrada', e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="saida-turno1">Saída:</Label>
-                  <Input 
-                    type="time" 
-                    id="saida-turno1" 
-                    value={turnData.turno1.saida}
-                    onChange={(e) => handleTurnDataChange('turno1', 'saida', e.target.value)}
-                  />
-                </div>
-              </div>
-              
-              <Turno1TasksComponent tasks={tasks.turno1} onTaskChange={(task, checked) => handleTaskChange('turno1', task, checked)} />
-              
-              <div className="mt-4">
-                <Label htmlFor="obs-turno1" className="font-medium">Outras Intervenções/Ocorrências:</Label>
-                <Textarea 
-                  id="obs-turno1" 
-                  className="mt-2"
-                  value={turnData.turno1.observations}
-                  onChange={(e) => handleTurnDataChange('turno1', 'observations', e.target.value)}
-                />
-              </div>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="turno2">
-            <div className="p-4 border rounded-md mb-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div>
-                  <Label htmlFor="operador-turno2">Operador:</Label>
-                  <Select 
-                    value={turnData.turno2.operator}
-                    onValueChange={(value) => handleTurnDataChange('turno2', 'operator', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o operador" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {operatorsList.map((operator) => (
-                        <SelectItem key={operator.value} value={operator.value}>
-                          {operator.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="entrada-turno2">Entrada:</Label>
-                  <Input 
-                    type="time" 
-                    id="entrada-turno2" 
-                    value={turnData.turno2.entrada}
-                    onChange={(e) => handleTurnDataChange('turno2', 'entrada', e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="saida-turno2">Saída:</Label>
-                  <Input 
-                    type="time" 
-                    id="saida-turno2" 
-                    value={turnData.turno2.saida}
-                    onChange={(e) => handleTurnDataChange('turno2', 'saida', e.target.value)}
-                  />
-                </div>
-              </div>
-              
-              <Turno2TasksComponent tasks={tasks.turno2} onTaskChange={(task, checked) => handleTaskChange('turno2', task, checked)} />
-              
-              <div className="mt-4">
-                <Label htmlFor="obs-turno2" className="font-medium">Outras Intervenções/Ocorrências:</Label>
-                <Textarea 
-                  id="obs-turno2" 
-                  className="mt-2"
-                  value={turnData.turno2.observations}
-                  onChange={(e) => handleTurnDataChange('turno2', 'observations', e.target.value)}
-                />
-              </div>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="turno3">
-            <div className="p-4 border rounded-md mb-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div>
-                  <Label htmlFor="operador-turno3">Operador:</Label>
-                  <Select 
-                    value={turnData.turno3.operator}
-                    onValueChange={(value) => handleTurnDataChange('turno3', 'operator', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o operador" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {operatorsList.map((operator) => (
-                        <SelectItem key={operator.value} value={operator.value}>
-                          {operator.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="entrada-turno3">Entrada:</Label>
-                  <Input 
-                    type="time" 
-                    id="entrada-turno3" 
-                    value={turnData.turno3.entrada}
-                    onChange={(e) => handleTurnDataChange('turno3', 'entrada', e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="saida-turno3">Saída:</Label>
-                  <Input 
-                    type="time" 
-                    id="saida-turno3" 
-                    value={turnData.turno3.saida}
-                    onChange={(e) => handleTurnDataChange('turno3', 'saida', e.target.value)}
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <h4 className="font-medium mb-2">Antes do Fecho:</h4>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa3-1" 
-                    checked={tasks.turno3.verificarDebitos}
-                    onCheckedChange={(checked) => handleTaskChange('turno3', 'verificarDebitos', !!checked)}
-                  />
-                  <Label htmlFor="tarefa3-1" className="cursor-pointer">Verificar Débitos/Créditos Aplicados no Turno Anterior</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa3-2"
-                    checked={tasks.turno3.tratarTapes}
-                    onCheckedChange={(checked) => handleTaskChange('turno3', 'tratarTapes', !!checked)}
-                  />
-                  <Label htmlFor="tarefa3-2" className="cursor-pointer">Tratar e trocar Tapes BM, BMBCK – percurso 7622</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa3-3"
-                    checked={tasks.turno3.fecharServidores}
-                    onCheckedChange={(checked) => handleTaskChange('turno3', 'fecharServidores', !!checked)}
-                  />
-                  <Label htmlFor="tarefa3-3" className="cursor-pointer">Fechar Servidores Teste e Produção</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa3-4"
-                    checked={tasks.turno3.fecharImpressoras}
-                    onCheckedChange={(checked) => handleTaskChange('turno3', 'fecharImpressoras', !!checked)}
-                  />
-                  <Label htmlFor="tarefa3-4" className="cursor-pointer">Fechar Impressoras e balcões centrais abertos exceto 14 - DSI</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa3-5"
-                    checked={tasks.turno3.userFecho}
-                    onCheckedChange={(checked) => handleTaskChange('turno3', 'userFecho', !!checked)}
-                  />
-                  <Label htmlFor="tarefa3-5" className="cursor-pointer">User Fecho Executar o percurso 7624 Save SYS1OB</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa3-6"
-                    checked={tasks.turno3.validarFicheiroCcln}
-                    onCheckedChange={(checked) => handleTaskChange('turno3', 'validarFicheiroCcln', !!checked)}
-                  />
-                  <Label htmlFor="tarefa3-6" className="cursor-pointer">Validar ficheiro CCLN - 76853</Label>
-                </div>
-                
-                <h4 className="font-medium mt-4 mb-2">Backups Diferidos:</h4>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa3-7"
-                    checked={tasks.turno3.bmjrn}
-                    onCheckedChange={(checked) => handleTaskChange('turno3', 'bmjrn', !!checked)}
-                  />
-                  <Label htmlFor="tarefa3-7" className="cursor-pointer">BMJRN (2 tapes/alterar 1 por mês/inicializar no início do mês)</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa3-8"
-                    checked={tasks.turno3.grjrcv}
-                    onCheckedChange={(checked) => handleTaskChange('turno3', 'grjrcv', !!checked)}
-                  />
-                  <Label htmlFor="tarefa3-8" className="cursor-pointer">GRJRCV (1 tape)</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa3-9"
-                    checked={tasks.turno3.aujrn}
-                    onCheckedChange={(checked) => handleTaskChange('turno3', 'aujrn', !!checked)}
-                  />
-                  <Label htmlFor="tarefa3-9" className="cursor-pointer">AUJRN (1 tape)</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa3-10"
-                    checked={tasks.turno3.mvdia1}
-                    onCheckedChange={(checked) => handleTaskChange('turno3', 'mvdia1', !!checked)}
-                  />
-                  <Label htmlFor="tarefa3-10" className="cursor-pointer">MVDIA1 (eliminar obj. após save N)</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa3-11"
-                    checked={tasks.turno3.mvdia2}
-                    onCheckedChange={(checked) => handleTaskChange('turno3', 'mvdia2', !!checked)}
-                  />
-                  <Label htmlFor="tarefa3-11" className="cursor-pointer">MVDIA2 (eliminar obj. após save S)</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa3-12"
-                    checked={tasks.turno3.brjrn}
-                    onCheckedChange={(checked) => handleTaskChange('turno3', 'brjrn', !!checked)}
-                  />
-                  <Label htmlFor="tarefa3-12" className="cursor-pointer">BRJRN (1 tape)</Label>
-                </div>
-              </div>
-              
-              <div className="mt-4">
-                <Label htmlFor="obs-turno3" className="font-medium">Outras Intervenções/Ocorrências:</Label>
-                <Textarea 
-                  id="obs-turno3" 
-                  className="mt-2"
-                  value={turnData.turno3.observations}
-                  onChange={(e) => handleTurnDataChange('turno3', 'observations', e.target.value)}
-                />
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
-        
-        <div className="mt-6">
-          <h3 className="text-lg font-semibold mb-3">Processamento de Ficheiros</h3>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>HORA</TableHead>
-                  <TableHead>TAREFAS</TableHead>
-                  <TableHead>NOME AS/400</TableHead>
-                  <TableHead>Nº OPERAÇÃO</TableHead>
-                  <TableHead>EXECUTADO POR</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {tableRows.map(row => (
-                  <TableRow key={row.id}>
-                    <TableCell>
-                      <Input
-                        type="time"
-                        value={row.hora}
-                        onChange={(e) => handleInputChange(row.id, 'hora', e.target.value)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="text"
-                        value={row.tarefa}
-                        onChange={(e) => handleInputChange(row.id, 'tarefa', e.target.value)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="text"
-                        value={row.nomeAs}
-                        onChange={(e) => handleInputChange(row.id, 'nomeAs', e.target.value)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <FormItem>
-                        <FormControl>
-                          <Input
-                            type="text"
-                            value={row.operacao}
-                            onChange={(e) => handleInputChange(row.id, 'operacao', e.target.value)}
-                            className={row.nomeAs && row.operacao && !/^\d{9}$/.test(row.operacao) ? "border-red-500" : ""}
-                          />
-                        </FormControl>
-                        {row.nomeAs && row.operacao && !/^\d{9}$/.test(row.operacao) && (
-                          <p className="text-sm text-red-500 mt-1">
-                            Digite exatamente 9 dígitos numéricos
-                          </p>
-                        )}
-                      </FormItem>
-                    </TableCell>
-                    <TableCell>
-                      <Select
-                        value={row.executado}
-                        onValueChange={(value) => handleInputChange(row.id, 'executado', value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o operador" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {operatorsList.map((operator) => (
-                            <SelectItem key={operator.value} value={operator.value}>
-                              {operator.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-          
-          <div className="flex gap-2 mt-2">
-            <Button variant="outline" size="sm" onClick={addTableRow}>
-              <PlusCircle className="h-4 w-4 mr-2" /> Adicionar Linha
-            </Button>
-            <Button variant="outline" size="sm" onClick={removeTableRow} disabled={tableRows.length <= 1}>
-              <Trash2 className="h-4 w-4 mr-2" /> Remover Linha
-            </Button>
-          </div>
-        </div>
-        
-        <div className="mt-6 flex justify-between">
-          <div className="space-x-2">
-            <Button onClick={handleSave}>
-              <Save className="h-4 w-4 mr-2" /> Salvar
-            </Button>
-            <Button variant="outline" onClick={resetForm}>
-              <RotateCcw className="h-4 w-4 mr-2" /> Reiniciar
-            </Button>
-          </div>
-          <Button onClick={generatePDF}>
-            <FileDown className="h-4 w-4 mr-2" /> Gerar PDF
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-export default Taskboard;
