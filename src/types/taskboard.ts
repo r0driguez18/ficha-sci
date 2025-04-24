@@ -41,14 +41,16 @@ export interface Turno2Tasks {
   sistemas: boolean;
   servicos: boolean;
   verificarReportes: boolean;
+  verificarDebitos: boolean;
   inpsProcessar: boolean;
   inpsEnviarRetorno: boolean;
   processarTef: boolean;
   processarTelecomp: boolean;
   enviarEci: boolean;
   enviarEdv: boolean;
-  validarSaco: boolean;
+  confirmarSisp: boolean;
   verificarPendentes: boolean;
+  validarSaco: boolean;
   fecharBalcoes: boolean;
 }
 
