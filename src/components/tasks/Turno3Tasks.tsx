@@ -12,6 +12,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({ tasks, onTask
   return (
     <div className="space-y-2">
       <h4 className="font-medium mb-4">Antes do Fecho</h4>
+      
       <div className="flex items-start space-x-2">
         <Checkbox 
           id="verificarDebitos3" 
