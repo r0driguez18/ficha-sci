@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,38 +9,12 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useTheme } from '@/hooks/use-theme';
 
 const Settings = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(
-    document.documentElement.classList.contains('dark')
-  );
-  
-  // Function to toggle dark mode
-  const toggleDarkMode = () => {
-    if (isDarkMode) {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    } else {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    }
-    setIsDarkMode(!isDarkMode);
-  };
-  
-  // Initialize theme from localStorage on component mount
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark' || 
-        (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      document.documentElement.classList.add('dark');
-      setIsDarkMode(true);
-    } else {
-      document.documentElement.classList.remove('dark');
-      setIsDarkMode(false);
-    }
-  }, []);
+  const { isDarkMode, toggleTheme } = useTheme();
   
   // Logout function
   const handleLogout = async () => {
@@ -73,7 +47,7 @@ const Settings = () => {
                 <Label htmlFor="dark-mode">Modo escuro</Label>
                 <p className="text-sm text-muted-foreground">Ativar tema escuro para interface</p>
               </div>
-              <Switch id="dark-mode" checked={isDarkMode} onCheckedChange={toggleDarkMode} />
+              <Switch id="dark-mode" checked={isDarkMode} onCheckedChange={toggleTheme} />
             </div>
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
