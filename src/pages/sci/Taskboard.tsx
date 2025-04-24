@@ -65,7 +65,6 @@ const Taskboard = () => {
     turno3: { operator: '', entrada: '', saida: '', observations: '' }
   });
 
-  // Updated tasks state to remove references to non-existent properties
   const [tasks, setTasks] = useState<TasksType>({
     turno1: {
       datacenter: false,
@@ -115,7 +114,6 @@ const Taskboard = () => {
       fecharBalcoes: false
     },
     turno3: {
-      // Antes do Fecho
       verificarDebitos: false,
       tratarTapes: false,
       fecharServidores: false,
@@ -142,8 +140,6 @@ const Taskboard = () => {
       abrirServidoresInternet: false,
       imprimirCheques: false,
       backupBm: false,
-      
-      // Depois do Fecho
       validarFicheiroCcln: false,
       aplicarFicheirosCompensacao: false,
       validarSaldoConta: false,
@@ -170,7 +166,6 @@ const Taskboard = () => {
     }
   });
 
-  // Time-related states for Turno3
   const [fechoRealTime, setFechoRealTime] = useState('');
   const [inicioFecho, setInicioFecho] = useState('');
   const [aberturaRealTime, setAberturaRealTime] = useState('');
@@ -781,3 +776,12 @@ const Taskboard = () => {
             <Button 
               variant="outline" 
               onClick={() => navigate('/sci/calendar')}
+            >
+              Calendário
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
