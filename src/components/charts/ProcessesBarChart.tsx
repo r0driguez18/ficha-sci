@@ -24,7 +24,8 @@ interface ProcessesChartProps {
 const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Processos por Mês" }) => {
   const { isDarkMode } = useTheme();
   
-  const chartConfig = {
+  // Updated color configuration with better contrast for dark mode
+  const chartConfig = React.useMemo(() => ({
     salary: {
       color: isDarkMode ? "#FF9B5E" : "#FF8042"
     },
@@ -49,7 +50,7 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
     other: {
       color: isDarkMode ? "#8EA5B4" : "#607D8B"
     }
-  };
+  }), [isDarkMode]);
 
   const formattedData = React.useMemo(() => {
     if (!data || data.length === 0) return [];
@@ -111,13 +112,13 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
                   tick={{ 
                     fontSize: isMobile ? 10 : 12,
                     dx: isMobile ? -5 : 0,
-                    fill: 'currentColor'
+                    fill: isDarkMode ? '#e5e7eb' : '#374151' // Dynamic text color
                   }}
                 />
                 <YAxis 
                   tick={{ 
                     fontSize: isMobile ? 10 : 12,
-                    fill: 'currentColor'
+                    fill: isDarkMode ? '#e5e7eb' : '#374151' // Dynamic text color
                   }}
                   width={isMobile ? 35 : 60}
                   label={{ 
@@ -128,7 +129,7 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
                       textAnchor: 'middle',
                       fontSize: isMobile ? 10 : 12,
                       dy: isMobile ? 0 : 50,
-                      fill: 'currentColor'
+                      fill: isDarkMode ? '#e5e7eb' : '#374151' // Dynamic text color
                     }
                   }}
                 />
@@ -136,11 +137,11 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
                       return (
-                        <div className="p-2 bg-background border rounded shadow-lg w-auto min-w-32">
-                          <p className="text-xs font-medium text-center">{payload[0]?.payload.formattedMonth}</p>
+                        <div className={`p-2 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border rounded shadow-lg w-auto min-w-32`}>
+                          <p className={`text-xs font-medium text-center ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{payload[0]?.payload.formattedMonth}</p>
                           <div className="flex justify-between items-center mt-1">
-                            <span className="text-xs text-muted-foreground">Valor:</span>
-                            <span className="text-xs font-medium">{payload[0]?.value?.toLocaleString()}</span>
+                            <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Valor:</span>
+                            <span className={`text-xs font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{payload[0]?.value?.toLocaleString()}</span>
                           </div>
                         </div>
                       );
