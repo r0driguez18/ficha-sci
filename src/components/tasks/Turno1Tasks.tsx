@@ -45,24 +45,6 @@ export const Turno1TasksComponent: React.FC<Turno1TasksProps> = ({ tasks, onTask
           />
           <Label htmlFor="processarTelecomp" className="cursor-pointer">Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR</Label>
         </div>
-        
-        <div className="flex items-start space-x-2">
-          <Checkbox 
-            id="verificarCpuMemoria"
-            checked={tasks.verificarCpuMemoria}
-            onCheckedChange={(checked) => onTaskChange('verificarCpuMemoria', !!checked)}
-          />
-          <Label htmlFor="verificarCpuMemoria" className="cursor-pointer">Verificar uso de CPU e memória em servidores principais</Label>
-        </div>
-        
-        <div className="flex items-start space-x-2">
-          <Checkbox 
-            id="enviarSegundoEtr"
-            checked={tasks.enviarSegundoEtr}
-            onCheckedChange={(checked) => onTaskChange('enviarSegundoEtr', !!checked)}
-          />
-          <Label htmlFor="enviarSegundoEtr" className="cursor-pointer">Enviar 2º Ficheiro ETR (13h:30)</Label>
-        </div>
       </div>
       
       <EnviarComTasks tasks={tasks} onTaskChange={onTaskChange} />
