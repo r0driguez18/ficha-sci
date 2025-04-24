@@ -21,7 +21,7 @@ import * as z from "zod";
 import { Turno1TasksComponent } from '@/components/tasks/Turno1Tasks';
 import { Turno2TasksComponent } from '@/components/tasks/Turno2Tasks';
 import { Turno3TasksComponent } from '@/components/tasks/Turno3Tasks';
-import { TasksType, TurnDataType, TurnKey } from '@/types/taskboard';
+import { TasksType, TurnDataType, TurnKey, TableRow } from '@/types/taskboard';
 
 const operatorsList = [
   { value: "joao", label: "João" },

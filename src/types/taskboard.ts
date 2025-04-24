@@ -6,6 +6,15 @@ export interface TurnData {
   observations: string;
 }
 
+export interface TableRow {
+  id: number;
+  hora: string;
+  tarefa: string;
+  nomeAs: string;
+  operacao: string;
+  executado: string;
+}
+
 export interface Turno1Tasks {
   datacenter: boolean;
   sistemas: boolean;
