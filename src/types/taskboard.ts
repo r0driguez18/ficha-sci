@@ -61,7 +61,6 @@ export interface Turno3Tasks {
   fecharServidores: boolean;
   fecharImpressoras: boolean;
   userFecho: boolean;
-  validarFicheiro: boolean;
   listaRequisicoesCheques: boolean;
   cancelarCartoesClientes: boolean;
   prepararEnviarAsc: boolean;
@@ -106,16 +105,6 @@ export interface Turno3Tasks {
   abrirServidoresTesteProducao: boolean;
   impressaoCheques: boolean;
   arquivarCheques: boolean;
-  terminoFecho: boolean;
-  transferirFicheirosDsi: boolean;
-  
-  // Backups Diferidos
-  bmjrn: boolean;
-  grjrcv: boolean;
-  aujrn: boolean;
-  mvdia1: boolean;
-  mvdia2: boolean;
-  brjrn: boolean;
 }
 
 export interface TasksType {
