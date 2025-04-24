@@ -2,8 +2,9 @@
 import React, { useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useTheme } from '@/hooks/use-theme';
 
 interface ProcessesChartProps {
   data: Array<{
@@ -21,30 +22,32 @@ interface ProcessesChartProps {
 }
 
 const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Processos por Mês" }) => {
+  const { isDarkMode } = useTheme();
+  
   const chartConfig = {
     salary: {
-      color: "#FF8042"
+      color: isDarkMode ? "#FF9B5E" : "#FF8042"
     },
     ga_processes: {
-      color: "#0088FE"
+      color: isDarkMode ? "#54A9FF" : "#0088FE"
     },
     im_processes: {
-      color: "#00C49F"
+      color: isDarkMode ? "#22DDAA" : "#00C49F"
     },
     ena_processes: {
-      color: "#FFBB28"
+      color: isDarkMode ? "#FFDD4A" : "#FFBB28"
     },
     inp_processes: {
-      color: "#FF6B6B"
+      color: isDarkMode ? "#FF8A8A" : "#FF6B6B"
     },
     bn_processes: {
-      color: "#4CAF50"
+      color: isDarkMode ? "#6ECD6E" : "#4CAF50"
     },
     fcvt_processes: {
-      color: "#9C27B0"
+      color: isDarkMode ? "#C167D9" : "#9C27B0"
     },
     other: {
-      color: "#607D8B"
+      color: isDarkMode ? "#8EA5B4" : "#607D8B"
     }
   };
 
@@ -76,7 +79,7 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
           <CardTitle>{title}</CardTitle>
         </CardHeader>
         <CardContent className="flex items-center justify-center h-80">
-          <p className="text-gray-500">Nenhum dado disponível. Adicione alguns processos para visualizá-los aqui.</p>
+          <p className="text-muted-foreground">Nenhum dado disponível. Adicione alguns processos para visualizá-los aqui.</p>
         </CardContent>
       </Card>
     );
@@ -98,7 +101,7 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
                   { top: 20, right: 30, left: 40, bottom: 60 }
                 }
               >
-                <CartesianGrid strokeDasharray="3 3" />
+                <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.3} />
                 <XAxis 
                   dataKey="formattedMonth" 
                   angle={-45}
@@ -107,11 +110,15 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
                   interval={0}
                   tick={{ 
                     fontSize: isMobile ? 10 : 12,
-                    dx: isMobile ? -5 : 0
+                    dx: isMobile ? -5 : 0,
+                    fill: 'currentColor'
                   }}
                 />
                 <YAxis 
-                  tick={{ fontSize: isMobile ? 10 : 12 }}
+                  tick={{ 
+                    fontSize: isMobile ? 10 : 12,
+                    fill: 'currentColor'
+                  }}
                   width={isMobile ? 35 : 60}
                   label={{ 
                     value: 'Quantidade de Processos', 
@@ -120,7 +127,8 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
                     style: { 
                       textAnchor: 'middle',
                       fontSize: isMobile ? 10 : 12,
-                      dy: isMobile ? 0 : 50
+                      dy: isMobile ? 0 : 50,
+                      fill: 'currentColor'
                     }
                   }}
                 />
@@ -128,7 +136,7 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
                       return (
-                        <div className={`p-2 bg-white border rounded shadow ${isMobile ? "w-24" : "w-32"}`}>
+                        <div className="p-2 bg-background border rounded shadow-lg w-auto min-w-32">
                           <p className="text-xs font-medium text-center">{payload[0]?.payload.formattedMonth}</p>
                           <div className="flex justify-between items-center mt-1">
                             <span className="text-xs text-muted-foreground">Valor:</span>

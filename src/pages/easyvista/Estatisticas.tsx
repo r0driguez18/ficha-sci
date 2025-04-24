@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import ProcessesTable from '@/components/charts/ProcessesTable';
 import ProcessesBarChart from '@/components/charts/ProcessesBarChart';
+import { useTheme } from '@/hooks/use-theme';
 
 const EasyVistaEstatisticas = () => {
   const [activeTab, setActiveTab] = useState('all');
@@ -19,6 +20,7 @@ const EasyVistaEstatisticas = () => {
   const [debitCreditProcesses, setDebitCreditProcesses] = useState<any[]>([]);
   const [otherProcesses, setOtherProcesses] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const { isDarkMode } = useTheme();
 
   const loadData = async () => {
     setLoading(true);
@@ -112,7 +114,7 @@ const EasyVistaEstatisticas = () => {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card className="bg-blue-50">
+                <Card className={isDarkMode ? "bg-blue-950/30" : "bg-blue-50"}>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-lg">Total de Processamentos</CardTitle>
                   </CardHeader>
@@ -121,7 +123,7 @@ const EasyVistaEstatisticas = () => {
                   </CardContent>
                 </Card>
                 
-                <Card className="bg-orange-50">
+                <Card className={isDarkMode ? "bg-orange-950/30" : "bg-orange-50"}>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-lg">Processamentos de Salário</CardTitle>
                   </CardHeader>
@@ -130,7 +132,7 @@ const EasyVistaEstatisticas = () => {
                   </CardContent>
                 </Card>
                 
-                <Card className="bg-blue-100">
+                <Card className={isDarkMode ? "bg-blue-900/30" : "bg-blue-100"}>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-lg">Processamentos de Empresas</CardTitle>
                   </CardHeader>
@@ -139,7 +141,7 @@ const EasyVistaEstatisticas = () => {
                   </CardContent>
                 </Card>
                 
-                <Card className="bg-green-50">
+                <Card className={isDarkMode ? "bg-green-950/30" : "bg-green-50"}>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-lg">Outros Processamentos</CardTitle>
                   </CardHeader>
