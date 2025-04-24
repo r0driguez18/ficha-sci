@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -754,12 +753,12 @@ const Taskboard = () => {
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader className="bg-[#18467e] text-white">
+    <Card className="w-full max-h-[calc(100vh-2rem)] flex flex-col">
+      <CardHeader className="bg-[#18467e] text-white shrink-0">
         <CardTitle className="text-center text-2xl">CENTRO INFORMÁTICA</CardTitle>
         <CardDescription className="text-center text-white text-xl">Ficha de Procedimentos</CardDescription>
       </CardHeader>
-      <CardContent className="pt-6">
+      <CardContent className="pt-6 overflow-y-auto flex-1">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-xl font-semibold">Processamentos Diários</h3>
           <div className="flex items-center gap-2">
