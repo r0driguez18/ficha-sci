@@ -1,3 +1,4 @@
+
 export interface TurnData {
   operator: string;
   entrada: string;
@@ -81,7 +82,7 @@ export interface Turno3Tasks {
   saveBmbck: boolean;
   abrirServidoresInternet: boolean;
   imprimirCheques: boolean;
-  backupBm: boolean;
+  // Removed backupBm as requested
   
   // Depois do Fecho
   validarFicheiroCcln: boolean;
