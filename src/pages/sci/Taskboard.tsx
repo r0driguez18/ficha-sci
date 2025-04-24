@@ -118,7 +118,6 @@ const Taskboard = () => {
       fecharServidores: false,
       fecharImpressoras: false,
       userFecho: false,
-      validarFicheiro: false,
       listaRequisicoesCheques: false,
       cancelarCartoesClientes: false,
       prepararEnviarAsc: false,
@@ -162,13 +161,7 @@ const Taskboard = () => {
       impressaoCheques: false,
       arquivarCheques: false,
       terminoFecho: false,
-      transferirFicheirosDsi: false,
-      bmjrn: false,
-      grjrcv: false,
-      aujrn: false,
-      mvdia1: false,
-      mvdia2: false,
-      brjrn: false
+      transferirFicheirosDsi: false
     }
   });
 
@@ -383,7 +376,6 @@ const Taskboard = () => {
         fecharServidores: false,
         fecharImpressoras: false,
         userFecho: false,
-        validarFicheiro: false,
         listaRequisicoesCheques: false,
         cancelarCartoesClientes: false,
         prepararEnviarAsc: false,
@@ -427,13 +419,7 @@ const Taskboard = () => {
         impressaoCheques: false,
         arquivarCheques: false,
         terminoFecho: false,
-        transferirFicheirosDsi: false,
-        bmjrn: false,
-        grjrcv: false,
-        aujrn: false,
-        mvdia1: false,
-        mvdia2: false,
-        brjrn: false
+        transferirFicheirosDsi: false
       }
     });
     setTableRows([{ id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '' }]);

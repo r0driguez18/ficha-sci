@@ -32,7 +32,7 @@ export const AntesFechoTasks: React.FC<AntesFechoTasksProps> = ({ tasks, onTaskC
         <Label htmlFor="tratarTapes" className="cursor-pointer">Tratar e trocar Tapes BM, BMBCK – percurso 7622</Label>
       </div>
 
-      {/* ... Continue with other "Antes do Fecho" tasks */}
+      {/* Add all other "Antes do Fecho" tasks */}
       <div className="flex items-start space-x-2">
         <Checkbox 
           id="backupBm"
