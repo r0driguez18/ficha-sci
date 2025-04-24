@@ -110,6 +110,14 @@ export interface Turno3Tasks {
   // Added the missing properties that are referenced in the components
   terminoFecho: boolean;
   transferirFicheirosDsi: boolean;
+  
+  // Add the backup tasks properties that are referenced in BackupsDiferidosTasks.tsx
+  bmjrn: boolean;
+  grjrcv: boolean;
+  aujrn: boolean;
+  mvdia1: boolean;
+  mvdia2: boolean;
+  brjrn: boolean;
 }
 
 export interface TasksType {
