@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -24,15 +23,6 @@ import { Turno2TasksComponent } from '@/components/tasks/Turno2Tasks';
 import { Turno3TasksComponent } from '@/components/tasks/Turno3Tasks';
 import { TasksType, TurnDataType, TurnKey } from '@/types/taskboard';
 
-export interface TableRow {
-  id: number;
-  hora: string;
-  tarefa: string;
-  nomeAs: string;
-  operacao: string;
-  executado: string;
-}
-
 const operatorsList = [
   { value: "joao", label: "João" },
   { value: "maria", label: "Maria" },
@@ -52,7 +42,6 @@ const processFormSchema = z.object({
   })
 });
 
-// Change to default export
 const Taskboard = () => {
   const navigate = useNavigate();
   
@@ -141,7 +130,6 @@ const Taskboard = () => {
       saveBmbck: false,
       abrirServidoresInternet: false,
       imprimirCheques: false,
-      backupBm: false,
       validarFicheiroCcln: false,
       aplicarFicheirosCompensacao: false,
       validarSaldoConta: false,
@@ -435,7 +423,6 @@ const Taskboard = () => {
         saveBmbck: false,
         abrirServidoresInternet: false,
         imprimirCheques: false,
-        backupBm: false,
         validarFicheiroCcln: false,
         aplicarFicheirosCompensacao: false,
         validarSaldoConta: false,
@@ -779,6 +766,7 @@ const Taskboard = () => {
               variant="outline" 
               onClick={() => navigate('/sci/calendar')}
             >
+              <CalendarIcon className="mr-2 h-4 w-4" />
               Calendário
             </Button>
           </div>
@@ -788,5 +776,4 @@ const Taskboard = () => {
   );
 };
 
-// Add default export
 export default Taskboard;
