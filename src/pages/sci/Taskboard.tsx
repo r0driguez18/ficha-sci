@@ -423,7 +423,6 @@ const Taskboard = () => {
   const generatePDF = () => {
     const doc = new jsPDF();
     
-    
     const currentDate = new Date();
     const formattedDate = currentDate.toISOString().split('T')[0].replace(/-/g, '');
     
@@ -688,7 +687,7 @@ const Taskboard = () => {
           };
           
           const typedTaskKey = taskKey as keyof Turno3Tasks;
-          processTask(taskKey, taskTexts[typedTaskKey], tasks.turno3[typedTaskKey]);
+          processTask(taskKey, taskTexts[taskKey], tasks.turno3[typedTaskKey]);
         });
         
         const finalAfterCloseTasks = ['abrirBcaDireto', 'abrirServidoresBanka', 'atualizarTelefonesOffline', 'verificarReplicacao', 'enviarFicheiroCsv', 'transferirFicheirosLiquidity', 'percurso76921', 'percurso76922', 'percurso76923', 'abrirServidoresTesteProducao', 'impressaoCheques', 'arquivarCheques', 'terminoFecho', 'transferirFicheirosDsi'];
@@ -707,4 +706,24 @@ const Taskboard = () => {
             abrirServidoresTesteProducao: "Abrir Servidores Teste e Produção",
             impressaoCheques: "Impressão Cheques dia seguinte",
             arquivarCheques: "Arquivar Cheques e Extratos Impressos",
-            terminoFecho: "Termino do
+            terminoFecho: "Termino do Fecho",
+            transferirFicheirosDsi: "Transferir Ficheiros DSI"
+          };
+          
+          const typedTaskKey = taskKey as keyof Turno3Tasks;
+          processTask(taskKey, taskTexts[taskKey], tasks.turno3[typedTaskKey]);
+        });
+      }
+    });
+    
+    doc.save(`Ficha de Procedimentos - ${formattedDate}.pdf`);
+  };
+
+  return (
+    <div>
+      {/* Component JSX */}
+    </div>
+  );
+};
+
+export default Taskboard;
