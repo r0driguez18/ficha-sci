@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -22,6 +21,7 @@ import * as z from "zod";
 import { Turno1TasksComponent } from '@/components/tasks/Turno1Tasks';
 import { Turno2TasksComponent } from '@/components/tasks/Turno2Tasks';
 import { Turno3TasksComponent } from '@/components/tasks/Turno3Tasks';
+import { PageHeader } from '@/components/layout/PageHeader';
 import type { Turno1Tasks, Turno2Tasks, Turno3Tasks, TurnKey, TasksType, TurnDataType } from '@/types/taskboard';
 
 declare module 'jspdf' {
@@ -455,12 +455,10 @@ const Taskboard = () => {
     toast.success('Formulário reiniciado com sucesso!');
   };
 
-  // Fix for TypeScript error - Ensure we only pass boolean values
   const ensureBoolean = (value: string | boolean): boolean => {
     if (typeof value === 'boolean') {
       return value;
     }
-    // Convert string to boolean
     return value === 'true';
   };
 
@@ -694,7 +692,7 @@ const Taskboard = () => {
         beforeCloseTasks.forEach(taskKey => {
           if (taskTexts[taskKey]) {
             const typedTaskKey = taskKey as keyof Turno3Tasks;
-            processTask(taskKey, taskTexts[taskKey], ensureBoolean(tasks.turno3[typedTaskKey]));
+            processTask(taskKey, taskTexts[typedTaskKey], ensureBoolean(tasks.turno3[typedTaskKey]));
           }
         });
         
@@ -759,7 +757,7 @@ const Taskboard = () => {
         afterCloseTasks.forEach(taskKey => {
           if (afterCloseTaskTexts[taskKey]) {
             const typedTaskKey = taskKey as keyof Turno3Tasks;
-            processTask(taskKey, afterCloseTaskTexts[taskKey], ensureBoolean(tasks.turno3[typedTaskKey]));
+            processTask(taskKey, afterCloseTaskTexts[typedTaskKey], ensureBoolean(tasks.turno3[typedTaskKey]));
           }
         });
         
@@ -865,7 +863,7 @@ const Taskboard = () => {
       <div className="my-4">
         <PageHeader
           title="Ficha de Processamentos"
-          description="Centro Informática - Formulário para registro diário de processamentos, tarefas e operações realizadas pelos diferentes turnos."
+          subtitle="Centro Informática - Formulário para registro diário de processamentos, tarefas e operações realizadas pelos diferentes turnos."
         />
       </div>
 
