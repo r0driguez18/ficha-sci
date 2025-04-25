@@ -4,6 +4,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Turno2Tasks } from '@/types/taskboard';
+import { ensureBoolean } from '@/utils/taskUtils';
 
 interface Turno2TasksProps {
   tasks: Turno2Tasks;
