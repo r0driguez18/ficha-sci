@@ -25,13 +25,15 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center space-x-2">
-        <Checkbox 
-          id="datacenter2" 
-          checked={tasks.datacenter}
-          onCheckedChange={(checked) => handleCheckboxChange('datacenter', checked)}
-        />
-        <Label htmlFor="datacenter2" className="cursor-pointer">Verificar Alarmes e Sistemas/Climatização DATA CENTER</Label>
+      <div className="grid items-center gap-1.5">
+        <div className="flex items-center space-x-2">
+          <Checkbox 
+            id="datacenter2" 
+            checked={tasks.datacenter}
+            onCheckedChange={(checked) => handleCheckboxChange('datacenter', checked)}
+          />
+          <Label htmlFor="datacenter2" className="cursor-pointer">Verificar Alarmes e Sistemas/Climatização DATA CENTER</Label>
+        </div>
       </div>
 
       <div className="flex items-center space-x-2">
