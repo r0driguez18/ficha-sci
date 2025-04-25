@@ -14,29 +14,29 @@ export const Turno1TasksComponent: React.FC<Turno1TasksProps> = ({ tasks, onTask
     <div className="space-y-2">
       <div className="flex items-start space-x-2">
         <Checkbox 
-          id="datacenter" 
+          id="datacenter1" 
           checked={tasks.datacenter}
           onCheckedChange={(checked) => onTaskChange('datacenter', !!checked)}
         />
-        <Label htmlFor="datacenter" className="cursor-pointer">Verificar DATA CENTER</Label>
+        <Label htmlFor="datacenter1" className="cursor-pointer">Verificar DATA CENTER</Label>
       </div>
       
       <div className="flex items-start space-x-2">
         <Checkbox 
-          id="sistemas"
+          id="sistemas1"
           checked={tasks.sistemas}
           onCheckedChange={(checked) => onTaskChange('sistemas', !!checked)}
         />
-        <Label htmlFor="sistemas" className="cursor-pointer">Verificar Sistemas: BCACV1/BCACV2</Label>
+        <Label htmlFor="sistemas1" className="cursor-pointer">Verificar Sistemas: BCACV1/BCACV2</Label>
       </div>
       
       <div className="flex items-start space-x-2">
         <Checkbox 
-          id="servicos"
+          id="servicos1"
           checked={tasks.servicos}
           onCheckedChange={(checked) => onTaskChange('servicos', !!checked)}
         />
-        <Label htmlFor="servicos" className="cursor-pointer">Verificar Serviços: Vinti24/BCADireto/Replicação/Servidor MIA</Label>
+        <Label htmlFor="servicos1" className="cursor-pointer">Verificar Serviços: Vinti24/BCADireto/Replicação/Servidor MIA</Label>
       </div>
       
       <div className="flex items-start space-x-2">

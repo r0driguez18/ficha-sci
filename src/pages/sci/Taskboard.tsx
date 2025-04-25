@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -19,6 +18,8 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { Turno1TasksComponent } from '@/components/tasks/Turno1Tasks';
+import { Turno2TasksComponent } from '@/components/tasks/Turno2Tasks';
 import { Turno3TasksComponent } from '@/components/tasks/Turno3Tasks';
 import type { Turno1Tasks, Turno2Tasks, Turno3Tasks, TurnKey, TasksType, TurnDataType } from '@/types/taskboard';
 
@@ -688,7 +689,7 @@ const Taskboard = () => {
           };
           
           const typedTaskKey = taskKey as keyof Turno3Tasks;
-          processTask(taskKey, taskTexts[taskKey], tasks.turno3[typedTaskKey]);
+          processTask(taskKey, taskTexts[typedTaskKey], tasks.turno3[typedTaskKey]);
         });
         
         const finalAfterCloseTasks = ['abrirBcaDireto', 'abrirServidoresBanka', 'atualizarTelefonesOffline', 'verificarReplicacao', 'enviarFicheiroCsv', 'transferirFicheirosLiquidity', 'percurso76921', 'percurso76922', 'percurso76923', 'abrirServidoresTesteProducao', 'impressaoCheques', 'arquivarCheques', 'terminoFecho', 'transferirFicheirosDsi'];
@@ -712,7 +713,7 @@ const Taskboard = () => {
           };
           
           const typedTaskKey = taskKey as keyof Turno3Tasks;
-          processTask(taskKey, taskTexts[taskKey], tasks.turno3[typedTaskKey]);
+          processTask(taskKey, taskTexts[typedTaskKey], tasks.turno3[typedTaskKey]);
         });
       }
     });
@@ -802,56 +803,10 @@ const Taskboard = () => {
                   <div className="mt-6">
                     <h3 className="mb-4 font-medium">Tarefas</h3>
                     <div className="space-y-4">
-                      {/* Tarefas do Turno 1 */}
-                      <div className="space-y-2">
-                        <div className="flex items-start space-x-2">
-                          <Checkbox 
-                            id="datacenter1" 
-                            checked={tasks.turno1.datacenter}
-                            onCheckedChange={(checked) => handleTaskChange('turno1', 'datacenter', !!checked)}
-                          />
-                          <Label htmlFor="datacenter1" className="cursor-pointer">Verificar DATA CENTER</Label>
-                        </div>
-                        
-                        <div className="flex items-start space-x-2">
-                          <Checkbox 
-                            id="sistemas1"
-                            checked={tasks.turno1.sistemas}
-                            onCheckedChange={(checked) => handleTaskChange('turno1', 'sistemas', !!checked)}
-                          />
-                          <Label htmlFor="sistemas1" className="cursor-pointer">Verificar Sistemas: BCACV1/BCACV2</Label>
-                        </div>
-                        
-                        <div className="flex items-start space-x-2">
-                          <Checkbox 
-                            id="servicos1"
-                            checked={tasks.turno1.servicos}
-                            onCheckedChange={(checked) => handleTaskChange('turno1', 'servicos', !!checked)}
-                          />
-                          <Label htmlFor="servicos1" className="cursor-pointer">Verificar Serviços: Vinti24/BCADireto/Replicação/Servidor MIA</Label>
-                        </div>
-                        
-                        {/* Additional checkboxes can be added here */}
-                        <div className="flex items-start space-x-2">
-                          <Checkbox 
-                            id="abrirServidores"
-                            checked={tasks.turno1.abrirServidores}
-                            onCheckedChange={(checked) => handleTaskChange('turno1', 'abrirServidores', !!checked)}
-                          />
-                          <Label htmlFor="abrirServidores" className="cursor-pointer">Abrir Servidores (SWIFT, OPDIF, TRMSG, CDGOV, AML)</Label>
-                        </div>
-                        
-                        <div className="flex items-start space-x-2">
-                          <Checkbox 
-                            id="percurso76931"
-                            checked={tasks.turno1.percurso76931}
-                            onCheckedChange={(checked) => handleTaskChange('turno1', 'percurso76931', !!checked)}
-                          />
-                          <Label htmlFor="percurso76931" className="cursor-pointer">Percurso 76931 - Atualiza os alertas nos clientes com dados desatualizados</Label>
-                        </div>
-                        
-                        {/* More tasks for Turno 1 */}
-                      </div>
+                      <Turno1TasksComponent 
+                        tasks={tasks.turno1} 
+                        onTaskChange={(task, checked) => handleTaskChange('turno1', task, checked)} 
+                      />
                     </div>
                   </div>
                 </CardContent>
@@ -913,37 +868,10 @@ const Taskboard = () => {
                   <div className="mt-6">
                     <h3 className="mb-4 font-medium">Tarefas</h3>
                     <div className="space-y-4">
-                      {/* Usando o componente Turno2Tasks */}
-                      <div className="space-y-2">
-                        <div className="flex items-start space-x-2">
-                          <Checkbox 
-                            id="datacenter2" 
-                            checked={tasks.turno2.datacenter}
-                            onCheckedChange={(checked) => handleTaskChange('turno2', 'datacenter', !!checked)}
-                          />
-                          <Label htmlFor="datacenter2" className="cursor-pointer">Verificar DATA CENTER</Label>
-                        </div>
-                        
-                        <div className="flex items-start space-x-2">
-                          <Checkbox 
-                            id="sistemas2"
-                            checked={tasks.turno2.sistemas}
-                            onCheckedChange={(checked) => handleTaskChange('turno2', 'sistemas', !!checked)}
-                          />
-                          <Label htmlFor="sistemas2" className="cursor-pointer">Verificar Sistemas: BCACV1/BCACV2</Label>
-                        </div>
-                        
-                        <div className="flex items-start space-x-2">
-                          <Checkbox 
-                            id="servicos2"
-                            checked={tasks.turno2.servicos}
-                            onCheckedChange={(checked) => handleTaskChange('turno2', 'servicos', !!checked)}
-                          />
-                          <Label htmlFor="servicos2" className="cursor-pointer">Verificar Serviços: Vinti24/BCADireto/Replicação/Servidor MIA</Label>
-                        </div>
-                        
-                        {/* More tasks for Turno 2 */}
-                      </div>
+                      <Turno2TasksComponent 
+                        tasks={tasks.turno2} 
+                        onTaskChange={(task, checked) => handleTaskChange('turno2', task, checked)} 
+                      />
                     </div>
                   </div>
                 </CardContent>
@@ -1005,7 +933,6 @@ const Taskboard = () => {
                   <div className="mt-6">
                     <h3 className="mb-4 font-medium">Tarefas</h3>
                     <div className="space-y-4">
-                      {/* Usando o componente Turno3TasksComponent */}
                       <Turno3TasksComponent 
                         tasks={tasks.turno3} 
                         onTaskChange={(task, checked) => handleTaskChange('turno3', task, checked)} 
