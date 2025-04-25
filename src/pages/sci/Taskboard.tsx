@@ -6,7 +6,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow as UITableRow 
+} from '@/components/ui/table';
 import { PlusCircle, Trash2, Save, FileDown, RotateCcw, Calendar as CalendarIcon } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
@@ -21,7 +28,7 @@ import * as z from "zod";
 import { Turno1TasksComponent } from '@/components/tasks/Turno1Tasks';
 import { Turno2TasksComponent } from '@/components/tasks/Turno2Tasks';
 import { Turno3TasksComponent } from '@/components/tasks/Turno3Tasks';
-import { TasksType, TurnDataType, TurnKey, TableRow } from '@/types/taskboard';
+import { TasksType, TurnDataType, TurnKey, TableRow as TaskTableRow } from '@/types/taskboard';
 
 const operatorsList = [
   { value: "joao", label: "João" },
@@ -46,7 +53,7 @@ const Taskboard = () => {
   const navigate = useNavigate();
   
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [tableRows, setTableRows] = useState<TableRow[]>([
+  const [tableRows, setTableRows] = useState<TaskTableRow[]>([
     { id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '' }
   ]);
 
@@ -249,7 +256,7 @@ const Taskboard = () => {
     }
   };
 
-  const handleInputChange = (id: number, field: keyof TableRow, value: string) => {
+  const handleInputChange = (id: number, field: keyof TaskTableRow, value: string) => {
     if (field === 'operacao') {
       const numericValue = value.replace(/\D/g, '').slice(0, 9);
       setTableRows(
