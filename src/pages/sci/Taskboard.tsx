@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -89,7 +90,13 @@ const Taskboard = () => {
       dia08: false,
       dia16: false,
       dia23: false,
-      atualizarCentralRisco: false
+      atualizarCentralRisco: false,
+      bmjrn: false,
+      grjrcv: false,
+      aujrn: false,
+      mvdia1: false,
+      mvdia2: false,
+      brjrn: false
     },
     turno2: {
       datacenter: false,
@@ -345,7 +352,13 @@ const Taskboard = () => {
         dia08: false,
         dia16: false,
         dia23: false,
-        atualizarCentralRisco: false
+        atualizarCentralRisco: false,
+        bmjrn: false,
+        grjrcv: false,
+        aujrn: false,
+        mvdia1: false,
+        mvdia2: false,
+        brjrn: false
       },
       turno2: {
         datacenter: false,
