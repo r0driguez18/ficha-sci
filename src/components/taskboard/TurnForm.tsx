@@ -58,23 +58,29 @@ export const TurnForm: React.FC<TurnFormProps> = ({
             </SelectContent>
           </Select>
         </div>
-        <div>
-          <Label htmlFor={`entrada${turnNumber}`}>Hora Entrada</Label>
-          <Input 
-            id={`entrada${turnNumber}`}
-            type="time" 
-            value={entrada}
-            onChange={(e) => onEntradaChange(e.target.value)}
-          />
+        <div className="flex flex-col">
+          <div className="flex items-center space-x-2">
+            <Label htmlFor={`entrada${turnNumber}`}>Hora Entrada</Label>
+            <Input 
+              id={`entrada${turnNumber}`}
+              type="time" 
+              value={entrada}
+              onChange={(e) => onEntradaChange(e.target.value)}
+              className="w-auto"
+            />
+          </div>
         </div>
-        <div>
-          <Label htmlFor={`saida${turnNumber}`}>Hora Saída</Label>
-          <Input 
-            id={`saida${turnNumber}`}
-            type="time"
-            value={saida}
-            onChange={(e) => onSaidaChange(e.target.value)} 
-          />
+        <div className="flex flex-col">
+          <div className="flex items-center space-x-2">
+            <Label htmlFor={`saida${turnNumber}`}>Hora Saída</Label>
+            <Input 
+              id={`saida${turnNumber}`}
+              type="time"
+              value={saida}
+              onChange={(e) => onSaidaChange(e.target.value)} 
+              className="w-auto"
+            />
+          </div>
         </div>
       </div>
       
