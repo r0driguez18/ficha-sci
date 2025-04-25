@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -191,7 +192,7 @@ const Taskboard = () => {
     localStorage.setItem('taskboard-tableRows', JSON.stringify(tableRows));
   }, [date, turnData, tasks, tableRows]);
 
-  const handleTaskChange = (turno: TurnKey, task: string, checked: boolean | string) => {
+  const handleTaskChange = (turno: TurnKey, task: string, checked: boolean) => {
     setTasks({
       ...tasks,
       [turno]: {
@@ -530,7 +531,7 @@ const Taskboard = () => {
       };
       
       if (turnKey === 'turno1') {
-        
+        // Turno 1 tasks processing
         const regularTasksToProcess = ['datacenter', 'sistemas', 'servicos', 'abrirServidores', 'percurso76931'];
         
         regularTasksToProcess.forEach(taskKey => {
@@ -546,6 +547,7 @@ const Taskboard = () => {
           processTask(taskKey, taskTexts[taskKey], tasks.turno1[typedTaskKey]);
         });
         
+        // "Enviar" section with checkboxes
         y = checkPageSpace(y, 8);
         drawCheckbox(15, y - 3, tasks.turno1.enviar);
         doc.setFontSize(10);
@@ -570,36 +572,63 @@ const Taskboard = () => {
         
         y += 8;
         
-        const remainingTasks = ['verificarDebitos', 'processarTef', 'processarTelecomp'];
+        // Remaining Turno 1 tasks
+        const remainingTasks = [
+          'verificarDebitos', 'processarTef', 'processarTelecomp', 'backupsDiferidos', 'enviarSegundoEtr',
+          'enviarFicheiroCom', 'dia01', 'dia08', 'dia16', 'dia23', 'atualizarCentralRisco',
+          'bmjrn', 'grjrcv', 'aujrn', 'mvdia1', 'mvdia2', 'brjrn'
+        ];
+        
+        const taskTexts: Record<string, string> = {
+          verificarDebitos: "Verificar Débitos/Créditos aplicados no dia Anterior",
+          processarTef: "Processar ficheiros TEF - ERR/RTR/RCT",
+          processarTelecomp: "Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR",
+          backupsDiferidos: "Backups Diferidos",
+          enviarSegundoEtr: "Enviar Segundo ETR",
+          enviarFicheiroCom: "Enviar Ficheiro COM",
+          dia01: "Dia 01",
+          dia08: "Dia 08",
+          dia16: "Dia 16",
+          dia23: "Dia 23",
+          atualizarCentralRisco: "Atualizar Central de Risco",
+          bmjrn: "BMJRN",
+          grjrcv: "GRJRCV",
+          aujrn: "AUJRN",
+          mvdia1: "MVDIA1",
+          mvdia2: "MVDIA2",
+          brjrn: "BRJRN"
+        };
         
         remainingTasks.forEach(taskKey => {
-          const taskTexts: Record<string, string> = {
-            verificarDebitos: "Verificar Débitos/Créditos aplicados no dia Anterior",
-            processarTef: "Processar ficheiros TEF - ERR/RTR/RCT",
-            processarTelecomp: "Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR"
-          };
-          
-          const typedTaskKey = taskKey as keyof Turno1Tasks;
-          processTask(taskKey, taskTexts[typedTaskKey], tasks.turno1[typedTaskKey]);
+          if (taskTexts[taskKey]) {
+            const typedTaskKey = taskKey as keyof Turno1Tasks;
+            processTask(taskKey, taskTexts[taskKey], tasks.turno1[typedTaskKey]);
+          }
         });
       }
       
       if (turnKey === 'turno2') {
-        
-        const regularTasksToProcess = ['datacenter', 'sistemas', 'servicos', 'verificarReportes'];
+        // Turno 2 tasks processing
+        const regularTasksToProcess = [
+          'datacenter', 'sistemas', 'servicos', 'verificarReportes', 'verificarDebitos', 
+          'confirmarAtualizacaoSisp'
+        ];
         
         regularTasksToProcess.forEach(taskKey => {
           const taskTexts: Record<string, string> = {
             datacenter: "Verificar DATA CENTER",
             sistemas: "Verificar Sistemas: BCACV1/BCACV2",
             servicos: "Verificar Serviços: Vinti24/BCADireto/Replicação/Servidor MIA",
-            verificarReportes: "Verificar envio de reportes(INPS, VISTO USA, BCV, IMPC)"
+            verificarReportes: "Verificar envio de reportes(INPS, VISTO USA, BCV, IMPC)",
+            verificarDebitos: "Verificar Débitos/Créditos Aplicados no Turno Anterior",
+            confirmarAtualizacaoSisp: "Confirmar Atualização SISP"
           };
           
           const typedTaskKey = taskKey as keyof Turno2Tasks;
           processTask(taskKey, taskTexts[taskKey], tasks.turno2[typedTaskKey]);
         });
         
+        // "Ficheiros INPS" section
         y = checkPageSpace(y, 8);
         doc.setFontSize(10);
         doc.text("Ficheiros INPS:", 20, y);
@@ -616,6 +645,7 @@ const Taskboard = () => {
         
         y += 8;
         
+        // Middle tasks
         const middleTasksToProcess = ['processarTef', 'processarTelecomp'];
         
         middleTasksToProcess.forEach(taskKey => {
@@ -625,9 +655,10 @@ const Taskboard = () => {
           };
           
           const typedTaskKey = taskKey as keyof Turno2Tasks;
-          processTask(taskKey, taskTexts[typedTaskKey], tasks.turno2[typedTaskKey]);
+          processTask(taskKey, taskTexts[taskKey], tasks.turno2[typedTaskKey]);
         });
         
+        // "Enviar Ficheiro" section
         y = checkPageSpace(y, 8);
         doc.setFontSize(10);
         doc.text("Enviar Ficheiro:", 20, y);
@@ -644,6 +675,7 @@ const Taskboard = () => {
         
         y += 8;
         
+        // Final tasks
         const finalTasksToProcess = ['validarSaco', 'verificarPendentes', 'fecharBalcoes'];
         
         finalTasksToProcess.forEach(taskKey => {
@@ -654,94 +686,164 @@ const Taskboard = () => {
           };
           
           const typedTaskKey = taskKey as keyof Turno2Tasks;
-          processTask(taskKey, taskTexts[typedTaskKey], tasks.turno2[typedTaskKey]);
+          processTask(taskKey, taskTexts[taskKey], tasks.turno2[typedTaskKey]);
         });
       }
       
       if (turnKey === 'turno3') {
-        const beforeCloseTasks = ['verificarDebitos', 'tratarTapes', 'fecharServidores', 'fecharImpressoras', 'userFecho', 'listaRequisicoesCheques', 'cancelarCartoesClientes', 'prepararEnviarAsc', 'adicionarRegistrosBanka', 'fecharServidoresBanka', 'alterarInternetBanking', 'prepararEnviarCsv', 'fecharRealTime', 'prepararEnviarEtr', 'fazerLoggOffAml', 'aplicarFicheiroErroEtr', 'validarBalcao14', 'fecharBalcao14', 'arranqueManual', 'inicioFecho', 'validarEnvioEmail', 'controlarTrabalhos', 'saveBmbck', 'abrirServidoresInternet', 'imprimirCheques', 'backupBm'];
+        // Before Close tasks
+        const beforeCloseTasks = [
+          'verificarDebitos', 'tratarTapes', 'fecharServidores', 'fecharImpressoras', 'userFecho', 
+          'listaRequisicoesCheques', 'cancelarCartoesClientes', 'prepararEnviarAsc', 'adicionarRegistrosBanka',
+          'fecharServidoresBanka', 'alterarInternetBanking', 'prepararEnviarCsv', 'fecharRealTime',
+          'prepararEnviarEtr', 'fazerLoggOffAml', 'aplicarFicheiroErroEtr', 'validarBalcao14',
+          'fecharBalcao14', 'arranqueManual', 'inicioFecho', 'validarEnvioEmail', 'controlarTrabalhos',
+          'saveBmbck', 'abrirServidoresInternet', 'imprimirCheques', 'backupBm'
+        ];
+        
+        const taskTexts: Record<string, string> = {
+          verificarDebitos: "Verificar Débitos/Créditos Aplicados no Turno Anterior",
+          tratarTapes: "Tratar e trocar Tapes BM, BMBCK – percurso 7622",
+          fecharServidores: "Fechar Servidores Teste e Produção",
+          fecharImpressoras: "Fechar Impressoras e balcões centrais abertos exceto 14 - DSI",
+          userFecho: "User Fecho Executar o percurso 7624 Save SYS1OB",
+          listaRequisicoesCheques: "Lista requisições de cheques do dia 7633. > do que 5, sem comprov. Estornar, 21911",
+          cancelarCartoesClientes: "User Fecho Cancela os cartões dos Clientes Bloqueados - percurso 76857",
+          prepararEnviarAsc: "Preparar e enviar ficheiro e ASC (alteração situação cartão) – percurso 4132",
+          adicionarRegistrosBanka: "User Fecho Adiciona registos na Banka Remota- percurso 768975",
+          fecharServidoresBanka: "User Fecho, fechar servidores Banka remota IN1/IN3/IN4",
+          alterarInternetBanking: "User Fecho Alterar Internet Banking para OFFLINE – percurso 49161",
+          prepararEnviarCsv: "Preparar e enviar ficheiro CSV (saldos)",
+          fecharRealTime: "Interromper o Real-Time com a SISP",
+          prepararEnviarEtr: "Preparar e enviar Ficheiro ETR - percurso 7538, consultar conta 18   5488103",
+          fazerLoggOffAml: "Fazer Logg-Off do utilizador AML – Percurso 161 (utilizadores ativos)",
+          aplicarFicheiroErroEtr: "Aplicar Ficheiro Erro ETR",
+          validarBalcao14: "Validar balção 14 7185",
+          fecharBalcao14: "Fechar o balcão 14 - DSI e confirmar se todos os balcões encontram-se fechados",
+          arranqueManual: "Arranque Manual - Verificar Data da Aplicação – Percurso 431",
+          inicioFecho: "Início do Fecho",
+          validarEnvioEmail: "Validar envio email( Notificação Inicio Fecho)  a partir do ISeries",
+          controlarTrabalhos: "Controlar os trabalhos no QBATCH (opções 5, 10, F10, F5, F18)",
+          saveBmbck: "Save BMBCK – Automático",
+          abrirServidoresInternet: "Abrir Servidores Internet Banking – Percurso 161–",
+          imprimirCheques: "Imprimir Cheques e Diários de Cheques (depois do Save BMBCK)",
+          backupBm: "Backup BM – Automático"
+        };
         
         beforeCloseTasks.forEach(taskKey => {
-          const taskTexts: Record<string, string> = {
-            verificarDebitos: "Verificar Débitos/Créditos Aplicados no Turno Anterior",
-            tratarTapes: "Tratar e trocar Tapes BM, BMBCK – percurso 7622",
-            fecharServidores: "Fechar Servidores Teste e Produção",
-            fecharImpressoras: "Fechar Impressoras e balcões centrais abertos exceto 14 - DSI",
-            userFecho: "User Fecho Executar o percurso 7624 Save SYS1OB",
-            listaRequisicoesCheques: "Lista requisições de cheques do dia 7633. > do que 5, sem comprov. Estornar, 21911",
-            cancelarCartoesClientes: "User Fecho Cancela os cartões dos Clientes Bloqueados - percurso 76857",
-            prepararEnviarAsc: "Preparar e enviar ficheiro e ASC (alteração situação cartão) – percurso 4132",
-            adicionarRegistrosBanka: "User Fecho Adiciona registos na Banka Remota- percurso 768975",
-            fecharServidoresBanka: "User Fecho, fechar servidores Banka remota IN1/IN3/IN4",
-            alterarInternetBanking: "User Fecho Alterar Internet Banking para OFFLINE – percurso 49161",
-            prepararEnviarCsv: "Preparar e enviar ficheiro CSV (saldos)",
-            fecharRealTime: "Interromper o Real-Time com a SISP",
-            prepararEnviarEtr: "Preparar e enviar Ficheiro ETR - percurso 7538, consultar conta 18   5488103",
-            fazerLoggOffAml: "Fazer Logg-Off do utilizador AML – Percurso 161 (utilizadores ativos)",
-            aplicarFicheiroErroEtr: "Aplicar Ficheiro Erro ETR",
-            validarBalcao14: "Validar balção 14 7185",
-            fecharBalcao14: "Fechar o balcão 14 - DSI e confirmar se todos os balcões encontram-se fechados",
-            arranqueManual: "Arranque Manual - Verificar Data da Aplicação – Percurso 431",
-            inicioFecho: "Início do Fecho",
-            validarEnvioEmail: "Validar envio email( Notificação Inicio Fecho)  a partir do ISeries",
-            controlarTrabalhos: "Controlar os trabalhos no QBATCH (opções 5, 10, F10, F5, F18)",
-            saveBmbck: "Save BMBCK – Automático",
-            abrirServidoresInternet: "Abrir Servidores Internet Banking – Percurso 161–",
-            imprimirCheques: "Imprimir Cheques e Diários de Cheques (depois do Save BMBCK)",
-            backupBm: "Backup BM – Automático"
-          };
-          
-          const typedTaskKey = taskKey as keyof Turno3Tasks;
-          processTask(taskKey, taskTexts[typedTaskKey], tasks.turno3[typedTaskKey]);
+          if (taskTexts[taskKey]) {
+            const typedTaskKey = taskKey as keyof Turno3Tasks;
+            processTask(taskKey, taskTexts[taskKey], tasks.turno3[typedTaskKey]);
+          }
         });
         
+        // Add timestamps for specific tasks
+        if (tasks.turno3.fecharRealTimeHora) {
+          const lastIndex = beforeCloseTasks.indexOf('fecharRealTime');
+          if (lastIndex !== -1) {
+            y -= 6; // Go back up a bit
+            doc.text(`Hora: ${tasks.turno3.fecharRealTimeHora}`, 120, y);
+            y += 6; // Go back down
+          }
+        }
+        
+        if (tasks.turno3.inicioFechoHora) {
+          const lastIndex = beforeCloseTasks.indexOf('inicioFecho');
+          if (lastIndex !== -1) {
+            y -= 6; // Go back up a bit
+            doc.text(`Hora: ${tasks.turno3.inicioFechoHora}`, 120, y);
+            y += 6; // Go back down
+          }
+        }
+        
+        // After Close tasks
         y = checkPageSpace(y, 8);
         doc.setFont("helvetica", "bold");
         doc.text("Depois do Fecho", 15, y);
         y += 8;
         
-        const afterCloseTasks = ['validarFicheiroCcln', 'aplicarFicheirosCompensacao', 'validarSaldoConta', 'saldoNegativo', 'saldoPositivo', 'abrirRealTime', 'verificarTransacoes', 'aplicarFicheiroVisa', 'cativarCartoes'];
+        const afterCloseTasks = [
+          'validarFicheiroCcln', 'aplicarFicheirosCompensacao', 'validarSaldoConta',
+          'abrirRealTime', 'verificarTransacoes', 'aplicarFicheiroVisa', 'cativarCartoes',
+          'abrirBcaDireto', 'abrirServidoresBanka', 'atualizarTelefonesOffline',
+          'verificarReplicacao', 'enviarFicheiroCsv', 'transferirFicheirosLiquidity',
+          'percurso76921', 'percurso76922', 'percurso76923', 'abrirServidoresTesteProducao',
+          'impressaoCheques', 'arquivarCheques', 'terminoFecho', 'transferirFicheirosDsi'
+        ];
+        
+        const afterCloseTaskTexts: Record<string, string> = {
+          validarFicheiroCcln: "Validar ficheiro CCLN - 76853",
+          aplicarFicheirosCompensacao: "Aplicar ficheiros compensação SISP (CCLN, EDST, EORI, ERMB)",
+          validarSaldoConta: "Validar saldo da conta 18/5488102:",
+          abrirRealTime: "Abrir o Real-Time",
+          verificarTransacoes: "Verificar a entrada de transações 3100 4681",
+          aplicarFicheiroVisa: "Aplicar ficheiro VISA DAF - com o user FECHO 4131",
+          cativarCartoes: "Cativar cartões de crédito em incumprimento - com o user FECHO – 76727",
+          abrirBcaDireto: "Abrir BCA Direto/MB/Extrato Digital/Paypal – 49162",
+          abrirServidoresBanka: "Abrir servidores Banka Remota",
+          atualizarTelefonesOffline: "Atualizar telefones OFFLINE",
+          verificarReplicacao: "Verificar a replicação entre servidores",
+          enviarFicheiroCsv: "Enviar ficheiro CSV (saldos) para MIA",
+          transferirFicheirosLiquidity: "Transferir ficheiros para a pasta Liquidity",
+          percurso76921: "Percurso 76921 (Produção de diversos ficheiros)",
+          percurso76922: "Percurso 76922 (Transmissão de ficheiros)",
+          percurso76923: "Percurso 76923 (Tratamento dos ficheiros)",
+          abrirServidoresTesteProducao: "Abrir Servidores Teste e Produção",
+          impressaoCheques: "Impressão Cheques dia seguinte",
+          arquivarCheques: "Arquivar Cheques e Extratos Impressos",
+          terminoFecho: "Termino do Fecho",
+          transferirFicheirosDsi: "Transferir Ficheiros DSI"
+        };
         
         afterCloseTasks.forEach(taskKey => {
-          const taskTexts: Record<string, string> = {
-            validarFicheiroCcln: "Validar ficheiro CCLN - 76853",
-            aplicarFicheirosCompensacao: "Aplicar ficheiros compensação SISP (CCLN, EDST, EORI, ERMB)",
-            validarSaldoConta: "Validar saldo da conta 18/5488102:",
-            saldoNegativo: "Negativo",
-            saldoPositivo: "Positivo",
-            abrirRealTime: "Abrir o Real-Time",
-            verificarTransacoes: "Verificar a entrada de transações 3100 4681",
-            aplicarFicheiroVisa: "Aplicar ficheiro VISA DAF - com o user FECHO 4131",
-            cativarCartoes: "Cativar cartões de crédito em incumprimento - com o user FECHO – 76727"
-          };
-          
-          const typedTaskKey = taskKey as keyof Turno3Tasks;
-          processTask(taskKey, taskTexts[typedTaskKey], tasks.turno3[typedTaskKey]);
+          if (afterCloseTaskTexts[taskKey]) {
+            const typedTaskKey = taskKey as keyof Turno3Tasks;
+            processTask(taskKey, afterCloseTaskTexts[taskKey], tasks.turno3[typedTaskKey]);
+          }
         });
         
-        const finalAfterCloseTasks = ['abrirBcaDireto', 'abrirServidoresBanka', 'atualizarTelefonesOffline', 'verificarReplicacao', 'enviarFicheiroCsv', 'transferirFicheirosLiquidity', 'percurso76921', 'percurso76922', 'percurso76923', 'abrirServidoresTesteProducao', 'impressaoCheques', 'arquivarCheques', 'terminoFecho', 'transferirFicheirosDsi'];
+        // Process saldo positivo/negativo
+        if (tasks.turno3.validarSaldoConta) {
+          const index = afterCloseTasks.indexOf('validarSaldoConta');
+          if (index !== -1) {
+            y -= 4; // Go back up a bit
+            
+            const xPosSaldoValue = 90;
+            if (tasks.turno3.saldoContaValor) {
+              doc.text(`Valor: ${tasks.turno3.saldoContaValor}`, xPosSaldoValue, y);
+            }
+            
+            // Add positive/negative checkboxes
+            const xPosSaldoNeg = 140;
+            drawCheckbox(xPosSaldoNeg, y - 3, tasks.turno3.saldoNegativo);
+            doc.text("Negativo", xPosSaldoNeg + 5, y);
+            
+            const xPosSaldoPos = 175;
+            drawCheckbox(xPosSaldoPos, y - 3, tasks.turno3.saldoPositivo);
+            doc.text("Positivo", xPosSaldoPos + 5, y);
+            
+            y += 6; // Continue with normal spacing
+          }
+        }
         
-        finalAfterCloseTasks.forEach(taskKey => {
-          const taskTexts: Record<string, string> = {
-            abrirBcaDireto: "Abrir BCA Direto/MB/Extrato Digital/Paypal – 49162",
-            abrirServidoresBanka: "Abrir servidores Banka Remota",
-            atualizarTelefonesOffline: "Atualizar telefones OFFLINE",
-            verificarReplicacao: "Verificar a replicação entre servidores",
-            enviarFicheiroCsv: "Enviar ficheiro CSV (saldos) para MIA",
-            transferirFicheirosLiquidity: "Transferir ficheiros para a pasta Liquidity",
-            percurso76921: "Percurso 76921 (Produção de diversos ficheiros)",
-            percurso76922: "Percurso 76922 (Transmissão de ficheiros)",
-            percurso76923: "Percurso 76923 (Tratamento dos ficheiros)",
-            abrirServidoresTesteProducao: "Abrir Servidores Teste e Produção",
-            impressaoCheques: "Impressão Cheques dia seguinte",
-            arquivarCheques: "Arquivar Cheques e Extratos Impressos",
-            terminoFecho: "Termino do Fecho",
-            transferirFicheirosDsi: "Transferir Ficheiros DSI"
-          };
-          
-          const typedTaskKey = taskKey as keyof Turno3Tasks;
-          processTask(taskKey, taskTexts[typedTaskKey], tasks.turno3[typedTaskKey]);
-        });
+        // Add timestamps for specific tasks
+        if (tasks.turno3.abrirRealTimeHora) {
+          const index = afterCloseTasks.indexOf('abrirRealTime');
+          if (index !== -1) {
+            y -= 6; // Go back up a bit
+            doc.text(`Hora: ${tasks.turno3.abrirRealTimeHora}`, 120, y);
+            y += 6; // Go back down
+          }
+        }
+        
+        if (tasks.turno3.terminoFechoHora) {
+          const index = afterCloseTasks.indexOf('terminoFecho');
+          if (index !== -1) {
+            y -= 6; // Go back up a bit
+            doc.text(`Hora: ${tasks.turno3.terminoFechoHora}`, 120, y);
+            y += 6; // Go back down
+          }
+        }
       }
     });
     
