@@ -1,3 +1,4 @@
+
 export interface Turno1Tasks {
   datacenter: boolean;
   sistemas: boolean;
