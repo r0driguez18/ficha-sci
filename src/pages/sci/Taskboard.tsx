@@ -454,6 +454,24 @@ const Taskboard = () => {
     toast.success('Formulário reiniciado com sucesso!');
   };
 
+  // Fix for TypeScript error - Ensure we only pass boolean values
+  const ensureBoolean = (value: string | boolean): boolean => {
+    if (typeof value === 'boolean') {
+      return value;
+    }
+    // Convert string to boolean
+    return value === 'true';
+  };
+
+  const drawCheckbox = (x: number, y: number, checked: string | boolean) => {
+    const isChecked = ensureBoolean(checked);
+    doc.rect(x, y, 3, 3);
+    if (isChecked) {
+      doc.line(x, y, x + 3, y + 3);
+      doc.line(x + 3, y, x, y + 3);
+    }
+  };
+
   const generatePDF = () => {
     const doc = new jsPDF();
     
@@ -468,14 +486,6 @@ const Taskboard = () => {
       const textWidth = doc.getTextWidth(text);
       const x = (pageWidth - textWidth) / 2;
       doc.text(text, x, y);
-    };
-    
-    const drawCheckbox = (x: number, y: number, checked: boolean) => {
-      doc.rect(x, y, 3, 3);
-      if (checked) {
-        doc.line(x, y, x + 3, y + 3);
-        doc.line(x + 3, y, x, y + 3);
-      }
     };
     
     const checkPageSpace = (y: number, requiredSpace: number): number => {
@@ -548,7 +558,7 @@ const Taskboard = () => {
               y += 6;
             }
             const text = key === 'inpsProcessar' ? "Processar" : "Enviar Retorno";
-            processTask(key, text, value);
+            processTask(key, text, ensureBoolean(value));
           } else if (key === 'enviarEci' || key === 'enviarEdv') {
             if (key === 'enviarEci' && !y.toString().includes('Enviar')) {
               y = checkPageSpace(y, 8);
@@ -556,9 +566,9 @@ const Taskboard = () => {
               y += 6;
             }
             const text = key === 'enviarEci' ? "ECI" : "EDV";
-            processTask(key, text, value);
+            processTask(key, text, ensureBoolean(value));
           } else if (taskTexts[key]) {
-            processTask(key, taskTexts[key], value);
+            processTask(key, taskTexts[key], ensureBoolean(value));
           }
         });
       }
@@ -577,7 +587,7 @@ const Taskboard = () => {
           };
           
           const typedTaskKey = taskKey as keyof Turno1Tasks;
-          processTask(taskKey, taskTexts[taskKey], tasks.turno1[typedTaskKey]);
+          processTask(taskKey, taskTexts[taskKey], ensureBoolean(tasks.turno1[typedTaskKey]));
         });
         
         // "Enviar" section with checkboxes
@@ -635,7 +645,7 @@ const Taskboard = () => {
         remainingTasks.forEach(taskKey => {
           if (taskTexts[taskKey]) {
             const typedTaskKey = taskKey as keyof Turno1Tasks;
-            processTask(taskKey, taskTexts[taskKey], tasks.turno1[typedTaskKey]);
+            processTask(taskKey, taskTexts[taskKey], ensureBoolean(tasks.turno1[typedTaskKey]));
           }
         });
       }
@@ -683,7 +693,7 @@ const Taskboard = () => {
         beforeCloseTasks.forEach(taskKey => {
           if (taskTexts[taskKey]) {
             const typedTaskKey = taskKey as keyof Turno3Tasks;
-            processTask(taskKey, taskTexts[taskKey], tasks.turno3[typedTaskKey]);
+            processTask(taskKey, taskTexts[taskKey], ensureBoolean(tasks.turno3[typedTaskKey]));
           }
         });
         
@@ -721,458 +731,4 @@ const Taskboard = () => {
           'impressaoCheques', 'arquivarCheques', 'terminoFecho', 'transferirFicheirosDsi'
         ];
         
-        const afterCloseTaskTexts: Record<string, string> = {
-          validarFicheiroCcln: "Validar ficheiro CCLN - 76853",
-          aplicarFicheirosCompensacao: "Aplicar ficheiros compensação SISP (CCLN, EDST, EORI, ERMB)",
-          validarSaldoConta: "Validar saldo da conta 18/5488102:",
-          abrirRealTime: "Abrir o Real-Time",
-          verificarTransacoes: "Verificar a entrada de transações 3100 4681",
-          aplicarFicheiroVisa: "Aplicar ficheiro VISA DAF - com o user FECHO 4131",
-          cativarCartoes: "Cativar cartões de crédito em incumprimento - com o user FECHO – 76727",
-          abrirBcaDireto: "Abrir BCA Direto/MB/Extrato Digital/Paypal – 49162",
-          abrirServidoresBanka: "Abrir servidores Banka Remota",
-          atualizarTelefonesOffline: "Atualizar telefones OFFLINE",
-          verificarReplicacao: "Verificar a replicação entre servidores",
-          enviarFicheiroCsv: "Enviar ficheiro CSV (saldos) para MIA",
-          transferirFicheirosLiquidity: "Transferir ficheiros para a pasta Liquidity",
-          percurso76921: "Percurso 76921 (Produção de diversos ficheiros)",
-          percurso76922: "Percurso 76922 (Transmissão de ficheiros)",
-          percurso76923: "Percurso 76923 (Tratamento dos ficheiros)",
-          abrirServidoresTesteProducao: "Abrir Servidores Teste e Produção",
-          impressaoCheques: "Impressão Cheques dia seguinte",
-          arquivarCheques: "Arquivar Cheques e Extratos Impressos",
-          terminoFecho: "Termino do Fecho",
-          transferirFicheirosDsi: "Transferir Ficheiros DSI"
-        };
-        
-        afterCloseTasks.forEach(taskKey => {
-          if (afterCloseTaskTexts[taskKey]) {
-            const typedTaskKey = taskKey as keyof Turno3Tasks;
-            processTask(taskKey, afterCloseTaskTexts[taskKey], tasks.turno3[typedTaskKey]);
-          }
-        });
-        
-        // Process saldo positivo/negativo
-        if (tasks.turno3.validarSaldoConta) {
-          const index = afterCloseTasks.indexOf('validarSaldoConta');
-          if (index !== -1) {
-            y -= 4; // Go back up a bit
-            
-            const xPosSaldoValue = 90;
-            if (tasks.turno3.saldoContaValor) {
-              doc.text(`Valor: ${tasks.turno3.saldoContaValor}`, xPosSaldoValue, y);
-            }
-            
-            // Add positive/negative checkboxes
-            const xPosSaldoNeg = 140;
-            drawCheckbox(xPosSaldoNeg, y - 3, tasks.turno3.saldoNegativo);
-            doc.text("Negativo", xPosSaldoNeg + 5, y);
-            
-            const xPosSaldoPos = 175;
-            drawCheckbox(xPosSaldoPos, y - 3, tasks.turno3.saldoPositivo);
-            doc.text("Positivo", xPosSaldoPos + 5, y);
-            
-            y += 6; // Continue with normal spacing
-          }
-        }
-        
-        // Add timestamps for specific tasks
-        if (tasks.turno3.abrirRealTimeHora) {
-          const index = afterCloseTasks.indexOf('abrirRealTime');
-          if (index !== -1) {
-            y -= 6; // Go back up a bit
-            doc.text(`Hora: ${tasks.turno3.abrirRealTimeHora}`, 120, y);
-            y += 6; // Go back down
-          }
-        }
-        
-        if (tasks.turno3.terminoFechoHora) {
-          const index = afterCloseTasks.indexOf('terminoFecho');
-          if (index !== -1) {
-            y -= 6; // Go back up a bit
-            doc.text(`Hora: ${tasks.turno3.terminoFechoHora}`, 120, y);
-            y += 6; // Go back down
-          }
-        }
-      }
-    });
-
-    if (tableRows.length > 0) {
-      y = checkPageSpace(y, 40);
-      doc.setFont("helvetica", "bold");
-      doc.text("Processamentos", 15, y);
-      y += 8;
-
-      const tableBody = tableRows.map(row => [
-        row.hora,
-        row.tarefa,
-        row.nomeAs,
-        row.operacao,
-        row.executado
-      ]);
-
-      doc.autoTable({
-        startY: y,
-        head: [['Hora', 'Tarefa', 'Nome AS400', 'Nº Operação', 'Executado Por']],
-        body: tableBody,
-        theme: 'grid',
-        styles: { fontSize: 10 },
-        headStyles: { fillColor: [24, 70, 126] }
-      });
-    }
-
-    doc.save(`Ficha de Procedimentos - ${formattedDate}.pdf`);
-  };
-
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle>Ficha de Processamentos</CardTitle>
-          <CardDescription>Registo de tarefas diárias do Centro Informática</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col space-y-4 md:flex-row md:space-x-4 md:space-y-0">
-            <div className="w-full md:w-1/4">
-              <Label htmlFor="date">Data</Label>
-              <Input 
-                id="date" 
-                type="date" 
-                value={date} 
-                onChange={(e) => setDate(e.target.value)} 
-              />
-            </div>
-          </div>
-          
-          <Tabs defaultValue="turno1" className="mt-6">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="turno1">Turno 1</TabsTrigger>
-              <TabsTrigger value="turno2">Turno 2</TabsTrigger>
-              <TabsTrigger value="turno3">Turno 3</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="turno1" className="mt-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Turno 1</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                    <div>
-                      <Label htmlFor="operator1">Operador</Label>
-                      <Select 
-                        value={turnData.turno1.operator}
-                        onValueChange={(value) => handleTurnDataChange('turno1', 'operator', value)}
-                      >
-                        <SelectTrigger className="mt-1">
-                          <SelectValue placeholder="Selecione um operador" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {operatorsList.map((op) => (
-                            <SelectItem key={op.value} value={op.value}>{op.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="entrada1">Hora Entrada</Label>
-                      <Input 
-                        id="entrada1" 
-                        type="time" 
-                        value={turnData.turno1.entrada}
-                        onChange={(e) => handleTurnDataChange('turno1', 'entrada', e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="saida1">Hora Saída</Label>
-                      <Input 
-                        id="saida1" 
-                        type="time"
-                        value={turnData.turno1.saida}
-                        onChange={(e) => handleTurnDataChange('turno1', 'saida', e.target.value)} 
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="mt-4">
-                    <Label htmlFor="observations1">Observações</Label>
-                    <Textarea 
-                      id="observations1" 
-                      value={turnData.turno1.observations}
-                      onChange={(e) => handleTurnDataChange('turno1', 'observations', e.target.value)}
-                    />
-                  </div>
-                  
-                  <div className="mt-6">
-                    <h3 className="mb-4 font-medium">Tarefas</h3>
-                    <div className="space-y-4">
-                      <Turno1TasksComponent 
-                        tasks={tasks.turno1} 
-                        onTaskChange={(task, checked) => handleTaskChange('turno1', task, checked)}
-                        observations={turnData.turno1.observations}
-                        onObservationsChange={(value) => handleTurnDataChange('turno1', 'observations', value)}
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="turno2" className="mt-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Turno 2</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                    <div>
-                      <Label htmlFor="operator2">Operador</Label>
-                      <Select 
-                        value={turnData.turno2.operator}
-                        onValueChange={(value) => handleTurnDataChange('turno2', 'operator', value)}
-                      >
-                        <SelectTrigger className="mt-1">
-                          <SelectValue placeholder="Selecione um operador" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {operatorsList.map((op) => (
-                            <SelectItem key={op.value} value={op.value}>{op.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="entrada2">Hora Entrada</Label>
-                      <Input 
-                        id="entrada2" 
-                        type="time" 
-                        value={turnData.turno2.entrada}
-                        onChange={(e) => handleTurnDataChange('turno2', 'entrada', e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="saida2">Hora Saída</Label>
-                      <Input 
-                        id="saida2" 
-                        type="time" 
-                        value={turnData.turno2.saida}
-                        onChange={(e) => handleTurnDataChange('turno2', 'saida', e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="mt-4">
-                    <Label htmlFor="observations2">Observações</Label>
-                    <Textarea 
-                      id="observations2" 
-                      value={turnData.turno2.observations}
-                      onChange={(e) => handleTurnDataChange('turno2', 'observations', e.target.value)}
-                    />
-                  </div>
-                  
-                  <div className="mt-6">
-                    <h3 className="mb-4 font-medium">Tarefas</h3>
-                    <div className="space-y-4">
-                      <Turno2TasksComponent 
-                        tasks={tasks.turno2} 
-                        onTaskChange={(task, checked) => handleTaskChange('turno2', task, checked)}
-                        observations={turnData.turno2.observations}
-                        onObservationsChange={(value) => handleTurnDataChange('turno2', 'observations', value)}
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="turno3" className="mt-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Turno 3</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                    <div>
-                      <Label htmlFor="operator3">Operador</Label>
-                      <Select 
-                        value={turnData.turno3.operator}
-                        onValueChange={(value) => handleTurnDataChange('turno3', 'operator', value)}
-                      >
-                        <SelectTrigger className="mt-1">
-                          <SelectValue placeholder="Selecione um operador" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {operatorsList.map((op) => (
-                            <SelectItem key={op.value} value={op.value}>{op.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="entrada3">Hora Entrada</Label>
-                      <Input 
-                        id="entrada3" 
-                        type="time" 
-                        value={turnData.turno3.entrada}
-                        onChange={(e) => handleTurnDataChange('turno3', 'entrada', e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="saida3">Hora Saída</Label>
-                      <Input 
-                        id="saida3" 
-                        type="time" 
-                        value={turnData.turno3.saida}
-                        onChange={(e) => handleTurnDataChange('turno3', 'saida', e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="mt-4">
-                    <Label htmlFor="observations3">Observações</Label>
-                    <Textarea 
-                      id="observations3" 
-                      value={turnData.turno3.observations}
-                      onChange={(e) => handleTurnDataChange('turno3', 'observations', e.target.value)}
-                    />
-                  </div>
-                  
-                  <div className="mt-6">
-                    <h3 className="mb-4 font-medium">Tarefas</h3>
-                    <div className="space-y-4">
-                      <Turno3TasksComponent 
-                        tasks={tasks.turno3} 
-                        onTaskChange={(task, checked) => handleTaskChange('turno3', task, checked)}
-                        observations={turnData.turno3.observations}
-                        onObservationsChange={(value) => handleTurnDataChange('turno3', 'observations', value)}
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
-      
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle>Processamentos</CardTitle>
-          <CardDescription>Registo de processamentos realizados</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <UITableRow>
-                  <TableHead>Hora</TableHead>
-                  <TableHead>Tarefa</TableHead>
-                  <TableHead>Nome AS400</TableHead>
-                  <TableHead>N�� Operação</TableHead>
-                  <TableHead>Executado Por</TableHead>
-                </UITableRow>
-              </TableHeader>
-              <TableBody>
-                {tableRows.map((row) => (
-                  <UITableRow key={row.id}>
-                    <TableCell>
-                      <Input 
-                        type="time" 
-                        value={row.hora}
-                        onChange={(e) => handleInputChange(row.id, 'hora', e.target.value)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input 
-                        type="text" 
-                        value={row.tarefa}
-                        onChange={(e) => handleInputChange(row.id, 'tarefa', e.target.value)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input 
-                        type="text" 
-                        value={row.nomeAs}
-                        onChange={(e) => handleInputChange(row.id, 'nomeAs', e.target.value)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input 
-                        type="text" 
-                        value={row.operacao}
-                        onChange={(e) => handleInputChange(row.id, 'operacao', e.target.value)}
-                        maxLength={9}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Select 
-                        value={row.executado}
-                        onValueChange={(value) => handleInputChange(row.id, 'executado', value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {operatorsList.map((op) => (
-                            <SelectItem key={op.value} value={op.value}>{op.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                  </UITableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-          
-          <div className="flex justify-end mt-4 space-x-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={addTableRow}
-              className="flex items-center"
-            >
-              <PlusCircle className="w-4 h-4 mr-1" /> Adicionar Linha
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={removeTableRow}
-              disabled={tableRows.length <= 1}
-              className="flex items-center"
-            >
-              <Trash2 className="w-4 h-4 mr-1" /> Remover Linha
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-      
-      <div className="flex justify-between items-center gap-4">
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            onClick={resetForm}
-            className="flex items-center gap-2"
-          >
-            <RotateCcw className="h-4 w-4" /> Reiniciar
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={generatePDF}
-            className="flex items-center gap-2"
-          >
-            <FileDown className="h-4 w-4" /> Exportar PDF
-          </Button>
-        </div>
-        <Button 
-          onClick={handleSave}
-          className="flex items-center gap-2"
-        >
-          <Save className="h-4 w-4" /> Guardar
-        </Button>
-      </div>
-    </div>
-  );
-};
-
-export default Taskboard;
+        const afterCloseTaskTexts: Record<string
