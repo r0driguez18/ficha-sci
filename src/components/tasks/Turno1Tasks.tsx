@@ -126,6 +126,15 @@ export const Turno1TasksComponent: React.FC<Turno1TasksProps> = ({ tasks, onTask
         />
         <Label htmlFor="verificarDebitos" className="cursor-pointer">Verificar Débitos/Créditos aplicados no dia Anterior</Label>
       </div>
+
+      <div className="flex items-start space-x-2">
+        <Checkbox 
+          id="backupsDiferidos"
+          checked={tasks.backupsDiferidos}
+          onCheckedChange={(checked) => onTaskChange('backupsDiferidos', !!checked)}
+        />
+        <Label htmlFor="backupsDiferidos" className="cursor-pointer">Backups Diferidos</Label>
+      </div>
       
       <div className="flex items-start space-x-2">
         <Checkbox 
@@ -143,15 +152,6 @@ export const Turno1TasksComponent: React.FC<Turno1TasksProps> = ({ tasks, onTask
           onCheckedChange={(checked) => onTaskChange('processarTelecomp', !!checked)}
         />
         <Label htmlFor="processarTelecomp" className="cursor-pointer">Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR</Label>
-      </div>
-      
-      <div className="flex items-start space-x-2">
-        <Checkbox 
-          id="verificarCpuMemoria"
-          checked={tasks.verificarCpuMemoria}
-          onCheckedChange={(checked) => onTaskChange('verificarCpuMemoria', !!checked)}
-        />
-        <Label htmlFor="verificarCpuMemoria" className="cursor-pointer">Verificar uso de CPU e memória em servidores principais</Label>
       </div>
       
       <div className="flex items-start space-x-2">
