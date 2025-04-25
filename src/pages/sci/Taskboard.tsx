@@ -644,7 +644,7 @@ const Taskboard = () => {
         remainingTasks.forEach(taskKey => {
           if (taskTexts[taskKey]) {
             const typedTaskKey = taskKey as keyof Turno1Tasks;
-            processTask(taskKey, taskTexts[taskKey], ensureBoolean(tasks.turno1[typedTaskKey]));
+            processTask(taskKey, taskTexts[typedTaskKey], ensureBoolean(tasks.turno1[typedTaskKey]));
           }
         });
       }
