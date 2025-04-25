@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -495,7 +494,7 @@ const Taskboard = () => {
     doc.text("Processamentos Diários", 15, y);
     doc.text(`Data: ${date}`, pageWidth - 50, y);
     y += 10;
-    
+
     const turnKeys: TurnKey[] = ['turno1', 'turno2', 'turno3'];
     const turnNames = ['Turno 1', 'Turno 2', 'Turno 3'];
     
@@ -506,29 +505,57 @@ const Taskboard = () => {
       y = checkPageSpace(y, 30);
       
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(12);
       doc.text(`${turnName}:`, 15, y);
       doc.setFont("helvetica", "normal");
-      
       doc.text(`Operador: ${turn.operator}`, 50, y);
       doc.text(`Entrada: ${turn.entrada}`, 120, y);
       doc.text(`Saída: ${turn.saida}`, 170, y);
       y += 10;
-      
-      if (turnKey === 'turno3') {
-        y = checkPageSpace(y, 8);
-        doc.setFont("helvetica", "bold");
-        doc.text("Antes do Fecho", 15, y);
-        y += 8;
-      }
-      
+
       const processTask = (taskKey: string, taskText: string, checked: boolean) => {
         y = checkPageSpace(y, 8);
         drawCheckbox(15, y - 3, checked);
-        doc.setFontSize(10);
         doc.text(taskText, 20, y);
         y += 6;
       };
+
+      if (turnKey === 'turno2') {
+        Object.entries(tasks.turno2).forEach(([key, value]) => {
+          const taskTexts: Record<string, string> = {
+            datacenter: "Verificar DATA CENTER",
+            sistemas: "Verificar Sistemas: BCACV1/BCACV2",
+            servicos: "Verificar Serviços: Vinti24/BCADireto/Replicação/Servidor MIA",
+            verificarReportes: "Verificar envio de reportes(INPS, VISTO USA, BCV, IMPC)",
+            verificarDebitos: "Verificar Débitos/Créditos Aplicados no Turno Anterior",
+            confirmarAtualizacaoSisp: "Confirmar Atualização SISP",
+            processarTef: "Processar ficheiros TEF - ERR/RTR/RCT",
+            processarTelecomp: "Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR",
+            validarSaco: "Validar Saco 1935",
+            verificarPendentes: "Verificar Pendentes dos Balcões",
+            fecharBalcoes: "Fechar os Balcoes Centrais"
+          };
+
+          if (key === 'inpsProcessar' || key === 'inpsEnviarRetorno') {
+            if (key === 'inpsProcessar' && !y.toString().includes('INPS')) {
+              y = checkPageSpace(y, 8);
+              doc.text("Ficheiros INPS:", 20, y);
+              y += 6;
+            }
+            const text = key === 'inpsProcessar' ? "Processar" : "Enviar Retorno";
+            processTask(key, text, value);
+          } else if (key === 'enviarEci' || key === 'enviarEdv') {
+            if (key === 'enviarEci' && !y.toString().includes('Enviar')) {
+              y = checkPageSpace(y, 8);
+              doc.text("Enviar Ficheiro:", 20, y);
+              y += 6;
+            }
+            const text = key === 'enviarEci' ? "ECI" : "EDV";
+            processTask(key, text, value);
+          } else if (taskTexts[key]) {
+            processTask(key, taskTexts[key], value);
+          }
+        });
+      }
       
       if (turnKey === 'turno1') {
         // Turno 1 tasks processing
@@ -604,89 +631,6 @@ const Taskboard = () => {
             const typedTaskKey = taskKey as keyof Turno1Tasks;
             processTask(taskKey, taskTexts[taskKey], tasks.turno1[typedTaskKey]);
           }
-        });
-      }
-      
-      if (turnKey === 'turno2') {
-        // Turno 2 tasks processing
-        const regularTasksToProcess = [
-          'datacenter', 'sistemas', 'servicos', 'verificarReportes', 'verificarDebitos', 
-          'confirmarAtualizacaoSisp'
-        ];
-        
-        regularTasksToProcess.forEach(taskKey => {
-          const taskTexts: Record<string, string> = {
-            datacenter: "Verificar DATA CENTER",
-            sistemas: "Verificar Sistemas: BCACV1/BCACV2",
-            servicos: "Verificar Serviços: Vinti24/BCADireto/Replicação/Servidor MIA",
-            verificarReportes: "Verificar envio de reportes(INPS, VISTO USA, BCV, IMPC)",
-            verificarDebitos: "Verificar Débitos/Créditos Aplicados no Turno Anterior",
-            confirmarAtualizacaoSisp: "Confirmar Atualização SISP"
-          };
-          
-          const typedTaskKey = taskKey as keyof Turno2Tasks;
-          processTask(taskKey, taskTexts[taskKey], tasks.turno2[typedTaskKey]);
-        });
-        
-        // "Ficheiros INPS" section
-        y = checkPageSpace(y, 8);
-        doc.setFontSize(10);
-        doc.text("Ficheiros INPS:", 20, y);
-        
-        let xOffset = 55;
-        
-        drawCheckbox(xOffset, y - 3, tasks.turno2.inpsProcessar);
-        doc.text("Processar", xOffset + 5, y);
-        
-        xOffset += 35;
-        
-        drawCheckbox(xOffset, y - 3, tasks.turno2.inpsEnviarRetorno);
-        doc.text("Enviar Retorno", xOffset + 5, y);
-        
-        y += 8;
-        
-        // Middle tasks
-        const middleTasksToProcess = ['processarTef', 'processarTelecomp'];
-        
-        middleTasksToProcess.forEach(taskKey => {
-          const taskTexts: Record<string, string> = {
-            processarTef: "Processar ficheiros TEF - ERR/RTR/RCT",
-            processarTelecomp: "Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR"
-          };
-          
-          const typedTaskKey = taskKey as keyof Turno2Tasks;
-          processTask(taskKey, taskTexts[taskKey], tasks.turno2[typedTaskKey]);
-        });
-        
-        // "Enviar Ficheiro" section
-        y = checkPageSpace(y, 8);
-        doc.setFontSize(10);
-        doc.text("Enviar Ficheiro:", 20, y);
-        
-        xOffset = 55;
-        
-        drawCheckbox(xOffset, y - 3, tasks.turno2.enviarEci);
-        doc.text("ECI", xOffset + 5, y);
-        
-        xOffset += 20;
-        
-        drawCheckbox(xOffset, y - 3, tasks.turno2.enviarEdv);
-        doc.text("EDV", xOffset + 5, y);
-        
-        y += 8;
-        
-        // Final tasks
-        const finalTasksToProcess = ['validarSaco', 'verificarPendentes', 'fecharBalcoes'];
-        
-        finalTasksToProcess.forEach(taskKey => {
-          const taskTexts: Record<string, string> = {
-            validarSaco: "Validar Saco 1935",
-            verificarPendentes: "Verificar Pendentes dos Balcões",
-            fecharBalcoes: "Fechar os Balcoes Centrais"
-          };
-          
-          const typedTaskKey = taskKey as keyof Turno2Tasks;
-          processTask(taskKey, taskTexts[taskKey], tasks.turno2[typedTaskKey]);
         });
       }
       
@@ -846,7 +790,31 @@ const Taskboard = () => {
         }
       }
     });
-    
+
+    if (tableRows.length > 0) {
+      y = checkPageSpace(y, 40);
+      doc.setFont("helvetica", "bold");
+      doc.text("Processamentos", 15, y);
+      y += 8;
+
+      const tableBody = tableRows.map(row => [
+        row.hora,
+        row.tarefa,
+        row.nomeAs,
+        row.operacao,
+        row.executado
+      ]);
+
+      doc.autoTable({
+        startY: y,
+        head: [['Hora', 'Tarefa', 'Nome AS400', 'Nº Operação', 'Executado Por']],
+        body: tableBody,
+        theme: 'grid',
+        styles: { fontSize: 10 },
+        headStyles: { fillColor: [24, 70, 126] }
+      });
+    }
+
     doc.save(`Ficha de Procedimentos - ${formattedDate}.pdf`);
   };
 
