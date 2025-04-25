@@ -18,6 +18,7 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { Turno3TasksComponent } from '@/components/tasks/Turno3Tasks';
 
 export interface TableRow {
   id: number;
@@ -739,13 +740,21 @@ const Taskboard = () => {
             saveBmbck: "Save BMBCK – Automático",
             abrirServidoresInternet: "Abrir Servidores Internet Banking – Percurso 161–",
             imprimirCheques: "Imprimir Cheques e Diários de Cheques (depois do Save BMBCK)",
-            backupBm: "Backup BM – Automático",
+            backupBm: "Backup BM – Automático"
+          };
+          
+          const typedTaskKey = taskKey as keyof Turno3Tasks;
+          processTask(taskKey, taskTexts[typedTaskKey], tasks.turno3[typedTaskKey]);
+        });
+        
+        y = checkPageSpace(y, 8);
+        doc.setFont("helvetica", "bold");
+        doc.text("Depois do Fecho", 15, y);
+        y += 8;
+        
+        const afterCloseTasks = ['validarFicheiroCcln', 'aplicarFicheirosCompensacao'];
+        
+        afterCloseTasks.forEach(taskKey => {
+          const taskTexts: Record<string, string> = {
             validarFicheiroCcln: "Validar ficheiro CCLN - 76853",
-            aplicarFicheirosCompensacao: "Aplicar ficheiros compensação SISP (CCLN, EDST, EORI, ERMB)",
-            validarSaldoConta: "Validar saldo da conta 18/5488102:",
-            saldoNegativo: "Negativo",
-            saldoPositivo: "Positivo",
-            abrirRealTime: "Abrir o Real-Time",
-            verificarTransacoes: "Verificar a entrada de transações 3100 4681",
-            aplicarFicheiroVisa: "Aplicar ficheiro VISA DAF - com o user FECHO 4131",
-            cativarCartoes: "Cativar cartões de crédito em incumprimento - com o user FECHO – 767
+            aplicarF
