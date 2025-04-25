@@ -1,4 +1,3 @@
-
 export interface Turno1Tasks {
   datacenter: boolean;
   sistemas: boolean;
@@ -23,6 +22,12 @@ export interface Turno1Tasks {
   dia16: boolean;
   dia23: boolean;
   atualizarCentralRisco: boolean;
+  bmjrn: boolean;
+  grjrcv: boolean;
+  aujrn: boolean;
+  mvdia1: boolean;
+  mvdia2: boolean;
+  brjrn: boolean;
 }
 
 export interface Turno2Tasks {

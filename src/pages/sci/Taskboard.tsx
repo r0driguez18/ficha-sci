@@ -1048,28 +1048,28 @@ const Taskboard = () => {
         </CardContent>
       </Card>
       
-      <div className="flex justify-between">
-        <div className="space-x-2">
+      <div className="flex justify-between items-center gap-4">
+        <div className="flex items-center gap-2">
           <Button 
             variant="outline" 
             onClick={resetForm}
-            className="flex items-center"
+            className="flex items-center gap-2"
           >
-            <RotateCcw className="w-4 h-4 mr-2" /> Reiniciar
+            <RotateCcw className="h-4 w-4" /> Reiniciar
           </Button>
           <Button 
             variant="outline" 
             onClick={generatePDF}
-            className="flex items-center"
+            className="flex items-center gap-2"
           >
-            <FileDown className="w-4 h-4 mr-2" /> Exportar PDF
+            <FileDown className="h-4 w-4" /> Exportar PDF
           </Button>
         </div>
         <Button 
           onClick={handleSave}
-          className="flex items-center"
+          className="flex items-center gap-2"
         >
-          <Save className="w-4 h-4 mr-2" /> Guardar
+          <Save className="h-4 w-4" /> Guardar
         </Button>
       </div>
     </div>

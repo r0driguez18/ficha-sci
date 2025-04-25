@@ -141,16 +141,56 @@ export const Turno1TasksComponent: React.FC<Turno1TasksProps> = ({
             checked={tasks.backupsDiferidos}
             onCheckedChange={(checked) => onTaskChange('backupsDiferidos', !!checked)}
           />
-          <div>
-            <Label htmlFor="backupsDiferidos" className="cursor-pointer font-medium">Backups Diferidos:</Label>
-            <ul className="ml-6 mt-2 space-y-1 text-sm">
-              <li>• BMJRN (2 tapes/alterar 1 por mês/inicializar no inicio do mês)</li>
-              <li>• GRJRCV (1 tape)</li>
-              <li>• AUJRN (1tape)</li>
-              <li>• MVDIA1 (eliminar obj. após save N)</li>
-              <li>• MVDIA2 (eliminar obj. após save S)</li>
-              <li>• BRJRN (1tape)</li>
-            </ul>
+          <Label htmlFor="backupsDiferidos" className="cursor-pointer font-medium">Backups Diferidos:</Label>
+        </div>
+        <div className="ml-6 mt-2 space-y-2">
+          <div className="flex items-start space-x-2">
+            <Checkbox 
+              id="bmjrn"
+              checked={tasks.bmjrn}
+              onCheckedChange={(checked) => onTaskChange('bmjrn', !!checked)}
+            />
+            <Label htmlFor="bmjrn" className="cursor-pointer">BMJRN (2 tapes/alterar 1 por mês/inicializar no inicio do mês)</Label>
+          </div>
+          <div className="flex items-start space-x-2">
+            <Checkbox 
+              id="grjrcv"
+              checked={tasks.grjrcv}
+              onCheckedChange={(checked) => onTaskChange('grjrcv', !!checked)}
+            />
+            <Label htmlFor="grjrcv" className="cursor-pointer">GRJRCV (1 tape)</Label>
+          </div>
+          <div className="flex items-start space-x-2">
+            <Checkbox 
+              id="aujrn"
+              checked={tasks.aujrn}
+              onCheckedChange={(checked) => onTaskChange('aujrn', !!checked)}
+            />
+            <Label htmlFor="aujrn" className="cursor-pointer">AUJRN (1tape)</Label>
+          </div>
+          <div className="flex items-start space-x-2">
+            <Checkbox 
+              id="mvdia1"
+              checked={tasks.mvdia1}
+              onCheckedChange={(checked) => onTaskChange('mvdia1', !!checked)}
+            />
+            <Label htmlFor="mvdia1" className="cursor-pointer">MVDIA1 (eliminar obj. após save N)</Label>
+          </div>
+          <div className="flex items-start space-x-2">
+            <Checkbox 
+              id="mvdia2"
+              checked={tasks.mvdia2}
+              onCheckedChange={(checked) => onTaskChange('mvdia2', !!checked)}
+            />
+            <Label htmlFor="mvdia2" className="cursor-pointer">MVDIA2 (eliminar obj. após save S)</Label>
+          </div>
+          <div className="flex items-start space-x-2">
+            <Checkbox 
+              id="brjrn"
+              checked={tasks.brjrn}
+              onCheckedChange={(checked) => onTaskChange('brjrn', !!checked)}
+            />
+            <Label htmlFor="brjrn" className="cursor-pointer">BRJRN (1tape)</Label>
           </div>
         </div>
       </div>
