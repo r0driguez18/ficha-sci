@@ -1,4 +1,3 @@
-
 import type { TurnKey, TasksType, Turno1Tasks, Turno2Tasks, Turno3Tasks } from '@/types/taskboard';
 
 /**
@@ -79,6 +78,7 @@ export const getInitialTasks = (): TasksType => ({
     processarTelecomp: false,
     enviarEci: false,
     enviarEdv: false,
+    confirmarAtualizacaoFicheirosSisp: false,
     validarSaco: false,
     verificarPendentes: false,
     fecharBalcoes: false

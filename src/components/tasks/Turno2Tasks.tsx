@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -19,7 +18,6 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
   observations,
   onObservationsChange 
 }) => {
-  // Helper function to ensure we only pass boolean values to onTaskChange
   const handleCheckboxChange = (task: keyof Turno2Tasks, value: boolean | "indeterminate") => {
     onTaskChange(task, value === true);
   };
@@ -142,6 +140,17 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
             <Label htmlFor="enviarEdv" className="cursor-pointer">EDV</Label>
           </div>
         </div>
+      </div>
+
+      <div className="flex items-center space-x-2">
+        <Checkbox 
+          id="confirmarAtualizacaoFicheirosSisp"
+          checked={tasks.confirmarAtualizacaoFicheirosSisp}
+          onCheckedChange={(checked) => handleCheckboxChange('confirmarAtualizacaoFicheirosSisp', checked)}
+        />
+        <Label htmlFor="confirmarAtualizacaoFicheirosSisp" className="cursor-pointer">
+          Confirmar Atualização Ficheiros Enviados à SISP (ECI * ENV/IMA)
+        </Label>
       </div>
 
       <div className="flex items-center space-x-2">
