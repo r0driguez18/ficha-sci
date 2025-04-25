@@ -455,9 +455,12 @@ const Taskboard = () => {
     toast.success('Formulário reiniciado com sucesso!');
   };
 
-  const ensureBoolean = (value: string | boolean): boolean => {
+  const ensureBoolean = (value: string | boolean | undefined): boolean => {
     if (typeof value === 'boolean') {
       return value;
+    }
+    if (typeof value === 'undefined') {
+      return false;
     }
     return value === 'true';
   };
