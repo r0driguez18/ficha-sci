@@ -76,17 +76,6 @@ export const TurnForm: React.FC<TurnFormProps> = ({
             onChange={(e) => onSaidaChange(e.target.value)} 
           />
         </div>
-        <div className="md:col-span-3">
-          <Label htmlFor={`observations${turnNumber}`}>
-            Outras Intervenções/Observações/Comunicações/Ocorrências
-          </Label>
-          <Textarea 
-            id={`observations${turnNumber}`}
-            value={observations}
-            onChange={(e) => onObservationsChange(e.target.value)}
-            className="mt-1 w-full min-h-[100px]"
-          />
-        </div>
       </div>
       
       <div className="mt-6">
