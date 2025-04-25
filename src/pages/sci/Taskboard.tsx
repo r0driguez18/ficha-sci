@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -129,20 +130,14 @@ const Taskboard = () => {
       prepararEnviarCsv: false,
       fecharRealTime: false,
       fecharRealTimeHora: '',
-      inicioFecho: false,
-      inicioFechoHora: '',
-      abrirRealTime: false,
-      abrirRealTimeHora: '',
-      terminoFecho: false,
-      terminoFechoHora: '',
-      validarSaldoConta: false,
-      saldoContaValor: '',
       prepararEnviarEtr: false,
       fazerLoggOffAml: false,
       aplicarFicheiroErroEtr: false,
       validarBalcao14: false,
       fecharBalcao14: false,
       arranqueManual: false,
+      inicioFecho: false,
+      inicioFechoHora: '',
       validarEnvioEmail: false,
       controlarTrabalhos: false,
       saveBmbck: false,
@@ -152,9 +147,11 @@ const Taskboard = () => {
       validarFicheiroCcln: false,
       aplicarFicheirosCompensacao: false,
       validarSaldoConta: false,
+      saldoContaValor: '',
       saldoNegativo: false,
       saldoPositivo: false,
       abrirRealTime: false,
+      abrirRealTimeHora: '',
       verificarTransacoes: false,
       aplicarFicheiroVisa: false,
       cativarCartoes: false,
@@ -171,6 +168,7 @@ const Taskboard = () => {
       impressaoCheques: false,
       arquivarCheques: false,
       terminoFecho: false,
+      terminoFechoHora: '',
       transferirFicheirosDsi: false
     }
   });
@@ -194,14 +192,37 @@ const Taskboard = () => {
     localStorage.setItem('taskboard-tableRows', JSON.stringify(tableRows));
   }, [date, turnData, tasks, tableRows]);
 
-  const handleTaskChange = (turno: TurnKey, task: string, checked: boolean) => {
-    setTasks({
-      ...tasks,
-      [turno]: {
-        ...tasks[turno],
-        [task]: checked
+  const handleTaskChange = (turno: TurnKey, task: string, checked: boolean | string) => {
+    // Handle string values for special fields that need time or numeric input
+    if (typeof checked === 'string') {
+      if (['fecharRealTimeHora', 'inicioFechoHora', 'abrirRealTimeHora', 'terminoFechoHora', 'saldoContaValor'].includes(task)) {
+        setTasks({
+          ...tasks,
+          [turno]: {
+            ...tasks[turno],
+            [task]: checked
+          }
+        });
+      } else {
+        // Convert to boolean for regular checkboxes
+        setTasks({
+          ...tasks,
+          [turno]: {
+            ...tasks[turno],
+            [task]: Boolean(checked)
+          }
+        });
       }
-    });
+    } else {
+      // Handle boolean values (regular checkboxes)
+      setTasks({
+        ...tasks,
+        [turno]: {
+          ...tasks[turno],
+          [task]: checked
+        }
+      });
+    }
   };
 
   const handleTurnDataChange = (turno: TurnKey, field: string, value: string) => {
@@ -399,20 +420,14 @@ const Taskboard = () => {
         prepararEnviarCsv: false,
         fecharRealTime: false,
         fecharRealTimeHora: '',
-        inicioFecho: false,
-        inicioFechoHora: '',
-        abrirRealTime: false,
-        abrirRealTimeHora: '',
-        terminoFecho: false,
-        terminoFechoHora: '',
-        validarSaldoConta: false,
-        saldoContaValor: '',
         prepararEnviarEtr: false,
         fazerLoggOffAml: false,
         aplicarFicheiroErroEtr: false,
         validarBalcao14: false,
         fecharBalcao14: false,
         arranqueManual: false,
+        inicioFecho: false,
+        inicioFechoHora: '',
         validarEnvioEmail: false,
         controlarTrabalhos: false,
         saveBmbck: false,
@@ -422,9 +437,11 @@ const Taskboard = () => {
         validarFicheiroCcln: false,
         aplicarFicheirosCompensacao: false,
         validarSaldoConta: false,
+        saldoContaValor: '',
         saldoNegativo: false,
         saldoPositivo: false,
         abrirRealTime: false,
+        abrirRealTimeHora: '',
         verificarTransacoes: false,
         aplicarFicheiroVisa: false,
         cativarCartoes: false,
@@ -441,6 +458,7 @@ const Taskboard = () => {
         impressaoCheques: false,
         arquivarCheques: false,
         terminoFecho: false,
+        terminoFechoHora: '',
         transferirFicheirosDsi: false
       }
     });
@@ -837,7 +855,7 @@ const Taskboard = () => {
                     <div className="space-y-4">
                       <Turno1TasksComponent 
                         tasks={tasks.turno1} 
-                        onTaskChange={(task, checked) => handleTaskChange('turno1', task, checked)}
+                        onTaskChange={(task, checked) => handleTaskChange('turno1', task, checked as boolean)}
                         observations={turnData.turno1.observations}
                         onObservationsChange={(value) => handleTurnDataChange('turno1', 'observations', value)}
                       />
@@ -904,7 +922,7 @@ const Taskboard = () => {
                     <div className="space-y-4">
                       <Turno2TasksComponent 
                         tasks={tasks.turno2} 
-                        onTaskChange={(task, checked) => handleTaskChange('turno2', task, checked)}
+                        onTaskChange={(task, checked) => handleTaskChange('turno2', task, checked as boolean)}
                         observations={turnData.turno2.observations}
                         onObservationsChange={(value) => handleTurnDataChange('turno2', 'observations', value)}
                       />
