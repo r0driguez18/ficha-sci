@@ -1,21 +1,22 @@
 import React from 'react';
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Turno3Tasks } from '@/types/taskboard';
 
 interface Turno3TasksProps {
   tasks: Turno3Tasks;
-  onTaskChange: (task: keyof Turno3Tasks, checked: boolean) => void;
+  onTaskChange: (task: keyof Turno3Tasks, value: boolean | string) => void;
   observations: string;
   onObservationsChange: (value: string) => void;
 }
 
-export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({ 
-  tasks, 
+export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
+  tasks,
   onTaskChange,
   observations,
-  onObservationsChange 
+  onObservationsChange
 }) => {
   return (
     <div className="space-y-2">
@@ -134,7 +135,15 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
           checked={tasks.fecharRealTime}
           onCheckedChange={(checked) => onTaskChange('fecharRealTime', !!checked)}
         />
-        <Label htmlFor="fecharRealTime" className="cursor-pointer">Interromper o Real-Time com a SISP</Label>
+        <Label htmlFor="fecharRealTime" className="cursor-pointer flex-grow">
+          Interromper o Real-Time com a SISP
+        </Label>
+        <Input
+          type="time"
+          value={tasks.fecharRealTimeHora}
+          onChange={(e) => onTaskChange('fecharRealTimeHora', e.target.value)}
+          className="w-32"
+        />
       </div>
       
       <div className="flex items-start space-x-2">
@@ -197,7 +206,15 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
           checked={tasks.inicioFecho}
           onCheckedChange={(checked) => onTaskChange('inicioFecho', !!checked)}
         />
-        <Label htmlFor="inicioFecho" className="cursor-pointer">Início do Fecho</Label>
+        <Label htmlFor="inicioFecho" className="cursor-pointer flex-grow">
+          Início do Fecho
+        </Label>
+        <Input
+          type="time"
+          value={tasks.inicioFechoHora}
+          onChange={(e) => onTaskChange('inicioFechoHora', e.target.value)}
+          className="w-32"
+        />
       </div>
       
       <div className="flex items-start space-x-2">
@@ -280,7 +297,16 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
           checked={tasks.validarSaldoConta}
           onCheckedChange={(checked) => onTaskChange('validarSaldoConta', !!checked)}
         />
-        <Label htmlFor="validarSaldoConta" className="cursor-pointer">Validar saldo da conta 18/5488102:</Label>
+        <Label htmlFor="validarSaldoConta" className="cursor-pointer flex-grow">
+          Validar saldo da conta 18/5488102:
+        </Label>
+        <Input
+          type="number"
+          value={tasks.saldoContaValor}
+          onChange={(e) => onTaskChange('saldoContaValor', e.target.value)}
+          className="w-32"
+          placeholder="0.00"
+        />
       </div>
       
       <div className="ml-6 flex space-x-4 mb-2">
@@ -308,7 +334,15 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
           checked={tasks.abrirRealTime}
           onCheckedChange={(checked) => onTaskChange('abrirRealTime', !!checked)}
         />
-        <Label htmlFor="abrirRealTime" className="cursor-pointer">Abrir o Real-Time</Label>
+        <Label htmlFor="abrirRealTime" className="cursor-pointer flex-grow">
+          Abrir o Real-Time
+        </Label>
+        <Input
+          type="time"
+          value={tasks.abrirRealTimeHora}
+          onChange={(e) => onTaskChange('abrirRealTimeHora', e.target.value)}
+          className="w-32"
+        />
       </div>
       
       <div className="flex items-start space-x-2">
@@ -452,7 +486,15 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
           checked={tasks.terminoFecho}
           onCheckedChange={(checked) => onTaskChange('terminoFecho', !!checked)}
         />
-        <Label htmlFor="terminoFecho" className="cursor-pointer">Término do Fecho</Label>
+        <Label htmlFor="terminoFecho" className="cursor-pointer flex-grow">
+          Término do Fecho
+        </Label>
+        <Input
+          type="time"
+          value={tasks.terminoFechoHora}
+          onChange={(e) => onTaskChange('terminoFechoHora', e.target.value)}
+          className="w-32"
+        />
       </div>
       
       <div className="flex items-start space-x-2">

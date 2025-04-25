@@ -62,6 +62,7 @@ export interface Turno3Tasks {
   alterarInternetBanking: boolean;
   prepararEnviarCsv: boolean;
   fecharRealTime: boolean;
+  fecharRealTimeHora: string;
   prepararEnviarEtr: boolean;
   fazerLoggOffAml: boolean;
   aplicarFicheiroErroEtr: boolean;
@@ -69,6 +70,7 @@ export interface Turno3Tasks {
   fecharBalcao14: boolean;
   arranqueManual: boolean;
   inicioFecho: boolean;
+  inicioFechoHora: string;
   validarEnvioEmail: boolean;
   controlarTrabalhos: boolean;
   saveBmbck: boolean;
@@ -78,9 +80,11 @@ export interface Turno3Tasks {
   validarFicheiroCcln: boolean;
   aplicarFicheirosCompensacao: boolean;
   validarSaldoConta: boolean;
+  saldoContaValor: string;
   saldoNegativo: boolean;
   saldoPositivo: boolean;
   abrirRealTime: boolean;
+  abrirRealTimeHora: string;
   verificarTransacoes: boolean;
   aplicarFicheiroVisa: boolean;
   cativarCartoes: boolean;
@@ -97,6 +101,7 @@ export interface Turno3Tasks {
   impressaoCheques: boolean;
   arquivarCheques: boolean;
   terminoFecho: boolean;
+  terminoFechoHora: string;
   transferirFicheirosDsi: boolean;
 }
 
