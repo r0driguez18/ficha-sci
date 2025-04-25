@@ -1,15 +1,22 @@
-
 import React from 'react';
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Turno3Tasks } from '@/types/taskboard';
 
 interface Turno3TasksProps {
   tasks: Turno3Tasks;
   onTaskChange: (task: keyof Turno3Tasks, checked: boolean) => void;
+  observations: string;
+  onObservationsChange: (value: string) => void;
 }
 
-export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({ tasks, onTaskChange }) => {
+export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({ 
+  tasks, 
+  onTaskChange,
+  observations,
+  onObservationsChange 
+}) => {
   return (
     <div className="space-y-2">
       <h4 className="font-medium mb-4">Operações Fecho Dia</h4>
@@ -456,7 +463,16 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({ tasks, onTask
         />
         <Label htmlFor="transferirFicheirosDsi" className="cursor-pointer">Transferência ficheiros SSM Liquidity ExercicesDSI-CI/2023</Label>
       </div>
+      
+      <div className="mt-6">
+        <Label htmlFor="observations3">Observaç��es</Label>
+        <Textarea 
+          id="observations3" 
+          value={observations}
+          onChange={(e) => onObservationsChange(e.target.value)}
+          className="mt-2"
+        />
+      </div>
     </div>
   );
 };
-

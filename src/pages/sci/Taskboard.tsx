@@ -809,7 +809,9 @@ const Taskboard = () => {
                     <div className="space-y-4">
                       <Turno1TasksComponent 
                         tasks={tasks.turno1} 
-                        onTaskChange={(task, checked) => handleTaskChange('turno1', task, checked)} 
+                        onTaskChange={(task, checked) => handleTaskChange('turno1', task, checked)}
+                        observations={turnData.turno1.observations}
+                        onObservationsChange={(value) => handleTurnDataChange('turno1', 'observations', value)}
                       />
                     </div>
                   </div>
@@ -874,7 +876,9 @@ const Taskboard = () => {
                     <div className="space-y-4">
                       <Turno2TasksComponent 
                         tasks={tasks.turno2} 
-                        onTaskChange={(task, checked) => handleTaskChange('turno2', task, checked)} 
+                        onTaskChange={(task, checked) => handleTaskChange('turno2', task, checked)}
+                        observations={turnData.turno2.observations}
+                        onObservationsChange={(value) => handleTurnDataChange('turno2', 'observations', value)}
                       />
                     </div>
                   </div>
@@ -939,7 +943,9 @@ const Taskboard = () => {
                     <div className="space-y-4">
                       <Turno3TasksComponent 
                         tasks={tasks.turno3} 
-                        onTaskChange={(task, checked) => handleTaskChange('turno3', task, checked)} 
+                        onTaskChange={(task, checked) => handleTaskChange('turno3', task, checked)}
+                        observations={turnData.turno3.observations}
+                        onObservationsChange={(value) => handleTurnDataChange('turno3', 'observations', value)}
                       />
                     </div>
                   </div>

@@ -1,15 +1,22 @@
-
 import React from 'react';
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Turno1Tasks } from '@/types/taskboard';
 
 interface Turno1TasksProps {
   tasks: Turno1Tasks;
   onTaskChange: (task: keyof Turno1Tasks, checked: boolean) => void;
+  observations: string;
+  onObservationsChange: (value: string) => void;
 }
 
-export const Turno1TasksComponent: React.FC<Turno1TasksProps> = ({ tasks, onTaskChange }) => {
+export const Turno1TasksComponent: React.FC<Turno1TasksProps> = ({ 
+  tasks, 
+  onTaskChange,
+  observations,
+  onObservationsChange 
+}) => {
   return (
     <div className="space-y-2">
       <div className="flex items-start space-x-2">
@@ -18,7 +25,7 @@ export const Turno1TasksComponent: React.FC<Turno1TasksProps> = ({ tasks, onTask
           checked={tasks.datacenter}
           onCheckedChange={(checked) => onTaskChange('datacenter', !!checked)}
         />
-        <Label htmlFor="datacenter1" className="cursor-pointer">Verificar DATA CENTER</Label>
+        <Label htmlFor="datacenter1" className="cursor-pointer">Verificar Alarmes e Sistemas/Climatização DATA CENTER</Label>
       </div>
       
       <div className="flex items-start space-x-2">
@@ -127,13 +134,25 @@ export const Turno1TasksComponent: React.FC<Turno1TasksProps> = ({ tasks, onTask
         <Label htmlFor="verificarDebitos" className="cursor-pointer">Verificar Débitos/Créditos aplicados no dia Anterior</Label>
       </div>
 
-      <div className="flex items-start space-x-2">
-        <Checkbox 
-          id="backupsDiferidos"
-          checked={tasks.backupsDiferidos}
-          onCheckedChange={(checked) => onTaskChange('backupsDiferidos', !!checked)}
-        />
-        <Label htmlFor="backupsDiferidos" className="cursor-pointer">Backups Diferidos</Label>
+      <div className="border rounded-md p-3 bg-gray-50 dark:bg-gray-800">
+        <div className="flex items-start space-x-2">
+          <Checkbox 
+            id="backupsDiferidos"
+            checked={tasks.backupsDiferidos}
+            onCheckedChange={(checked) => onTaskChange('backupsDiferidos', !!checked)}
+          />
+          <div>
+            <Label htmlFor="backupsDiferidos" className="cursor-pointer font-medium">Backups Diferidos:</Label>
+            <ul className="ml-6 mt-2 space-y-1 text-sm">
+              <li>• BMJRN (2 tapes/alterar 1 por mês/inicializar no inicio do mês)</li>
+              <li>• GRJRCV (1 tape)</li>
+              <li>• AUJRN (1tape)</li>
+              <li>• MVDIA1 (eliminar obj. após save N)</li>
+              <li>• MVDIA2 (eliminar obj. após save S)</li>
+              <li>• BRJRN (1tape)</li>
+            </ul>
+          </div>
+        </div>
       </div>
       
       <div className="flex items-start space-x-2">
@@ -215,6 +234,16 @@ export const Turno1TasksComponent: React.FC<Turno1TasksProps> = ({ tasks, onTask
           onCheckedChange={(checked) => onTaskChange('atualizarCentralRisco', !!checked)}
         />
         <Label htmlFor="atualizarCentralRisco" className="cursor-pointer">Atualizar Nº Central de Risco (Todas as Sextas-Feiras)</Label>
+      </div>
+
+      <div className="mt-6">
+        <Label htmlFor="observations1">Observações</Label>
+        <Textarea 
+          id="observations1" 
+          value={observations}
+          onChange={(e) => onObservationsChange(e.target.value)}
+          className="mt-2"
+        />
       </div>
     </div>
   );
