@@ -29,7 +29,7 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
         <Checkbox 
           id="datacenter2" 
           checked={Boolean(tasks.datacenter)}
-          onCheckedChange={(checked) => handleCheckboxChange('datacenter', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('datacenter', Boolean(checked))}
         />
         <Label htmlFor="datacenter2" className="cursor-pointer">Verificar Alarmes e Sistemas/Climatização DATA CENTER</Label>
       </div>
@@ -38,7 +38,7 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
         <Checkbox 
           id="sistemas2"
           checked={Boolean(tasks.sistemas)}
-          onCheckedChange={(checked) => handleCheckboxChange('sistemas', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('sistemas', Boolean(checked))}
         />
         <Label htmlFor="sistemas2" className="cursor-pointer">Verificar Sistemas: BCACV1/BCACV2</Label>
       </div>
@@ -47,7 +47,7 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
         <Checkbox 
           id="servicos2"
           checked={Boolean(tasks.servicos)}
-          onCheckedChange={(checked) => handleCheckboxChange('servicos', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('servicos', Boolean(checked))}
         />
         <Label htmlFor="servicos2" className="cursor-pointer">Verificar Serviços: Vinti24/BCADireto/Replicação/Servidor MIA</Label>
       </div>
@@ -56,7 +56,7 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
         <Checkbox 
           id="verificarReportes"
           checked={Boolean(tasks.verificarReportes)}
-          onCheckedChange={(checked) => handleCheckboxChange('verificarReportes', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('verificarReportes', Boolean(checked))}
         />
         <Label htmlFor="verificarReportes" className="cursor-pointer">Verificar envio de reportes(INPS, VISTO USA, BCV, IMPC)</Label>
       </div>
@@ -65,7 +65,7 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
         <Checkbox 
           id="verificarDebitos2"
           checked={Boolean(tasks.verificarDebitos)}
-          onCheckedChange={(checked) => handleCheckboxChange('verificarDebitos', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('verificarDebitos', Boolean(checked))}
         />
         <Label htmlFor="verificarDebitos2" className="cursor-pointer">Verificar Débitos/Créditos Aplicados no Turno Anterior</Label>
       </div>
@@ -77,7 +77,7 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
             <Checkbox 
               id="inpsProcessar"
               checked={Boolean(tasks.inpsProcessar)}
-              onCheckedChange={(checked) => handleCheckboxChange('inpsProcessar', !!checked)}
+              onCheckedChange={(checked) => handleCheckboxChange('inpsProcessar', Boolean(checked))}
             />
             <Label htmlFor="inpsProcessar" className="cursor-pointer">Processar</Label>
           </div>
@@ -85,7 +85,7 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
             <Checkbox 
               id="inpsEnviarRetorno"
               checked={Boolean(tasks.inpsEnviarRetorno)}
-              onCheckedChange={(checked) => handleCheckboxChange('inpsEnviarRetorno', !!checked)}
+              onCheckedChange={(checked) => handleCheckboxChange('inpsEnviarRetorno', Boolean(checked))}
             />
             <Label htmlFor="inpsEnviarRetorno" className="cursor-pointer">Enviar Retorno</Label>
           </div>
@@ -96,7 +96,7 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
         <Checkbox 
           id="processarTef2"
           checked={Boolean(tasks.processarTef)}
-          onCheckedChange={(checked) => handleCheckboxChange('processarTef', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('processarTef', Boolean(checked))}
         />
         <Label htmlFor="processarTef2" className="cursor-pointer">Processar ficheiros TEF - ERR/RTR/RCT</Label>
       </div>
@@ -105,7 +105,7 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
         <Checkbox 
           id="processarTelecomp2"
           checked={Boolean(tasks.processarTelecomp)}
-          onCheckedChange={(checked) => handleCheckboxChange('processarTelecomp', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('processarTelecomp', Boolean(checked))}
         />
         <Label htmlFor="processarTelecomp2" className="cursor-pointer">Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR</Label>
       </div>
@@ -117,7 +117,7 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
             <Checkbox 
               id="enviarEci"
               checked={Boolean(tasks.enviarEci)}
-              onCheckedChange={(checked) => handleCheckboxChange('enviarEci', !!checked)}
+              onCheckedChange={(checked) => handleCheckboxChange('enviarEci', Boolean(checked))}
             />
             <Label htmlFor="enviarEci" className="cursor-pointer">ECI</Label>
           </div>
@@ -125,7 +125,7 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
             <Checkbox 
               id="enviarEdv"
               checked={Boolean(tasks.enviarEdv)}
-              onCheckedChange={(checked) => handleCheckboxChange('enviarEdv', !!checked)}
+              onCheckedChange={(checked) => handleCheckboxChange('enviarEdv', Boolean(checked))}
             />
             <Label htmlFor="enviarEdv" className="cursor-pointer">EDV</Label>
           </div>
@@ -136,7 +136,7 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
         <Checkbox 
           id="confirmarAtualizacaoSisp"
           checked={Boolean(tasks.confirmarAtualizacaoSisp)}
-          onCheckedChange={(checked) => handleCheckboxChange('confirmarAtualizacaoSisp', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('confirmarAtualizacaoSisp', Boolean(checked))}
         />
         <Label htmlFor="confirmarAtualizacaoSisp" className="cursor-pointer">Confirmar Atualização Ficheiros Enviados à SISP (ECI * ENV/IMA)</Label>
       </div>
@@ -145,7 +145,7 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
         <Checkbox 
           id="validarSaco"
           checked={Boolean(tasks.validarSaco)}
-          onCheckedChange={(checked) => handleCheckboxChange('validarSaco', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('validarSaco', Boolean(checked))}
         />
         <Label htmlFor="validarSaco" className="cursor-pointer">Validar Saco 1935</Label>
       </div>
@@ -154,7 +154,7 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
         <Checkbox 
           id="verificarPendentes"
           checked={Boolean(tasks.verificarPendentes)}
-          onCheckedChange={(checked) => handleCheckboxChange('verificarPendentes', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('verificarPendentes', Boolean(checked))}
         />
         <Label htmlFor="verificarPendentes" className="cursor-pointer">Verificar Pendentes dos Balcões</Label>
       </div>
@@ -163,7 +163,7 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
         <Checkbox 
           id="fecharBalcoes"
           checked={Boolean(tasks.fecharBalcoes)}
-          onCheckedChange={(checked) => handleCheckboxChange('fecharBalcoes', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('fecharBalcoes', Boolean(checked))}
         />
         <Label htmlFor="fecharBalcoes" className="cursor-pointer">Fechar os Balcoes Centrais</Label>
       </div>
