@@ -70,13 +70,50 @@ interface Turno3Tasks {
   fecharServidores: boolean;
   fecharImpressoras: boolean;
   userFecho: boolean;
-  validarFicheiro: boolean;
-  bmjrn: boolean;
-  grjrcv: boolean;
-  aujrn: boolean;
-  mvdia1: boolean;
-  mvdia2: boolean;
-  brjrn: boolean;
+  listaRequisicoesCheques: boolean;
+  cancelarCartoesClientes: boolean;
+  prepararEnviarAsc: boolean;
+  adicionarRegistrosBanka: boolean;
+  fecharServidoresBanka: boolean;
+  alterarInternetBanking: boolean;
+  prepararEnviarCsv: boolean;
+  fecharRealTime: boolean;
+  prepararEnviarEtr: boolean;
+  fazerLoggOffAml: boolean;
+  aplicarFicheiroErroEtr: boolean;
+  validarBalcao14: boolean;
+  fecharBalcao14: boolean;
+  arranqueManual: boolean;
+  inicioFecho: boolean;
+  validarEnvioEmail: boolean;
+  controlarTrabalhos: boolean;
+  saveBmbck: boolean;
+  abrirServidoresInternet: boolean;
+  imprimirCheques: boolean;
+  backupBm: boolean;
+  validarFicheiroCcln: boolean;
+  aplicarFicheirosCompensacao: boolean;
+  validarSaldoConta: boolean;
+  saldoNegativo: boolean;
+  saldoPositivo: boolean;
+  abrirRealTime: boolean;
+  verificarTransacoes: boolean;
+  aplicarFicheiroVisa: boolean;
+  cativarCartoes: boolean;
+  abrirBcaDireto: boolean;
+  abrirServidoresBanka: boolean;
+  atualizarTelefonesOffline: boolean;
+  verificarReplicacao: boolean;
+  enviarFicheiroCsv: boolean;
+  transferirFicheirosLiquidity: boolean;
+  percurso76921: boolean;
+  percurso76922: boolean;
+  percurso76923: boolean;
+  abrirServidoresTesteProducao: boolean;
+  impressaoCheques: boolean;
+  arquivarCheques: boolean;
+  terminoFecho: boolean;
+  transferirFicheirosDsi: boolean;
 }
 
 interface TasksType {
@@ -163,13 +200,50 @@ const Taskboard = () => {
       fecharServidores: false,
       fecharImpressoras: false,
       userFecho: false,
-      validarFicheiro: false,
-      bmjrn: false,
-      grjrcv: false,
-      aujrn: false,
-      mvdia1: false,
-      mvdia2: false,
-      brjrn: false
+      listaRequisicoesCheques: false,
+      cancelarCartoesClientes: false,
+      prepararEnviarAsc: false,
+      adicionarRegistrosBanka: false,
+      fecharServidoresBanka: false,
+      alterarInternetBanking: false,
+      prepararEnviarCsv: false,
+      fecharRealTime: false,
+      prepararEnviarEtr: false,
+      fazerLoggOffAml: false,
+      aplicarFicheiroErroEtr: false,
+      validarBalcao14: false,
+      fecharBalcao14: false,
+      arranqueManual: false,
+      inicioFecho: false,
+      validarEnvioEmail: false,
+      controlarTrabalhos: false,
+      saveBmbck: false,
+      abrirServidoresInternet: false,
+      imprimirCheques: false,
+      backupBm: false,
+      validarFicheiroCcln: false,
+      aplicarFicheirosCompensacao: false,
+      validarSaldoConta: false,
+      saldoNegativo: false,
+      saldoPositivo: false,
+      abrirRealTime: false,
+      verificarTransacoes: false,
+      aplicarFicheiroVisa: false,
+      cativarCartoes: false,
+      abrirBcaDireto: false,
+      abrirServidoresBanka: false,
+      atualizarTelefonesOffline: false,
+      verificarReplicacao: false,
+      enviarFicheiroCsv: false,
+      transferirFicheirosLiquidity: false,
+      percurso76921: false,
+      percurso76922: false,
+      percurso76923: false,
+      abrirServidoresTesteProducao: false,
+      impressaoCheques: false,
+      arquivarCheques: false,
+      terminoFecho: false,
+      transferirFicheirosDsi: false
     }
   });
 
@@ -372,13 +446,50 @@ const Taskboard = () => {
         fecharServidores: false,
         fecharImpressoras: false,
         userFecho: false,
-        validarFicheiro: false,
-        bmjrn: false,
-        grjrcv: false,
-        aujrn: false,
-        mvdia1: false,
-        mvdia2: false,
-        brjrn: false
+        listaRequisicoesCheques: false,
+        cancelarCartoesClientes: false,
+        prepararEnviarAsc: false,
+        adicionarRegistrosBanka: false,
+        fecharServidoresBanka: false,
+        alterarInternetBanking: false,
+        prepararEnviarCsv: false,
+        fecharRealTime: false,
+        prepararEnviarEtr: false,
+        fazerLoggOffAml: false,
+        aplicarFicheiroErroEtr: false,
+        validarBalcao14: false,
+        fecharBalcao14: false,
+        arranqueManual: false,
+        inicioFecho: false,
+        validarEnvioEmail: false,
+        controlarTrabalhos: false,
+        saveBmbck: false,
+        abrirServidoresInternet: false,
+        imprimirCheques: false,
+        backupBm: false,
+        validarFicheiroCcln: false,
+        aplicarFicheirosCompensacao: false,
+        validarSaldoConta: false,
+        saldoNegativo: false,
+        saldoPositivo: false,
+        abrirRealTime: false,
+        verificarTransacoes: false,
+        aplicarFicheiroVisa: false,
+        cativarCartoes: false,
+        abrirBcaDireto: false,
+        abrirServidoresBanka: false,
+        atualizarTelefonesOffline: false,
+        verificarReplicacao: false,
+        enviarFicheiroCsv: false,
+        transferirFicheirosLiquidity: false,
+        percurso76921: false,
+        percurso76922: false,
+        percurso76923: false,
+        abrirServidoresTesteProducao: false,
+        impressaoCheques: false,
+        arquivarCheques: false,
+        terminoFecho: false,
+        transferirFicheirosDsi: false
       }
     });
     setTableRows([{ id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '' }]);
@@ -599,7 +710,7 @@ const Taskboard = () => {
       }
       
       if (turnKey === 'turno3') {
-        const beforeCloseTasks = ['verificarDebitos', 'tratarTapes', 'fecharServidores', 'fecharImpressoras', 'userFecho', 'validarFicheiro'];
+        const beforeCloseTasks = ['verificarDebitos', 'tratarTapes', 'fecharServidores', 'fecharImpressoras', 'userFecho', 'listaRequisicoesCheques', 'cancelarCartoesClientes', 'prepararEnviarAsc', 'adicionarRegistrosBanka', 'fecharServidoresBanka', 'alterarInternetBanking', 'prepararEnviarCsv', 'fecharRealTime', 'prepararEnviarEtr', 'fazerLoggOffAml', 'aplicarFicheiroErroEtr', 'validarBalcao14', 'fecharBalcao14', 'arranqueManual', 'inicioFecho', 'validarEnvioEmail', 'controlarTrabalhos', 'saveBmbck', 'abrirServidoresInternet', 'imprimirCheques', 'backupBm'];
         
         beforeCloseTasks.forEach(taskKey => {
           const taskTexts: Record<string, string> = {
@@ -608,753 +719,33 @@ const Taskboard = () => {
             fecharServidores: "Fechar Servidores Teste e Produção",
             fecharImpressoras: "Fechar Impressoras e balcões centrais abertos exceto 14 - DSI",
             userFecho: "User Fecho Executar o percurso 7624 Save SYS1OB",
-            validarFicheiro: "Validar ficheiro CCLN - 76853"
-          };
-          
-          const typedTaskKey = taskKey as keyof Turno3Tasks;
-          processTask(taskKey, taskTexts[typedTaskKey], tasks.turno3[typedTaskKey]);
-          
-          if (taskKey === 'validarFicheiro') {
-            y = checkPageSpace(y, 8);
-            doc.setFont("helvetica", "bold");
-            doc.text("Depois do Fecho", 15, y);
-            y += 8;
-          }
-        });
-        
-        y = checkPageSpace(y, 8);
-        doc.setFont("helvetica", "bold");
-        doc.text("Backups Diferidos", 15, y);
-        y += 8;
-        
-        const backupTasks = ['bmjrn', 'grjrcv', 'aujrn', 'mvdia1', 'mvdia2', 'brjrn'];
-        
-        backupTasks.forEach(taskKey => {
-          const taskTexts: Record<string, string> = {
-            bmjrn: "BMJRN (2 tapes/alterar 1 por mês/inicializar no início do mês)",
-            grjrcv: "GRJRCV (1 tape)",
-            aujrn: "AUJRN (1 tape)",
-            mvdia1: "MVDIA1 (eliminar obj. após save N)",
-            mvdia2: "MVDIA2 (eliminar obj. após save S)",
-            brjrn: "BRJRN (1 tape)"
-          };
-          
-          const typedTaskKey = taskKey as keyof Turno3Tasks;
-          processTask(taskKey, taskTexts[typedTaskKey], tasks.turno3[typedTaskKey]);
-        });
-      }
-      
-      y = checkPageSpace(y, 25);
-      doc.setFont("helvetica", "bold");
-      doc.text("Outras Intervenções/Ocorrências:", 15, y);
-      y += 7;
-      
-      const observations = turn.observations;
-      
-      if (observations && observations.trim() !== '') {
-        doc.setDrawColor(150, 150, 150);
-        doc.setFillColor(255, 255, 255);
-        const textAreaHeight = 20;
-        doc.rect(15, y, pageWidth - 30, textAreaHeight, 'S');
-        
-        const observationLines = doc.splitTextToSize(observations, pageWidth - 35);
-        doc.text(observationLines, 17, y + 5);
-        y += textAreaHeight + 10;
-      } else {
-        doc.setDrawColor(150, 150, 150);
-        doc.setFillColor(255, 255, 255);
-        const textAreaHeight = 20;
-        doc.rect(15, y, pageWidth - 30, textAreaHeight, 'S');
-        y += textAreaHeight + 10;
-      }
-    });
-    
-    y = checkPageSpace(y, 10);
-    doc.setFont("helvetica", "bold");
-    doc.text("Processamento de Ficheiros", 15, y);
-    y += 10;
-    
-    const tableData = tableRows.map(row => [
-      row.hora,
-      row.tarefa,
-      row.nomeAs,
-      row.operacao,
-      row.executado
-    ]);
-    
-    autoTable(doc, {
-      startY: y,
-      head: [['HORA', 'TAREFAS', 'NOME AS/400', 'Nº OPERAÇÃO', 'EXECUTADO POR']],
-      body: tableData,
-      theme: 'grid',
-      headStyles: { fillColor: [24, 70, 126], textColor: 255 },
-      margin: { left: 15, right: 15 }
-    });
-    
-    doc.save(`FD${formattedDate}.pdf`);
-    
-    toast.success('PDF gerado com sucesso!');
-
-    saveTableRowsToSupabase();
-  };
-
-  return (
-    <Card className="w-full">
-      <CardHeader className="bg-[#18467e] text-white">
-        <CardTitle className="text-center text-2xl">CENTRO INFORMÁTICA</CardTitle>
-        <CardDescription className="text-center text-white text-xl">Ficha de Procedimentos</CardDescription>
-      </CardHeader>
-      <CardContent className="pt-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-semibold">Processamentos Diários</h3>
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => navigate('/sci/calendar')}
-              className="mr-2"
-            >
-              <CalendarIcon className="h-4 w-4 mr-2" /> Calendário
-            </Button>
-            <Label htmlFor="date" className="whitespace-nowrap">Data:</Label>
-            <Input
-              type="date"
-              id="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="w-auto"
-              required
-            />
-          </div>
-        </div>
-
-        <Tabs defaultValue="turno1" className="w-full">
-          <TabsList className="w-full grid grid-cols-3">
-            <TabsTrigger value="turno1">Turno 1</TabsTrigger>
-            <TabsTrigger value="turno2">Turno 2</TabsTrigger>
-            <TabsTrigger value="turno3">Turno 3</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="turno1">
-            <div className="p-4 border rounded-md mb-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div>
-                  <Label htmlFor="operador-turno1">Operador:</Label>
-                  <Select 
-                    value={turnData.turno1.operator}
-                    onValueChange={(value) => handleTurnDataChange('turno1', 'operator', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o operador" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="joao">João</SelectItem>
-                      <SelectItem value="maria">Maria</SelectItem>
-                      <SelectItem value="edelgado">Edelgado</SelectItem>
-                      <SelectItem value="etavares">Etavares</SelectItem>
-                      <SelectItem value="lspencer">Lspencer</SelectItem>
-                      <SelectItem value="sbarbosa">Sbarbosa</SelectItem>
-                      <SelectItem value="nalves">Nalves</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="entrada-turno1">Entrada:</Label>
-                  <Input 
-                    type="time" 
-                    id="entrada-turno1" 
-                    value={turnData.turno1.entrada}
-                    onChange={(e) => handleTurnDataChange('turno1', 'entrada', e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="saida-turno1">Saída:</Label>
-                  <Input 
-                    type="time" 
-                    id="saida-turno1" 
-                    value={turnData.turno1.saida}
-                    onChange={(e) => handleTurnDataChange('turno1', 'saida', e.target.value)}
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa1-1" 
-                    checked={tasks.turno1.datacenter}
-                    onCheckedChange={(checked) => handleTaskChange('turno1', 'datacenter', !!checked)}
-                  />
-                  <Label htmlFor="tarefa1-1" className="cursor-pointer">Verificar DATA CENTER</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa1-2"
-                    checked={tasks.turno1.sistemas}
-                    onCheckedChange={(checked) => handleTaskChange('turno1', 'sistemas', !!checked)}
-                  />
-                  <Label htmlFor="tarefa1-2" className="cursor-pointer">Verificar Sistemas: BCACV1/BCACV2</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa1-3"
-                    checked={tasks.turno1.servicos}
-                    onCheckedChange={(checked) => handleTaskChange('turno1', 'servicos', !!checked)}
-                  />
-                  <Label htmlFor="tarefa1-3" className="cursor-pointer">Verificar Serviços: Vinti24/BCADireto/Replicação/Servidor MIA</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa1-4"
-                    checked={tasks.turno1.abrirServidores}
-                    onCheckedChange={(checked) => handleTaskChange('turno1', 'abrirServidores', !!checked)}
-                  />
-                  <Label htmlFor="tarefa1-4" className="cursor-pointer">Abrir Servidores (SWIFT, OPDIF, TRMSG, CDGOV, AML)</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa1-5"
-                    checked={tasks.turno1.percurso76931}
-                    onCheckedChange={(checked) => handleTaskChange('turno1', 'percurso76931', !!checked)}
-                  />
-                  <Label htmlFor="tarefa1-5" className="cursor-pointer">Percurso 76931 - Atualiza os alertas nos clientes com dados desatualizados</Label>
-                </div>
-                
-                <div className="border rounded-md p-3 bg-gray-50">
-                  <div className="flex items-start space-x-2">
-                    <Checkbox 
-                      id="tarefa1-6-enviar"
-                      checked={tasks.turno1.enviar}
-                      onCheckedChange={(checked) => handleTaskChange('turno1', 'enviar', !!checked)}
-                    />
-                    <Label htmlFor="tarefa1-6-enviar" className="cursor-pointer font-medium">Enviar:</Label>
-                  </div>
-                  <div className="flex flex-wrap gap-4 mt-2 ml-6">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="tarefa1-6-1"
-                        checked={tasks.turno1.etr}
-                        onCheckedChange={(checked) => handleTaskChange('turno1', 'etr', !!checked)}
-                      />
-                      <Label htmlFor="tarefa1-6-1" className="cursor-pointer">ETR</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="tarefa1-6-2"
-                        checked={tasks.turno1.impostos}
-                        onCheckedChange={(checked) => handleTaskChange('turno1', 'impostos', !!checked)}
-                      />
-                      <Label htmlFor="tarefa1-6-2" className="cursor-pointer">Impostos</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="tarefa1-6-3"
-                        checked={tasks.turno1.inpsExtrato}
-                        onCheckedChange={(checked) => handleTaskChange('turno1', 'inpsExtrato', !!checked)}
-                      />
-                      <Label htmlFor="tarefa1-6-3" className="cursor-pointer">INPS/Extrato</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="tarefa1-6-4"
-                        checked={tasks.turno1.vistoUsa}
-                        onCheckedChange={(checked) => handleTaskChange('turno1', 'vistoUsa', !!checked)}
-                      />
-                      <Label htmlFor="tarefa1-6-4" className="cursor-pointer">Visto USA</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="tarefa1-6-5"
-                        checked={tasks.turno1.ben}
-                        onCheckedChange={(checked) => handleTaskChange('turno1', 'ben', !!checked)}
-                      />
-                      <Label htmlFor="tarefa1-6-5" className="cursor-pointer">BEN</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="tarefa1-6-6"
-                        checked={tasks.turno1.bcta}
-                        onCheckedChange={(checked) => handleTaskChange('turno1', 'bcta', !!checked)}
-                      />
-                      <Label htmlFor="tarefa1-6-6" className="cursor-pointer">BCTA</Label>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa1-7"
-                    checked={tasks.turno1.verificarDebitos}
-                    onCheckedChange={(checked) => handleTaskChange('turno1', 'verificarDebitos', !!checked)}
-                  />
-                  <Label htmlFor="tarefa1-7" className="cursor-pointer">Verificar Débitos/Créditos aplicados no dia Anterior</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa1-8"
-                    checked={tasks.turno1.processarTef}
-                    onCheckedChange={(checked) => handleTaskChange('turno1', 'processarTef', !!checked)}
-                  />
-                  <Label htmlFor="tarefa1-8" className="cursor-pointer">Processar ficheiros TEF - ERR/RTR/RCT</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa1-9"
-                    checked={tasks.turno1.processarTelecomp}
-                    onCheckedChange={(checked) => handleTaskChange('turno1', 'processarTelecomp', !!checked)}
-                  />
-                  <Label htmlFor="tarefa1-9" className="cursor-pointer">Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR</Label>
-                </div>
-              </div>
-              
-              <div className="mt-4">
-                <Label htmlFor="obs-turno1" className="font-medium">Outras Intervenções/Ocorrências:</Label>
-                <Textarea 
-                  id="obs-turno1" 
-                  className="mt-2"
-                  value={turnData.turno1.observations}
-                  onChange={(e) => handleTurnDataChange('turno1', 'observations', e.target.value)}
-                />
-              </div>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="turno2">
-            <div className="p-4 border rounded-md mb-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div>
-                  <Label htmlFor="operador-turno2">Operador:</Label>
-                  <Select 
-                    value={turnData.turno2.operator}
-                    onValueChange={(value) => handleTurnDataChange('turno2', 'operator', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o operador" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="joao">João</SelectItem>
-                      <SelectItem value="maria">Maria</SelectItem>
-                      <SelectItem value="edelgado">Edelgado</SelectItem>
-                      <SelectItem value="etavares">Etavares</SelectItem>
-                      <SelectItem value="lspencer">Lspencer</SelectItem>
-                      <SelectItem value="sbarbosa">Sbarbosa</SelectItem>
-                      <SelectItem value="nalves">Nalves</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="entrada-turno2">Entrada:</Label>
-                  <Input 
-                    type="time" 
-                    id="entrada-turno2" 
-                    value={turnData.turno2.entrada}
-                    onChange={(e) => handleTurnDataChange('turno2', 'entrada', e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="saida-turno2">Saída:</Label>
-                  <Input 
-                    type="time" 
-                    id="saida-turno2" 
-                    value={turnData.turno2.saida}
-                    onChange={(e) => handleTurnDataChange('turno2', 'saida', e.target.value)}
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa2-1" 
-                    checked={tasks.turno2.datacenter}
-                    onCheckedChange={(checked) => handleTaskChange('turno2', 'datacenter', !!checked)}
-                  />
-                  <Label htmlFor="tarefa2-1" className="cursor-pointer">Verificar DATA CENTER</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa2-2"
-                    checked={tasks.turno2.sistemas}
-                    onCheckedChange={(checked) => handleTaskChange('turno2', 'sistemas', !!checked)}
-                  />
-                  <Label htmlFor="tarefa2-2" className="cursor-pointer">Verificar Sistemas: BCACV1/BCACV2</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa2-3"
-                    checked={tasks.turno2.servicos}
-                    onCheckedChange={(checked) => handleTaskChange('turno2', 'servicos', !!checked)}
-                  />
-                  <Label htmlFor="tarefa2-3" className="cursor-pointer">Verificar Serviços: Vinti24/BCADireto/Replicação/Servidor MIA</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa2-4"
-                    checked={tasks.turno2.verificarReportes}
-                    onCheckedChange={(checked) => handleTaskChange('turno2', 'verificarReportes', !!checked)}
-                  />
-                  <Label htmlFor="tarefa2-4" className="cursor-pointer">Verificar envio de reportes(INPS, VISTO USA, BCV, IMPC)</Label>
-                </div>
-                
-                <div className="border rounded-md p-3 bg-gray-50">
-                  <h4 className="font-medium mb-2">Ficheiros INPS:</h4>
-                  <div className="ml-4 space-y-2">
-                    <div className="flex items-start space-x-2">
-                      <Checkbox 
-                        id="tarefa2-5"
-                        checked={tasks.turno2.inpsProcessar}
-                        onCheckedChange={(checked) => handleTaskChange('turno2', 'inpsProcessar', !!checked)}
-                      />
-                      <Label htmlFor="tarefa2-5" className="cursor-pointer">Processar</Label>
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <Checkbox 
-                        id="tarefa2-6"
-                        checked={tasks.turno2.inpsEnviarRetorno}
-                        onCheckedChange={(checked) => handleTaskChange('turno2', 'inpsEnviarRetorno', !!checked)}
-                      />
-                      <Label htmlFor="tarefa2-6" className="cursor-pointer">Enviar Retorno</Label>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa2-7"
-                    checked={tasks.turno2.processarTef}
-                    onCheckedChange={(checked) => handleTaskChange('turno2', 'processarTef', !!checked)}
-                  />
-                  <Label htmlFor="tarefa2-7" className="cursor-pointer">Processar ficheiros TEF - ERR/RTR/RCT</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa2-8"
-                    checked={tasks.turno2.processarTelecomp}
-                    onCheckedChange={(checked) => handleTaskChange('turno2', 'processarTelecomp', !!checked)}
-                  />
-                  <Label htmlFor="tarefa2-8" className="cursor-pointer">Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR</Label>
-                </div>
-                
-                <div className="border rounded-md p-3 bg-gray-50">
-                  <h4 className="font-medium mb-2">Enviar Ficheiro:</h4>
-                  <div className="ml-4 space-y-2">
-                    <div className="flex items-start space-x-2">
-                      <Checkbox 
-                        id="tarefa2-9"
-                        checked={tasks.turno2.enviarEci}
-                        onCheckedChange={(checked) => handleTaskChange('turno2', 'enviarEci', !!checked)}
-                      />
-                      <Label htmlFor="tarefa2-9" className="cursor-pointer">ECI</Label>
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <Checkbox 
-                        id="tarefa2-10"
-                        checked={tasks.turno2.enviarEdv}
-                        onCheckedChange={(checked) => handleTaskChange('turno2', 'enviarEdv', !!checked)}
-                      />
-                      <Label htmlFor="tarefa2-10" className="cursor-pointer">EDV</Label>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa2-11"
-                    checked={tasks.turno2.validarSaco}
-                    onCheckedChange={(checked) => handleTaskChange('turno2', 'validarSaco', !!checked)}
-                  />
-                  <Label htmlFor="tarefa2-11" className="cursor-pointer">Validar Saco 1935</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa2-12"
-                    checked={tasks.turno2.verificarPendentes}
-                    onCheckedChange={(checked) => handleTaskChange('turno2', 'verificarPendentes', !!checked)}
-                  />
-                  <Label htmlFor="tarefa2-12" className="cursor-pointer">Verificar Pendentes dos Balcões</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa2-13"
-                    checked={tasks.turno2.fecharBalcoes}
-                    onCheckedChange={(checked) => handleTaskChange('turno2', 'fecharBalcoes', !!checked)}
-                  />
-                  <Label htmlFor="tarefa2-13" className="cursor-pointer">Fechar os Balcoes Centrais</Label>
-                </div>
-              </div>
-              
-              <div className="mt-4">
-                <Label htmlFor="obs-turno2" className="font-medium">Outras Intervenções/Ocorrências:</Label>
-                <Textarea 
-                  id="obs-turno2" 
-                  className="mt-2"
-                  value={turnData.turno2.observations}
-                  onChange={(e) => handleTurnDataChange('turno2', 'observations', e.target.value)}
-                />
-              </div>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="turno3">
-            <div className="p-4 border rounded-md mb-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div>
-                  <Label htmlFor="operador-turno3">Operador:</Label>
-                  <Select 
-                    value={turnData.turno3.operator}
-                    onValueChange={(value) => handleTurnDataChange('turno3', 'operator', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o operador" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="joao">João</SelectItem>
-                      <SelectItem value="maria">Maria</SelectItem>
-                      <SelectItem value="edelgado">Edelgado</SelectItem>
-                      <SelectItem value="etavares">Etavares</SelectItem>
-                      <SelectItem value="lspencer">Lspencer</SelectItem>
-                      <SelectItem value="sbarbosa">Sbarbosa</SelectItem>
-                      <SelectItem value="nalves">Nalves</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="entrada-turno3">Entrada:</Label>
-                  <Input 
-                    type="time" 
-                    id="entrada-turno3" 
-                    value={turnData.turno3.entrada}
-                    onChange={(e) => handleTurnDataChange('turno3', 'entrada', e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="saida-turno3">Saída:</Label>
-                  <Input 
-                    type="time" 
-                    id="saida-turno3" 
-                    value={turnData.turno3.saida}
-                    onChange={(e) => handleTurnDataChange('turno3', 'saida', e.target.value)}
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <h4 className="font-medium mb-2">Antes do Fecho:</h4>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa3-1" 
-                    checked={tasks.turno3.verificarDebitos}
-                    onCheckedChange={(checked) => handleTaskChange('turno3', 'verificarDebitos', !!checked)}
-                  />
-                  <Label htmlFor="tarefa3-1" className="cursor-pointer">Verificar Débitos/Créditos Aplicados no Turno Anterior</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa3-2"
-                    checked={tasks.turno3.tratarTapes}
-                    onCheckedChange={(checked) => handleTaskChange('turno3', 'tratarTapes', !!checked)}
-                  />
-                  <Label htmlFor="tarefa3-2" className="cursor-pointer">Tratar e trocar Tapes BM, BMBCK – percurso 7622</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa3-3"
-                    checked={tasks.turno3.fecharServidores}
-                    onCheckedChange={(checked) => handleTaskChange('turno3', 'fecharServidores', !!checked)}
-                  />
-                  <Label htmlFor="tarefa3-3" className="cursor-pointer">Fechar Servidores Teste e Produção</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa3-4"
-                    checked={tasks.turno3.fecharImpressoras}
-                    onCheckedChange={(checked) => handleTaskChange('turno3', 'fecharImpressoras', !!checked)}
-                  />
-                  <Label htmlFor="tarefa3-4" className="cursor-pointer">Fechar Impressoras e balcões centrais abertos exceto 14 - DSI</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa3-5"
-                    checked={tasks.turno3.userFecho}
-                    onCheckedChange={(checked) => handleTaskChange('turno3', 'userFecho', !!checked)}
-                  />
-                  <Label htmlFor="tarefa3-5" className="cursor-pointer">User Fecho Executar o percurso 7624 Save SYS1OB</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa3-6"
-                    checked={tasks.turno3.validarFicheiro}
-                    onCheckedChange={(checked) => handleTaskChange('turno3', 'validarFicheiro', !!checked)}
-                  />
-                  <Label htmlFor="tarefa3-6" className="cursor-pointer">Validar ficheiro CCLN - 76853</Label>
-                </div>
-                
-                <h4 className="font-medium mt-4 mb-2">Backups Diferidos:</h4>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa3-7"
-                    checked={tasks.turno3.bmjrn}
-                    onCheckedChange={(checked) => handleTaskChange('turno3', 'bmjrn', !!checked)}
-                  />
-                  <Label htmlFor="tarefa3-7" className="cursor-pointer">BMJRN (2 tapes/alterar 1 por mês/inicializar no início do mês)</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa3-8"
-                    checked={tasks.turno3.grjrcv}
-                    onCheckedChange={(checked) => handleTaskChange('turno3', 'grjrcv', !!checked)}
-                  />
-                  <Label htmlFor="tarefa3-8" className="cursor-pointer">GRJRCV (1 tape)</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa3-9"
-                    checked={tasks.turno3.aujrn}
-                    onCheckedChange={(checked) => handleTaskChange('turno3', 'aujrn', !!checked)}
-                  />
-                  <Label htmlFor="tarefa3-9" className="cursor-pointer">AUJRN (1 tape)</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa3-10"
-                    checked={tasks.turno3.mvdia1}
-                    onCheckedChange={(checked) => handleTaskChange('turno3', 'mvdia1', !!checked)}
-                  />
-                  <Label htmlFor="tarefa3-10" className="cursor-pointer">MVDIA1 (eliminar obj. após save N)</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa3-11"
-                    checked={tasks.turno3.mvdia2}
-                    onCheckedChange={(checked) => handleTaskChange('turno3', 'mvdia2', !!checked)}
-                  />
-                  <Label htmlFor="tarefa3-11" className="cursor-pointer">MVDIA2 (eliminar obj. após save S)</Label>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <Checkbox 
-                    id="tarefa3-12"
-                    checked={tasks.turno3.brjrn}
-                    onCheckedChange={(checked) => handleTaskChange('turno3', 'brjrn', !!checked)}
-                  />
-                  <Label htmlFor="tarefa3-12" className="cursor-pointer">BRJRN (1 tape)</Label>
-                </div>
-              </div>
-              
-              <div className="mt-4">
-                <Label htmlFor="obs-turno3" className="font-medium">Outras Intervenções/Ocorrências:</Label>
-                <Textarea 
-                  id="obs-turno3" 
-                  className="mt-2"
-                  value={turnData.turno3.observations}
-                  onChange={(e) => handleTurnDataChange('turno3', 'observations', e.target.value)}
-                />
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
-        
-        <div className="mt-6">
-          <h3 className="text-lg font-semibold mb-3">Processamento de Ficheiros</h3>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>HORA</TableHead>
-                  <TableHead>TAREFAS</TableHead>
-                  <TableHead>NOME AS/400</TableHead>
-                  <TableHead>Nº OPERAÇÃO</TableHead>
-                  <TableHead>EXECUTADO POR</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {tableRows.map(row => (
-                  <TableRow key={row.id}>
-                    <TableCell>
-                      <Input
-                        type="time"
-                        value={row.hora}
-                        onChange={(e) => handleInputChange(row.id, 'hora', e.target.value)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="text"
-                        value={row.tarefa}
-                        onChange={(e) => handleInputChange(row.id, 'tarefa', e.target.value)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="text"
-                        value={row.nomeAs}
-                        onChange={(e) => handleInputChange(row.id, 'nomeAs', e.target.value)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <FormItem>
-                        <FormControl>
-                          <Input
-                            type="text"
-                            value={row.operacao}
-                            onChange={(e) => handleInputChange(row.id, 'operacao', e.target.value)}
-                            className={row.operacao && !/^\d{9}$/.test(row.operacao) ? "border-red-500" : ""}
-                          />
-                        </FormControl>
-                        {row.operacao && !/^\d{9}$/.test(row.operacao) && (
-                          <p className="text-sm text-red-500 mt-1">
-                            Digite exatamente 9 dígitos numéricos
-                          </p>
-                        )}
-                      </FormItem>
-                    </TableCell>
-                    <TableCell>
-                      <Select
-                        value={row.executado}
-                        onValueChange={(value) => handleInputChange(row.id, 'executado', value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o operador" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {operatorsList.map((operator) => (
-                            <SelectItem key={operator.value} value={operator.value}>
-                              {operator.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-          
-          <div className="flex gap-2 mt-2">
-            <Button variant="outline" size="sm" onClick={addTableRow}>
-              <PlusCircle className="h-4 w-4 mr-2" /> Adicionar Linha
-            </Button>
-            <Button variant="outline" size="sm" onClick={removeTableRow} disabled={tableRows.length <= 1}>
-              <Trash2 className="h-4 w-4 mr-2" /> Remover Linha
-            </Button>
-          </div>
-        </div>
-        
-        <div className="mt-6 flex justify-between">
-          <div className="space-x-2">
-            <Button onClick={handleSave}>
-              <Save className="h-4 w-4 mr-2" /> Salvar
-            </Button>
-            <Button variant="outline" onClick={resetForm}>
-              <RotateCcw className="h-4 w-4 mr-2" /> Reiniciar
-            </Button>
-          </div>
-          <Button onClick={generatePDF}>
-            <FileDown className="h-4 w-4 mr-2" /> Gerar PDF
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-export default Taskboard;
+            listaRequisicoesCheques: "Lista requisições de cheques do dia 7633. > do que 5, sem comprov. Estornar, 21911",
+            cancelarCartoesClientes: "User Fecho Cancela os cartões dos Clientes Bloqueados - percurso 76857",
+            prepararEnviarAsc: "Preparar e enviar ficheiro e ASC (alteração situação cartão) – percurso 4132",
+            adicionarRegistrosBanka: "User Fecho Adiciona registos na Banka Remota- percurso 768975",
+            fecharServidoresBanka: "User Fecho, fechar servidores Banka remota IN1/IN3/IN4",
+            alterarInternetBanking: "User Fecho Alterar Internet Banking para OFFLINE – percurso 49161",
+            prepararEnviarCsv: "Preparar e enviar ficheiro CSV (saldos)",
+            fecharRealTime: "Interromper o Real-Time com a SISP",
+            prepararEnviarEtr: "Preparar e enviar Ficheiro ETR - percurso 7538, consultar conta 18   5488103",
+            fazerLoggOffAml: "Fazer Logg-Off do utilizador AML – Percurso 161 (utilizadores ativos)",
+            aplicarFicheiroErroEtr: "Aplicar Ficheiro Erro ETR",
+            validarBalcao14: "Validar balção 14 7185",
+            fecharBalcao14: "Fechar o balcão 14 - DSI e confirmar se todos os balcões encontram-se fechados",
+            arranqueManual: "Arranque Manual - Verificar Data da Aplicação – Percurso 431",
+            inicioFecho: "Início do Fecho",
+            validarEnvioEmail: "Validar envio email( Notificação Inicio Fecho)  a partir do ISeries",
+            controlarTrabalhos: "Controlar os trabalhos no QBATCH (opções 5, 10, F10, F5, F18)",
+            saveBmbck: "Save BMBCK – Automático",
+            abrirServidoresInternet: "Abrir Servidores Internet Banking – Percurso 161–",
+            imprimirCheques: "Imprimir Cheques e Diários de Cheques (depois do Save BMBCK)",
+            backupBm: "Backup BM – Automático",
+            validarFicheiroCcln: "Validar ficheiro CCLN - 76853",
+            aplicarFicheirosCompensacao: "Aplicar ficheiros compensação SISP (CCLN, EDST, EORI, ERMB)",
+            validarSaldoConta: "Validar saldo da conta 18/5488102:",
+            saldoNegativo: "Negativo",
+            saldoPositivo: "Positivo",
+            abrirRealTime: "Abrir o Real-Time",
+            verificarTransacoes: "Verificar a entrada de transações 3100 4681",
+            aplicarFicheiroVisa: "Aplicar ficheiro VISA DAF - com o user FECHO 4131",
+            cativarCartoes: "Cativar cartões de crédito em incumprimento - com o user FECHO – 767
