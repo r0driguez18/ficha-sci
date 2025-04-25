@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -720,8 +721,420 @@ const Taskboard = () => {
   };
 
   return (
-    <div>
-      {/* Component JSX */}
+    <div className="container mx-auto px-4 py-8">
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle>Ficha de Processamentos</CardTitle>
+          <CardDescription>Registo de tarefas diárias do Centro Informática</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col space-y-4 md:flex-row md:space-x-4 md:space-y-0">
+            <div className="w-full md:w-1/4">
+              <Label htmlFor="date">Data</Label>
+              <Input 
+                id="date" 
+                type="date" 
+                value={date} 
+                onChange={(e) => setDate(e.target.value)} 
+              />
+            </div>
+          </div>
+          
+          <Tabs defaultValue="turno1" className="mt-6">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="turno1">Turno 1</TabsTrigger>
+              <TabsTrigger value="turno2">Turno 2</TabsTrigger>
+              <TabsTrigger value="turno3">Turno 3</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="turno1" className="mt-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Turno 1</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <div>
+                      <Label htmlFor="operator1">Operador</Label>
+                      <Select 
+                        value={turnData.turno1.operator}
+                        onValueChange={(value) => handleTurnDataChange('turno1', 'operator', value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione um operador" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {operatorsList.map((op) => (
+                            <SelectItem key={op.value} value={op.value}>{op.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="entrada1">Hora Entrada</Label>
+                      <Input 
+                        id="entrada1" 
+                        type="time" 
+                        value={turnData.turno1.entrada}
+                        onChange={(e) => handleTurnDataChange('turno1', 'entrada', e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="saida1">Hora Saída</Label>
+                      <Input 
+                        id="saida1" 
+                        type="time"
+                        value={turnData.turno1.saida}
+                        onChange={(e) => handleTurnDataChange('turno1', 'saida', e.target.value)} 
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4">
+                    <Label htmlFor="observations1">Observações</Label>
+                    <Textarea 
+                      id="observations1" 
+                      value={turnData.turno1.observations}
+                      onChange={(e) => handleTurnDataChange('turno1', 'observations', e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="mt-6">
+                    <h3 className="mb-4 font-medium">Tarefas</h3>
+                    <div className="space-y-4">
+                      {/* Tarefas do Turno 1 */}
+                      <div className="space-y-2">
+                        <div className="flex items-start space-x-2">
+                          <Checkbox 
+                            id="datacenter1" 
+                            checked={tasks.turno1.datacenter}
+                            onCheckedChange={(checked) => handleTaskChange('turno1', 'datacenter', !!checked)}
+                          />
+                          <Label htmlFor="datacenter1" className="cursor-pointer">Verificar DATA CENTER</Label>
+                        </div>
+                        
+                        <div className="flex items-start space-x-2">
+                          <Checkbox 
+                            id="sistemas1"
+                            checked={tasks.turno1.sistemas}
+                            onCheckedChange={(checked) => handleTaskChange('turno1', 'sistemas', !!checked)}
+                          />
+                          <Label htmlFor="sistemas1" className="cursor-pointer">Verificar Sistemas: BCACV1/BCACV2</Label>
+                        </div>
+                        
+                        <div className="flex items-start space-x-2">
+                          <Checkbox 
+                            id="servicos1"
+                            checked={tasks.turno1.servicos}
+                            onCheckedChange={(checked) => handleTaskChange('turno1', 'servicos', !!checked)}
+                          />
+                          <Label htmlFor="servicos1" className="cursor-pointer">Verificar Serviços: Vinti24/BCADireto/Replicação/Servidor MIA</Label>
+                        </div>
+                        
+                        {/* Additional checkboxes can be added here */}
+                        <div className="flex items-start space-x-2">
+                          <Checkbox 
+                            id="abrirServidores"
+                            checked={tasks.turno1.abrirServidores}
+                            onCheckedChange={(checked) => handleTaskChange('turno1', 'abrirServidores', !!checked)}
+                          />
+                          <Label htmlFor="abrirServidores" className="cursor-pointer">Abrir Servidores (SWIFT, OPDIF, TRMSG, CDGOV, AML)</Label>
+                        </div>
+                        
+                        <div className="flex items-start space-x-2">
+                          <Checkbox 
+                            id="percurso76931"
+                            checked={tasks.turno1.percurso76931}
+                            onCheckedChange={(checked) => handleTaskChange('turno1', 'percurso76931', !!checked)}
+                          />
+                          <Label htmlFor="percurso76931" className="cursor-pointer">Percurso 76931 - Atualiza os alertas nos clientes com dados desatualizados</Label>
+                        </div>
+                        
+                        {/* More tasks for Turno 1 */}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="turno2" className="mt-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Turno 2</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <div>
+                      <Label htmlFor="operator2">Operador</Label>
+                      <Select 
+                        value={turnData.turno2.operator}
+                        onValueChange={(value) => handleTurnDataChange('turno2', 'operator', value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione um operador" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {operatorsList.map((op) => (
+                            <SelectItem key={op.value} value={op.value}>{op.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="entrada2">Hora Entrada</Label>
+                      <Input 
+                        id="entrada2" 
+                        type="time" 
+                        value={turnData.turno2.entrada}
+                        onChange={(e) => handleTurnDataChange('turno2', 'entrada', e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="saida2">Hora Saída</Label>
+                      <Input 
+                        id="saida2" 
+                        type="time" 
+                        value={turnData.turno2.saida}
+                        onChange={(e) => handleTurnDataChange('turno2', 'saida', e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4">
+                    <Label htmlFor="observations2">Observações</Label>
+                    <Textarea 
+                      id="observations2" 
+                      value={turnData.turno2.observations}
+                      onChange={(e) => handleTurnDataChange('turno2', 'observations', e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="mt-6">
+                    <h3 className="mb-4 font-medium">Tarefas</h3>
+                    <div className="space-y-4">
+                      {/* Usando o componente Turno2Tasks */}
+                      <div className="space-y-2">
+                        <div className="flex items-start space-x-2">
+                          <Checkbox 
+                            id="datacenter2" 
+                            checked={tasks.turno2.datacenter}
+                            onCheckedChange={(checked) => handleTaskChange('turno2', 'datacenter', !!checked)}
+                          />
+                          <Label htmlFor="datacenter2" className="cursor-pointer">Verificar DATA CENTER</Label>
+                        </div>
+                        
+                        <div className="flex items-start space-x-2">
+                          <Checkbox 
+                            id="sistemas2"
+                            checked={tasks.turno2.sistemas}
+                            onCheckedChange={(checked) => handleTaskChange('turno2', 'sistemas', !!checked)}
+                          />
+                          <Label htmlFor="sistemas2" className="cursor-pointer">Verificar Sistemas: BCACV1/BCACV2</Label>
+                        </div>
+                        
+                        <div className="flex items-start space-x-2">
+                          <Checkbox 
+                            id="servicos2"
+                            checked={tasks.turno2.servicos}
+                            onCheckedChange={(checked) => handleTaskChange('turno2', 'servicos', !!checked)}
+                          />
+                          <Label htmlFor="servicos2" className="cursor-pointer">Verificar Serviços: Vinti24/BCADireto/Replicação/Servidor MIA</Label>
+                        </div>
+                        
+                        {/* More tasks for Turno 2 */}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="turno3" className="mt-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Turno 3</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <div>
+                      <Label htmlFor="operator3">Operador</Label>
+                      <Select 
+                        value={turnData.turno3.operator}
+                        onValueChange={(value) => handleTurnDataChange('turno3', 'operator', value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione um operador" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {operatorsList.map((op) => (
+                            <SelectItem key={op.value} value={op.value}>{op.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="entrada3">Hora Entrada</Label>
+                      <Input 
+                        id="entrada3" 
+                        type="time" 
+                        value={turnData.turno3.entrada}
+                        onChange={(e) => handleTurnDataChange('turno3', 'entrada', e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="saida3">Hora Saída</Label>
+                      <Input 
+                        id="saida3" 
+                        type="time" 
+                        value={turnData.turno3.saida}
+                        onChange={(e) => handleTurnDataChange('turno3', 'saida', e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4">
+                    <Label htmlFor="observations3">Observações</Label>
+                    <Textarea 
+                      id="observations3" 
+                      value={turnData.turno3.observations}
+                      onChange={(e) => handleTurnDataChange('turno3', 'observations', e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="mt-6">
+                    <h3 className="mb-4 font-medium">Tarefas</h3>
+                    <div className="space-y-4">
+                      {/* Usando o componente Turno3TasksComponent */}
+                      <Turno3TasksComponent 
+                        tasks={tasks.turno3} 
+                        onTaskChange={(task, checked) => handleTaskChange('turno3', task, checked)} 
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+      
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle>Processamentos</CardTitle>
+          <CardDescription>Registo de processamentos realizados</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <UITableRow>
+                  <TableHead>Hora</TableHead>
+                  <TableHead>Tarefa</TableHead>
+                  <TableHead>Nome AS400</TableHead>
+                  <TableHead>Nº Operação</TableHead>
+                  <TableHead>Executado Por</TableHead>
+                </UITableRow>
+              </TableHeader>
+              <TableBody>
+                {tableRows.map((row) => (
+                  <UITableRow key={row.id}>
+                    <TableCell>
+                      <Input 
+                        type="time" 
+                        value={row.hora}
+                        onChange={(e) => handleInputChange(row.id, 'hora', e.target.value)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input 
+                        type="text" 
+                        value={row.tarefa}
+                        onChange={(e) => handleInputChange(row.id, 'tarefa', e.target.value)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input 
+                        type="text" 
+                        value={row.nomeAs}
+                        onChange={(e) => handleInputChange(row.id, 'nomeAs', e.target.value)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input 
+                        type="text" 
+                        value={row.operacao}
+                        onChange={(e) => handleInputChange(row.id, 'operacao', e.target.value)}
+                        maxLength={9}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Select 
+                        value={row.executado}
+                        onValueChange={(value) => handleInputChange(row.id, 'executado', value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {operatorsList.map((op) => (
+                            <SelectItem key={op.value} value={op.value}>{op.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                  </UITableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          
+          <div className="flex justify-end mt-4 space-x-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={addTableRow}
+              className="flex items-center"
+            >
+              <PlusCircle className="w-4 h-4 mr-1" /> Adicionar Linha
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={removeTableRow}
+              disabled={tableRows.length <= 1}
+              className="flex items-center"
+            >
+              <Trash2 className="w-4 h-4 mr-1" /> Remover Linha
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+      
+      <div className="flex justify-between">
+        <div className="space-x-2">
+          <Button 
+            variant="outline" 
+            onClick={resetForm}
+            className="flex items-center"
+          >
+            <RotateCcw className="w-4 h-4 mr-2" /> Reiniciar
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={generatePDF}
+            className="flex items-center"
+          >
+            <FileDown className="w-4 h-4 mr-2" /> Exportar PDF
+          </Button>
+        </div>
+        <Button 
+          onClick={handleSave}
+          className="flex items-center"
+        >
+          <Save className="w-4 h-4 mr-2" /> Guardar
+        </Button>
+      </div>
     </div>
   );
 };
