@@ -1,15 +1,22 @@
-
 import React from 'react';
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Turno2Tasks } from '@/types/taskboard';
 
 interface Turno2TasksProps {
   tasks: Turno2Tasks;
   onTaskChange: (task: keyof Turno2Tasks, checked: boolean) => void;
+  observations: string;
+  onObservationsChange: (value: string) => void;
 }
 
-export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({ tasks, onTaskChange }) => {
+export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({ 
+  tasks, 
+  onTaskChange,
+  observations,
+  onObservationsChange 
+}) => {
   return (
     <div className="space-y-2">
       <div className="flex items-start space-x-2">
@@ -18,7 +25,7 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({ tasks, onTask
           checked={tasks.datacenter}
           onCheckedChange={(checked) => onTaskChange('datacenter', !!checked)}
         />
-        <Label htmlFor="datacenter2" className="cursor-pointer">Verificar DATA CENTER</Label>
+        <Label htmlFor="datacenter2" className="cursor-pointer">Verificar Alarmes e Sistemas/Climatização DATA CENTER</Label>
       </div>
       
       <div className="flex items-start space-x-2">
@@ -153,6 +160,16 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({ tasks, onTask
           onCheckedChange={(checked) => onTaskChange('fecharBalcoes', !!checked)}
         />
         <Label htmlFor="fecharBalcoes" className="cursor-pointer">Fechar os Balcoes Centrais</Label>
+      </div>
+
+      <div className="mt-6">
+        <Label htmlFor="observations2">Observações</Label>
+        <Textarea 
+          id="observations2" 
+          value={observations}
+          onChange={(e) => onObservationsChange(e.target.value)}
+          className="mt-2"
+        />
       </div>
     </div>
   );
