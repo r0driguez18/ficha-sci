@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -463,17 +464,17 @@ const Taskboard = () => {
     return value === 'true';
   };
 
-  const drawCheckbox = (x: number, y: number, checked: string | boolean) => {
-    const isChecked = ensureBoolean(checked);
-    doc.rect(x, y, 3, 3);
-    if (isChecked) {
-      doc.line(x, y, x + 3, y + 3);
-      doc.line(x + 3, y, x, y + 3);
-    }
-  };
-
   const generatePDF = () => {
     const doc = new jsPDF();
+    
+    const drawCheckbox = (x: number, y: number, checked: string | boolean) => {
+      const isChecked = ensureBoolean(checked);
+      doc.rect(x, y, 3, 3);
+      if (isChecked) {
+        doc.line(x, y, x + 3, y + 3);
+        doc.line(x + 3, y, x, y + 3);
+      }
+    };
     
     const currentDate = new Date();
     const formattedDate = currentDate.toISOString().split('T')[0].replace(/-/g, '');
@@ -731,4 +732,453 @@ const Taskboard = () => {
           'impressaoCheques', 'arquivarCheques', 'terminoFecho', 'transferirFicheirosDsi'
         ];
         
-        const afterCloseTaskTexts: Record<string
+        const afterCloseTaskTexts: Record<string, string> = {
+          validarFicheiroCcln: "Validar Ficheiro CCLN",
+          aplicarFicheirosCompensacao: "Aplicar Ficheiros de Compensação",
+          validarSaldoConta: "Validar Saldo da Conta: 5488103 pelo SP (opção 85) e também na 21.86.3",
+          abrirRealTime: "Iniciar o Real-Time SISP",
+          verificarTransacoes: "Verificar se o número de transações da compensação está correcto",
+          aplicarFicheiroVisa: "Aplicar Ficheiro Visa",
+          cativarCartoes: "Cativar cartões, gerar NTPs",
+          abrirBcaDireto: "User fecho Abrir BCA Directo – percurso 49162",
+          abrirServidoresBanka: "User fecho Abrir servidores Banka remota (s/GATEs)",
+          atualizarTelefonesOffline: "User fecho Atualizar telefones offline percurso 76861",
+          verificarReplicacao: "Verificar replicação pelo transactional agent",
+          enviarFicheiroCsv: "Enviar Ficheiro CSV",
+          transferirFicheirosLiquidity: "Transferir Ficheiros Liquidity",
+          percurso76921: "Percurso 76921 após conclusão do fecho",
+          percurso76922: "Percurso 76922 MVDIAR após conclusão do percurso 76921",
+          percurso76923: "Percurso 76923 GRJCVR após conclusão do percurso 76922",
+          abrirServidoresTesteProducao: "Abrir servidores Teste e Produção",
+          impressaoCheques: "Impressão de Cheques / Talões de Levantamento",
+          arquivarCheques: "Arquivar cheques",
+          terminoFecho: "Termino do Fecho",
+          transferirFicheirosDsi: "Transferir Ficheiros DSI"
+        };
+        
+        afterCloseTasks.forEach(taskKey => {
+          if (afterCloseTaskTexts[taskKey]) {
+            const typedTaskKey = taskKey as keyof Turno3Tasks;
+            processTask(taskKey, afterCloseTaskTexts[taskKey], ensureBoolean(tasks.turno3[typedTaskKey]));
+          }
+        });
+        
+        // Add timestamps for specific tasks
+        if (tasks.turno3.abrirRealTimeHora) {
+          const lastIndex = afterCloseTasks.indexOf('abrirRealTime');
+          if (lastIndex !== -1) {
+            y -= 6; // Go back up a bit
+            doc.text(`Hora: ${tasks.turno3.abrirRealTimeHora}`, 120, y);
+            y += 6; // Go back down
+          }
+        }
+        
+        if (tasks.turno3.terminoFechoHora) {
+          const lastIndex = afterCloseTasks.indexOf('terminoFecho');
+          if (lastIndex !== -1) {
+            y -= 6; // Go back up a bit
+            doc.text(`Hora: ${tasks.turno3.terminoFechoHora}`, 120, y);
+            y += 6; // Go back down
+          }
+        }
+        
+        // Saldo conta section
+        if (tasks.turno3.validarSaldoConta) {
+          const lastIndex = afterCloseTasks.indexOf('validarSaldoConta');
+          if (lastIndex !== -1) {
+            const saldoValor = tasks.turno3.saldoContaValor;
+            if (saldoValor) {
+              y -= 6; // Go back up a bit
+              doc.text(`Valor: ${saldoValor}`, 120, y);
+            }
+            y -= 4; // Go back up more for the checkboxes
+            
+            let xOffset = 160;
+            doc.setFontSize(10);
+            
+            if (tasks.turno3.saldoNegativo || tasks.turno3.saldoPositivo) {
+              if (tasks.turno3.saldoPositivo) {
+                drawCheckbox(xOffset, y, tasks.turno3.saldoPositivo);
+                doc.text("Positivo", xOffset + 5, y + 3);
+                xOffset += 40;
+              }
+              
+              if (tasks.turno3.saldoNegativo) {
+                drawCheckbox(xOffset, y, tasks.turno3.saldoNegativo);
+                doc.text("Negativo", xOffset + 5, y + 3);
+              }
+              
+              y += 10; // Go back down
+            }
+          }
+        }
+      }
+      
+      // Add observations
+      const observations = turnData[turnKey].observations;
+      if (observations) {
+        y = checkPageSpace(y, 20);
+        doc.setFont("helvetica", "bold");
+        doc.text("Observações:", 15, y);
+        y += 6;
+        
+        doc.setFont("helvetica", "normal");
+        const lines = doc.splitTextToSize(observations, pageWidth - 30);
+        doc.text(lines, 15, y);
+        y += lines.length * 6 + 8;
+      }
+    });
+
+    // Table for task processing
+    y = checkPageSpace(y, 15);
+    doc.setFont("helvetica", "bold");
+    doc.text("Processamentos:", 15, y);
+    y += 10;
+
+    // Format the table data
+    const tableData = tableRows
+      .filter(row => row.hora || row.tarefa || row.nomeAs || row.operacao || row.executado)
+      .map(row => [
+        row.hora,
+        row.tarefa,
+        row.nomeAs,
+        row.operacao,
+        row.executado
+      ]);
+    
+    // Add the table to the PDF
+    doc.autoTable({
+      startY: y,
+      head: [['Hora', 'Tarefa', 'Nome AS/400', 'Nº Operação', 'Executado Por']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [24, 70, 126], textColor: [255, 255, 255] },
+      styles: { font: 'helvetica', fontSize: 10 }
+    });
+    
+    // Save the PDF with the current date in the filename
+    doc.save(`Ficha_Procedimentos_${formattedDate}.pdf`);
+  };  
+
+  return (
+    <div className="container mx-auto pb-12">
+      <div className="my-4">
+        <PageHeader
+          title="Ficha de Processamentos"
+          description="Centro Informática - Formulário para registro diário de processamentos, tarefas e operações realizadas pelos diferentes turnos."
+        />
+      </div>
+
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-xl">Data do Registro</CardTitle>
+          <CardDescription>Selecione a data para registro das atividades.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-4">
+            <Label htmlFor="date" className="w-20">Data</Label>
+            <Input 
+              type="date" 
+              id="date" 
+              value={date} 
+              onChange={(e) => setDate(e.target.value)} 
+              className="max-w-xs" 
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Tabs defaultValue="turno1" className="mb-6">
+        <TabsList className="grid grid-cols-3 w-full max-w-lg">
+          <TabsTrigger value="turno1">Turno 1</TabsTrigger>
+          <TabsTrigger value="turno2">Turno 2</TabsTrigger>
+          <TabsTrigger value="turno3">Turno 3</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="turno1">
+          <Card>
+            <CardHeader>
+              <CardTitle>Dados do Turno 1</CardTitle>
+              <CardDescription>Preencha as informações do operador e atividades realizadas no Turno 1.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-4 mb-6">
+                <div className="w-full md:w-auto md:flex-1">
+                  <Label htmlFor="operator1">Operador</Label>
+                  <Select
+                    value={turnData.turno1.operator}
+                    onValueChange={(value) => handleTurnDataChange('turno1', 'operator', value)}
+                  >
+                    <SelectTrigger className="w-full mt-1">
+                      <SelectValue placeholder="Selecione o operador" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {operatorsList.map((op) => (
+                        <SelectItem key={`turno1-${op.value}`} value={op.value}>{op.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="w-full md:w-1/4">
+                  <Label htmlFor="entrada1">Hora de Entrada</Label>
+                  <Input
+                    id="entrada1"
+                    type="time"
+                    value={turnData.turno1.entrada}
+                    onChange={(e) => handleTurnDataChange('turno1', 'entrada', e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+
+                <div className="w-full md:w-1/4">
+                  <Label htmlFor="saida1">Hora de Saída</Label>
+                  <Input
+                    id="saida1"
+                    type="time"
+                    value={turnData.turno1.saida}
+                    onChange={(e) => handleTurnDataChange('turno1', 'saida', e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+
+              <div className="border-t pt-4 mt-4">
+                <h3 className="text-lg font-medium mb-4">Tarefas do Turno 1</h3>
+                <Turno1TasksComponent 
+                  tasks={tasks.turno1}
+                  onTaskChange={(task, checked) => handleTaskChange('turno1', task, checked)}
+                  observations={turnData.turno1.observations}
+                  onObservationsChange={(value) => handleTurnDataChange('turno1', 'observations', value)}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="turno2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Dados do Turno 2</CardTitle>
+              <CardDescription>Preencha as informações do operador e atividades realizadas no Turno 2.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-4 mb-6">
+                <div className="w-full md:w-auto md:flex-1">
+                  <Label htmlFor="operator2">Operador</Label>
+                  <Select
+                    value={turnData.turno2.operator}
+                    onValueChange={(value) => handleTurnDataChange('turno2', 'operator', value)}
+                  >
+                    <SelectTrigger className="w-full mt-1">
+                      <SelectValue placeholder="Selecione o operador" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {operatorsList.map((op) => (
+                        <SelectItem key={`turno2-${op.value}`} value={op.value}>{op.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="w-full md:w-1/4">
+                  <Label htmlFor="entrada2">Hora de Entrada</Label>
+                  <Input
+                    id="entrada2"
+                    type="time"
+                    value={turnData.turno2.entrada}
+                    onChange={(e) => handleTurnDataChange('turno2', 'entrada', e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+
+                <div className="w-full md:w-1/4">
+                  <Label htmlFor="saida2">Hora de Saída</Label>
+                  <Input
+                    id="saida2"
+                    type="time"
+                    value={turnData.turno2.saida}
+                    onChange={(e) => handleTurnDataChange('turno2', 'saida', e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+
+              <div className="border-t pt-4 mt-4">
+                <h3 className="text-lg font-medium mb-4">Tarefas do Turno 2</h3>
+                <Turno2TasksComponent 
+                  tasks={tasks.turno2}
+                  onTaskChange={(task, checked) => handleTaskChange('turno2', task, checked)}
+                  observations={turnData.turno2.observations}
+                  onObservationsChange={(value) => handleTurnDataChange('turno2', 'observations', value)}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="turno3">
+          <Card>
+            <CardHeader>
+              <CardTitle>Dados do Turno 3</CardTitle>
+              <CardDescription>Preencha as informações do operador e atividades realizadas no Turno 3.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-4 mb-6">
+                <div className="w-full md:w-auto md:flex-1">
+                  <Label htmlFor="operator3">Operador</Label>
+                  <Select
+                    value={turnData.turno3.operator}
+                    onValueChange={(value) => handleTurnDataChange('turno3', 'operator', value)}
+                  >
+                    <SelectTrigger className="w-full mt-1">
+                      <SelectValue placeholder="Selecione o operador" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {operatorsList.map((op) => (
+                        <SelectItem key={`turno3-${op.value}`} value={op.value}>{op.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="w-full md:w-1/4">
+                  <Label htmlFor="entrada3">Hora de Entrada</Label>
+                  <Input
+                    id="entrada3"
+                    type="time"
+                    value={turnData.turno3.entrada}
+                    onChange={(e) => handleTurnDataChange('turno3', 'entrada', e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+
+                <div className="w-full md:w-1/4">
+                  <Label htmlFor="saida3">Hora de Saída</Label>
+                  <Input
+                    id="saida3"
+                    type="time"
+                    value={turnData.turno3.saida}
+                    onChange={(e) => handleTurnDataChange('turno3', 'saida', e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+
+              <div className="border-t pt-4 mt-4">
+                <h3 className="text-lg font-medium mb-4">Tarefas do Turno 3</h3>
+                <Turno3TasksComponent 
+                  tasks={tasks.turno3}
+                  onTaskChange={(task, checked) => handleTaskChange('turno3', task, checked)}
+                  observations={turnData.turno3.observations}
+                  onObservationsChange={(value) => handleTurnDataChange('turno3', 'observations', value)}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <span>Registro de Processamentos</span>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={addTableRow}>
+                <PlusCircle className="w-4 h-4 mr-1" /> Adicionar
+              </Button>
+              <Button size="sm" variant="outline" onClick={removeTableRow} disabled={tableRows.length <= 1}>
+                <Trash2 className="w-4 h-4 mr-1" /> Remover
+              </Button>
+            </div>
+          </CardTitle>
+          <CardDescription>
+            Registre as atividades, processamentos ou operações realizadas durante o seu turno.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="border rounded-md">
+            <Table>
+              <TableHeader>
+                <UITableRow>
+                  <TableHead className="w-[100px]">Hora</TableHead>
+                  <TableHead className="w-[200px]">Tarefa</TableHead>
+                  <TableHead className="w-[200px]">Nome AS/400</TableHead>
+                  <TableHead className="w-[150px]">Nº Operação</TableHead>
+                  <TableHead className="w-[150px]">Executado Por</TableHead>
+                </UITableRow>
+              </TableHeader>
+              <TableBody>
+                {tableRows.map(row => (
+                  <UITableRow key={row.id}>
+                    <TableCell>
+                      <Input 
+                        type="time" 
+                        value={row.hora} 
+                        onChange={(e) => handleInputChange(row.id, 'hora', e.target.value)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input 
+                        type="text" 
+                        value={row.tarefa} 
+                        onChange={(e) => handleInputChange(row.id, 'tarefa', e.target.value)}
+                        placeholder="Descreva a tarefa..."
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input 
+                        type="text" 
+                        value={row.nomeAs} 
+                        onChange={(e) => handleInputChange(row.id, 'nomeAs', e.target.value)}
+                        placeholder="Nome AS/400..."
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input 
+                        type="text"
+                        pattern="[0-9]*"
+                        value={row.operacao}
+                        onChange={(e) => handleInputChange(row.id, 'operacao', e.target.value)}
+                        placeholder="Apenas números..."
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Select 
+                        value={row.executado}
+                        onValueChange={(value) => handleInputChange(row.id, 'executado', value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {operatorsList.map((op) => (
+                            <SelectItem key={`row-${row.id}-${op.value}`} value={op.value}>{op.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                  </UITableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-end gap-4">
+        <Button variant="outline" onClick={resetForm}>
+          <RotateCcw className="w-4 h-4 mr-2" /> Reiniciar Formulário
+        </Button>
+        <Button variant="secondary" onClick={generatePDF}>
+          <FileDown className="w-4 h-4 mr-2" /> Gerar PDF
+        </Button>
+        <Button onClick={handleSave}>
+          <Save className="w-4 h-4 mr-2" /> Salvar Dados
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+export default Taskboard;
