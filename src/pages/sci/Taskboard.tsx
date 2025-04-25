@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow as UITableRow } from '@/components/ui/table';
 import { PlusCircle, Trash2, Save, FileDown, RotateCcw, Calendar as CalendarIcon } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
@@ -19,114 +19,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Turno3TasksComponent } from '@/components/tasks/Turno3Tasks';
+import type { Turno1Tasks, Turno2Tasks, Turno3Tasks, TurnKey, TasksType, TurnDataType } from '@/types/taskboard';
 
-export interface TableRow {
+export interface TaskTableRow {
   id: number;
   hora: string;
   tarefa: string;
   nomeAs: string;
   operacao: string;
   executado: string;
-}
-
-type TurnKey = 'turno1' | 'turno2' | 'turno3';
-
-interface Turno1Tasks {
-  datacenter: boolean;
-  sistemas: boolean;
-  servicos: boolean;
-  abrirServidores: boolean;
-  percurso76931: boolean;
-  enviar: boolean;
-  etr: boolean;
-  impostos: boolean;
-  inpsExtrato: boolean;
-  vistoUsa: boolean;
-  ben: boolean;
-  bcta: boolean;
-  verificarDebitos: boolean;
-  processarTef: boolean;
-  processarTelecomp: boolean;
-}
-
-interface Turno2Tasks {
-  datacenter: boolean;
-  sistemas: boolean;
-  servicos: boolean;
-  verificarReportes: boolean;
-  inpsProcessar: boolean;
-  inpsEnviarRetorno: boolean;
-  processarTef: boolean;
-  processarTelecomp: boolean;
-  enviarEci: boolean;
-  enviarEdv: boolean;
-  validarSaco: boolean;
-  verificarPendentes: boolean;
-  fecharBalcoes: boolean;
-}
-
-interface Turno3Tasks {
-  verificarDebitos: boolean;
-  tratarTapes: boolean;
-  fecharServidores: boolean;
-  fecharImpressoras: boolean;
-  userFecho: boolean;
-  listaRequisicoesCheques: boolean;
-  cancelarCartoesClientes: boolean;
-  prepararEnviarAsc: boolean;
-  adicionarRegistrosBanka: boolean;
-  fecharServidoresBanka: boolean;
-  alterarInternetBanking: boolean;
-  prepararEnviarCsv: boolean;
-  fecharRealTime: boolean;
-  prepararEnviarEtr: boolean;
-  fazerLoggOffAml: boolean;
-  aplicarFicheiroErroEtr: boolean;
-  validarBalcao14: boolean;
-  fecharBalcao14: boolean;
-  arranqueManual: boolean;
-  inicioFecho: boolean;
-  validarEnvioEmail: boolean;
-  controlarTrabalhos: boolean;
-  saveBmbck: boolean;
-  abrirServidoresInternet: boolean;
-  imprimirCheques: boolean;
-  backupBm: boolean;
-  validarFicheiroCcln: boolean;
-  aplicarFicheirosCompensacao: boolean;
-  validarSaldoConta: boolean;
-  saldoNegativo: boolean;
-  saldoPositivo: boolean;
-  abrirRealTime: boolean;
-  verificarTransacoes: boolean;
-  aplicarFicheiroVisa: boolean;
-  cativarCartoes: boolean;
-  abrirBcaDireto: boolean;
-  abrirServidoresBanka: boolean;
-  atualizarTelefonesOffline: boolean;
-  verificarReplicacao: boolean;
-  enviarFicheiroCsv: boolean;
-  transferirFicheirosLiquidity: boolean;
-  percurso76921: boolean;
-  percurso76922: boolean;
-  percurso76923: boolean;
-  abrirServidoresTesteProducao: boolean;
-  impressaoCheques: boolean;
-  arquivarCheques: boolean;
-  terminoFecho: boolean;
-  transferirFicheirosDsi: boolean;
-}
-
-interface TasksType {
-  turno1: Turno1Tasks;
-  turno2: Turno2Tasks;
-  turno3: Turno3Tasks;
-}
-
-interface TurnDataType {
-  turno1: { operator: string; entrada: string; saida: string; observations: string };
-  turno2: { operator: string; entrada: string; saida: string; observations: string };
-  turno3: { operator: string; entrada: string; saida: string; observations: string };
 }
 
 const operatorsList = [
@@ -152,7 +53,7 @@ const Taskboard = () => {
   const navigate = useNavigate();
   
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [tableRows, setTableRows] = useState<TableRow[]>([
+  const [tableRows, setTableRows] = useState<TaskTableRow[]>([
     { id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '' }
   ]);
 
@@ -178,7 +79,15 @@ const Taskboard = () => {
       bcta: false,
       verificarDebitos: false,
       processarTef: false,
-      processarTelecomp: false
+      processarTelecomp: false,
+      verificarCpuMemoria: false,
+      enviarSegundoEtr: false,
+      enviarFicheiroCom: false,
+      dia01: false,
+      dia08: false,
+      dia16: false,
+      dia23: false,
+      atualizarCentralRisco: false
     },
     turno2: {
       datacenter: false,
@@ -305,7 +214,7 @@ const Taskboard = () => {
     }
   };
 
-  const handleInputChange = (id: number, field: keyof TableRow, value: string) => {
+  const handleInputChange = (id: number, field: keyof TaskTableRow, value: string) => {
     if (field === 'operacao') {
       const numericValue = value.replace(/\D/g, '').slice(0, 9);
       setTableRows(
@@ -424,7 +333,15 @@ const Taskboard = () => {
         bcta: false,
         verificarDebitos: false,
         processarTef: false,
-        processarTelecomp: false
+        processarTelecomp: false,
+        verificarCpuMemoria: false,
+        enviarSegundoEtr: false,
+        enviarFicheiroCom: false,
+        dia01: false,
+        dia08: false,
+        dia16: false,
+        dia23: false,
+        atualizarCentralRisco: false
       },
       turno2: {
         datacenter: false,
@@ -506,6 +423,7 @@ const Taskboard = () => {
   const generatePDF = () => {
     const doc = new jsPDF();
     
+    
     const currentDate = new Date();
     const formattedDate = currentDate.toISOString().split('T')[0].replace(/-/g, '');
     
@@ -584,6 +502,7 @@ const Taskboard = () => {
       };
       
       if (turnKey === 'turno1') {
+        
         const regularTasksToProcess = ['datacenter', 'sistemas', 'servicos', 'abrirServidores', 'percurso76931'];
         
         regularTasksToProcess.forEach(taskKey => {
@@ -638,6 +557,7 @@ const Taskboard = () => {
       }
       
       if (turnKey === 'turno2') {
+        
         const regularTasksToProcess = ['datacenter', 'sistemas', 'servicos', 'verificarReportes'];
         
         regularTasksToProcess.forEach(taskKey => {
@@ -649,7 +569,7 @@ const Taskboard = () => {
           };
           
           const typedTaskKey = taskKey as keyof Turno2Tasks;
-          processTask(taskKey, taskTexts[typedTaskKey], tasks.turno2[typedTaskKey]);
+          processTask(taskKey, taskTexts[taskKey], tasks.turno2[typedTaskKey]);
         });
         
         y = checkPageSpace(y, 8);
@@ -752,9 +672,39 @@ const Taskboard = () => {
         doc.text("Depois do Fecho", 15, y);
         y += 8;
         
-        const afterCloseTasks = ['validarFicheiroCcln', 'aplicarFicheirosCompensacao'];
+        const afterCloseTasks = ['validarFicheiroCcln', 'aplicarFicheirosCompensacao', 'validarSaldoConta', 'saldoNegativo', 'saldoPositivo', 'abrirRealTime', 'verificarTransacoes', 'aplicarFicheiroVisa', 'cativarCartoes'];
         
         afterCloseTasks.forEach(taskKey => {
           const taskTexts: Record<string, string> = {
             validarFicheiroCcln: "Validar ficheiro CCLN - 76853",
-            aplicarF
+            aplicarFicheirosCompensacao: "Aplicar ficheiros compensação SISP (CCLN, EDST, EORI, ERMB)",
+            validarSaldoConta: "Validar saldo da conta 18/5488102:",
+            saldoNegativo: "Negativo",
+            saldoPositivo: "Positivo",
+            abrirRealTime: "Abrir o Real-Time",
+            verificarTransacoes: "Verificar a entrada de transações 3100 4681",
+            aplicarFicheiroVisa: "Aplicar ficheiro VISA DAF - com o user FECHO 4131",
+            cativarCartoes: "Cativar cartões de crédito em incumprimento - com o user FECHO – 76727"
+          };
+          
+          const typedTaskKey = taskKey as keyof Turno3Tasks;
+          processTask(taskKey, taskTexts[typedTaskKey], tasks.turno3[typedTaskKey]);
+        });
+        
+        const finalAfterCloseTasks = ['abrirBcaDireto', 'abrirServidoresBanka', 'atualizarTelefonesOffline', 'verificarReplicacao', 'enviarFicheiroCsv', 'transferirFicheirosLiquidity', 'percurso76921', 'percurso76922', 'percurso76923', 'abrirServidoresTesteProducao', 'impressaoCheques', 'arquivarCheques', 'terminoFecho', 'transferirFicheirosDsi'];
+        
+        finalAfterCloseTasks.forEach(taskKey => {
+          const taskTexts: Record<string, string> = {
+            abrirBcaDireto: "Abrir BCA Direto/MB/Extrato Digital/Paypal – 49162",
+            abrirServidoresBanka: "Abrir servidores Banka Remota",
+            atualizarTelefonesOffline: "Atualizar telefones OFFLINE",
+            verificarReplicacao: "Verificar a replicação entre servidores",
+            enviarFicheiroCsv: "Enviar ficheiro CSV (saldos) para MIA",
+            transferirFicheirosLiquidity: "Transferir ficheiros para a pasta Liquidity",
+            percurso76921: "Percurso 76921 (Produção de diversos ficheiros)",
+            percurso76922: "Percurso 76922 (Transmissão de ficheiros)",
+            percurso76923: "Percurso 76923 (Tratamento dos ficheiros)",
+            abrirServidoresTesteProducao: "Abrir Servidores Teste e Produção",
+            impressaoCheques: "Impressão Cheques dia seguinte",
+            arquivarCheques: "Arquivar Cheques e Extratos Impressos",
+            terminoFecho: "Termino do
