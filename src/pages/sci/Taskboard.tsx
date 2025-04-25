@@ -508,9 +508,10 @@ const Taskboard = () => {
       doc.setFontSize(12);
       doc.text(`${turnName}:`, 15, y);
       doc.setFont("helvetica", "normal");
-      doc.text(`Operador: ${turn.operator}`, 40, y);
-      doc.text(`Entrada: ${turn.entrada}`, 100, y);
-      doc.text(`Saída: ${turn.saida}`, 150, y);
+      
+      doc.text(`Operador: ${turn.operator}`, 50, y);
+      doc.text(`Entrada: ${turn.entrada}`, 120, y);
+      doc.text(`Saída: ${turn.saida}`, 170, y);
       y += 10;
       
       if (turnKey === 'turno3') {
@@ -787,7 +788,7 @@ const Taskboard = () => {
                         value={turnData.turno1.operator}
                         onValueChange={(value) => handleTurnDataChange('turno1', 'operator', value)}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="mt-1">
                           <SelectValue placeholder="Selecione um operador" />
                         </SelectTrigger>
                         <SelectContent>
@@ -854,7 +855,7 @@ const Taskboard = () => {
                         value={turnData.turno2.operator}
                         onValueChange={(value) => handleTurnDataChange('turno2', 'operator', value)}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="mt-1">
                           <SelectValue placeholder="Selecione um operador" />
                         </SelectTrigger>
                         <SelectContent>
@@ -921,7 +922,7 @@ const Taskboard = () => {
                         value={turnData.turno3.operator}
                         onValueChange={(value) => handleTurnDataChange('turno3', 'operator', value)}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="mt-1">
                           <SelectValue placeholder="Selecione um operador" />
                         </SelectTrigger>
                         <SelectContent>
