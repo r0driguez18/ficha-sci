@@ -181,7 +181,7 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
       </div>
 
       <div className="mt-6">
-        <Label htmlFor="observations2">Observações</Label>
+        <Label htmlFor="observations2">Outras Intervenções/Observações/Comunicações/Ocorrências</Label>
         <Textarea 
           id="observations2" 
           value={observations}
