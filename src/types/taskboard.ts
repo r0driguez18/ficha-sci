@@ -6,15 +6,6 @@ export interface TurnData {
   observations: string;
 }
 
-export interface TableRow {
-  id: number;
-  hora: string;
-  tarefa: string;
-  nomeAs: string;
-  operacao: string;
-  executado: string;
-}
-
 export interface Turno1Tasks {
   datacenter: boolean;
   sistemas: boolean;
@@ -31,6 +22,7 @@ export interface Turno1Tasks {
   verificarDebitos: boolean;
   processarTef: boolean;
   processarTelecomp: boolean;
+  verificarCpuMemoria: boolean;
   enviarSegundoEtr: boolean;
   enviarFicheiroCom: boolean;
   dia01: boolean;
@@ -38,12 +30,6 @@ export interface Turno1Tasks {
   dia16: boolean;
   dia23: boolean;
   atualizarCentralRisco: boolean;
-  bmjrn: boolean;
-  grjrcv: boolean;
-  aujrn: boolean;
-  mvdia1: boolean;
-  mvdia2: boolean;
-  brjrn: boolean;
 }
 
 export interface Turno2Tasks {
@@ -51,16 +37,14 @@ export interface Turno2Tasks {
   sistemas: boolean;
   servicos: boolean;
   verificarReportes: boolean;
-  verificarDebitos: boolean;
   inpsProcessar: boolean;
   inpsEnviarRetorno: boolean;
   processarTef: boolean;
   processarTelecomp: boolean;
   enviarEci: boolean;
   enviarEdv: boolean;
-  confirmarSisp: boolean;
-  verificarPendentes: boolean;
   validarSaco: boolean;
+  verificarPendentes: boolean;
   fecharBalcoes: boolean;
 }
 
@@ -71,6 +55,7 @@ export interface Turno3Tasks {
   fecharServidores: boolean;
   fecharImpressoras: boolean;
   userFecho: boolean;
+  validarFicheiro: boolean;
   listaRequisicoesCheques: boolean;
   cancelarCartoesClientes: boolean;
   prepararEnviarAsc: boolean;
@@ -91,7 +76,7 @@ export interface Turno3Tasks {
   saveBmbck: boolean;
   abrirServidoresInternet: boolean;
   imprimirCheques: boolean;
-  // Removed backupBm as requested
+  backupBm: boolean;
   
   // Depois do Fecho
   validarFicheiroCcln: boolean;
@@ -117,6 +102,14 @@ export interface Turno3Tasks {
   arquivarCheques: boolean;
   terminoFecho: boolean;
   transferirFicheirosDsi: boolean;
+  
+  // Backups Diferidos
+  bmjrn: boolean;
+  grjrcv: boolean;
+  aujrn: boolean;
+  mvdia1: boolean;
+  mvdia2: boolean;
+  brjrn: boolean;
 }
 
 export interface TasksType {
