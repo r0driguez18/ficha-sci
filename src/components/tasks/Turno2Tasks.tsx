@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -6,7 +7,7 @@ import { Turno2Tasks } from '@/types/taskboard';
 
 interface Turno2TasksProps {
   tasks: Turno2Tasks;
-  onTaskChange: (task: keyof Turno2Tasks, checked: boolean) => void;
+  onTaskChange: (task: keyof Turno2Tasks, checked: boolean | string) => void;
   observations: string;
   onObservationsChange: (value: string) => void;
 }
@@ -19,7 +20,7 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
 }) => {
   return (
     <div className="space-y-2">
-      <div className="flex items-start space-x-2">
+      <div className="flex items-center space-x-2">
         <Checkbox 
           id="datacenter2" 
           checked={tasks.datacenter}
@@ -28,7 +29,7 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
         <Label htmlFor="datacenter2" className="cursor-pointer">Verificar Alarmes e Sistemas/Climatização DATA CENTER</Label>
       </div>
       
-      <div className="flex items-start space-x-2">
+      <div className="flex items-center space-x-2">
         <Checkbox 
           id="sistemas2"
           checked={tasks.sistemas}
@@ -37,7 +38,7 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
         <Label htmlFor="sistemas2" className="cursor-pointer">Verificar Sistemas: BCACV1/BCACV2</Label>
       </div>
       
-      <div className="flex items-start space-x-2">
+      <div className="flex items-center space-x-2">
         <Checkbox 
           id="servicos2"
           checked={tasks.servicos}
@@ -46,7 +47,7 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
         <Label htmlFor="servicos2" className="cursor-pointer">Verificar Serviços: Vinti24/BCADireto/Replicação/Servidor MIA</Label>
       </div>
       
-      <div className="flex items-start space-x-2">
+      <div className="flex items-center space-x-2">
         <Checkbox 
           id="verificarReportes"
           checked={tasks.verificarReportes}
@@ -55,7 +56,7 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
         <Label htmlFor="verificarReportes" className="cursor-pointer">Verificar envio de reportes(INPS, VISTO USA, BCV, IMPC)</Label>
       </div>
 
-      <div className="flex items-start space-x-2">
+      <div className="flex items-center space-x-2">
         <Checkbox 
           id="verificarDebitos2"
           checked={tasks.verificarDebitos}
@@ -67,7 +68,7 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
       <div className="border rounded-md p-3 bg-gray-50 dark:bg-gray-800">
         <h4 className="font-medium mb-2">Ficheiros INPS:</h4>
         <div className="ml-4 space-y-2">
-          <div className="flex items-start space-x-2">
+          <div className="flex items-center space-x-2">
             <Checkbox 
               id="inpsProcessar"
               checked={tasks.inpsProcessar}
@@ -75,7 +76,7 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
             />
             <Label htmlFor="inpsProcessar" className="cursor-pointer">Processar</Label>
           </div>
-          <div className="flex items-start space-x-2">
+          <div className="flex items-center space-x-2">
             <Checkbox 
               id="inpsEnviarRetorno"
               checked={tasks.inpsEnviarRetorno}
@@ -86,7 +87,7 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
         </div>
       </div>
       
-      <div className="flex items-start space-x-2">
+      <div className="flex items-center space-x-2">
         <Checkbox 
           id="processarTef2"
           checked={tasks.processarTef}
@@ -95,7 +96,7 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
         <Label htmlFor="processarTef2" className="cursor-pointer">Processar ficheiros TEF - ERR/RTR/RCT</Label>
       </div>
       
-      <div className="flex items-start space-x-2">
+      <div className="flex items-center space-x-2">
         <Checkbox 
           id="processarTelecomp2"
           checked={tasks.processarTelecomp}
@@ -107,7 +108,7 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
       <div className="border rounded-md p-3 bg-gray-50 dark:bg-gray-800">
         <h4 className="font-medium mb-2">Enviar Ficheiro:</h4>
         <div className="ml-4 space-y-2">
-          <div className="flex items-start space-x-2">
+          <div className="flex items-center space-x-2">
             <Checkbox 
               id="enviarEci"
               checked={tasks.enviarEci}
@@ -115,7 +116,7 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
             />
             <Label htmlFor="enviarEci" className="cursor-pointer">ECI</Label>
           </div>
-          <div className="flex items-start space-x-2">
+          <div className="flex items-center space-x-2">
             <Checkbox 
               id="enviarEdv"
               checked={tasks.enviarEdv}
@@ -126,7 +127,7 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
         </div>
       </div>
 
-      <div className="flex items-start space-x-2">
+      <div className="flex items-center space-x-2">
         <Checkbox 
           id="confirmarAtualizacaoSisp"
           checked={tasks.confirmarAtualizacaoSisp}
@@ -135,7 +136,7 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
         <Label htmlFor="confirmarAtualizacaoSisp" className="cursor-pointer">Confirmar Atualização Ficheiros Enviados à SISP (ECI * ENV/IMA)</Label>
       </div>
       
-      <div className="flex items-start space-x-2">
+      <div className="flex items-center space-x-2">
         <Checkbox 
           id="validarSaco"
           checked={tasks.validarSaco}
@@ -144,7 +145,7 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
         <Label htmlFor="validarSaco" className="cursor-pointer">Validar Saco 1935</Label>
       </div>
       
-      <div className="flex items-start space-x-2">
+      <div className="flex items-center space-x-2">
         <Checkbox 
           id="verificarPendentes"
           checked={tasks.verificarPendentes}
@@ -153,7 +154,7 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
         <Label htmlFor="verificarPendentes" className="cursor-pointer">Verificar Pendentes dos Balcões</Label>
       </div>
       
-      <div className="flex items-start space-x-2">
+      <div className="flex items-center space-x-2">
         <Checkbox 
           id="fecharBalcoes"
           checked={tasks.fecharBalcoes}
