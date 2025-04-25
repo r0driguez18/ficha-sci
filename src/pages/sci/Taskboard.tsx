@@ -11,7 +11,7 @@ import { PlusCircle, Trash2, Save, FileDown, RotateCcw, Calendar as CalendarIcon
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import 'jspdf-autotable';
 import { useNavigate } from 'react-router-dom';
 import { saveFileProcess } from '@/services/fileProcessService';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
@@ -22,6 +22,12 @@ import { Turno1TasksComponent } from '@/components/tasks/Turno1Tasks';
 import { Turno2TasksComponent } from '@/components/tasks/Turno2Tasks';
 import { Turno3TasksComponent } from '@/components/tasks/Turno3Tasks';
 import type { Turno1Tasks, Turno2Tasks, Turno3Tasks, TurnKey, TasksType, TurnDataType } from '@/types/taskboard';
+
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (options: any) => jsPDF;
+  }
+}
 
 export interface TaskTableRow {
   id: number;
@@ -1062,7 +1068,7 @@ const Taskboard = () => {
                   <TableHead>Hora</TableHead>
                   <TableHead>Tarefa</TableHead>
                   <TableHead>Nome AS400</TableHead>
-                  <TableHead>Nº Operação</TableHead>
+                  <TableHead>N�� Operação</TableHead>
                   <TableHead>Executado Por</TableHead>
                 </UITableRow>
               </TableHeader>
