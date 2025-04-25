@@ -7,7 +7,7 @@ import { Turno2Tasks } from '@/types/taskboard';
 
 interface Turno2TasksProps {
   tasks: Turno2Tasks;
-  onTaskChange: (task: keyof Turno2Tasks, checked: boolean | string) => void;
+  onTaskChange: (task: keyof Turno2Tasks, checked: boolean) => void;
   observations: string;
   onObservationsChange: (value: string) => void;
 }
@@ -18,45 +18,47 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
   observations,
   onObservationsChange 
 }) => {
-  // Helper function to ensure we only pass boolean values to Checkbox
-  const handleCheckboxChange = (task: keyof Turno2Tasks, checked: boolean) => {
-    onTaskChange(task, checked);
+  // Helper function to ensure we only pass boolean values to onTaskChange
+  const handleCheckboxChange = (task: keyof Turno2Tasks, value: boolean | string) => {
+    onTaskChange(task, Boolean(value));
   };
-  
+
   return (
-    <div className="space-y-2">
-      <div className="flex items-center space-x-2">
-        <Checkbox 
-          id="datacenter2" 
-          checked={Boolean(tasks.datacenter)}
-          onCheckedChange={(checked) => handleCheckboxChange('datacenter', Boolean(checked))}
-        />
-        <Label htmlFor="datacenter2" className="cursor-pointer">Verificar Alarmes e Sistemas/Climatização DATA CENTER</Label>
+    <div className="space-y-4">
+      <div className="grid items-center gap-1.5">
+        <div className="flex items-center space-x-2">
+          <Checkbox 
+            id="datacenter2" 
+            checked={tasks.datacenter}
+            onCheckedChange={(checked) => handleCheckboxChange('datacenter', checked)}
+          />
+          <Label htmlFor="datacenter2" className="cursor-pointer">Verificar Alarmes e Sistemas/Climatização DATA CENTER</Label>
+        </div>
       </div>
-      
+
       <div className="flex items-center space-x-2">
         <Checkbox 
           id="sistemas2"
-          checked={Boolean(tasks.sistemas)}
-          onCheckedChange={(checked) => handleCheckboxChange('sistemas', Boolean(checked))}
+          checked={tasks.sistemas}
+          onCheckedChange={(checked) => handleCheckboxChange('sistemas', checked)}
         />
         <Label htmlFor="sistemas2" className="cursor-pointer">Verificar Sistemas: BCACV1/BCACV2</Label>
       </div>
-      
+
       <div className="flex items-center space-x-2">
         <Checkbox 
           id="servicos2"
-          checked={Boolean(tasks.servicos)}
-          onCheckedChange={(checked) => handleCheckboxChange('servicos', Boolean(checked))}
+          checked={tasks.servicos}
+          onCheckedChange={(checked) => handleCheckboxChange('servicos', checked)}
         />
         <Label htmlFor="servicos2" className="cursor-pointer">Verificar Serviços: Vinti24/BCADireto/Replicação/Servidor MIA</Label>
       </div>
-      
+
       <div className="flex items-center space-x-2">
         <Checkbox 
           id="verificarReportes"
-          checked={Boolean(tasks.verificarReportes)}
-          onCheckedChange={(checked) => handleCheckboxChange('verificarReportes', Boolean(checked))}
+          checked={tasks.verificarReportes}
+          onCheckedChange={(checked) => handleCheckboxChange('verificarReportes', checked)}
         />
         <Label htmlFor="verificarReportes" className="cursor-pointer">Verificar envio de reportes(INPS, VISTO USA, BCV, IMPC)</Label>
       </div>
@@ -64,68 +66,68 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
       <div className="flex items-center space-x-2">
         <Checkbox 
           id="verificarDebitos2"
-          checked={Boolean(tasks.verificarDebitos)}
-          onCheckedChange={(checked) => handleCheckboxChange('verificarDebitos', Boolean(checked))}
+          checked={tasks.verificarDebitos}
+          onCheckedChange={(checked) => handleCheckboxChange('verificarDebitos', checked)}
         />
         <Label htmlFor="verificarDebitos2" className="cursor-pointer">Verificar Débitos/Créditos Aplicados no Turno Anterior</Label>
       </div>
-      
+
       <div className="border rounded-md p-3 bg-gray-50 dark:bg-gray-800">
         <h4 className="font-medium mb-2">Ficheiros INPS:</h4>
         <div className="ml-4 space-y-2">
           <div className="flex items-center space-x-2">
             <Checkbox 
               id="inpsProcessar"
-              checked={Boolean(tasks.inpsProcessar)}
-              onCheckedChange={(checked) => handleCheckboxChange('inpsProcessar', Boolean(checked))}
+              checked={tasks.inpsProcessar}
+              onCheckedChange={(checked) => handleCheckboxChange('inpsProcessar', checked)}
             />
             <Label htmlFor="inpsProcessar" className="cursor-pointer">Processar</Label>
           </div>
           <div className="flex items-center space-x-2">
             <Checkbox 
               id="inpsEnviarRetorno"
-              checked={Boolean(tasks.inpsEnviarRetorno)}
-              onCheckedChange={(checked) => handleCheckboxChange('inpsEnviarRetorno', Boolean(checked))}
+              checked={tasks.inpsEnviarRetorno}
+              onCheckedChange={(checked) => handleCheckboxChange('inpsEnviarRetorno', checked)}
             />
             <Label htmlFor="inpsEnviarRetorno" className="cursor-pointer">Enviar Retorno</Label>
           </div>
         </div>
       </div>
-      
+
       <div className="flex items-center space-x-2">
         <Checkbox 
           id="processarTef2"
-          checked={Boolean(tasks.processarTef)}
-          onCheckedChange={(checked) => handleCheckboxChange('processarTef', Boolean(checked))}
+          checked={tasks.processarTef}
+          onCheckedChange={(checked) => handleCheckboxChange('processarTef', checked)}
         />
         <Label htmlFor="processarTef2" className="cursor-pointer">Processar ficheiros TEF - ERR/RTR/RCT</Label>
       </div>
-      
+
       <div className="flex items-center space-x-2">
         <Checkbox 
           id="processarTelecomp2"
-          checked={Boolean(tasks.processarTelecomp)}
-          onCheckedChange={(checked) => handleCheckboxChange('processarTelecomp', Boolean(checked))}
+          checked={tasks.processarTelecomp}
+          onCheckedChange={(checked) => handleCheckboxChange('processarTelecomp', checked)}
         />
         <Label htmlFor="processarTelecomp2" className="cursor-pointer">Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR</Label>
       </div>
-      
+
       <div className="border rounded-md p-3 bg-gray-50 dark:bg-gray-800">
         <h4 className="font-medium mb-2">Enviar Ficheiro:</h4>
         <div className="ml-4 space-y-2">
           <div className="flex items-center space-x-2">
             <Checkbox 
               id="enviarEci"
-              checked={Boolean(tasks.enviarEci)}
-              onCheckedChange={(checked) => handleCheckboxChange('enviarEci', Boolean(checked))}
+              checked={tasks.enviarEci}
+              onCheckedChange={(checked) => handleCheckboxChange('enviarEci', checked)}
             />
             <Label htmlFor="enviarEci" className="cursor-pointer">ECI</Label>
           </div>
           <div className="flex items-center space-x-2">
             <Checkbox 
               id="enviarEdv"
-              checked={Boolean(tasks.enviarEdv)}
-              onCheckedChange={(checked) => handleCheckboxChange('enviarEdv', Boolean(checked))}
+              checked={tasks.enviarEdv}
+              onCheckedChange={(checked) => handleCheckboxChange('enviarEdv', checked)}
             />
             <Label htmlFor="enviarEdv" className="cursor-pointer">EDV</Label>
           </div>
@@ -134,36 +136,27 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
 
       <div className="flex items-center space-x-2">
         <Checkbox 
-          id="confirmarAtualizacaoSisp"
-          checked={Boolean(tasks.confirmarAtualizacaoSisp)}
-          onCheckedChange={(checked) => handleCheckboxChange('confirmarAtualizacaoSisp', Boolean(checked))}
-        />
-        <Label htmlFor="confirmarAtualizacaoSisp" className="cursor-pointer">Confirmar Atualização Ficheiros Enviados à SISP (ECI * ENV/IMA)</Label>
-      </div>
-      
-      <div className="flex items-center space-x-2">
-        <Checkbox 
           id="validarSaco"
-          checked={Boolean(tasks.validarSaco)}
-          onCheckedChange={(checked) => handleCheckboxChange('validarSaco', Boolean(checked))}
+          checked={tasks.validarSaco}
+          onCheckedChange={(checked) => handleCheckboxChange('validarSaco', checked)}
         />
         <Label htmlFor="validarSaco" className="cursor-pointer">Validar Saco 1935</Label>
       </div>
-      
+
       <div className="flex items-center space-x-2">
         <Checkbox 
           id="verificarPendentes"
-          checked={Boolean(tasks.verificarPendentes)}
-          onCheckedChange={(checked) => handleCheckboxChange('verificarPendentes', Boolean(checked))}
+          checked={tasks.verificarPendentes}
+          onCheckedChange={(checked) => handleCheckboxChange('verificarPendentes', checked)}
         />
         <Label htmlFor="verificarPendentes" className="cursor-pointer">Verificar Pendentes dos Balcões</Label>
       </div>
-      
+
       <div className="flex items-center space-x-2">
         <Checkbox 
           id="fecharBalcoes"
-          checked={Boolean(tasks.fecharBalcoes)}
-          onCheckedChange={(checked) => handleCheckboxChange('fecharBalcoes', Boolean(checked))}
+          checked={tasks.fecharBalcoes}
+          onCheckedChange={(checked) => handleCheckboxChange('fecharBalcoes', checked)}
         />
         <Label htmlFor="fecharBalcoes" className="cursor-pointer">Fechar os Balcoes Centrais</Label>
       </div>
