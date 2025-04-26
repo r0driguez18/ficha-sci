@@ -190,8 +190,7 @@ export const generateTaskboardPDF = (
         { key: 'verificarDebitos', text: 'Verificar Débitos/Créditos Aplicados no Turno Anterior' },
         { key: 'confirmarAtualizacaoSisp', text: 'Confirmar Atualização SISP' },
         { key: 'processarTef', text: 'Processar ficheiros TEF - ERR/RTR/RCT' },
-        { key: 'processarTelecomp', text: 'Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR' },
-        { key: 'confirmarAtualizacaoFicheirosSisp', text: 'Confirmar Atualização Ficheiros Enviados à SISP (ECI * ENV/IMA)' }
+        { key: 'processarTelecomp', text: 'Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR' }
       ];
 
       turno2Tasks.forEach(task => {
@@ -232,6 +231,13 @@ export const generateTaskboardPDF = (
         xOffset += 20;
       });
       y += 8;
+
+      // Add confirmarAtualizacaoFicheirosSisp after Enviar Ficheiro section
+      processTask(
+        'confirmarAtualizacaoFicheirosSisp', 
+        'Confirmar Atualização Ficheiros Enviados à SISP (ECI * ENV/IMA)', 
+        tasks.turno2.confirmarAtualizacaoFicheirosSisp
+      );
 
       // Additional tasks after Enviar Ficheiro
       const additionalTurno2Tasks = [
