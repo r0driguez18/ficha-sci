@@ -1,4 +1,3 @@
-
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { TurnDataType, TasksType, TurnKey } from '@/types/taskboard';
@@ -407,7 +406,7 @@ export const generateTaskboardPDF = (
       styles: {
         fontSize: 9,
       },
-      margin: { top: 10 },
+      margin: { top: 10 }
     });
   }
   
