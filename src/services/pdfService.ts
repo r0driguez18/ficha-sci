@@ -393,7 +393,8 @@ export const generateTaskboardPDF = (
       row.executado || ''
     ]);
     
-    doc.autoTable({
+    // Call autoTable correctly with the expected parameters
+    autoTable(doc, {
       startY: y,
       head: [['Hora', 'Tarefa', 'Nome AS/400', 'Operação', 'Executado Por']],
       body: tableData,
