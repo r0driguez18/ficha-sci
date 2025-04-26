@@ -1,3 +1,4 @@
+
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { TurnDataType, TasksType, TurnKey } from '@/types/taskboard';
@@ -14,7 +15,7 @@ export const generateTaskboardPDF = (
   date: string, 
   turnData: TurnDataType, 
   tasks: TasksType, 
-  tableRows?: TaskTableRow[]
+  tableRows: TaskTableRow[] = []
 ): void => {
   const doc = new jsPDF();
   
@@ -375,6 +376,7 @@ export const generateTaskboardPDF = (
     y += 10;
   });
   
+  // Add the processamentos table to the PDF if there are any rows
   if (tableRows && tableRows.length > 0) {
     y = checkPageSpace(y, 40); // Check if we need a new page for the table
     
@@ -407,9 +409,6 @@ export const generateTaskboardPDF = (
       },
       margin: { top: 10 },
     });
-    
-    // Update y position after the table
-    y = (doc as any).lastAutoTable.finalY + 10;
   }
   
   doc.save(`Ficha de Procedimentos - ${formattedDate}.pdf`);
