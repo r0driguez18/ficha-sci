@@ -286,7 +286,7 @@ const Taskboard = () => {
           </Button>
           <Button 
             variant="outline" 
-            onClick={() => generateTaskboardPDF(date, turnData, tasks)}
+            onClick={() => generateTaskboardPDF(date, turnData, tasks, tableRows)}
             className="flex items-center gap-2"
           >
             <FileDown className="h-4 w-4" /> Exportar PDF
