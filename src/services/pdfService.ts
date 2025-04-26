@@ -1,7 +1,7 @@
-
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { TurnDataType, TasksType, TurnKey } from '@/types/taskboard';
+import type { TaskTableRow } from '@/components/taskboard/TableRows';
 
 // Add autoTable to jsPDF type
 declare module 'jspdf' {
@@ -10,7 +10,12 @@ declare module 'jspdf' {
   }
 }
 
-export const generateTaskboardPDF = (date: string, turnData: TurnDataType, tasks: TasksType): void => {
+export const generateTaskboardPDF = (
+  date: string, 
+  turnData: TurnDataType, 
+  tasks: TasksType, 
+  tableRows?: TaskTableRow[]
+): void => {
   const doc = new jsPDF();
   
   const currentDate = new Date();
@@ -369,6 +374,43 @@ export const generateTaskboardPDF = (date: string, turnData: TurnDataType, tasks
 
     y += 10;
   });
+  
+  if (tableRows && tableRows.length > 0) {
+    y = checkPageSpace(y, 40); // Check if we need a new page for the table
+    
+    // Add a title for the processamentos section
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("Processamentos", 15, y);
+    y += 10;
+    
+    const tableData = tableRows.map(row => [
+      row.hora || '',
+      row.tarefa || '',
+      row.nomeAs || '',
+      row.operacao || '',
+      row.executado || ''
+    ]);
+    
+    doc.autoTable({
+      startY: y,
+      head: [['Hora', 'Tarefa', 'Nome AS/400', 'Operação', 'Executado Por']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { 
+        fillColor: [200, 200, 200],
+        textColor: [0, 0, 0],
+        fontStyle: 'bold'
+      },
+      styles: {
+        fontSize: 9,
+      },
+      margin: { top: 10 },
+    });
+    
+    // Update y position after the table
+    y = (doc as any).lastAutoTable.finalY + 10;
+  }
   
   doc.save(`Ficha de Procedimentos - ${formattedDate}.pdf`);
 };
