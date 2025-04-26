@@ -191,10 +191,7 @@ export const generateTaskboardPDF = (
         { key: 'confirmarAtualizacaoSisp', text: 'Confirmar Atualização SISP' },
         { key: 'processarTef', text: 'Processar ficheiros TEF - ERR/RTR/RCT' },
         { key: 'processarTelecomp', text: 'Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR' },
-        { key: 'confirmarAtualizacaoFicheirosSisp', text: 'Confirmar Atualização Ficheiros Enviados à SISP (ECI * ENV/IMA)' },
-        { key: 'validarSaco', text: 'Validar Saco 1935' },
-        { key: 'verificarPendentes', text: 'Verificar Pendentes dos Balcões' },
-        { key: 'fecharBalcoes', text: 'Fechar os Balcoes Centrais' }
+        { key: 'confirmarAtualizacaoFicheirosSisp', text: 'Confirmar Atualização Ficheiros Enviados à SISP (ECI * ENV/IMA)' }
       ];
 
       turno2Tasks.forEach(task => {
@@ -235,6 +232,18 @@ export const generateTaskboardPDF = (
         xOffset += 20;
       });
       y += 8;
+
+      // Additional tasks after Enviar Ficheiro
+      const additionalTurno2Tasks = [
+        { key: 'validarSaco', text: 'Validar Saco 1935' },
+        { key: 'verificarPendentes', text: 'Verificar Pendentes dos Balcões' },
+        { key: 'fecharBalcoes', text: 'Fechar os Balcoes Centrais' }
+      ];
+
+      additionalTurno2Tasks.forEach(task => {
+        const typedKey = task.key as keyof typeof tasks.turno2;
+        processTask(task.key, task.text, tasks.turno2[typedKey] as boolean);
+      });
     }
 
     // Process Turno 3 tasks
