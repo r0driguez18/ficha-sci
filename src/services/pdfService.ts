@@ -1,3 +1,4 @@
+
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { TurnDataType, TasksType, TurnKey } from '@/types/taskboard';
@@ -276,7 +277,22 @@ export const generateTaskboardPDF = (
 
       beforeClosingTasks.forEach(task => {
         const typedKey = task.key as keyof typeof tasks.turno3;
-        processTask(task.key, task.text, tasks.turno3[typedKey] as boolean);
+        const isChecked = tasks.turno3[typedKey] as boolean;
+        
+        processTask(task.key, task.text, isChecked);
+        
+        // Adicionar horário para tarefas específicas logo abaixo delas
+        if (task.key === 'fecharRealTime' && tasks.turno3.fecharRealTimeHora) {
+          y -= 6; // Recuar um pouco para adicionar a hora na mesma linha
+          doc.text(`Hora: ${tasks.turno3.fecharRealTimeHora}`, 120, y);
+          y += 6; // Avançar novamente
+        }
+        
+        if (task.key === 'inicioFecho' && tasks.turno3.inicioFechoHora) {
+          y -= 6; // Recuar um pouco para adicionar a hora na mesma linha
+          doc.text(`Hora: ${tasks.turno3.inicioFechoHora}`, 120, y);
+          y += 6; // Avançar novamente
+        }
       });
 
       // After closing tasks
@@ -290,8 +306,6 @@ export const generateTaskboardPDF = (
         { key: 'validarFicheiroCcln', text: 'Validar ficheiro CCLN - 76853' },
         { key: 'aplicarFicheirosCompensacao', text: 'Aplicar ficheiros compensação SISP (CCLN, EDST, EORI, ERMB)' },
         { key: 'validarSaldoConta', text: 'Validar saldo da conta 18/5488102:' },
-        { key: 'saldoNegativo', text: 'Negativo' },
-        { key: 'saldoPositivo', text: 'Positivo' },
         { key: 'abrirRealTime', text: 'Abrir o Real-Time' },
         { key: 'verificarTransacoes', text: 'Verificar a entrada de transações 3100 4681' },
         { key: 'aplicarFicheiroVisa', text: 'Aplicar ficheiro VISA DAF - com o user FECHO 4131' },
@@ -314,45 +328,41 @@ export const generateTaskboardPDF = (
 
       afterClosingTasks.forEach(task => {
         const typedKey = task.key as keyof typeof tasks.turno3;
-        processTask(task.key, task.text, tasks.turno3[typedKey] as boolean);
-      });
+        const isChecked = tasks.turno3[typedKey] as boolean;
+        
+        processTask(task.key, task.text, isChecked);
 
-      // Add specific times for time-sensitive tasks
-      if (tasks.turno3.fecharRealTimeHora) {
-        const timeIndex = beforeClosingTasks.findIndex(t => t.key === 'fecharRealTime');
-        if (timeIndex !== -1) {
+        // Adicionar informações adicionais para tarefas específicas
+        if (task.key === 'validarSaldoConta') {
           y -= 6;
-          doc.text(`Hora: ${tasks.turno3.fecharRealTimeHora}`, 120, y);
+          if (tasks.turno3.saldoContaValor) {
+            doc.text(`Valor: ${tasks.turno3.saldoContaValor}`, 120, y);
+          }
+          
+          // Adicionar checkboxes para positivo/negativo
+          let xOffset = 180;
+          if (tasks.turno3.saldoPositivo) {
+            doc.text("Positivo", xOffset, y);
+            drawCheckbox(xOffset - 5, y - 3, true);
+          } else if (tasks.turno3.saldoNegativo) {
+            doc.text("Negativo", xOffset, y);
+            drawCheckbox(xOffset - 5, y - 3, true);
+          }
           y += 6;
         }
-      }
-
-      if (tasks.turno3.inicioFechoHora) {
-        const timeIndex = beforeClosingTasks.findIndex(t => t.key === 'inicioFecho');
-        if (timeIndex !== -1) {
-          y -= 6;
-          doc.text(`Hora: ${tasks.turno3.inicioFechoHora}`, 120, y);
-          y += 6;
-        }
-      }
-
-      if (tasks.turno3.abrirRealTimeHora) {
-        const timeIndex = afterClosingTasks.findIndex(t => t.key === 'abrirRealTime');
-        if (timeIndex !== -1) {
+        
+        if (task.key === 'abrirRealTime' && tasks.turno3.abrirRealTimeHora) {
           y -= 6;
           doc.text(`Hora: ${tasks.turno3.abrirRealTimeHora}`, 120, y);
           y += 6;
         }
-      }
-
-      if (tasks.turno3.terminoFechoHora) {
-        const timeIndex = afterClosingTasks.findIndex(t => t.key === 'terminoFecho');
-        if (timeIndex !== -1) {
+        
+        if (task.key === 'terminoFecho' && tasks.turno3.terminoFechoHora) {
           y -= 6;
           doc.text(`Hora: ${tasks.turno3.terminoFechoHora}`, 120, y);
           y += 6;
         }
-      }
+      });
     }
 
     if (turn.observations) {
@@ -393,7 +403,6 @@ export const generateTaskboardPDF = (
       row.executado || ''
     ]);
     
-    // Call autoTable correctly with the expected parameters
     autoTable(doc, {
       startY: y,
       head: [['Hora', 'Tarefa', 'Nome AS/400', 'Operação', 'Executado Por']],
