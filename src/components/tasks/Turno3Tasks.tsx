@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -18,6 +19,15 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
   observations,
   onObservationsChange
 }) => {
+  // Helper function to handle input changes for time and numeric fields
+  const handleTimeChange = (field: keyof Turno3Tasks, value: string) => {
+    onTaskChange(field, value);
+  };
+  
+  const handleNumberChange = (field: keyof Turno3Tasks, value: string) => {
+    onTaskChange(field, value);
+  };
+  
   return (
     <div className="space-y-2">
       <h4 className="font-medium mb-4">Operações Fecho Dia</h4>
@@ -140,8 +150,8 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         </Label>
         <Input
           type="time"
-          value={tasks.fecharRealTimeHora}
-          onChange={(e) => onTaskChange('fecharRealTimeHora', e.target.value)}
+          value={tasks.fecharRealTimeHora || ''}
+          onChange={(e) => handleTimeChange('fecharRealTimeHora', e.target.value)}
           className="w-32"
         />
       </div>
@@ -211,8 +221,8 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         </Label>
         <Input
           type="time"
-          value={tasks.inicioFechoHora}
-          onChange={(e) => onTaskChange('inicioFechoHora', e.target.value)}
+          value={tasks.inicioFechoHora || ''}
+          onChange={(e) => handleTimeChange('inicioFechoHora', e.target.value)}
           className="w-32"
         />
       </div>
@@ -301,9 +311,9 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
           Validar saldo da conta 18/5488102:
         </Label>
         <Input
-          type="number"
-          value={tasks.saldoContaValor}
-          onChange={(e) => onTaskChange('saldoContaValor', e.target.value)}
+          type="text"
+          value={tasks.saldoContaValor || ''}
+          onChange={(e) => handleNumberChange('saldoContaValor', e.target.value)}
           className="w-32"
           placeholder="0.00"
         />
@@ -339,8 +349,8 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         </Label>
         <Input
           type="time"
-          value={tasks.abrirRealTimeHora}
-          onChange={(e) => onTaskChange('abrirRealTimeHora', e.target.value)}
+          value={tasks.abrirRealTimeHora || ''}
+          onChange={(e) => handleTimeChange('abrirRealTimeHora', e.target.value)}
           className="w-32"
         />
       </div>
@@ -491,8 +501,8 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         </Label>
         <Input
           type="time"
-          value={tasks.terminoFechoHora}
-          onChange={(e) => onTaskChange('terminoFechoHora', e.target.value)}
+          value={tasks.terminoFechoHora || ''}
+          onChange={(e) => handleTimeChange('terminoFechoHora', e.target.value)}
           className="w-32"
         />
       </div>
