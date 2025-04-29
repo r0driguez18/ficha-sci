@@ -348,11 +348,9 @@ export const generateTaskboardPDF = (
         processTask(task.key, task.text, isChecked);
 
         // Adicionar informações adicionais para tarefas específicas
-        if (task.key === 'validarSaldoConta') {
+        if (task.key === 'validarSaldoConta' && tasks.turno3.saldoContaValor) {
           y -= 6;
-          if (tasks.turno3.saldoContaValor) {
-            doc.text(`Valor: ${tasks.turno3.saldoContaValor}`, 120, y);
-          }
+          doc.text(`Valor: ${tasks.turno3.saldoContaValor}`, 120, y);
           
           // Adicionar checkboxes para positivo/negativo
           let xOffset = 180;
