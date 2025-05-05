@@ -25,9 +25,22 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
   };
   
   const handleNumberChange = (field: keyof Turno3Tasks, value: string) => {
-    onTaskChange(field, value);
+    // Allow only numbers and decimal point
+    const numericValue = value.replace(/[^0-9.]/g, '');
+    onTaskChange(field, numericValue);
   };
   
+  // Helper function to handle radio/toggle inputs
+  const handleToggleChange = (positiveField: keyof Turno3Tasks, negativeField: keyof Turno3Tasks, isPositive: boolean) => {
+    if (isPositive) {
+      onTaskChange(positiveField, true);
+      onTaskChange(negativeField, false);
+    } else {
+      onTaskChange(positiveField, false);
+      onTaskChange(negativeField, true);
+    }
+  };
+
   return (
     <div className="space-y-2">
       <h4 className="font-medium mb-4">Operações Fecho Dia</h4>
@@ -152,6 +165,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         </Label>
         <Input
           type="time"
+          id="fecharRealTimeHora"
           value={tasks.fecharRealTimeHora || ''}
           onChange={(e) => handleTimeChange('fecharRealTimeHora', e.target.value)}
           className="w-32"
@@ -223,6 +237,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         </Label>
         <Input
           type="time"
+          id="inicioFechoHora"
           value={tasks.inicioFechoHora || ''}
           onChange={(e) => handleTimeChange('inicioFechoHora', e.target.value)}
           className="w-32"
@@ -314,10 +329,12 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         </Label>
         <Input
           type="text"
+          id="saldoContaValor"
           value={tasks.saldoContaValor || ''}
           onChange={(e) => handleNumberChange('saldoContaValor', e.target.value)}
           className="w-32"
           placeholder="0.00"
+          inputMode="decimal"
         />
       </div>
       
@@ -326,7 +343,9 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
           <Checkbox 
             id="saldoNegativo"
             checked={tasks.saldoNegativo}
-            onCheckedChange={(checked) => onTaskChange('saldoNegativo', !!checked)}
+            onCheckedChange={(checked) => {
+              if (checked) handleToggleChange('saldoNegativo', 'saldoPositivo', false);
+            }}
           />
           <Label htmlFor="saldoNegativo" className="cursor-pointer">Negativo</Label>
         </div>
@@ -334,7 +353,9 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
           <Checkbox 
             id="saldoPositivo"
             checked={tasks.saldoPositivo}
-            onCheckedChange={(checked) => onTaskChange('saldoPositivo', !!checked)}
+            onCheckedChange={(checked) => {
+              if (checked) handleToggleChange('saldoPositivo', 'saldoNegativo', true);
+            }}
           />
           <Label htmlFor="saldoPositivo" className="cursor-pointer">Positivo</Label>
         </div>
@@ -351,6 +372,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         </Label>
         <Input
           type="time"
+          id="abrirRealTimeHora"
           value={tasks.abrirRealTimeHora || ''}
           onChange={(e) => handleTimeChange('abrirRealTimeHora', e.target.value)}
           className="w-32"
@@ -503,6 +525,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         </Label>
         <Input
           type="time"
+          id="terminoFechoHora"
           value={tasks.terminoFechoHora || ''}
           onChange={(e) => handleTimeChange('terminoFechoHora', e.target.value)}
           className="w-32"
