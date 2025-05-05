@@ -5,11 +5,14 @@ import { cn } from "@/lib/utils"
 
 const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
   ({ className, type, ...props }, ref) => {
+    // Handle different input types appropriately
+    let validatedProps = { ...props };
+    
     // For number inputs, ensure value is handled properly
-    const validatedProps = type === "number" && props.value === "" 
-      ? { ...props, value: undefined } 
-      : props;
-      
+    if (type === "number" && props.value === "") {
+      validatedProps = { ...validatedProps, value: undefined };
+    }
+    
     return (
       <input
         type={type}
