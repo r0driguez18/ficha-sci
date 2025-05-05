@@ -1,4 +1,3 @@
-
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { TurnDataType, TasksType, TurnKey } from '@/types/taskboard';
@@ -66,30 +65,25 @@ export const generateTaskboardPDF = (
     return y + boxHeight + 4;
   };
   
-  const processTask = (
+  const processLabelWithInput = (
     text: string, 
     x: number, 
     y: number, 
     checked: boolean | undefined,
-    timeField?: { key: keyof typeof tasks.turno3, value: string } | null,
-    numberField?: { value: string, type?: string } | null,
+    timeValue?: string | null,
+    numberValue?: string | null,
     hasCheckbox: boolean = true
   ): number => {
     let displayText = text.trim();
     
     // Add time value if available
-    if (timeField && timeField.value) {
-      displayText += `: ${timeField.value}`;
+    if (timeValue) {
+      displayText += `: ${timeValue}`;
     }
     
     // Add number value if available
-    if (numberField && numberField.value) {
-      let valueDisplay = numberField.value;
-      // Add type label if available (Positivo/Negativo)
-      if (numberField.type) {
-        valueDisplay += ` (${numberField.type})`;
-      }
-      displayText += `: ${valueDisplay}`;
+    if (numberValue) {
+      displayText += ` ${numberValue}`;
     }
     
     // Draw checkbox if needed
@@ -160,7 +154,7 @@ export const generateTaskboardPDF = (
         const typedKey = task.key as keyof typeof tasks.turno1;
         const isChecked = tasks.turno1[typedKey] as boolean;
         y = checkPageSpace(y, 8);
-        y = processTask(task.text, 15, y, isChecked);
+        y = processLabelWithInput(task.text, 15, y, isChecked);
       });
 
       // Enviar section
@@ -204,7 +198,7 @@ export const generateTaskboardPDF = (
         const typedKey = task.key as keyof typeof tasks.turno1;
         const isChecked = tasks.turno1[typedKey] as boolean;
         y = checkPageSpace(y, 8);
-        y = processTask(task.text, 15, y, isChecked);
+        y = processLabelWithInput(task.text, 15, y, isChecked);
       });
 
       // Ficheiro COM section
@@ -237,7 +231,7 @@ export const generateTaskboardPDF = (
         const typedKey = task.key as keyof typeof tasks.turno1;
         const isChecked = tasks.turno1[typedKey] as boolean;
         y = checkPageSpace(y, 8);
-        y = processTask(task.text, 15, y, isChecked);
+        y = processLabelWithInput(task.text, 15, y, isChecked);
       });
     }
 
@@ -258,7 +252,7 @@ export const generateTaskboardPDF = (
         const typedKey = task.key as keyof typeof tasks.turno2;
         const isChecked = tasks.turno2[typedKey] as boolean;
         y = checkPageSpace(y, 8);
-        y = processTask(task.text, 15, y, isChecked);
+        y = processLabelWithInput(task.text, 15, y, isChecked);
       });
 
       // INPS section
@@ -301,7 +295,7 @@ export const generateTaskboardPDF = (
 
       // Add confirmarAtualizacaoFicheirosSisp after Enviar Ficheiro section
       y = checkPageSpace(y, 8);
-      y = processTask(
+      y = processLabelWithInput(
         'Confirmar Atualização Ficheiros Enviados à SISP (ECI * ENV/IMA)',
         15,
         y,
@@ -319,7 +313,7 @@ export const generateTaskboardPDF = (
         const typedKey = task.key as keyof typeof tasks.turno2;
         const isChecked = tasks.turno2[typedKey] as boolean;
         y = checkPageSpace(y, 8);
-        y = processTask(task.text, 15, y, isChecked);
+        y = processLabelWithInput(task.text, 15, y, isChecked);
       });
     }
 
@@ -344,55 +338,15 @@ export const generateTaskboardPDF = (
         { key: 'adicionarRegistrosBanka', text: 'User Fecho Adiciona registos na Banka Remota- percurso 768975' },
         { key: 'fecharServidoresBanka', text: 'User Fecho, fechar servidores Banka remota IN1/IN3/IN4' },
         { key: 'alterarInternetBanking', text: 'User Fecho Alterar Internet Banking para OFFLINE – percurso 49161' },
-        { key: 'prepararEnviarCsv', text: 'Preparar e enviar ficheiro CSV (saldos)' }
-      ];
-
-      beforeClosingTasks.forEach(task => {
-        const typedKey = task.key as keyof typeof tasks.turno3;
-        const isChecked = tasks.turno3[typedKey] as boolean;
-        
-        y = checkPageSpace(y, 8);
-        y = processTask(task.text, 15, y, isChecked);
-      });
-      
-      // Special handling for fields with time inputs
-      y = checkPageSpace(y, 8);
-      y = processTask(
-        'Interromper o Real-Time com a SISP',
-        15,
-        y,
-        tasks.turno3.fecharRealTime,
-        { key: 'fecharRealTimeHora', value: tasks.turno3.fecharRealTimeHora || '' }
-      );
-      
-      const remainingBeforeClosingTasks = [
+        { key: 'prepararEnviarCsv', text: 'Preparar e enviar ficheiro CSV (saldos)' },
+        { key: 'fecharRealTime', text: 'Interromper o Real-Time com a SISP' },
         { key: 'prepararEnviarEtr', text: 'Preparar e enviar Ficheiro ETR - percurso 7538, consultar conta 18   5488103' },
         { key: 'fazerLoggOffAml', text: 'Fazer Logg-Off do utilizador AML – Percurso 161 (utilizadores ativos)' },
         { key: 'aplicarFicheiroErroEtr', text: 'Aplicar Ficheiro Erro ETR' },
         { key: 'validarBalcao14', text: 'Validar balção 14 7185' },
         { key: 'fecharBalcao14', text: 'Fechar o balcão 14 - DSI e confirmar se todos os balcões encontram-se fechados' },
-        { key: 'arranqueManual', text: 'Arranque Manual - Verificar Data da Aplicação – Percurso 431' }
-      ];
-
-      remainingBeforeClosingTasks.forEach(task => {
-        const typedKey = task.key as keyof typeof tasks.turno3;
-        const isChecked = tasks.turno3[typedKey] as boolean;
-        
-        y = checkPageSpace(y, 8);
-        y = processTask(task.text, 15, y, isChecked);
-      });
-      
-      // Handle inicio fecho with time
-      y = checkPageSpace(y, 8);
-      y = processTask(
-        'Início do Fecho',
-        15,
-        y,
-        tasks.turno3.inicioFecho,
-        { key: 'inicioFechoHora', value: tasks.turno3.inicioFechoHora || '' }
-      );
-
-      const finalBeforeClosingTasks = [
+        { key: 'arranqueManual', text: 'Arranque Manual - Verificar Data da Aplicação – Percurso 431' },
+        { key: 'inicioFecho', text: 'Início do Fecho' },
         { key: 'validarEnvioEmail', text: 'Validar envio email( Notificação Inicio Fecho)  a partir do ISeries' },
         { key: 'controlarTrabalhos', text: 'Controlar os trabalhos no QBATCH (opções 5, 10, F10, F5, F18)' },
         { key: 'saveBmbck', text: 'Save BMBCK – Automático' },
@@ -401,12 +355,22 @@ export const generateTaskboardPDF = (
         { key: 'backupBm', text: 'Backup BM – Automático' }
       ];
 
-      finalBeforeClosingTasks.forEach(task => {
+      beforeClosingTasks.forEach(task => {
         const typedKey = task.key as keyof typeof tasks.turno3;
         const isChecked = tasks.turno3[typedKey] as boolean;
         
         y = checkPageSpace(y, 8);
-        y = processTask(task.text, 15, y, isChecked);
+        
+        // Handle special cases with time fields
+        if (task.key === 'fecharRealTime') {
+          const timeValue = tasks.turno3.fecharRealTimeHora || '';
+          y = processLabelWithInput(task.text, 15, y, isChecked, timeValue);
+        } else if (task.key === 'inicioFecho') {
+          const timeValue = tasks.turno3.inicioFechoHora || '';
+          y = processLabelWithInput(task.text, 15, y, isChecked, timeValue);
+        } else {
+          y = processLabelWithInput(task.text, 15, y, isChecked);
+        }
       });
 
       // After closing tasks
@@ -418,42 +382,9 @@ export const generateTaskboardPDF = (
 
       const afterClosingTasks = [
         { key: 'validarFicheiroCcln', text: 'Validar ficheiro CCLN - 76853' },
-        { key: 'aplicarFicheirosCompensacao', text: 'Aplicar ficheiros compensação SISP (CCLN, EDST, EORI, ERMB)' }
-      ];
-
-      afterClosingTasks.forEach(task => {
-        const typedKey = task.key as keyof typeof tasks.turno3;
-        const isChecked = tasks.turno3[typedKey] as boolean;
-        
-        y = checkPageSpace(y, 8);
-        y = processTask(task.text, 15, y, isChecked);
-      });
-      
-      // Handle validar saldo conta with number input and radio buttons
-      y = checkPageSpace(y, 8);
-      let saldoTipo = '';
-      if (tasks.turno3.saldoPositivo) saldoTipo = 'Positivo';
-      if (tasks.turno3.saldoNegativo) saldoTipo = 'Negativo';
-      y = processTask(
-        'Validar saldo da conta 18/5488102',
-        15,
-        y,
-        tasks.turno3.validarSaldoConta,
-        null,
-        { value: tasks.turno3.saldoContaValor || '', type: saldoTipo }
-      );
-      
-      // Handle abrir real time with time
-      y = checkPageSpace(y, 8);
-      y = processTask(
-        'Abrir o Real-Time',
-        15,
-        y,
-        tasks.turno3.abrirRealTime,
-        { key: 'abrirRealTimeHora', value: tasks.turno3.abrirRealTimeHora || '' }
-      );
-
-      const remainingAfterClosingTasks = [
+        { key: 'aplicarFicheirosCompensacao', text: 'Aplicar ficheiros compensação SISP (CCLN, EDST, EORI, ERMB)' },
+        { key: 'validarSaldoConta', text: 'Validar saldo da conta 18/5488102' },
+        { key: 'abrirRealTime', text: 'Abrir o Real-Time' },
         { key: 'verificarTransacoes', text: 'Verificar a entrada de transações 3100 4681' },
         { key: 'aplicarFicheiroVisa', text: 'Aplicar ficheiro VISA DAF - com o user FECHO 4131' },
         { key: 'cativarCartoes', text: 'Cativar cartões de crédito em incumprimento - com o user FECHO – 76727' },
@@ -468,35 +399,32 @@ export const generateTaskboardPDF = (
         { key: 'percurso76923', text: 'Percurso 76923 (Tratamento dos ficheiros)' },
         { key: 'abrirServidoresTesteProducao', text: 'Abrir Servidores Teste e Produção' },
         { key: 'impressaoCheques', text: 'Impressão Cheques dia seguinte' },
-        { key: 'arquivarCheques', text: 'Arquivar Cheques e Extratos Impressos' }
+        { key: 'arquivarCheques', text: 'Arquivar Cheques e Extratos Impressos' },
+        { key: 'terminoFecho', text: 'Termino do Fecho' },
+        { key: 'transferirFicheirosDsi', text: 'Transferir Ficheiros DSI' }
       ];
 
-      remainingAfterClosingTasks.forEach(task => {
+      afterClosingTasks.forEach(task => {
         const typedKey = task.key as keyof typeof tasks.turno3;
         const isChecked = tasks.turno3[typedKey] as boolean;
         
         y = checkPageSpace(y, 8);
-        y = processTask(task.text, 15, y, isChecked);
+        
+        // Handle special cases with time or number fields
+        if (task.key === 'validarSaldoConta') {
+          const saldoValor = tasks.turno3.saldoContaValor || '';
+          const saldoTipo = tasks.turno3.saldoPositivo ? 'Positivo' : tasks.turno3.saldoNegativo ? 'Negativo' : '';
+          y = processLabelWithInput(task.text, 15, y, isChecked, null, `${saldoValor}${saldoTipo ? ` (${saldoTipo})` : ''}`);
+        } else if (task.key === 'abrirRealTime') {
+          const timeValue = tasks.turno3.abrirRealTimeHora || '';
+          y = processLabelWithInput(task.text, 15, y, isChecked, timeValue);
+        } else if (task.key === 'terminoFecho') {
+          const timeValue = tasks.turno3.terminoFechoHora || '';
+          y = processLabelWithInput(task.text, 15, y, isChecked, timeValue);
+        } else {
+          y = processLabelWithInput(task.text, 15, y, isChecked);
+        }
       });
-      
-      // Handle termino fecho with time
-      y = checkPageSpace(y, 8);
-      y = processTask(
-        'Termino do Fecho',
-        15,
-        y,
-        tasks.turno3.terminoFecho,
-        { key: 'terminoFechoHora', value: tasks.turno3.terminoFechoHora || '' }
-      );
-      
-      // Final task
-      y = checkPageSpace(y, 8);
-      y = processTask(
-        'Transferência ficheiros SSM Liquidity ExercicesDSI-CI/2023',
-        15,
-        y,
-        tasks.turno3.transferirFicheirosDsi
-      );
     }
 
     if (turn.observations) {
