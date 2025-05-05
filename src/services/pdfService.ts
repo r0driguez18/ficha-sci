@@ -1,4 +1,3 @@
-
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { TurnDataType, TasksType, TurnKey } from '@/types/taskboard';
@@ -47,6 +46,60 @@ export const generateTaskboardPDF = (
     }
     return y;
   };
+
+  const processTextArea = (text: string, x: number, y: number, width: number): number => {
+    if (!text || text.trim() === '') return y;
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    const lines = doc.splitTextToSize(text, width);
+    
+    // Draw a rectangle around the text to simulate a textarea
+    const lineHeight = 6;
+    const padding = 2;
+    const boxHeight = Math.max(lines.length * lineHeight + 2 * padding, 14); // Minimum height
+    
+    doc.rect(x, y, width, boxHeight);
+    doc.text(lines, x + padding, y + lineHeight + padding - 2);
+    
+    return y + boxHeight + 4;
+  };
+  
+  const processLabelWithInput = (
+    text: string, 
+    x: number, 
+    y: number, 
+    checked: boolean | undefined,
+    timeValue?: string | null,
+    numberValue?: string | null,
+    hasCheckbox: boolean = true
+  ): number => {
+    let displayText = text.trim();
+    
+    // Add time value if available
+    if (timeValue) {
+      displayText += `: ${timeValue}`;
+    }
+    
+    // Add number value if available
+    if (numberValue) {
+      displayText += ` ${numberValue}`;
+    }
+    
+    // Draw checkbox if needed
+    if (hasCheckbox && typeof checked === 'boolean') {
+      drawCheckbox(x, y - 3, checked);
+      x += 5; // Indent the text after checkbox
+    }
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    
+    const lines = doc.splitTextToSize(displayText, pageWidth - 30);
+    doc.text(lines, x, y);
+    
+    return y + (lines.length * 6);
+  };
   
   // Header
   doc.setFont("helvetica", "bold");
@@ -83,21 +136,6 @@ export const generateTaskboardPDF = (
     doc.text(`Saída: ${turn.saida}`, 170, y);
     y += 10;
     
-    const processTask = (taskKey: string, taskText: string, checked: boolean, timeValue?: string) => {
-      y = checkPageSpace(y, 8);
-      drawCheckbox(15, y - 3, checked);
-      doc.setFontSize(10);
-      
-      // Display the task text with time (if available)
-      if (timeValue) {
-        doc.text(`${taskText}: ${timeValue}`, 20, y);
-      } else {
-        doc.text(taskText, 20, y);
-      }
-      
-      y += 6;
-    };
-
     // Process Turno 1 tasks
     if (turnKey === 'turno1') {
       const turno1Tasks = [
@@ -114,7 +152,9 @@ export const generateTaskboardPDF = (
 
       turno1Tasks.forEach(task => {
         const typedKey = task.key as keyof typeof tasks.turno1;
-        processTask(task.key, task.text, tasks.turno1[typedKey] as boolean);
+        const isChecked = tasks.turno1[typedKey] as boolean;
+        y = checkPageSpace(y, 8);
+        y = processLabelWithInput(task.text, 15, y, isChecked);
       });
 
       // Enviar section
@@ -132,7 +172,9 @@ export const generateTaskboardPDF = (
       ];
 
       enviarItems.forEach(item => {
-        drawCheckbox(xOffset, y - 3, tasks.turno1[item.key as keyof typeof tasks.turno1] as boolean);
+        const typedKey = item.key as keyof typeof tasks.turno1;
+        const isChecked = tasks.turno1[typedKey] as boolean;
+        drawCheckbox(xOffset, y - 3, isChecked);
         doc.text(item.text, xOffset + 5, y);
         xOffset += doc.getTextWidth(item.text) + 15;
       });
@@ -154,7 +196,9 @@ export const generateTaskboardPDF = (
 
       backupTasks.forEach(task => {
         const typedKey = task.key as keyof typeof tasks.turno1;
-        processTask(task.key, task.text, tasks.turno1[typedKey] as boolean);
+        const isChecked = tasks.turno1[typedKey] as boolean;
+        y = checkPageSpace(y, 8);
+        y = processLabelWithInput(task.text, 15, y, isChecked);
       });
 
       // Ficheiro COM section
@@ -170,7 +214,9 @@ export const generateTaskboardPDF = (
       ];
 
       comDays.forEach(day => {
-        drawCheckbox(xOffset, y - 3, tasks.turno1[day.key as keyof typeof tasks.turno1] as boolean);
+        const typedKey = day.key as keyof typeof tasks.turno1;
+        const isChecked = tasks.turno1[typedKey] as boolean;
+        drawCheckbox(xOffset, y - 3, isChecked);
         doc.text(day.text, xOffset + 5, y);
         xOffset += 20;
       });
@@ -183,7 +229,9 @@ export const generateTaskboardPDF = (
 
       additionalTasks.forEach(task => {
         const typedKey = task.key as keyof typeof tasks.turno1;
-        processTask(task.key, task.text, tasks.turno1[typedKey] as boolean);
+        const isChecked = tasks.turno1[typedKey] as boolean;
+        y = checkPageSpace(y, 8);
+        y = processLabelWithInput(task.text, 15, y, isChecked);
       });
     }
 
@@ -202,7 +250,9 @@ export const generateTaskboardPDF = (
 
       turno2Tasks.forEach(task => {
         const typedKey = task.key as keyof typeof tasks.turno2;
-        processTask(task.key, task.text, tasks.turno2[typedKey] as boolean);
+        const isChecked = tasks.turno2[typedKey] as boolean;
+        y = checkPageSpace(y, 8);
+        y = processLabelWithInput(task.text, 15, y, isChecked);
       });
 
       // INPS section
@@ -216,7 +266,9 @@ export const generateTaskboardPDF = (
       ];
 
       inpsTasks.forEach(task => {
-        drawCheckbox(xOffset, y - 3, tasks.turno2[task.key as keyof typeof tasks.turno2] as boolean);
+        const typedKey = task.key as keyof typeof tasks.turno2;
+        const isChecked = tasks.turno2[typedKey] as boolean;
+        drawCheckbox(xOffset, y - 3, isChecked);
         doc.text(task.text, xOffset + 5, y);
         xOffset += doc.getTextWidth(task.text) + 25;
       });
@@ -233,16 +285,20 @@ export const generateTaskboardPDF = (
       ];
 
       enviarTasks.forEach(task => {
-        drawCheckbox(xOffset, y - 3, tasks.turno2[task.key as keyof typeof tasks.turno2] as boolean);
+        const typedKey = task.key as keyof typeof tasks.turno2;
+        const isChecked = tasks.turno2[typedKey] as boolean;
+        drawCheckbox(xOffset, y - 3, isChecked);
         doc.text(task.text, xOffset + 5, y);
         xOffset += 20;
       });
       y += 8;
 
       // Add confirmarAtualizacaoFicheirosSisp after Enviar Ficheiro section
-      processTask(
-        'confirmarAtualizacaoFicheirosSisp', 
-        'Confirmar Atualização Ficheiros Enviados à SISP (ECI * ENV/IMA)', 
+      y = checkPageSpace(y, 8);
+      y = processLabelWithInput(
+        'Confirmar Atualização Ficheiros Enviados à SISP (ECI * ENV/IMA)',
+        15,
+        y,
         tasks.turno2.confirmarAtualizacaoFicheirosSisp
       );
 
@@ -255,7 +311,9 @@ export const generateTaskboardPDF = (
 
       additionalTurno2Tasks.forEach(task => {
         const typedKey = task.key as keyof typeof tasks.turno2;
-        processTask(task.key, task.text, tasks.turno2[typedKey] as boolean);
+        const isChecked = tasks.turno2[typedKey] as boolean;
+        y = checkPageSpace(y, 8);
+        y = processLabelWithInput(task.text, 15, y, isChecked);
       });
     }
 
@@ -301,15 +359,17 @@ export const generateTaskboardPDF = (
         const typedKey = task.key as keyof typeof tasks.turno3;
         const isChecked = tasks.turno3[typedKey] as boolean;
         
+        y = checkPageSpace(y, 8);
+        
         // Handle special cases with time fields
         if (task.key === 'fecharRealTime') {
           const timeValue = tasks.turno3.fecharRealTimeHora || '';
-          processTask(task.key, task.text, isChecked, timeValue);
+          y = processLabelWithInput(task.text, 15, y, isChecked, timeValue);
         } else if (task.key === 'inicioFecho') {
           const timeValue = tasks.turno3.inicioFechoHora || '';
-          processTask(task.key, task.text, isChecked, timeValue);
+          y = processLabelWithInput(task.text, 15, y, isChecked, timeValue);
         } else {
-          processTask(task.key, task.text, isChecked);
+          y = processLabelWithInput(task.text, 15, y, isChecked);
         }
       });
 
@@ -348,22 +408,21 @@ export const generateTaskboardPDF = (
         const typedKey = task.key as keyof typeof tasks.turno3;
         const isChecked = tasks.turno3[typedKey] as boolean;
         
+        y = checkPageSpace(y, 8);
+        
         // Handle special cases with time or number fields
         if (task.key === 'validarSaldoConta') {
           const saldoValor = tasks.turno3.saldoContaValor || '';
           const saldoTipo = tasks.turno3.saldoPositivo ? 'Positivo' : tasks.turno3.saldoNegativo ? 'Negativo' : '';
-          
-          // Format the display to show: "Validar saldo da conta 18/5488102: 1234.56 (Positive)"
-          const displayValue = `${saldoValor}${saldoTipo ? ` (${saldoTipo})` : ''}`;
-          processTask(task.key, task.text, isChecked, displayValue);
+          y = processLabelWithInput(task.text, 15, y, isChecked, null, `${saldoValor}${saldoTipo ? ` (${saldoTipo})` : ''}`);
         } else if (task.key === 'abrirRealTime') {
           const timeValue = tasks.turno3.abrirRealTimeHora || '';
-          processTask(task.key, task.text, isChecked, timeValue);
+          y = processLabelWithInput(task.text, 15, y, isChecked, timeValue);
         } else if (task.key === 'terminoFecho') {
           const timeValue = tasks.turno3.terminoFechoHora || '';
-          processTask(task.key, task.text, isChecked, timeValue);
+          y = processLabelWithInput(task.text, 15, y, isChecked, timeValue);
         } else {
-          processTask(task.key, task.text, isChecked);
+          y = processLabelWithInput(task.text, 15, y, isChecked);
         }
       });
     }
@@ -373,16 +432,9 @@ export const generateTaskboardPDF = (
       doc.setFont("helvetica", "bold");
       doc.text("Observações:", 15, y);
       y += 6;
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
       
-      const maxWidth = pageWidth - 30;
-      const lines = doc.splitTextToSize(turn.observations, maxWidth);
-      lines.forEach((line: string) => {
-        y = checkPageSpace(y, 6);
-        doc.text(line, 15, y);
-        y += 6;
-      });
+      // Process text area for observations
+      y = processTextArea(turn.observations, 15, y, pageWidth - 30);
     }
 
     y += 10;
