@@ -19,7 +19,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
   observations,
   onObservationsChange
 }) => {
-  // Helper function to handle input changes for time and numeric fields
+  // Helper functions to handle input changes for time and numeric fields
   const handleTimeChange = (field: keyof Turno3Tasks, value: string) => {
     onTaskChange(field, value);
   };
@@ -31,6 +31,8 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
   return (
     <div className="space-y-2">
       <h4 className="font-medium mb-4">Operações Fecho Dia</h4>
+      
+      {/* Verificar Débitos */}
       <div className="flex items-center space-x-2">
         <Checkbox 
           id="verificarDebitos3" 
