@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Turno3Tasks } from '@/types/taskboard';
+import { toast } from 'sonner';
 
 interface Turno3TasksProps {
   tasks: Turno3Tasks;
@@ -21,12 +22,24 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
 }) => {
   // Helper functions to handle input changes for time and numeric fields
   const handleTimeChange = (field: keyof Turno3Tasks, value: string) => {
+    // Validate time format (optional)
+    if (value && !/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(value)) {
+      toast.error("Formato da hora inválido. Use HH:MM");
+      return;
+    }
     onTaskChange(field, value);
   };
   
   const handleNumberChange = (field: keyof Turno3Tasks, value: string) => {
     // Allow only numbers and decimal point
-    const numericValue = value.replace(/[^0-9.]/g, '');
+    const numericValue = value.replace(/[^0-9.,]/g, '').replace(',', '.');
+    
+    // Validate if it's a valid number (optional)
+    if (numericValue && isNaN(parseFloat(numericValue))) {
+      toast.error("Por favor, insira um valor numérico válido");
+      return;
+    }
+    
     onTaskChange(field, numericValue);
   };
   
@@ -154,22 +167,29 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Label htmlFor="prepararEnviarCsv" className="cursor-pointer ml-2">Preparar e enviar ficheiro CSV (saldos)</Label>
       </div>
       
-      <div className="flex items-center space-x-2">
-        <Checkbox 
-          id="fecharRealTime"
-          checked={tasks.fecharRealTime}
-          onCheckedChange={(checked) => onTaskChange('fecharRealTime', !!checked)}
-        />
-        <Label htmlFor="fecharRealTime" className="cursor-pointer ml-2">
-          Interromper o Real-Time com a SISP
-        </Label>
-        <Input
-          type="time"
-          id="fecharRealTimeHora"
-          value={tasks.fecharRealTimeHora || ''}
-          onChange={(e) => handleTimeChange('fecharRealTimeHora', e.target.value)}
-          className="w-32"
-        />
+      <div className="flex items-start gap-2">
+        <div className="flex items-center h-10">
+          <Checkbox 
+            id="fecharRealTime"
+            checked={tasks.fecharRealTime}
+            onCheckedChange={(checked) => onTaskChange('fecharRealTime', !!checked)}
+          />
+        </div>
+        <div className="flex flex-col gap-1 w-full">
+          <Label htmlFor="fecharRealTime" className="cursor-pointer">
+            Interromper o Real-Time com a SISP
+          </Label>
+          <div className="flex items-center gap-2">
+            <Label htmlFor="fecharRealTimeHora" className="text-xs">Hora:</Label>
+            <Input
+              type="time"
+              id="fecharRealTimeHora"
+              value={tasks.fecharRealTimeHora || ''}
+              onChange={(e) => handleTimeChange('fecharRealTimeHora', e.target.value)}
+              className="w-32 h-8"
+            />
+          </div>
+        </div>
       </div>
       
       <div className="flex items-center space-x-2">
@@ -226,22 +246,29 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Label htmlFor="arranqueManual" className="cursor-pointer ml-2">Arranque Manual - Verificar Data da Aplicação – Percurso 431</Label>
       </div>
       
-      <div className="flex items-center space-x-2">
-        <Checkbox 
-          id="inicioFecho"
-          checked={tasks.inicioFecho}
-          onCheckedChange={(checked) => onTaskChange('inicioFecho', !!checked)}
-        />
-        <Label htmlFor="inicioFecho" className="cursor-pointer ml-2">
-          Início do Fecho
-        </Label>
-        <Input
-          type="time"
-          id="inicioFechoHora"
-          value={tasks.inicioFechoHora || ''}
-          onChange={(e) => handleTimeChange('inicioFechoHora', e.target.value)}
-          className="w-32"
-        />
+      <div className="flex items-start gap-2">
+        <div className="flex items-center h-10">
+          <Checkbox 
+            id="inicioFecho"
+            checked={tasks.inicioFecho}
+            onCheckedChange={(checked) => onTaskChange('inicioFecho', !!checked)}
+          />
+        </div>
+        <div className="flex flex-col gap-1 w-full">
+          <Label htmlFor="inicioFecho" className="cursor-pointer">
+            Início do Fecho
+          </Label>
+          <div className="flex items-center gap-2">
+            <Label htmlFor="inicioFechoHora" className="text-xs">Hora:</Label>
+            <Input
+              type="time"
+              id="inicioFechoHora"
+              value={tasks.inicioFechoHora || ''}
+              onChange={(e) => handleTimeChange('inicioFechoHora', e.target.value)}
+              className="w-32 h-8"
+            />
+          </div>
+        </div>
       </div>
       
       <div className="flex items-center space-x-2">
@@ -318,65 +345,78 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Label htmlFor="aplicarFicheirosCompensacao" className="cursor-pointer ml-2">Aplicar ficheiros compensação SISP (CCLN, EDST, EORI, ERMB)</Label>
       </div>
       
-      <div className="flex items-center space-x-2">
-        <Checkbox 
-          id="validarSaldoConta"
-          checked={tasks.validarSaldoConta}
-          onCheckedChange={(checked) => onTaskChange('validarSaldoConta', !!checked)}
-        />
-        <Label htmlFor="validarSaldoConta" className="cursor-pointer ml-2">
-          Validar saldo da conta 18/5488102:
-        </Label>
-        <Input
-          type="text"
-          id="saldoContaValor"
-          value={tasks.saldoContaValor || ''}
-          onChange={(e) => handleNumberChange('saldoContaValor', e.target.value)}
-          className="w-32"
-          placeholder="0.00"
-          inputMode="decimal"
-        />
+      <div className="flex items-start gap-2">
+        <div className="flex items-center h-10">
+          <Checkbox 
+            id="validarSaldoConta"
+            checked={tasks.validarSaldoConta}
+            onCheckedChange={(checked) => onTaskChange('validarSaldoConta', !!checked)}
+          />
+        </div>
+        <div className="flex flex-col gap-1 w-full">
+          <Label htmlFor="validarSaldoConta" className="cursor-pointer">
+            Validar saldo da conta 18/5488102
+          </Label>
+          <div className="flex items-center gap-2">
+            <Label htmlFor="saldoContaValor" className="text-xs">Valor:</Label>
+            <Input
+              type="text"
+              id="saldoContaValor"
+              value={tasks.saldoContaValor || ''}
+              onChange={(e) => handleNumberChange('saldoContaValor', e.target.value)}
+              className="w-32 h-8"
+              placeholder="0.00"
+              inputMode="decimal"
+            />
+            <div className="flex space-x-4">
+              <div className="flex items-center gap-1">
+                <Checkbox 
+                  id="saldoNegativo"
+                  checked={tasks.saldoNegativo}
+                  onCheckedChange={(checked) => {
+                    if (checked) handleToggleChange('saldoNegativo', 'saldoPositivo', false);
+                  }}
+                />
+                <Label htmlFor="saldoNegativo" className="text-xs">Negativo</Label>
+              </div>
+              <div className="flex items-center gap-1">
+                <Checkbox 
+                  id="saldoPositivo"
+                  checked={tasks.saldoPositivo}
+                  onCheckedChange={(checked) => {
+                    if (checked) handleToggleChange('saldoPositivo', 'saldoNegativo', true);
+                  }}
+                />
+                <Label htmlFor="saldoPositivo" className="text-xs">Positivo</Label>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       
-      <div className="ml-6 flex space-x-4 mb-2">
-        <div className="flex items-center space-x-2">
+      <div className="flex items-start gap-2">
+        <div className="flex items-center h-10">
           <Checkbox 
-            id="saldoNegativo"
-            checked={tasks.saldoNegativo}
-            onCheckedChange={(checked) => {
-              if (checked) handleToggleChange('saldoNegativo', 'saldoPositivo', false);
-            }}
+            id="abrirRealTime"
+            checked={tasks.abrirRealTime}
+            onCheckedChange={(checked) => onTaskChange('abrirRealTime', !!checked)}
           />
-          <Label htmlFor="saldoNegativo" className="cursor-pointer">Negativo</Label>
         </div>
-        <div className="flex items-center space-x-2">
-          <Checkbox 
-            id="saldoPositivo"
-            checked={tasks.saldoPositivo}
-            onCheckedChange={(checked) => {
-              if (checked) handleToggleChange('saldoPositivo', 'saldoNegativo', true);
-            }}
-          />
-          <Label htmlFor="saldoPositivo" className="cursor-pointer">Positivo</Label>
+        <div className="flex flex-col gap-1 w-full">
+          <Label htmlFor="abrirRealTime" className="cursor-pointer">
+            Abrir o Real-Time
+          </Label>
+          <div className="flex items-center gap-2">
+            <Label htmlFor="abrirRealTimeHora" className="text-xs">Hora:</Label>
+            <Input
+              type="time"
+              id="abrirRealTimeHora"
+              value={tasks.abrirRealTimeHora || ''}
+              onChange={(e) => handleTimeChange('abrirRealTimeHora', e.target.value)}
+              className="w-32 h-8"
+            />
+          </div>
         </div>
-      </div>
-      
-      <div className="flex items-center space-x-2">
-        <Checkbox 
-          id="abrirRealTime"
-          checked={tasks.abrirRealTime}
-          onCheckedChange={(checked) => onTaskChange('abrirRealTime', !!checked)}
-        />
-        <Label htmlFor="abrirRealTime" className="cursor-pointer ml-2">
-          Abrir o Real-Time
-        </Label>
-        <Input
-          type="time"
-          id="abrirRealTimeHora"
-          value={tasks.abrirRealTimeHora || ''}
-          onChange={(e) => handleTimeChange('abrirRealTimeHora', e.target.value)}
-          className="w-32"
-        />
       </div>
       
       <div className="flex items-center space-x-2">
@@ -514,22 +554,29 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Label htmlFor="arquivarCheques" className="cursor-pointer ml-2">Arquivar Cheques e respectivos Diários</Label>
       </div>
       
-      <div className="flex items-center space-x-2">
-        <Checkbox 
-          id="terminoFecho"
-          checked={tasks.terminoFecho}
-          onCheckedChange={(checked) => onTaskChange('terminoFecho', !!checked)}
-        />
-        <Label htmlFor="terminoFecho" className="cursor-pointer ml-2">
-          Término do Fecho
-        </Label>
-        <Input
-          type="time"
-          id="terminoFechoHora"
-          value={tasks.terminoFechoHora || ''}
-          onChange={(e) => handleTimeChange('terminoFechoHora', e.target.value)}
-          className="w-32"
-        />
+      <div className="flex items-start gap-2">
+        <div className="flex items-center h-10">
+          <Checkbox 
+            id="terminoFecho"
+            checked={tasks.terminoFecho}
+            onCheckedChange={(checked) => onTaskChange('terminoFecho', !!checked)}
+          />
+        </div>
+        <div className="flex flex-col gap-1 w-full">
+          <Label htmlFor="terminoFecho" className="cursor-pointer">
+            Término do Fecho
+          </Label>
+          <div className="flex items-center gap-2">
+            <Label htmlFor="terminoFechoHora" className="text-xs">Hora:</Label>
+            <Input
+              type="time"
+              id="terminoFechoHora"
+              value={tasks.terminoFechoHora || ''}
+              onChange={(e) => handleTimeChange('terminoFechoHora', e.target.value)}
+              className="w-32 h-8"
+            />
+          </div>
+        </div>
       </div>
       
       <div className="flex items-center space-x-2">
