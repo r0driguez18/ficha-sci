@@ -1,4 +1,3 @@
-
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { TurnDataType, TasksType, TurnKey } from '@/types/taskboard';
@@ -83,11 +82,17 @@ export const generateTaskboardPDF = (
     doc.text(`Saída: ${turn.saida}`, 170, y);
     y += 10;
     
-    const processTask = (taskKey: string, taskText: string, checked: boolean) => {
+    const processTask = (taskKey: string, taskText: string, checked: boolean, timeValue?: string) => {
       y = checkPageSpace(y, 8);
       drawCheckbox(15, y - 3, checked);
       doc.setFontSize(10);
       doc.text(taskText, 20, y);
+      
+      // If a time value is provided, display it on the same line
+      if (timeValue) {
+        doc.text(`Hora: ${timeValue}`, 120, y);
+      }
+      
       y += 6;
     };
 
@@ -294,19 +299,13 @@ export const generateTaskboardPDF = (
         const typedKey = task.key as keyof typeof tasks.turno3;
         const isChecked = tasks.turno3[typedKey] as boolean;
         
-        processTask(task.key, task.text, isChecked);
-        
-        // Adicionar horário para tarefas específicas logo abaixo delas
-        if (task.key === 'fecharRealTime' && tasks.turno3.fecharRealTimeHora) {
-          y -= 6; // Recuar um pouco para adicionar a hora na mesma linha
-          doc.text(`Hora: ${tasks.turno3.fecharRealTimeHora}`, 120, y);
-          y += 6; // Avançar novamente
-        }
-        
-        if (task.key === 'inicioFecho' && tasks.turno3.inicioFechoHora) {
-          y -= 6; // Recuar um pouco para adicionar a hora na mesma linha
-          doc.text(`Hora: ${tasks.turno3.inicioFechoHora}`, 120, y);
-          y += 6; // Avançar novamente
+        // Handle special cases with time fields
+        if (task.key === 'fecharRealTime') {
+          processTask(task.key, task.text, isChecked, tasks.turno3.fecharRealTimeHora);
+        } else if (task.key === 'inicioFecho') {
+          processTask(task.key, task.text, isChecked, tasks.turno3.inicioFechoHora);
+        } else {
+          processTask(task.key, task.text, isChecked);
         }
       });
 
@@ -345,37 +344,34 @@ export const generateTaskboardPDF = (
         const typedKey = task.key as keyof typeof tasks.turno3;
         const isChecked = tasks.turno3[typedKey] as boolean;
         
-        processTask(task.key, task.text, isChecked);
-
-        // Adicionar informações adicionais para tarefas específicas
+        // Handle special cases with time or number fields
         if (task.key === 'validarSaldoConta') {
-          y -= 6;
+          processTask(task.key, task.text, isChecked);
           if (tasks.turno3.saldoContaValor) {
+            y -= 6;
             doc.text(`Valor: ${tasks.turno3.saldoContaValor}`, 120, y);
+            y += 6;
           }
           
           // Adicionar checkboxes para positivo/negativo
-          let xOffset = 180;
-          if (tasks.turno3.saldoPositivo) {
-            doc.text("Positivo", xOffset, y);
-            drawCheckbox(xOffset - 5, y - 3, true);
-          } else if (tasks.turno3.saldoNegativo) {
-            doc.text("Negativo", xOffset, y);
-            drawCheckbox(xOffset - 5, y - 3, true);
+          if (tasks.turno3.saldoPositivo || tasks.turno3.saldoNegativo) {
+            y -= 6;
+            let xOffset = 180;
+            if (tasks.turno3.saldoPositivo) {
+              drawCheckbox(xOffset - 5, y - 3, true);
+              doc.text("Positivo", xOffset, y);
+            } else if (tasks.turno3.saldoNegativo) {
+              drawCheckbox(xOffset - 5, y - 3, true);
+              doc.text("Negativo", xOffset, y);
+            }
+            y += 6;
           }
-          y += 6;
-        }
-        
-        if (task.key === 'abrirRealTime' && tasks.turno3.abrirRealTimeHora) {
-          y -= 6;
-          doc.text(`Hora: ${tasks.turno3.abrirRealTimeHora}`, 120, y);
-          y += 6;
-        }
-        
-        if (task.key === 'terminoFecho' && tasks.turno3.terminoFechoHora) {
-          y -= 6;
-          doc.text(`Hora: ${tasks.turno3.terminoFechoHora}`, 120, y);
-          y += 6;
+        } else if (task.key === 'abrirRealTime') {
+          processTask(task.key, task.text, isChecked, tasks.turno3.abrirRealTimeHora);
+        } else if (task.key === 'terminoFecho') {
+          processTask(task.key, task.text, isChecked, tasks.turno3.terminoFechoHora);
+        } else {
+          processTask(task.key, task.text, isChecked);
         }
       });
     }
