@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -111,6 +110,33 @@ const Taskboard = () => {
   };
 
   const handleSave = async () => {
+    // Validate saldo value if the task is checked
+    if (tasks.turno3.validarSaldoConta && !tasks.turno3.saldoContaValor) {
+      toast.error('Favor preencher o valor do saldo da conta');
+      return;
+    }
+    
+    // Validate time fields if corresponding tasks are checked
+    if (tasks.turno3.fecharRealTime && !tasks.turno3.fecharRealTimeHora) {
+      toast.error('Favor preencher o horário de fechar Real-Time');
+      return;
+    }
+    
+    if (tasks.turno3.inicioFecho && !tasks.turno3.inicioFechoHora) {
+      toast.error('Favor preencher o horário de início do fecho');
+      return;
+    }
+    
+    if (tasks.turno3.abrirRealTime && !tasks.turno3.abrirRealTimeHora) {
+      toast.error('Favor preencher o horário de abrir Real-Time');
+      return;
+    }
+    
+    if (tasks.turno3.terminoFecho && !tasks.turno3.terminoFechoHora) {
+      toast.error('Favor preencher o horário de término do fecho');
+      return;
+    }
+    
     const { savedCount, duplicateCount } = await saveTableRowsToSupabase(tableRows);
     
     if (savedCount > 0) {
