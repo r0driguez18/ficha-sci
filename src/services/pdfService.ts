@@ -76,14 +76,13 @@ export const generateTaskboardPDF = (
   ): number => {
     let displayText = text.trim();
     
-    // Add time value if available
-    if (timeValue) {
+    // Add time or number value if available
+    if (timeValue && timeValue.trim() !== '') {
       displayText += `: ${timeValue}`;
-    }
-    
-    // Add number value if available
-    if (numberValue) {
-      displayText += ` ${numberValue}`;
+    } else if (numberValue && numberValue.trim() !== '') {
+      const saldoTipo = tasks.turno3.saldoPositivo ? ' (Positivo)' : 
+                         tasks.turno3.saldoNegativo ? ' (Negativo)' : '';
+      displayText += `: ${numberValue}${saldoTipo}`;
     }
     
     // Draw checkbox if needed
@@ -235,7 +234,6 @@ export const generateTaskboardPDF = (
       });
     }
 
-    // Process Turno 2 tasks
     if (turnKey === 'turno2') {
       const turno2Tasks = [
         { key: 'datacenter', text: 'Verificar DATA CENTER' },
