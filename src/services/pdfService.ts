@@ -301,9 +301,11 @@ export const generateTaskboardPDF = (
         
         // Handle special cases with time fields
         if (task.key === 'fecharRealTime') {
-          processTask(task.key, task.text, isChecked, tasks.turno3.fecharRealTimeHora);
+          const timeValue = tasks.turno3.fecharRealTimeHora || '';
+          processTask(task.key, `${task.text} - ${timeValue ? `Hora: ${timeValue}` : ''}`, isChecked);
         } else if (task.key === 'inicioFecho') {
-          processTask(task.key, task.text, isChecked, tasks.turno3.inicioFechoHora);
+          const timeValue = tasks.turno3.inicioFechoHora || '';
+          processTask(task.key, `${task.text} - ${timeValue ? `Hora: ${timeValue}` : ''}`, isChecked);
         } else {
           processTask(task.key, task.text, isChecked);
         }
@@ -346,30 +348,16 @@ export const generateTaskboardPDF = (
         
         // Handle special cases with time or number fields
         if (task.key === 'validarSaldoConta') {
-          processTask(task.key, task.text, isChecked);
-          if (tasks.turno3.saldoContaValor) {
-            y -= 6;
-            doc.text(`Valor: ${tasks.turno3.saldoContaValor}`, 120, y);
-            y += 6;
-          }
+          const saldoValor = tasks.turno3.saldoContaValor || '';
+          const saldoTipo = tasks.turno3.saldoPositivo ? 'Positivo' : tasks.turno3.saldoNegativo ? 'Negativo' : '';
           
-          // Adicionar checkboxes para positivo/negativo
-          if (tasks.turno3.saldoPositivo || tasks.turno3.saldoNegativo) {
-            y -= 6;
-            let xOffset = 180;
-            if (tasks.turno3.saldoPositivo) {
-              drawCheckbox(xOffset - 5, y - 3, true);
-              doc.text("Positivo", xOffset, y);
-            } else if (tasks.turno3.saldoNegativo) {
-              drawCheckbox(xOffset - 5, y - 3, true);
-              doc.text("Negativo", xOffset, y);
-            }
-            y += 6;
-          }
+          processTask(task.key, `${task.text} ${saldoValor}${saldoTipo ? ` (${saldoTipo})` : ''}`, isChecked);
         } else if (task.key === 'abrirRealTime') {
-          processTask(task.key, task.text, isChecked, tasks.turno3.abrirRealTimeHora);
+          const timeValue = tasks.turno3.abrirRealTimeHora || '';
+          processTask(task.key, `${task.text} - ${timeValue ? `Hora: ${timeValue}` : ''}`, isChecked);
         } else if (task.key === 'terminoFecho') {
-          processTask(task.key, task.text, isChecked, tasks.turno3.terminoFechoHora);
+          const timeValue = tasks.turno3.terminoFechoHora || '';
+          processTask(task.key, `${task.text} - ${timeValue ? `Hora: ${timeValue}` : ''}`, isChecked);
         } else {
           processTask(task.key, task.text, isChecked);
         }
