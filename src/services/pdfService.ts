@@ -1,3 +1,4 @@
+
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { TurnDataType, TasksType, TurnKey } from '@/types/taskboard';
@@ -86,11 +87,12 @@ export const generateTaskboardPDF = (
       y = checkPageSpace(y, 8);
       drawCheckbox(15, y - 3, checked);
       doc.setFontSize(10);
-      doc.text(taskText, 20, y);
       
-      // If a time value is provided, display it on the same line
+      // Display the task text with time (if available)
       if (timeValue) {
-        doc.text(`Hora: ${timeValue}`, 120, y);
+        doc.text(`${taskText}: ${timeValue}`, 20, y);
+      } else {
+        doc.text(taskText, 20, y);
       }
       
       y += 6;
@@ -302,10 +304,10 @@ export const generateTaskboardPDF = (
         // Handle special cases with time fields
         if (task.key === 'fecharRealTime') {
           const timeValue = tasks.turno3.fecharRealTimeHora || '';
-          processTask(task.key, `${task.text} - ${timeValue ? `Hora: ${timeValue}` : ''}`, isChecked);
+          processTask(task.key, task.text, isChecked, timeValue);
         } else if (task.key === 'inicioFecho') {
           const timeValue = tasks.turno3.inicioFechoHora || '';
-          processTask(task.key, `${task.text} - ${timeValue ? `Hora: ${timeValue}` : ''}`, isChecked);
+          processTask(task.key, task.text, isChecked, timeValue);
         } else {
           processTask(task.key, task.text, isChecked);
         }
@@ -321,7 +323,7 @@ export const generateTaskboardPDF = (
       const afterClosingTasks = [
         { key: 'validarFicheiroCcln', text: 'Validar ficheiro CCLN - 76853' },
         { key: 'aplicarFicheirosCompensacao', text: 'Aplicar ficheiros compensação SISP (CCLN, EDST, EORI, ERMB)' },
-        { key: 'validarSaldoConta', text: 'Validar saldo da conta 18/5488102:' },
+        { key: 'validarSaldoConta', text: 'Validar saldo da conta 18/5488102' },
         { key: 'abrirRealTime', text: 'Abrir o Real-Time' },
         { key: 'verificarTransacoes', text: 'Verificar a entrada de transações 3100 4681' },
         { key: 'aplicarFicheiroVisa', text: 'Aplicar ficheiro VISA DAF - com o user FECHO 4131' },
@@ -351,13 +353,15 @@ export const generateTaskboardPDF = (
           const saldoValor = tasks.turno3.saldoContaValor || '';
           const saldoTipo = tasks.turno3.saldoPositivo ? 'Positivo' : tasks.turno3.saldoNegativo ? 'Negativo' : '';
           
-          processTask(task.key, `${task.text} ${saldoValor}${saldoTipo ? ` (${saldoTipo})` : ''}`, isChecked);
+          // Format the display to show: "Validar saldo da conta 18/5488102: 1234.56 (Positive)"
+          const displayValue = `${saldoValor}${saldoTipo ? ` (${saldoTipo})` : ''}`;
+          processTask(task.key, task.text, isChecked, displayValue);
         } else if (task.key === 'abrirRealTime') {
           const timeValue = tasks.turno3.abrirRealTimeHora || '';
-          processTask(task.key, `${task.text} - ${timeValue ? `Hora: ${timeValue}` : ''}`, isChecked);
+          processTask(task.key, task.text, isChecked, timeValue);
         } else if (task.key === 'terminoFecho') {
           const timeValue = tasks.turno3.terminoFechoHora || '';
-          processTask(task.key, `${task.text} - ${timeValue ? `Hora: ${timeValue}` : ''}`, isChecked);
+          processTask(task.key, task.text, isChecked, timeValue);
         } else {
           processTask(task.key, task.text, isChecked);
         }
