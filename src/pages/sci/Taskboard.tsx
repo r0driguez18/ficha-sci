@@ -103,17 +103,6 @@ const Taskboard = () => {
       return;
     }
     
-    // Validate time format for hora field
-    if (field === 'hora' && value) {
-      if (!/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(value) && value !== '') {
-        // Allow partial time input during typing
-        if (!/^([01]?[0-9])?:?([0-5]?[0-9])?$/.test(value)) {
-          toast.error("Formato da hora inválido. Use HH:MM");
-          return;
-        }
-      }
-    }
-    
     setTableRows(
       tableRows.map(row => 
         row.id === id ? { ...row, [field]: value } : row
@@ -121,55 +110,7 @@ const Taskboard = () => {
     );
   };
 
-  const validateTimeFields = (): boolean => {
-    // Verify all time fields in Turno 3
-    const turno3 = tasks.turno3;
-    const timeFields = [
-      { key: 'fecharRealTimeHora', label: 'Fechar RealTime', checked: turno3.fecharRealTime },
-      { key: 'inicioFechoHora', label: 'Início do Fecho', checked: turno3.inicioFecho },
-      { key: 'abrirRealTimeHora', label: 'Abrir RealTime', checked: turno3.abrirRealTime },
-      { key: 'terminoFechoHora', label: 'Término do Fecho', checked: turno3.terminoFecho }
-    ];
-
-    let isValid = true;
-
-    // Check that if the checkbox is checked, the time field is filled
-    timeFields.forEach(field => {
-      if (field.checked && !turno3[field.key as keyof Turno3Tasks]) {
-        toast.error(`${field.label}: Por favor, preencha o campo de hora.`);
-        isValid = false;
-      }
-    });
-
-    // Validate saldo conta if checked
-    if (turno3.validarSaldoConta) {
-      if (!turno3.saldoContaValor || turno3.saldoContaValor.trim() === '') {
-        toast.error('Validar saldo da conta: Por favor, insira um valor.');
-        isValid = false;
-      }
-      
-      if (!turno3.saldoPositivo && !turno3.saldoNegativo) {
-        toast.error('Validar saldo da conta: Por favor, selecione se o saldo é positivo ou negativo.');
-        isValid = false;
-      }
-    }
-
-    return isValid;
-  };
-
   const handleSave = async () => {
-    // Validate inputs before saving
-    if (!validateTimeFields()) {
-      return;
-    }
-
-    // Validate table rows
-    const hasEmptyRows = tableRows.some(row => !row.hora || !row.tarefa || !row.nomeAs);
-    if (tableRows.length > 1 && hasEmptyRows) {
-      const proceed = window.confirm('Alguns processamentos têm campos vazios. Deseja continuar mesmo assim?');
-      if (!proceed) return;
-    }
-
     const { savedCount, duplicateCount } = await saveTableRowsToSupabase(tableRows);
     
     if (savedCount > 0) {
@@ -196,24 +137,21 @@ const Taskboard = () => {
   };
 
   const resetForm = () => {
-    // Confirm before reset
-    if (window.confirm('Tem certeza que deseja reiniciar o formulário? Todos os dados serão perdidos.')) {
-      setDate(new Date().toISOString().split('T')[0]);
-      setTurnData({
-        turno1: { operator: '', entrada: '', saida: '', observations: '' },
-        turno2: { operator: '', entrada: '', saida: '', observations: '' },
-        turno3: { operator: '', entrada: '', saida: '', observations: '' }
-      });
-      setTasks(getInitialTasks());
-      setTableRows([{ id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '' }]);
-      
-      localStorage.removeItem('taskboard-date');
-      localStorage.removeItem('taskboard-turnData');
-      localStorage.removeItem('taskboard-tasks');
-      localStorage.removeItem('taskboard-tableRows');
-      
-      toast.success('Formulário reiniciado com sucesso!');
-    }
+    setDate(new Date().toISOString().split('T')[0]);
+    setTurnData({
+      turno1: { operator: '', entrada: '', saida: '', observations: '' },
+      turno2: { operator: '', entrada: '', saida: '', observations: '' },
+      turno3: { operator: '', entrada: '', saida: '', observations: '' }
+    });
+    setTasks(getInitialTasks());
+    setTableRows([{ id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '' }]);
+    
+    localStorage.removeItem('taskboard-date');
+    localStorage.removeItem('taskboard-turnData');
+    localStorage.removeItem('taskboard-tasks');
+    localStorage.removeItem('taskboard-tableRows');
+    
+    toast.success('Formulário reiniciado com sucesso!');
   };
 
   return (
