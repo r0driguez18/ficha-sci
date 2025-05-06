@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -605,7 +604,7 @@ const Taskboard = () => {
               const itemKey = subItem.key as keyof Turno1Tasks;
               drawCheckbox(xOffset, y - 3, ensureBoolean(tasks.turno1[itemKey]));
               doc.text(subItem.text, xOffset + 5, y);
-              xOffset += doc.getTextWidth(subItem.text) + 15;
+              xOffset += 20;
             });
             
             y += 6;
