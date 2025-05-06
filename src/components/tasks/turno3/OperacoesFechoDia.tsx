@@ -89,7 +89,7 @@ export const OperacoesFechoDia: React.FC<OperacoesFechoDiaProps> = ({
         id="listaRequisicoesCheques" 
         checked={tasks.listaRequisicoesCheques}
         onCheckedChange={(checked) => handleCheckboxChange('listaRequisicoesCheques', checked)}
-        label="Lista requisições de cheques do dia 7633. {\">\"}; do que 5, sem comprov. Estornar, 21911"
+        label="Lista requisições de cheques do dia 7633. > do que 5, sem comprov. Estornar, 21911"
       />
       
       <CheckboxField 
