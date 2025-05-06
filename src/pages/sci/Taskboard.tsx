@@ -530,7 +530,14 @@ const Taskboard = () => {
           {key: 'sistemas', text: "Verificar Sistemas: BCACV1/BCACV2"},
           {key: 'servicos', text: "Verificar Serviços: Vinti24/BCADireto/Replicação/Servidor MIA"},
           {key: 'abrirServidores', text: "Abrir Servidores (SWIFT, OPDIF, TRMSG, CDGOV, AML)"},
-          {key: 'percurso76931', text: "Percurso 76931 - Atualiza os alertas nos clientes com dados desatualizados"}
+          {key: 'percurso76931', text: "Percurso 76931 - Atualiza os alertas nos clientes com dados desatualizados"},
+          {key: 'verificarDebitos', text: "Verificar Débitos/Créditos aplicados no dia Anterior"},
+          {key: 'processarTef', text: "Processar ficheiros TEF - ERR/RTR/RCT"},
+          {key: 'processarTelecomp', text: "Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR"},
+          {key: 'backupsDiferidos', text: "Backups Diferidos"},
+          {key: 'enviarSegundoEtr', text: "Enviar 2º Ficheiro ETR (13h:30)"},
+          {key: 'enviarFicheiroCom', text: "Enviar Ficheiro COM, dias específicos"},
+          {key: 'atualizarCentralRisco', text: "Atualizar Nº Central de Risco (Todas as Sextas-Feiras)"}
         ];
         
         // Processar tarefas básicas
@@ -540,6 +547,46 @@ const Taskboard = () => {
           doc.setFontSize(10);
           doc.text(item.text, 20, y);
           y += 6;
+          
+          // Adicionar sub-itens para backupsDiferidos
+          if (item.key === 'backupsDiferidos' && ensureBoolean(tasks.turno1.backupsDiferidos)) {
+            const backupItems = [
+              { key: 'bmjrn', text: "BMJRN (2 tapes/alterar 1 por mês/inicializar no inicio do mês)" },
+              { key: 'grjrcv', text: "GRJRCV (1 tape)" },
+              { key: 'aujrn', text: "AUJRN (1tape)" },
+              { key: 'mvdia1', text: "MVDIA1 (eliminar obj. após save N)" },
+              { key: 'mvdia2', text: "MVDIA2 (eliminar obj. após save S)" },
+              { key: 'brjrn', text: "BRJRN (1tape)" }
+            ];
+            
+            backupItems.forEach(item => {
+              y = checkPageSpace(y, 8);
+              drawCheckbox(25, y - 3, ensureBoolean(tasks.turno1[item.key as keyof Turno1Tasks]));
+              doc.text(item.text, 30, y);
+              y += 6;
+            });
+          }
+          
+          // Adicionar sub-itens para enviarFicheiroCom
+          if (item.key === 'enviarFicheiroCom' && ensureBoolean(tasks.turno1.enviarFicheiroCom)) {
+            y = checkPageSpace(y, 8);
+            doc.text("Dias:", 25, y);
+            
+            let xOffset = 40;
+            const comDaysItems = [
+              { key: 'dia01', text: '01' },
+              { key: 'dia08', text: '08' },
+              { key: 'dia16', text: '16' },
+              { key: 'dia23', text: '23' }
+            ];
+            
+            comDaysItems.forEach(item => {
+              drawCheckbox(xOffset, y - 3, ensureBoolean(tasks.turno1[item.key as keyof Turno1Tasks]));
+              doc.text(item.text, xOffset + 5, y);
+              xOffset += 20;
+            });
+            y += 6;
+          }
         });
         
         // Enviar grupo
@@ -568,84 +615,6 @@ const Taskboard = () => {
         
         y += 8;
         
-        // Verificar débitos
-        y = checkPageSpace(y, 8);
-        drawCheckbox(15, y - 3, ensureBoolean(tasks.turno1.verificarDebitos));
-        doc.setFontSize(10);
-        doc.text("Verificar Débitos/Créditos aplicados no dia Anterior", 20, y);
-        y += 8;
-        
-        // Backups Diferidos grupo
-        y = checkPageSpace(y, 8);
-        drawCheckbox(15, y - 3, ensureBoolean(tasks.turno1.backupsDiferidos));
-        doc.setFontSize(10);
-        doc.text("Backups Diferidos:", 20, y);
-        y += 8;
-        
-        // Sub-itens de Backups Diferidos
-        const backupItems = [
-          { key: 'bmjrn', text: "BMJRN (2 tapes/alterar 1 por mês/inicializar no inicio do mês)" },
-          { key: 'grjrcv', text: "GRJRCV (1 tape)" },
-          { key: 'aujrn', text: "AUJRN (1tape)" },
-          { key: 'mvdia1', text: "MVDIA1 (eliminar obj. após save N)" },
-          { key: 'mvdia2', text: "MVDIA2 (eliminar obj. após save S)" },
-          { key: 'brjrn', text: "BRJRN (1tape)" }
-        ];
-        
-        backupItems.forEach(item => {
-          y = checkPageSpace(y, 8);
-          drawCheckbox(25, y - 3, ensureBoolean(tasks.turno1[item.key as keyof Turno1Tasks]));
-          doc.text(item.text, 30, y);
-          y += 6;
-        });
-        
-        // Processar TEF
-        y = checkPageSpace(y, 8);
-        drawCheckbox(15, y - 3, ensureBoolean(tasks.turno1.processarTef));
-        doc.text("Processar ficheiros TEF - ERR/RTR/RCT", 20, y);
-        y += 8;
-        
-        // Processar Telecomp
-        y = checkPageSpace(y, 8);
-        drawCheckbox(15, y - 3, ensureBoolean(tasks.turno1.processarTelecomp));
-        doc.text("Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR", 20, y);
-        y += 8;
-        
-        // Enviar 2º Ficheiro ETR
-        y = checkPageSpace(y, 8);
-        drawCheckbox(15, y - 3, ensureBoolean(tasks.turno1.enviarSegundoEtr));
-        doc.text("Enviar 2º Ficheiro ETR (13h:30)", 20, y);
-        y += 8;
-        
-        // Enviar Ficheiro COM grupo
-        y = checkPageSpace(y, 8);
-        drawCheckbox(15, y - 3, ensureBoolean(tasks.turno1.enviarFicheiroCom));
-        doc.text("Enviar Ficheiro COM, dias:", 20, y);
-        y += 6;
-        
-        // Sub-itens de Enviar Ficheiro COM
-        xOffset = 25;
-        const comDaysItems = [
-          { key: 'dia01', text: '01' },
-          { key: 'dia08', text: '08' },
-          { key: 'dia16', text: '16' },
-          { key: 'dia23', text: '23' }
-        ];
-        
-        comDaysItems.forEach(item => {
-          drawCheckbox(xOffset, y - 3, ensureBoolean(tasks.turno1[item.key as keyof Turno1Tasks]));
-          doc.text(item.text, xOffset + 5, y);
-          xOffset += 20;
-        });
-        
-        y += 8;
-        
-        // Atualizar Central Risco
-        y = checkPageSpace(y, 8);
-        drawCheckbox(15, y - 3, ensureBoolean(tasks.turno1.atualizarCentralRisco));
-        doc.text("Atualizar Nº Central de Risco (Todas as Sextas-Feiras)", 20, y);
-        y += 10;
-        
         // Observações
         if (turn.observations) {
           y = checkPageSpace(y, 20);
@@ -669,6 +638,12 @@ const Taskboard = () => {
           {key: 'servicos', text: "Verificar Serviços: Vinti24/BCADireto/Replicação/Servidor MIA"},
           {key: 'verificarReportes', text: "Verificar envio de reportes(INPS, VISTO USA, BCV, IMPC)"},
           {key: 'verificarDebitos', text: "Verificar Débitos/Créditos Aplicados no Turno Anterior"},
+          {key: 'confirmarAtualizacaoSisp', text: "Confirmar atualização SISP"},
+          {key: 'processarTef', text: "Processar ficheiros TEF - ERR/RTR/RCT"},
+          {key: 'processarTelecomp', text: "Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR"},
+          {key: 'validarSaco', text: "Validar Saco 1935"},
+          {key: 'verificarPendentes', text: "Verificar Pendentes dos Balcões"},
+          {key: 'fecharBalcoes', text: "Fechar os Balcoes Centrais"}
         ];
         
         // Processar tarefas básicas
@@ -679,12 +654,6 @@ const Taskboard = () => {
           doc.text(item.text, 20, y);
           y += 6;
         });
-        
-        // Confirmar Atualização SISP
-        y = checkPageSpace(y, 8);
-        drawCheckbox(15, y - 3, ensureBoolean(tasks.turno2.confirmarAtualizacaoSisp));
-        doc.text("Confirmar atualização SISP", 20, y);
-        y += 8;
         
         // Ficheiros INPS
         y = checkPageSpace(y, 8);
@@ -701,18 +670,6 @@ const Taskboard = () => {
         
         y += 8;
         
-        // Processar TEF
-        y = checkPageSpace(y, 8);
-        drawCheckbox(15, y - 3, ensureBoolean(tasks.turno2.processarTef));
-        doc.text("Processar ficheiros TEF - ERR/RTR/RCT", 20, y);
-        y += 8;
-        
-        // Processar Telecomp
-        y = checkPageSpace(y, 8);
-        drawCheckbox(15, y - 3, ensureBoolean(tasks.turno2.processarTelecomp));
-        doc.text("Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR", 20, y);
-        y += 8;
-        
         // Enviar Ficheiro
         y = checkPageSpace(y, 8);
         doc.setFontSize(10);
@@ -727,24 +684,6 @@ const Taskboard = () => {
         doc.text("EDV", xOffset + 5, y);
         
         y += 8;
-        
-        // Validar Saco
-        y = checkPageSpace(y, 8);
-        drawCheckbox(15, y - 3, ensureBoolean(tasks.turno2.validarSaco));
-        doc.text("Validar Saco 1935", 20, y);
-        y += 8;
-        
-        // Verificar Pendentes
-        y = checkPageSpace(y, 8);
-        drawCheckbox(15, y - 3, ensureBoolean(tasks.turno2.verificarPendentes));
-        doc.text("Verificar Pendentes dos Balcões", 20, y);
-        y += 8;
-        
-        // Fechar Balcões
-        y = checkPageSpace(y, 8);
-        drawCheckbox(15, y - 3, ensureBoolean(tasks.turno2.fecharBalcoes));
-        doc.text("Fechar os Balcoes Centrais", 20, y);
-        y += 10;
         
         // Observações
         if (turn.observations) {
@@ -768,7 +707,7 @@ const Taskboard = () => {
         y += 8;
         doc.setFont("helvetica", "normal");
         
-        const beforeCloseTasks: {key: keyof Turno3Tasks, text: string}[] = [
+        const beforeCloseTasks: {key: keyof Turno3Tasks, text: string, hasTime?: boolean}[] = [
           {key: 'verificarDebitos', text: "Verificar Débitos/Créditos Aplicados no Turno Anterior"},
           {key: 'tratarTapes', text: "Tratar e trocar Tapes BM, BMBCK – percurso 7622"},
           {key: 'fecharServidores', text: "Fechar Servidores Teste e Produção"},
@@ -781,51 +720,51 @@ const Taskboard = () => {
           {key: 'fecharServidoresBanka', text: "User Fecho, fechar servidores Banka remota IN1/IN3/IN4"},
           {key: 'alterarInternetBanking', text: "User Fecho Alterar Internet Banking para OFFLINE – percurso 49161"},
           {key: 'prepararEnviarCsv', text: "Preparar e enviar ficheiro CSV (saldos)"},
-          {key: 'fecharRealTime', text: "Interromper o Real-Time com a SISP"}
+          {key: 'fecharRealTime', text: "Interromper o Real-Time com a SISP", hasTime: true}
         ];
         
         beforeCloseTasks.forEach(task => {
           y = checkPageSpace(y, 8);
           drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3[task.key]));
           doc.setFontSize(10);
-          doc.text(task.text, 20, y);
-          y += 6;
           
-          // Adicionar campo de hora para fecharRealTime
-          if (task.key === 'fecharRealTime' && tasks.turno3.fecharRealTimeHora) {
-            doc.text(`Hora: ${tasks.turno3.fecharRealTimeHora}`, 30, y);
-            y += 6;
+          let taskText = task.text;
+          if (task.hasTime && tasks.turno3[`${task.key}Hora`]) {
+            taskText += ` ${tasks.turno3[`${task.key}Hora` as keyof Turno3Tasks]}`;
           }
+          
+          doc.text(taskText, 20, y);
+          y += 6;
         });
         
         // Continuar com as tarefas antes do fecho
-        const moreTasks: {key: keyof Turno3Tasks, text: string}[] = [
-          {key: 'prepararEnviarEtr', text: "Preparar e enviar Ficheiro ETR - percurso 7538, consultar conta 18   5488103"},
+        const moreTasks: {key: keyof Turno3Tasks, text: string, hasTime?: boolean}[] = [
+          {key: 'prepararEnviarEtr', text: "Preparar e enviar Ficheiro ETR - percurso 7538, consultar conta 18 5488103"},
           {key: 'fazerLoggOffAml', text: "Fazer Logg-Off do utilizador AML – Percurso 161 (utilizadores ativos)"},
           {key: 'aplicarFicheiroErroEtr', text: "Aplicar Ficheiro Erro ETR"},
           {key: 'validarBalcao14', text: "Validar balção 14 7185"},
           {key: 'fecharBalcao14', text: "Fechar o balcão 14 - DSI e confirmar se todos os balcões encontram-se fechados"},
           {key: 'arranqueManual', text: "Arranque Manual - Verificar Data da Aplicação – Percurso 431"},
-          {key: 'inicioFecho', text: "Início do Fecho"}
+          {key: 'inicioFecho', text: "Início do Fecho", hasTime: true}
         ];
         
         moreTasks.forEach(task => {
           y = checkPageSpace(y, 8);
           drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3[task.key]));
           doc.setFontSize(10);
-          doc.text(task.text, 20, y);
-          y += 6;
           
-          // Adicionar campo de hora para inicioFecho
-          if (task.key === 'inicioFecho' && tasks.turno3.inicioFechoHora) {
-            doc.text(`Hora: ${tasks.turno3.inicioFechoHora}`, 30, y);
-            y += 6;
+          let taskText = task.text;
+          if (task.hasTime && tasks.turno3[`${task.key}Hora` as keyof Turno3Tasks]) {
+            taskText += ` ${tasks.turno3[`${task.key}Hora` as keyof Turno3Tasks]}`;
           }
+          
+          doc.text(taskText, 20, y);
+          y += 6;
         });
         
         // Mais tarefas antes do fecho
         const finalBeforeTasks: {key: keyof Turno3Tasks, text: string}[] = [
-          {key: 'validarEnvioEmail', text: "Validar envio email( Notificação Inicio Fecho)  a partir do ISeries"},
+          {key: 'validarEnvioEmail', text: "Validar envio email (Notificação Inicio Fecho) a partir do ISeries"},
           {key: 'controlarTrabalhos', text: "Controlar os trabalhos no QBATCH (opções 5, 10, F10, F5, F18)"},
           {key: 'saveBmbck', text: "Save BMBCK – Automático"},
           {key: 'abrirServidoresInternet', text: "Abrir Servidores Internet Banking – Percurso 161–"},
@@ -880,42 +819,42 @@ const Taskboard = () => {
         });
         
         // Continuar com tarefas depois do fecho
-        const moreAfterTasks: {key: keyof Turno3Tasks, text: string}[] = [
-          {key: 'abrirRealTime', text: "Abrir o Real-Time"},
+        const moreAfterTasks: {key: keyof Turno3Tasks, text: string, hasTime?: boolean}[] = [
+          {key: 'abrirRealTime', text: "Abrir o Real-Time", hasTime: true},
           {key: 'verificarTransacoes', text: "Verificar a entrada de transações 3100 4681"},
           {key: 'aplicarFicheiroVisa', text: "Aplicar ficheiro VISA DAF - com o user FECHO 4131"},
-          {key: 'cativarCartoes', text: "Cativar cartões de crédito em incumprimento - com o user FECHO – 76727"},
-          {key: 'abrirBcaDireto', text: "Abrir BCA Direto/MB/Extrato Digital/Paypal – 49162"},
-          {key: 'abrirServidoresBanka', text: "Abrir servidores Banka Remota"},
-          {key: 'atualizarTelefonesOffline', text: "Atualizar telefones OFFLINE"},
-          {key: 'verificarReplicacao', text: "Verificar a replicação entre servidores"},
-          {key: 'enviarFicheiroCsv', text: "Enviar ficheiro CSV (saldos) para MIA"},
-          {key: 'transferirFicheirosLiquidity', text: "Transferir ficheiros para a pasta Liquidity"}
+          {key: 'cativarCartoes', text: "Cativar cartões de crédito em incumprimento - com o user FECHO – 7675"},
+          {key: 'abrirBcaDireto', text: "Abrir o BCADireto percurso 49162 – Validar transações"},
+          {key: 'abrirServidoresBanka', text: "User Fecho, Abril servidores Banka remota IN1/IN3/IN4"},
+          {key: 'atualizarTelefonesOffline', text: "Atualiza Telefones tratados no OFFLINE- percurso 768976"},
+          {key: 'verificarReplicacao', text: "Verificar Replicação"},
+          {key: 'enviarFicheiroCsv', text: "Enviar ficheiro CSV (Comunicação Saldo Véspera)"},
+          {key: 'transferirFicheirosLiquidity', text: "Transferência ficheiros SSM Liquidity Exercices (Confirmação)"}
         ];
         
         moreAfterTasks.forEach(task => {
           y = checkPageSpace(y, 8);
           drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3[task.key]));
           doc.setFontSize(10);
-          doc.text(task.text, 20, y);
-          y += 6;
           
-          // Adicionar campo de hora para abrirRealTime
-          if (task.key === 'abrirRealTime' && tasks.turno3.abrirRealTimeHora) {
-            doc.text(`Hora: ${tasks.turno3.abrirRealTimeHora}`, 30, y);
-            y += 6;
+          let taskText = task.text;
+          if (task.hasTime && tasks.turno3[`${task.key}Hora` as keyof Turno3Tasks]) {
+            taskText += ` ${tasks.turno3[`${task.key}Hora` as keyof Turno3Tasks]}`;
           }
+          
+          doc.text(taskText, 20, y);
+          y += 6;
         });
         
         // Últimas tarefas depois do fecho
-        const finalAfterTasks: {key: keyof Turno3Tasks, text: string}[] = [
-          {key: 'percurso76921', text: "Percurso 76921 (Produção de diversos ficheiros)"},
-          {key: 'percurso76922', text: "Percurso 76922 (Transmissão de ficheiros)"},
-          {key: 'percurso76923', text: "Percurso 76923 (Tratamento dos ficheiros)"},
+        const finalAfterTasks: {key: keyof Turno3Tasks, text: string, hasTime?: boolean}[] = [
+          {key: 'percurso76921', text: "Fazer o percurso 76921 – Limpeza Ficheiro BRLOGED (Dia 1 de cada Mês)"},
+          {key: 'percurso76922', text: "Fazer o percurso 76922 - Reorganiza BRLOGED (Dia 2 de cada Mês)"},
+          {key: 'percurso76923', text: "Fazer o percurso 76923 - Reorganiza GBMVCO (Dia 3 de cada Mês)"},
           {key: 'abrirServidoresTesteProducao', text: "Abrir Servidores Teste e Produção"},
           {key: 'impressaoCheques', text: "Impressão Cheques dia seguinte"},
           {key: 'arquivarCheques', text: "Arquivar Cheques e Extratos Impressos"},
-          {key: 'terminoFecho', text: "Termino do Fecho"},
+          {key: 'terminoFecho', text: "Termino do Fecho", hasTime: true},
           {key: 'transferirFicheirosDsi', text: "Transferir Ficheiros DSI"}
         ];
         
@@ -923,14 +862,14 @@ const Taskboard = () => {
           y = checkPageSpace(y, 8);
           drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3[task.key]));
           doc.setFontSize(10);
-          doc.text(task.text, 20, y);
-          y += 6;
           
-          // Adicionar campo de hora para terminoFecho
-          if (task.key === 'terminoFecho' && tasks.turno3.terminoFechoHora) {
-            doc.text(`Hora: ${tasks.turno3.terminoFechoHora}`, 30, y);
-            y += 6;
+          let taskText = task.text;
+          if (task.hasTime && tasks.turno3[`${task.key}Hora` as keyof Turno3Tasks]) {
+            taskText += ` ${tasks.turno3[`${task.key}Hora` as keyof Turno3Tasks]}`;
           }
+          
+          doc.text(taskText, 20, y);
+          y += 6;
         });
         
         // Observações
