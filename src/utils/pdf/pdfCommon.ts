@@ -46,7 +46,7 @@ export const drawObservationsBox = (doc: jsPDF, startY: number, text: string): n
   const padding = 5;
   const lineHeight = 5;
   
-  doc.setFont("helvetica", "bold");
+  doc.setFont("helvetica", "normal"); // Changed to normal, not bold
   doc.text("Observações:", 15, startY);
   startY += 6;
   
