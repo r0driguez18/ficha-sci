@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -33,13 +34,11 @@ export interface TaskTableRow {
 }
 
 const operatorsList = [
-  { value: "joao", label: "João" },
-  { value: "maria", label: "Maria" },
-  { value: "edelgado", label: "Edelgado" },
-  { value: "etavares", label: "Etavares" },
-  { value: "lspencer", label: "Lspencer" },
-  { value: "sbarbosa", label: "Sbarbosa" },
-  { value: "nalves", label: "Nalves" }
+  { value: "nalves", label: "Nelson Alves" },
+  { value: "etavares", label: "Evandro Tavares" },
+  { value: "edelgado", label: "Emanuel Delgado" },
+  { value: "sbarbosa", label: "Silvino Barbosa" },
+  { value: "lspencer", label: "Louis Spencer" }
 ];
 
 const processFormSchema = z.object({
@@ -523,6 +522,12 @@ const Taskboard = () => {
       const turnName = turnNames[index];
       const turn = turnData[turnKey];
       
+      // Add extra spacing between turns (20 pixels)
+      if (index > 0) {
+        y = checkPageSpace(y, 20);
+        y += 15; // Add extra spacing between turns
+      }
+      
       y = checkPageSpace(y, 30);
       
       doc.setFont("helvetica", "bold");
@@ -956,7 +961,9 @@ const Taskboard = () => {
     
     // Add Processos table
     if (tableRows.length > 0) {
+      // Add extra spacing before the processes table
       y = checkPageSpace(y, 30);
+      y += 10;
       
       doc.setFont("helvetica", "bold");
       doc.setFontSize(14);
