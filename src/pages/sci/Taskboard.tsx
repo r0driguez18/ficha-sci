@@ -1,36 +1,23 @@
+
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow as UITableRow } from '@/components/ui/table';
-import { PlusCircle, Trash2, Save, FileDown, RotateCcw } from 'lucide-react';
-import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { useNavigate } from 'react-router-dom';
 import { saveFileProcess } from '@/services/fileProcessService';
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Turno1TasksComponent } from '@/components/tasks/Turno1Tasks';
 import { Turno2TasksComponent } from '@/components/tasks/Turno2Tasks';
 import { Turno3TasksComponent } from '@/components/tasks/Turno3Tasks';
-import type { Turno1Tasks, Turno2Tasks, Turno3Tasks, TurnKey, TasksType, TurnDataType } from '@/types/taskboard';
-
-export interface TaskTableRow {
-  id: number;
-  hora: string;
-  tarefa: string;
-  nomeAs: string;
-  operacao: string;
-  executado: string;
-}
+import { generateTaskboardPDF } from '@/utils/pdfGenerator';
+import { TurnInfoSection } from '@/components/taskboard/TurnInfoSection';
+import { TableRowsSection } from '@/components/taskboard/TableRowsSection';
+import { FormActions } from '@/components/taskboard/FormActions';
+import type { TurnKey, TasksType, TurnDataType } from '@/types/taskboard';
+import type { TaskTableRow } from '@/types/taskTableRow';
 
 const operatorsList = [
   { value: "nalves", label: "Nelson Alves" },
@@ -458,316 +445,130 @@ const Taskboard = () => {
     toast.success('Formulário reiniciado com sucesso!');
   };
 
-  const generatePDF = () => {
-    const doc = new jsPDF();
-    
-    const currentDate = new Date();
-    const formattedDate = currentDate.toISOString().split('T')[0].replace(/-/g, '');
-    
-    const pageWidth = doc.internal.pageSize.width;
-    const pageHeight = doc.internal.pageSize.height;
-    let y = 20;
-    
-    const centerText = (text: string, y: number) => {
-      const textWidth = doc.getTextWidth(text);
-      const x = (pageWidth - textWidth) / 2;
-      doc.text(text, x, y);
-    };
-    
-    // Helper function to ensure we only pass boolean values to drawCheckbox
-    const ensureBoolean = (value: boolean | string): boolean => {
-      if (typeof value === 'string') {
-        return value === 'true' || value === 'indeterminate';
-      }
-      return Boolean(value);
-    };
-    
-    const drawCheckbox = (x: number, y: number, checked: boolean | string) => {
-      const isChecked = ensureBoolean(checked);
-      doc.rect(x, y, 3, 3);
-      if (isChecked) {
-        doc.line(x, y, x + 3, y + 3);
-        doc.line(x + 3, y, x, y + 3);
-      }
-    };
-    
-    const checkPageSpace = (y: number, requiredSpace: number): number => {
-      if (y + requiredSpace > pageHeight - 20) {
-        doc.addPage();
-        return 20;
-      }
-      return y;
-    };
-    
-    // Helper function to draw a rectangle around observations
-    const drawObservationsBox = (startY: number, text: string): number => {
-      const padding = 5;
-      const lineHeight = 5;
-      
-      doc.setFont("helvetica", "bold");
-      doc.text("Observações:", 15, startY);
-      startY += 6;
-      
-      // Calculate the height needed for the observations text
-      const splitText = doc.splitTextToSize(text || "", pageWidth - 30 - (padding * 2));
-      const textHeight = splitText.length * lineHeight;
-      
-      // Draw rectangle with padding
-      const boxHeight = Math.max(20, textHeight + padding * 2); // Minimum 20px height
-      doc.setDrawColor(200, 200, 200); // Light gray border
-      doc.setLineWidth(0.5);
-      doc.rect(15 - padding, startY - padding, pageWidth - 30, boxHeight);
-      
-      // If there is text, add it inside the rectangle
-      if (text) {
-        doc.setFont("helvetica", "normal");
-        doc.text(splitText, 15, startY + padding);
-        return startY + textHeight + (padding * 2);
-      }
-      
-      return startY + boxHeight;
-    };
-    
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(18);
-    centerText("CENTRO INFORMÁTICA", y);
-    y += 10;
-    
-    doc.setFontSize(16);
-    centerText("Ficha de Procedimentos", y);
-    y += 15;
-    
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "normal");
-    doc.text("Processamentos Diários", 15, y);
-    doc.text(`Data: ${date}`, pageWidth - 50, y);
-    y += 10;
-    
-    const turnKeys: TurnKey[] = ['turno1', 'turno2', 'turno3'];
-    const turnNames = ['Turno 1', 'Turno 2', 'Turno 3'];
-    
-    turnKeys.forEach((turnKey, index) => {
-      const turnName = turnNames[index];
-      const turn = turnData[turnKey];
-      
-      // Add extra spacing between turns (20 pixels)
-      if (index > 0) {
-        y = checkPageSpace(y, 20);
-        y += 15; // Add extra spacing between turns
-      }
-      
-      y = checkPageSpace(y, 30);
-      
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(12);
-      doc.text(`${turnName}:`, 15, y);
-      doc.setFont("helvetica", "normal");
-      
-      doc.text(`Operador: ${turn.operator}`, 50, y);
-      doc.text(`Entrada: ${turn.entrada}`, 120, y);
-      doc.text(`Saída: ${turn.saida}`, 170, y);
-      y += 10;
-      
-      // Process tasks for Turno 1
-      if (turnKey === 'turno1') {
-        // Process basic tasks
-        const taskList: {key: keyof Turno1Tasks, text: string}[] = [
-          {key: 'datacenter', text: "Verificar Alarmes e Sistemas/Climatização DATA CENTER"},
-          {key: 'sistemas', text: "Verificar Sistemas: BCACV1/BCACV2"},
-          {key: 'servicos', text: "Verificar Serviços: Vinti24/BCADireto/Replicação/Servidor MIA"},
-          {key: 'abrirServidores', text: "Abrir Servidores (SWIFT, OPDIF, TRMSG, CDGOV, AML)"},
-          {key: 'percurso76931', text: "Percurso 76931 - Atualiza os alertas nos clientes com dados desatualizados"},
-          {key: 'enviar', text: "Enviar:"},
-          {key: 'verificarDebitos', text: "Verificar Débitos/Créditos aplicados no dia Anterior"},
-          {key: 'enviarReportes', text: "Enviar Reportes (INPS, Visto USA, BCV, IMPC)"},
-          {key: 'verificarRecepcaoSisp', text: "Verificar Recep. dos Ficheiros Enviados à SISP:"},
-          {key: 'backupsDiferidos', text: "Backups Diferidos"},
-          {key: 'processarTef', text: "Processar ficheiros TEF - ERR/RTR/RCT"},
-          {key: 'processarTelecomp', text: "Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR"},
-          {key: 'enviarSegundoEtr', text: "Enviar 2º Ficheiro ETR (13h:30)"},
-          {key: 'enviarFicheiroCom', text: "Enviar Ficheiro COM, dias específicos"},
-          {key: 'atualizarCentralRisco', text: "Atualizar Nº Central de Risco (Todas as Sextas-Feiras)"}
-        ];
-        
-        taskList.forEach(item => {
-          y = checkPageSpace(y, 8);
+  const exportToPDF = () => {
+    try {
+      const doc = generateTaskboardPDF(date, turnData, tasks, tableRows);
+      doc.save(`taskboard_${date.replace(/-/g, '')}.pdf`);
+      toast.success('PDF gerado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      toast.error('Erro ao gerar PDF. Tente novamente.');
+    }
+  };
+
+  return (
+    <div className="container py-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Ficha de Procedimentos</CardTitle>
+          <CardDescription>Preencha as informações necessárias para cada turno</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-6">
+            <Label htmlFor="date">Data</Label>
+            <Input
+              id="date"
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="max-w-xs"
+            />
+          </div>
+
+          <Tabs defaultValue="turno1">
+            <TabsList className="mb-4">
+              <TabsTrigger value="turno1">Turno 1</TabsTrigger>
+              <TabsTrigger value="turno2">Turno 2</TabsTrigger>
+              <TabsTrigger value="turno3">Turno 3</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="turno1">
+              <div className="space-y-6">
+                <TurnInfoSection
+                  turnKey="turno1"
+                  operator={turnData.turno1.operator}
+                  entrada={turnData.turno1.entrada}
+                  saida={turnData.turno1.saida}
+                  title="Turno 1"
+                  operatorsList={operatorsList}
+                  onTurnDataChange={handleTurnDataChange}
+                />
+                
+                <div className="mt-6">
+                  <Turno1TasksComponent
+                    tasks={tasks.turno1}
+                    onTaskChange={(task, checked) => handleTaskChange('turno1', task, checked)}
+                    observations={turnData.turno1.observations}
+                    onObservationsChange={(value) => handleTurnDataChange('turno1', 'observations', value)}
+                  />
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="turno2">
+              <div className="space-y-6">
+                <TurnInfoSection
+                  turnKey="turno2"
+                  operator={turnData.turno2.operator}
+                  entrada={turnData.turno2.entrada}
+                  saida={turnData.turno2.saida}
+                  title="Turno 2"
+                  operatorsList={operatorsList}
+                  onTurnDataChange={handleTurnDataChange}
+                />
+                
+                <div className="mt-6">
+                  <Turno2TasksComponent
+                    tasks={tasks.turno2}
+                    onTaskChange={(task, checked) => handleTaskChange('turno2', task, checked)}
+                    observations={turnData.turno2.observations}
+                    onObservationsChange={(value) => handleTurnDataChange('turno2', 'observations', value)}
+                  />
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="turno3">
+              <div className="space-y-6">
+                <TurnInfoSection
+                  turnKey="turno3"
+                  operator={turnData.turno3.operator}
+                  entrada={turnData.turno3.entrada}
+                  saida={turnData.turno3.saida}
+                  title="Turno 3"
+                  operatorsList={operatorsList}
+                  onTurnDataChange={handleTurnDataChange}
+                />
+                
+                <div className="mt-6">
+                  <Turno3TasksComponent
+                    tasks={tasks.turno3}
+                    onTaskChange={(task, value) => handleTaskChange('turno3', task, value)}
+                    observations={turnData.turno3.observations}
+                    onObservationsChange={(value) => handleTurnDataChange('turno3', 'observations', value)}
+                  />
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          <TableRowsSection
+            tableRows={tableRows}
+            operatorsList={operatorsList}
+            onAddRow={addTableRow}
+            onRemoveRow={removeTableRow}
+            onInputChange={handleInputChange}
+          />
           
-          drawCheckbox(15, y - 3, ensureBoolean(tasks.turno1[item.key]));
-          doc.setFontSize(10);
-          
-          // Handle the "Enviar:" special case
-          if (item.key === 'enviar') {
-            doc.text(item.text, 20, y);
-            y += 6;  // Add extra line space after "Enviar:" label
-            
-            // Process sub-items in rows rather than inline for "Enviar"
-            const enviarSubItems = [
-              { key: 'etr', text: 'ETR' },
-              { key: 'impostos', text: 'Impostos' },
-              { key: 'inpsExtrato', text: 'INPS/Extrato' },
-              { key: 'vistoUsa', text: 'Visto USA' },
-              { key: 'ben', text: 'BEN' },
-              { key: 'bcta', text: 'BCTA' }
-            ];
-            
-            // Display in two columns, 3 items per row
-            for (let i = 0; i < enviarSubItems.length; i += 3) {
-              y = checkPageSpace(y, 8);
-              
-              // First column items (up to 3 per row)
-              for (let j = 0; j < 3; j++) {
-                if (i + j < enviarSubItems.length) {
-                  const subItem = enviarSubItems[i + j];
-                  const itemKey = subItem.key as keyof Turno1Tasks;
-                  const xOffset = 25 + (j * 40); // Space items horizontally
-                  
-                  drawCheckbox(xOffset, y - 3, ensureBoolean(tasks.turno1[itemKey]));
-                  doc.text(subItem.text, xOffset + 5, y);
-                }
-              }
-              
-              y += 6; // Move to next row after displaying up to 3 items
-            }
-          } else if (item.key === 'verificarRecepcaoSisp') {
-            // Handle Verificar Recepção SISP with ASC, CSV, ECI checkboxes
-            doc.text(item.text, 20, y);
-            
-            let xOffset = 115;
-            const sispItems = [
-              { key: 'verificarAsc', text: 'ASC' },
-              { key: 'verificarCsv', text: 'CSV' },
-              { key: 'verificarEci', text: 'ECI' }
-            ];
-            
-            sispItems.forEach(subItem => {
-              const itemKey = subItem.key as keyof Turno1Tasks;
-              drawCheckbox(xOffset, y - 3, ensureBoolean(tasks.turno1[itemKey]));
-              doc.text(subItem.text, xOffset + 5, y);
-              xOffset += 20;
-            });
-            
-            y += 6;
-          } else {
-            doc.text(item.text, 20, y);
-            y += 6;
-          }
-          
-          // Add sub-items for backupsDiferidos
-          if (item.key === 'backupsDiferidos') {
-            const backupItems = [
-              { key: 'bmjrn', text: "BMJRN (2 tapes/alterar 1 por mês/inicializar no inicio do mês)" },
-              { key: 'grjrcv', text: "GRJRCV (1 tape)" },
-              { key: 'aujrn', text: "AUJRN (1tape)" },
-              { key: 'mvdia1', text: "MVDIA1 (eliminar obj. após save N)" },
-              { key: 'mvdia2', text: "MVDIA2 (eliminar obj. após save S)" },
-              { key: 'brjrn', text: "BRJRN (1tape)" }
-            ];
-            
-            backupItems.forEach(item => {
-              y = checkPageSpace(y, 8);
-              drawCheckbox(25, y - 3, ensureBoolean(tasks.turno1[item.key as keyof Turno1Tasks]));
-              doc.text(item.text, 30, y);
-              y += 6;
-            });
-          }
-          
-          // Add sub-items for enviarFicheiroCom
-          if (item.key === 'enviarFicheiroCom') {
-            y = checkPageSpace(y, 8);
-            doc.text("Dias:", 25, y);
-            
-            let xOffset = 40;
-            const comDaysItems = [
-              { key: 'dia01', text: '01' },
-              { key: 'dia08', text: '08' },
-              { key: 'dia16', text: '16' },
-              { key: 'dia23', text: '23' }
-            ];
-            
-            comDaysItems.forEach(item => {
-              drawCheckbox(xOffset, y - 3, ensureBoolean(tasks.turno1[item.key as keyof Turno1Tasks]));
-              doc.text(item.text, xOffset + 5, y);
-              xOffset += 20;
-            });
-            y += 6;
-          }
-        });
-        
-        // Observations with rectangle
-        y = checkPageSpace(y, 30);
-        y = drawObservationsBox(y, turn.observations);
-      }
-      
-      // Process tasks for Turno 2
-      if (turnKey === 'turno2') {
-        const taskList: {key: keyof Turno2Tasks, text: string}[] = [
-          {key: 'datacenter', text: "Verificar Alarmes e Sistemas/Climatização DATA CENTER"},
-          {key: 'sistemas', text: "Verificar Sistemas: BCACV1/BCACV2"},
-          {key: 'servicos', text: "Verificar Serviços: Vinti24/BCADireto/Replicação/Servidor MIA"},
-          {key: 'verificarReportes', text: "Verificar envio de reportes (INPS, VISTO USA, BCV, IMPC)"},
-          {key: 'verificarDebitos', text: "Verificar Débitos/Créditos Aplicados no Turno Anterior"},
-          {key: 'confirmarAtualizacaoSisp', text: "Confirmar Atualização SISP"}
-        ];
-        
-        // Process basic tasks
-        taskList.forEach(item => {
-          y = checkPageSpace(y, 8);
-          drawCheckbox(15, y - 3, ensureBoolean(tasks.turno2[item.key]));
-          doc.setFontSize(10);
-          doc.text(item.text, 20, y);
-          y += 6;
-        });
-        
-        // Ficheiros INPS
-        y = checkPageSpace(y, 10);
-        doc.setFont("helvetica", "bold");
-        doc.text("Ficheiros INPS:", 15, y);
-        y += 6;
-        doc.setFont("helvetica", "normal");
-        
-        const inpsItems = [
-          { key: 'inpsProcessar', text: "Processar" },
-          { key: 'inpsEnviarRetorno', text: "Enviar Retorno" }
-        ];
-        
-        inpsItems.forEach(item => {
-          y = checkPageSpace(y, 8);
-          drawCheckbox(20, y - 3, ensureBoolean(tasks.turno2[item.key]));
-          doc.text(item.text, 25, y);
-          y += 6;
-        });
-        
-        // Continue with remaining tasks in order
-        const remainingTasks: {key: keyof Turno2Tasks, text: string}[] = [
-          {key: 'processarTef', text: "Processar ficheiros TEF - ERR/RTR/RCT"},
-          {key: 'processarTelecomp', text: "Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR"}
-        ];
-        
-        remainingTasks.forEach(item => {
-          y = checkPageSpace(y, 8);
-          drawCheckbox(15, y - 3, ensureBoolean(tasks.turno2[item.key]));
-          doc.text(item.text, 20, y);
-          y += 6;
-        });
-        
-        // Enviar Ficheiro
-        y = checkPageSpace(y, 10);
-        doc.setFont("helvetica", "bold");
-        doc.text("Enviar Ficheiro:", 15, y);
-        y += 6;
-        doc.setFont("helvetica", "normal");
-        
-        const ficheirosItems = [
-          { key: 'enviarEci', text: "ECI" },
-          { key: 'enviarEdv', text: "EDV" }
-        ];
-        
-        ficheirosItems.forEach(item => {
-          y = checkPageSpace(y, 8);
-          drawCheckbox(20, y - 3, ensureBoolean(tasks.turno2[item.key]));
-          doc.text(item.text, 25, y);
-          y += 6;
-        });
-        
-        // Final tasks
-        const finalTasks: {key: keyof
+          <FormActions
+            onSave={handleSave}
+            onExportPDF={exportToPDF}
+            onReset={resetForm}
+          />
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default Taskboard;
