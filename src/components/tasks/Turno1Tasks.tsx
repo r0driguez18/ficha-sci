@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -132,6 +133,24 @@ export const Turno1TasksComponent: React.FC<Turno1TasksProps> = ({
           onCheckedChange={(checked) => onTaskChange('verificarDebitos', !!checked)}
         />
         <Label htmlFor="verificarDebitos" className="cursor-pointer">Verificar Débitos/Créditos aplicados no dia Anterior</Label>
+      </div>
+
+      <div className="flex items-start space-x-2">
+        <Checkbox 
+          id="enviarReportes"
+          checked={tasks.enviarReportes}
+          onCheckedChange={(checked) => onTaskChange('enviarReportes', !!checked)}
+        />
+        <Label htmlFor="enviarReportes" className="cursor-pointer">Enviar Reportes (INPS, Visto USA, BCV, IMPC)</Label>
+      </div>
+
+      <div className="flex items-start space-x-2">
+        <Checkbox 
+          id="verificarRecepcaoSisp"
+          checked={tasks.verificarRecepcaoSisp}
+          onCheckedChange={(checked) => onTaskChange('verificarRecepcaoSisp', !!checked)}
+        />
+        <Label htmlFor="verificarRecepcaoSisp" className="cursor-pointer">Verificar Recep. dos Ficheiros Enviados à SISP: ASC CSV ECI</Label>
       </div>
 
       <div className="border rounded-md p-3 bg-gray-50 dark:bg-gray-800">
