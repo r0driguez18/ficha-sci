@@ -26,14 +26,13 @@ export const renderTurno2Tasks = (
     y = checkPageSpace(doc, y, 8);
     drawCheckbox(doc, 15, y - 3, ensureBoolean(tasks[item.key as keyof typeof tasks]));
     doc.setFontSize(10);
-    doc.setFont("helvetica", "normal"); // Ensure normal font weight
     doc.text(item.text, 20, y);
     y += 6;
   });
   
   // Ficheiros INPS
   y = checkPageSpace(doc, y, 10);
-  doc.setFont("helvetica", "normal"); // Changed to normal, not bold
+  doc.setFont("helvetica", "bold");
   doc.text("Ficheiros INPS:", 15, y);
   y += 6;
   doc.setFont("helvetica", "normal");
@@ -65,7 +64,7 @@ export const renderTurno2Tasks = (
   
   // Enviar Ficheiro
   y = checkPageSpace(doc, y, 10);
-  doc.setFont("helvetica", "normal"); // Changed to normal, not bold
+  doc.setFont("helvetica", "bold");
   doc.text("Enviar Ficheiro:", 15, y);
   y += 6;
   doc.setFont("helvetica", "normal");
