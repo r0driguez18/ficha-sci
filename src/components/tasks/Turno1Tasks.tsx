@@ -18,18 +18,13 @@ export const Turno1TasksComponent: React.FC<Turno1TasksProps> = ({
   observations,
   onObservationsChange 
 }) => {
-  // Helper function to ensure we only pass boolean values to onTaskChange
-  const handleCheckboxChange = (task: keyof Turno1Tasks, value: boolean | string) => {
-    onTaskChange(task, value === 'indeterminate' ? false : Boolean(value));
-  };
-
   return (
     <div className="space-y-2">
       <div className="flex items-start space-x-2">
         <Checkbox 
           id="datacenter1" 
           checked={tasks.datacenter}
-          onCheckedChange={(checked) => handleCheckboxChange('datacenter', checked)}
+          onCheckedChange={(checked) => onTaskChange('datacenter', !!checked)}
         />
         <Label htmlFor="datacenter1" className="cursor-pointer">Verificar Alarmes e Sistemas/Climatização DATA CENTER</Label>
       </div>
