@@ -33,7 +33,7 @@ export const generateTaskboardPDF = (
   
   const drawCheckbox = (x: number, y: number, checked: boolean | string) => {
     const isChecked = ensureBoolean(checked);
-    // Standardize all checkbox colors to black
+    // Always use black for checkbox color
     doc.setDrawColor(0, 0, 0);
     doc.setFillColor(0, 0, 0);
     doc.rect(x, y, 3, 3);
@@ -252,6 +252,7 @@ export const generateTaskboardPDF = (
     
     // Process tasks for Turno 2
     if (turnKey === 'turno2') {
+      // Process basic tasks
       const taskList = [
         {key: 'datacenter', text: "Verificar Alarmes e Sistemas/Climatização DATA CENTER"},
         {key: 'sistemas', text: "Verificar Sistemas: BCACV1/BCACV2"},
@@ -546,7 +547,7 @@ export const generateTaskboardPDF = (
       startY: 25,
       theme: 'grid',
       headStyles: {
-        fillColor: [0, 0, 0], // Changed to black
+        fillColor: [0, 0, 255], // Blue header
         textColor: [255, 255, 255], // White text
         fontStyle: 'bold'
       },
