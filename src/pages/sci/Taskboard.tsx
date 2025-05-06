@@ -499,6 +499,35 @@ const Taskboard = () => {
       return y;
     };
     
+    // Helper function to draw a rectangle around observations
+    const drawObservationsBox = (startY: number, text: string): number => {
+      const padding = 5;
+      const lineHeight = 5;
+      
+      doc.setFont("helvetica", "bold");
+      doc.text("Observações:", 15, startY);
+      startY += 6;
+      
+      // Calculate the height needed for the observations text
+      const splitText = doc.splitTextToSize(text || "", pageWidth - 30 - (padding * 2));
+      const textHeight = splitText.length * lineHeight;
+      
+      // Draw rectangle with padding
+      const boxHeight = Math.max(20, textHeight + padding * 2); // Minimum 20px height
+      doc.setDrawColor(200, 200, 200); // Light gray border
+      doc.setLineWidth(0.5);
+      doc.rect(15 - padding, startY - padding, pageWidth - 30, boxHeight);
+      
+      // If there is text, add it inside the rectangle
+      if (text) {
+        doc.setFont("helvetica", "normal");
+        doc.text(splitText, 15, startY + padding);
+        return startY + textHeight + (padding * 2);
+      }
+      
+      return startY + boxHeight;
+    };
+    
     doc.setFont("helvetica", "bold");
     doc.setFontSize(18);
     centerText("CENTRO INFORMÁTICA", y);
@@ -541,6 +570,7 @@ const Taskboard = () => {
       
       // Process tasks for Turno 1
       if (turnKey === 'turno1') {
+        // Process basic tasks
         const taskList: {key: keyof Turno1Tasks, text: string}[] = [
           {key: 'datacenter', text: "Verificar Alarmes e Sistemas/Climatização DATA CENTER"},
           {key: 'sistemas', text: "Verificar Sistemas: BCACV1/BCACV2"},
@@ -559,7 +589,6 @@ const Taskboard = () => {
           {key: 'atualizarCentralRisco', text: "Atualizar Nº Central de Risco (Todas as Sextas-Feiras)"}
         ];
         
-        // Process basic tasks
         taskList.forEach(item => {
           y = checkPageSpace(y, 8);
           
@@ -654,25 +683,9 @@ const Taskboard = () => {
           }
         });
         
-        // Observations
-        if (turn.observations) {
-          y = checkPageSpace(y, 20);
-          doc.setFont("helvetica", "bold");
-          doc.text("Observações:", 15, y);
-          y += 6;
-          doc.setFont("helvetica", "normal");
-          
-          // Break long text into multiple lines
-          const splitText = doc.splitTextToSize(turn.observations, pageWidth - 30);
-          doc.text(splitText, 15, y);
-          y += splitText.length * 5 + 5;
-        } else {
-          // Always add Observações section even if empty
-          y = checkPageSpace(y, 20);
-          doc.setFont("helvetica", "bold");
-          doc.text("Observações:", 15, y);
-          y += 6;
-        }
+        // Observations with rectangle
+        y = checkPageSpace(y, 30);
+        y = drawObservationsBox(y, turn.observations);
       }
       
       // Process tasks for Turno 2
@@ -761,24 +774,9 @@ const Taskboard = () => {
           y += 6;
         });
         
-        // Observations
-        if (turn.observations) {
-          y = checkPageSpace(y, 20);
-          doc.setFont("helvetica", "bold");
-          doc.text("Observações:", 15, y);
-          y += 6;
-          doc.setFont("helvetica", "normal");
-          
-          const splitText = doc.splitTextToSize(turn.observations, pageWidth - 30);
-          doc.text(splitText, 15, y);
-          y += splitText.length * 5 + 5;
-        } else {
-          // Always add Observações section even if empty
-          y = checkPageSpace(y, 20);
-          doc.setFont("helvetica", "bold");
-          doc.text("Observações:", 15, y);
-          y += 6;
-        }
+        // Observations with rectangle
+        y = checkPageSpace(y, 30);
+        y = drawObservationsBox(y, turn.observations);
       }
       
       // Process tasks for Turno 3
@@ -958,24 +956,9 @@ const Taskboard = () => {
         doc.text("Transferência ficheiros DSI-CI/2023", 20, y);
         y += 8;
         
-        // Observations
-        if (turn.observations) {
-          y = checkPageSpace(y, 20);
-          doc.setFont("helvetica", "bold");
-          doc.text("Observações:", 15, y);
-          y += 6;
-          doc.setFont("helvetica", "normal");
-          
-          const splitText = doc.splitTextToSize(turn.observations, pageWidth - 30);
-          doc.text(splitText, 15, y);
-          y += splitText.length * 5 + 5;
-        } else {
-          // Always add Observações section even if empty
-          y = checkPageSpace(y, 20);
-          doc.setFont("helvetica", "bold");
-          doc.text("Observações:", 15, y);
-          y += 6;
-        }
+        // Observations with rectangle
+        y = checkPageSpace(y, 30);
+        y = drawObservationsBox(y, turn.observations);
       }
     });
     
