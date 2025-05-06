@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -18,6 +19,16 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
   observations,
   onObservationsChange
 }) => {
+  // Helper function to handle checkbox changes
+  const handleCheckboxChange = (task: keyof Turno3Tasks, checked: boolean | "indeterminate") => {
+    onTaskChange(task, checked === "indeterminate" ? false : Boolean(checked));
+  };
+
+  // Helper function to handle input changes for string values
+  const handleInputChange = (task: keyof Turno3Tasks, value: string) => {
+    onTaskChange(task, value);
+  };
+
   return (
     <div className="space-y-2">
       <h4 className="font-medium mb-4">Operações Fecho Dia</h4>
@@ -25,7 +36,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="verificarDebitos3" 
           checked={tasks.verificarDebitos}
-          onCheckedChange={(checked) => onTaskChange('verificarDebitos', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('verificarDebitos', checked)}
         />
         <Label htmlFor="verificarDebitos3" className="cursor-pointer ml-2">Verificar Débitos/Créditos Aplicados no Turno Anterior</Label>
       </div>
@@ -34,7 +45,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="tratarTapes"
           checked={tasks.tratarTapes}
-          onCheckedChange={(checked) => onTaskChange('tratarTapes', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('tratarTapes', checked)}
         />
         <Label htmlFor="tratarTapes" className="cursor-pointer ml-2">Tratar e trocar Tapes BM, BMBCK – percurso 7622</Label>
       </div>
@@ -43,7 +54,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="fecharServidores"
           checked={tasks.fecharServidores}
-          onCheckedChange={(checked) => onTaskChange('fecharServidores', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('fecharServidores', checked)}
         />
         <Label htmlFor="fecharServidores" className="cursor-pointer ml-2">Fechar Servidores Teste e Produção</Label>
       </div>
@@ -52,7 +63,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="fecharImpressoras"
           checked={tasks.fecharImpressoras}
-          onCheckedChange={(checked) => onTaskChange('fecharImpressoras', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('fecharImpressoras', checked)}
         />
         <Label htmlFor="fecharImpressoras" className="cursor-pointer ml-2">Fechar Impressoras e balcões centrais abertos exceto 14 - DSI</Label>
       </div>
@@ -61,7 +72,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="userFecho"
           checked={tasks.userFecho}
-          onCheckedChange={(checked) => onTaskChange('userFecho', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('userFecho', checked)}
         />
         <Label htmlFor="userFecho" className="cursor-pointer ml-2">User Fecho Executar o percurso 7624 Save SYS1OB</Label>
       </div>
@@ -70,7 +81,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="listaRequisicoesCheques"
           checked={tasks.listaRequisicoesCheques}
-          onCheckedChange={(checked) => onTaskChange('listaRequisicoesCheques', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('listaRequisicoesCheques', checked)}
         />
         <Label htmlFor="listaRequisicoesCheques" className="cursor-pointer ml-2">Lista requisições de cheques do dia 7633. {"> "} do que 5, sem comprov. Estornar, 21911</Label>
       </div>
@@ -79,7 +90,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="cancelarCartoesClientes"
           checked={tasks.cancelarCartoesClientes}
-          onCheckedChange={(checked) => onTaskChange('cancelarCartoesClientes', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('cancelarCartoesClientes', checked)}
         />
         <Label htmlFor="cancelarCartoesClientes" className="cursor-pointer ml-2">User Fecho Cancela os cartões dos Clientes Bloqueados - percurso 76857</Label>
       </div>
@@ -88,7 +99,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="prepararEnviarAsc"
           checked={tasks.prepararEnviarAsc}
-          onCheckedChange={(checked) => onTaskChange('prepararEnviarAsc', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('prepararEnviarAsc', checked)}
         />
         <Label htmlFor="prepararEnviarAsc" className="cursor-pointer ml-2">Preparar e enviar ficheiro e ASC (alteração situação cartão) – percurso 4132</Label>
       </div>
@@ -97,7 +108,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="adicionarRegistrosBanka"
           checked={tasks.adicionarRegistrosBanka}
-          onCheckedChange={(checked) => onTaskChange('adicionarRegistrosBanka', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('adicionarRegistrosBanka', checked)}
         />
         <Label htmlFor="adicionarRegistrosBanka" className="cursor-pointer ml-2">User Fecho Adiciona registos na Banka Remota- percurso 768975</Label>
       </div>
@@ -106,7 +117,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="fecharServidoresBanka"
           checked={tasks.fecharServidoresBanka}
-          onCheckedChange={(checked) => onTaskChange('fecharServidoresBanka', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('fecharServidoresBanka', checked)}
         />
         <Label htmlFor="fecharServidoresBanka" className="cursor-pointer ml-2">User Fecho, fechar servidores Banka remota IN1/IN3/IN4</Label>
       </div>
@@ -115,7 +126,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="alterarInternetBanking"
           checked={tasks.alterarInternetBanking}
-          onCheckedChange={(checked) => onTaskChange('alterarInternetBanking', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('alterarInternetBanking', checked)}
         />
         <Label htmlFor="alterarInternetBanking" className="cursor-pointer ml-2">User Fecho Alterar Internet Banking para OFFLINE – percurso 49161</Label>
       </div>
@@ -124,7 +135,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="prepararEnviarCsv"
           checked={tasks.prepararEnviarCsv}
-          onCheckedChange={(checked) => onTaskChange('prepararEnviarCsv', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('prepararEnviarCsv', checked)}
         />
         <Label htmlFor="prepararEnviarCsv" className="cursor-pointer ml-2">Preparar e enviar ficheiro CSV (saldos)</Label>
       </div>
@@ -133,15 +144,15 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="fecharRealTime"
           checked={tasks.fecharRealTime}
-          onCheckedChange={(checked) => onTaskChange('fecharRealTime', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('fecharRealTime', checked)}
         />
         <Label htmlFor="fecharRealTime" className="cursor-pointer flex-grow ml-2">
           Interromper o Real-Time com a SISP
         </Label>
         <Input
           type="time"
-          value={tasks.fecharRealTimeHora}
-          onChange={(e) => onTaskChange('fecharRealTimeHora', e.target.value)}
+          value={tasks.fecharRealTimeHora || ""}
+          onChange={(e) => handleInputChange('fecharRealTimeHora', e.target.value)}
           className="w-32 ml-2"
         />
       </div>
@@ -150,7 +161,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="prepararEnviarEtr"
           checked={tasks.prepararEnviarEtr}
-          onCheckedChange={(checked) => onTaskChange('prepararEnviarEtr', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('prepararEnviarEtr', checked)}
         />
         <Label htmlFor="prepararEnviarEtr" className="cursor-pointer ml-2">Preparar e enviar Ficheiro ETR - percurso 7538, consultar conta 18 5488103</Label>
       </div>
@@ -159,7 +170,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="fazerLoggOffAml"
           checked={tasks.fazerLoggOffAml}
-          onCheckedChange={(checked) => onTaskChange('fazerLoggOffAml', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('fazerLoggOffAml', checked)}
         />
         <Label htmlFor="fazerLoggOffAml" className="cursor-pointer ml-2">Fazer Logg-Off do utilizador AML – Percurso 161 (utilizadores ativos)</Label>
       </div>
@@ -168,7 +179,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="aplicarFicheiroErroEtr"
           checked={tasks.aplicarFicheiroErroEtr}
-          onCheckedChange={(checked) => onTaskChange('aplicarFicheiroErroEtr', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('aplicarFicheiroErroEtr', checked)}
         />
         <Label htmlFor="aplicarFicheiroErroEtr" className="cursor-pointer ml-2">Aplicar Ficheiro Erro ETR</Label>
       </div>
@@ -177,7 +188,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="validarBalcao14"
           checked={tasks.validarBalcao14}
-          onCheckedChange={(checked) => onTaskChange('validarBalcao14', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('validarBalcao14', checked)}
         />
         <Label htmlFor="validarBalcao14" className="cursor-pointer ml-2">Validar balção 14 7185</Label>
       </div>
@@ -186,7 +197,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="fecharBalcao14"
           checked={tasks.fecharBalcao14}
-          onCheckedChange={(checked) => onTaskChange('fecharBalcao14', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('fecharBalcao14', checked)}
         />
         <Label htmlFor="fecharBalcao14" className="cursor-pointer ml-2">Fechar o balcão 14 - DSI e confirmar se todos os balcões encontram-se fechados</Label>
       </div>
@@ -195,7 +206,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="arranqueManual"
           checked={tasks.arranqueManual}
-          onCheckedChange={(checked) => onTaskChange('arranqueManual', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('arranqueManual', checked)}
         />
         <Label htmlFor="arranqueManual" className="cursor-pointer ml-2">Arranque Manual - Verificar Data da Aplicação – Percurso 431</Label>
       </div>
@@ -204,15 +215,15 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="inicioFecho"
           checked={tasks.inicioFecho}
-          onCheckedChange={(checked) => onTaskChange('inicioFecho', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('inicioFecho', checked)}
         />
         <Label htmlFor="inicioFecho" className="cursor-pointer flex-grow ml-2">
           Início do Fecho
         </Label>
         <Input
           type="time"
-          value={tasks.inicioFechoHora}
-          onChange={(e) => onTaskChange('inicioFechoHora', e.target.value)}
+          value={tasks.inicioFechoHora || ""}
+          onChange={(e) => handleInputChange('inicioFechoHora', e.target.value)}
           className="w-32 ml-2"
         />
       </div>
@@ -221,7 +232,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="validarEnvioEmail"
           checked={tasks.validarEnvioEmail}
-          onCheckedChange={(checked) => onTaskChange('validarEnvioEmail', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('validarEnvioEmail', checked)}
         />
         <Label htmlFor="validarEnvioEmail" className="cursor-pointer ml-2">Validar envio email (Notificação Inicio Fecho) a partir do ISeries</Label>
       </div>
@@ -230,7 +241,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="controlarTrabalhos"
           checked={tasks.controlarTrabalhos}
-          onCheckedChange={(checked) => onTaskChange('controlarTrabalhos', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('controlarTrabalhos', checked)}
         />
         <Label htmlFor="controlarTrabalhos" className="cursor-pointer ml-2">Controlar os trabalhos no QBATCH (opções 5, 10, F10, F5, F18)</Label>
       </div>
@@ -239,7 +250,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="saveBmbck"
           checked={tasks.saveBmbck}
-          onCheckedChange={(checked) => onTaskChange('saveBmbck', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('saveBmbck', checked)}
         />
         <Label htmlFor="saveBmbck" className="cursor-pointer ml-2">Save BMBCK – Automático</Label>
       </div>
@@ -248,7 +259,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="abrirServidoresInternet"
           checked={tasks.abrirServidoresInternet}
-          onCheckedChange={(checked) => onTaskChange('abrirServidoresInternet', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('abrirServidoresInternet', checked)}
         />
         <Label htmlFor="abrirServidoresInternet" className="cursor-pointer ml-2">Abrir Servidores Internet Banking – Percurso 161–</Label>
       </div>
@@ -257,7 +268,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="imprimirCheques"
           checked={tasks.imprimirCheques}
-          onCheckedChange={(checked) => onTaskChange('imprimirCheques', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('imprimirCheques', checked)}
         />
         <Label htmlFor="imprimirCheques" className="cursor-pointer ml-2">Imprimir Cheques e Diários de Cheques (depois do Save BMBCK)</Label>
       </div>
@@ -266,7 +277,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="backupBm"
           checked={tasks.backupBm}
-          onCheckedChange={(checked) => onTaskChange('backupBm', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('backupBm', checked)}
         />
         <Label htmlFor="backupBm" className="cursor-pointer ml-2">Backup BM – Automático</Label>
       </div>
@@ -277,7 +288,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="validarFicheiroCcln"
           checked={tasks.validarFicheiroCcln}
-          onCheckedChange={(checked) => onTaskChange('validarFicheiroCcln', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('validarFicheiroCcln', checked)}
         />
         <Label htmlFor="validarFicheiroCcln" className="cursor-pointer ml-2">Validar ficheiro CCLN - 76853</Label>
       </div>
@@ -286,7 +297,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="aplicarFicheirosCompensacao"
           checked={tasks.aplicarFicheirosCompensacao}
-          onCheckedChange={(checked) => onTaskChange('aplicarFicheirosCompensacao', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('aplicarFicheirosCompensacao', checked)}
         />
         <Label htmlFor="aplicarFicheirosCompensacao" className="cursor-pointer ml-2">Aplicar ficheiros compensação SISP (CCLN, EDST, EORI, ERMB)</Label>
       </div>
@@ -295,15 +306,15 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="validarSaldoConta"
           checked={tasks.validarSaldoConta}
-          onCheckedChange={(checked) => onTaskChange('validarSaldoConta', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('validarSaldoConta', checked)}
         />
         <Label htmlFor="validarSaldoConta" className="cursor-pointer flex-grow ml-2">
           Validar saldo da conta 18/5488102:
         </Label>
         <Input
-          type="number"
-          value={tasks.saldoContaValor}
-          onChange={(e) => onTaskChange('saldoContaValor', e.target.value)}
+          type="text"
+          value={tasks.saldoContaValor || ""}
+          onChange={(e) => handleInputChange('saldoContaValor', e.target.value)}
           className="w-32 ml-2"
           placeholder="0.00"
         />
@@ -314,7 +325,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
           <Checkbox 
             id="saldoNegativo"
             checked={tasks.saldoNegativo}
-            onCheckedChange={(checked) => onTaskChange('saldoNegativo', !!checked)}
+            onCheckedChange={(checked) => handleCheckboxChange('saldoNegativo', checked)}
           />
           <Label htmlFor="saldoNegativo" className="cursor-pointer">Negativo</Label>
         </div>
@@ -322,7 +333,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
           <Checkbox 
             id="saldoPositivo"
             checked={tasks.saldoPositivo}
-            onCheckedChange={(checked) => onTaskChange('saldoPositivo', !!checked)}
+            onCheckedChange={(checked) => handleCheckboxChange('saldoPositivo', checked)}
           />
           <Label htmlFor="saldoPositivo" className="cursor-pointer">Positivo</Label>
         </div>
@@ -332,15 +343,15 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="abrirRealTime"
           checked={tasks.abrirRealTime}
-          onCheckedChange={(checked) => onTaskChange('abrirRealTime', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('abrirRealTime', checked)}
         />
         <Label htmlFor="abrirRealTime" className="cursor-pointer flex-grow ml-2">
           Abrir o Real-Time
         </Label>
         <Input
           type="time"
-          value={tasks.abrirRealTimeHora}
-          onChange={(e) => onTaskChange('abrirRealTimeHora', e.target.value)}
+          value={tasks.abrirRealTimeHora || ""}
+          onChange={(e) => handleInputChange('abrirRealTimeHora', e.target.value)}
           className="w-32 ml-2"
         />
       </div>
@@ -349,7 +360,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="verificarTransacoes"
           checked={tasks.verificarTransacoes}
-          onCheckedChange={(checked) => onTaskChange('verificarTransacoes', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('verificarTransacoes', checked)}
         />
         <Label htmlFor="verificarTransacoes" className="cursor-pointer ml-2">Verificar a entrada de transações 3100 4681</Label>
       </div>
@@ -358,7 +369,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="aplicarFicheiroVisa"
           checked={tasks.aplicarFicheiroVisa}
-          onCheckedChange={(checked) => onTaskChange('aplicarFicheiroVisa', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('aplicarFicheiroVisa', checked)}
         />
         <Label htmlFor="aplicarFicheiroVisa" className="cursor-pointer ml-2">Aplicar ficheiro VISA DAF - com o user FECHO 4131</Label>
       </div>
@@ -367,7 +378,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="cativarCartoes"
           checked={tasks.cativarCartoes}
-          onCheckedChange={(checked) => onTaskChange('cativarCartoes', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('cativarCartoes', checked)}
         />
         <Label htmlFor="cativarCartoes" className="cursor-pointer ml-2">Cativar cartões de crédito em incumprimento - com o user FECHO – 7675</Label>
       </div>
@@ -376,7 +387,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="abrirBcaDireto"
           checked={tasks.abrirBcaDireto}
-          onCheckedChange={(checked) => onTaskChange('abrirBcaDireto', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('abrirBcaDireto', checked)}
         />
         <Label htmlFor="abrirBcaDireto" className="cursor-pointer ml-2">Abrir o BCADireto percurso 49162 – Validar transações</Label>
       </div>
@@ -385,7 +396,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="abrirServidoresBanka"
           checked={tasks.abrirServidoresBanka}
-          onCheckedChange={(checked) => onTaskChange('abrirServidoresBanka', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('abrirServidoresBanka', checked)}
         />
         <Label htmlFor="abrirServidoresBanka" className="cursor-pointer ml-2">User Fecho, Abril servidores Banka remota IN1/IN3/IN4</Label>
       </div>
@@ -394,7 +405,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="atualizarTelefonesOffline"
           checked={tasks.atualizarTelefonesOffline}
-          onCheckedChange={(checked) => onTaskChange('atualizarTelefonesOffline', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('atualizarTelefonesOffline', checked)}
         />
         <Label htmlFor="atualizarTelefonesOffline" className="cursor-pointer ml-2">Atualiza Telefones tratados no OFFLINE- percurso 768976</Label>
       </div>
@@ -403,7 +414,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="verificarReplicacao"
           checked={tasks.verificarReplicacao}
-          onCheckedChange={(checked) => onTaskChange('verificarReplicacao', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('verificarReplicacao', checked)}
         />
         <Label htmlFor="verificarReplicacao" className="cursor-pointer ml-2">Verificar Replicação</Label>
       </div>
@@ -412,7 +423,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="enviarFicheiroCsv"
           checked={tasks.enviarFicheiroCsv}
-          onCheckedChange={(checked) => onTaskChange('enviarFicheiroCsv', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('enviarFicheiroCsv', checked)}
         />
         <Label htmlFor="enviarFicheiroCsv" className="cursor-pointer ml-2">Enviar ficheiro CSV (Comunicação Saldo Véspera)</Label>
       </div>
@@ -421,7 +432,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="transferirFicheirosLiquidity"
           checked={tasks.transferirFicheirosLiquidity}
-          onCheckedChange={(checked) => onTaskChange('transferirFicheirosLiquidity', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('transferirFicheirosLiquidity', checked)}
         />
         <Label htmlFor="transferirFicheirosLiquidity" className="cursor-pointer ml-2">Transferência ficheiros SSM Liquidity Exercices (Confirmação)</Label>
       </div>
@@ -430,7 +441,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="percurso76921"
           checked={tasks.percurso76921}
-          onCheckedChange={(checked) => onTaskChange('percurso76921', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('percurso76921', checked)}
         />
         <Label htmlFor="percurso76921" className="cursor-pointer ml-2">Fazer o percurso 76921 – Limpeza Ficheiro BRLOGED (Dia 1 de cada Mês)</Label>
       </div>
@@ -439,7 +450,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="percurso76922"
           checked={tasks.percurso76922}
-          onCheckedChange={(checked) => onTaskChange('percurso76922', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('percurso76922', checked)}
         />
         <Label htmlFor="percurso76922" className="cursor-pointer ml-2">Fazer o percurso 76922 - Reorganiza BRLOGED (Dia 2 de cada Mês)</Label>
       </div>
@@ -448,7 +459,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="percurso76923"
           checked={tasks.percurso76923}
-          onCheckedChange={(checked) => onTaskChange('percurso76923', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('percurso76923', checked)}
         />
         <Label htmlFor="percurso76923" className="cursor-pointer ml-2">Fazer o percurso 76923 - Reorganiza GBMVCO (Dia 3 de cada Mês)</Label>
       </div>
@@ -457,7 +468,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="abrirServidoresTesteProducao"
           checked={tasks.abrirServidoresTesteProducao}
-          onCheckedChange={(checked) => onTaskChange('abrirServidoresTesteProducao', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('abrirServidoresTesteProducao', checked)}
         />
         <Label htmlFor="abrirServidoresTesteProducao" className="cursor-pointer ml-2">Abrir Servidores Teste e Produção</Label>
       </div>
@@ -466,7 +477,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="impressaoCheques"
           checked={tasks.impressaoCheques}
-          onCheckedChange={(checked) => onTaskChange('impressaoCheques', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('impressaoCheques', checked)}
         />
         <Label htmlFor="impressaoCheques" className="cursor-pointer ml-2">Impressão Cheques e respectivos Diários (verificação dos mesmos)</Label>
       </div>
@@ -475,7 +486,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="arquivarCheques"
           checked={tasks.arquivarCheques}
-          onCheckedChange={(checked) => onTaskChange('arquivarCheques', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('arquivarCheques', checked)}
         />
         <Label htmlFor="arquivarCheques" className="cursor-pointer ml-2">Arquivar Cheques e respectivos Diários</Label>
       </div>
@@ -484,15 +495,15 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="terminoFecho"
           checked={tasks.terminoFecho}
-          onCheckedChange={(checked) => onTaskChange('terminoFecho', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('terminoFecho', checked)}
         />
         <Label htmlFor="terminoFecho" className="cursor-pointer flex-grow ml-2">
           Término do Fecho
         </Label>
         <Input
           type="time"
-          value={tasks.terminoFechoHora}
-          onChange={(e) => onTaskChange('terminoFechoHora', e.target.value)}
+          value={tasks.terminoFechoHora || ""}
+          onChange={(e) => handleInputChange('terminoFechoHora', e.target.value)}
           className="w-32 ml-2"
         />
       </div>
@@ -501,7 +512,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
         <Checkbox 
           id="transferirFicheirosDsi"
           checked={tasks.transferirFicheirosDsi}
-          onCheckedChange={(checked) => onTaskChange('transferirFicheirosDsi', !!checked)}
+          onCheckedChange={(checked) => handleCheckboxChange('transferirFicheirosDsi', checked)}
         />
         <Label htmlFor="transferirFicheirosDsi" className="cursor-pointer ml-2">Transferência ficheiros SSM Liquidity ExercicesDSI-CI/2023</Label>
       </div>
