@@ -1,7 +1,7 @@
 
 # BCA - SCI Sistema de Controle Interno
 
-## Project Documentation
+## Sobre o Projeto
 
 Este é um sistema administrativo para controle interno que permite gerenciar:
 
@@ -10,82 +10,31 @@ Este é um sistema administrativo para controle interno que permite gerenciar:
 - Estatísticas e análises de desempenho
 - Tratamento de ficheiros e registros
 
-## Project Structure
+## Executando o Projeto
+
+O projeto foi construído utilizando as seguintes tecnologias:
+
+- Vite
+- TypeScript
+- React
+- shadcn-ui
+- Tailwind CSS
+
+Para iniciar o projeto localmente:
+
+```sh
+# Passo 1: Clone o repositório
+git clone <URL_DO_REPOSITÓRIO>
+
+# Passo 2: Navegue até a pasta do projeto
+cd <NOME_DO_PROJETO>
+
+# Passo 3: Instale as dependências
+npm i
+
+# Passo 4: Inicie o servidor de desenvolvimento
+npm run dev
 ```
-  ├── src/
-  │   ├── assets/
-  │   │   └── styles/
-  │   │       └── main.css
-  │   ├── components/
-  │   │   ├── auth/
-  │   │   ├── charts/
-  │   │   ├── layout/
-  │   │   ├── taskboard/
-  │   │   ├── tasks/
-  │   │   └── ui/
-  │   ├── hooks/
-  │   ├── integrations/
-  │   │   └── supabase/
-  │   ├── lib/
-  │   ├── pages/
-  │   │   ├── auth/
-  │   │   ├── crc/
-  │   │   ├── dis/
-  │   │   ├── easyvista/
-  │   │   └── sci/
-  │   ├── services/
-  │   ├── types/
-  │   └── utils/
-  ├── public/
-  └── README.md
-```
-
-## CSS Location
-The main CSS styling in this project is handled by Tailwind CSS. The global styles are located in:
-- `src/index.css`
-
-## Project Setup
-1. Clone the repository
-   ```sh
-   git clone <URL_DO_REPOSITÓRIO>
-   ```
-
-2. Navigate to the project directory
-   ```sh
-   cd <NOME_DO_PROJETO>
-   ```
-
-3. Install dependencies
-   ```sh
-   npm install
-   ```
-
-4. Start development server
-   ```sh
-   npm run dev
-   ```
-
-## File Organization
-- **components/** - Reusable UI components organized by feature
-  - **auth/** - Authentication related components
-  - **charts/** - Data visualization components
-  - **layout/** - Page layouts and structural components
-  - **taskboard/** - Task management components
-  - **tasks/** - Task-specific components for different shifts
-  - **ui/** - Shadcn UI components
-- **hooks/** - Custom React hooks
-- **integrations/** - Third-party service integrations
-  - **supabase/** - Supabase database client and types
-- **lib/** - Utility libraries and functions
-- **pages/** - Page components organized by module
-  - **auth/** - Authentication pages
-  - **crc/** - Ficheiros treatment module
-  - **dis/** - Data insertion module
-  - **easyvista/** - Statistics and dashboards
-  - **sci/** - Internal control system core pages
-- **services/** - Service layer for API interactions
-- **types/** - TypeScript type definitions
-- **utils/** - Utility functions
 
 ## Módulos do Sistema
 
@@ -95,28 +44,3 @@ O sistema está dividido nos seguintes módulos:
 - **CRC**: Tratamento de Ficheiros 
 - **DIS**: Módulo para Dados e Inserção
 - **Processamentos**: Estatísticas e Relatórios de processamentos
-
-## Tecnologias Utilizadas
-
-- Vite
-- TypeScript
-- React
-- React Router DOM
-- Tailwind CSS
-- Shadcn UI
-- Supabase
-- React Query
-- Recharts
-- jsPDF
-- Lucide React
-- Sonner (para notificações)
-- Zod (validação de esquemas)
-
-## Funcionalidades Principais
-
-- Autenticação e controle de acesso
-- Gestão de tarefas por turnos
-- Processamento de dados e relatórios
-- Exportação de dados para PDF
-- Dashboard e visualizações estatísticas
-- Integração com banco de dados Supabase

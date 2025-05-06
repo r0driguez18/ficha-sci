@@ -44,7 +44,6 @@ export interface Turno2Tasks {
   processarTelecomp: boolean;
   enviarEci: boolean;
   enviarEdv: boolean;
-  confirmarAtualizacaoFicheirosSisp: boolean;  // New task
   validarSaco: boolean;
   verificarPendentes: boolean;
   fecharBalcoes: boolean;
