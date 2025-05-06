@@ -14,6 +14,9 @@ export interface Turno1Tasks {
   verificarDebitos: boolean;
   enviarReportes: boolean;
   verificarRecepcaoSisp: boolean;
+  verificarAsc: boolean;
+  verificarCsv: boolean;
+  verificarEci: boolean;
   backupsDiferidos: boolean;
   processarTef: boolean;
   processarTelecomp: boolean;
