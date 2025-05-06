@@ -196,7 +196,7 @@ const Taskboard = () => {
       ...tasks,
       [turno]: {
         ...tasks[turno],
-        [task]: checked === 'indeterminate' ? false : Boolean(checked)
+        [task]: checked
       }
     });
   };
@@ -466,7 +466,10 @@ const Taskboard = () => {
     
     // Helper function to ensure we only pass boolean values to drawCheckbox
     const ensureBoolean = (value: boolean | string): boolean => {
-      return value === 'indeterminate' ? false : Boolean(value);
+      if (typeof value === 'string') {
+        return value === 'true' || value === 'indeterminate';
+      }
+      return Boolean(value);
     };
     
     const drawCheckbox = (x: number, y: number, checked: boolean | string) => {
