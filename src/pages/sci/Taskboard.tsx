@@ -897,10 +897,10 @@ const Taskboard = () => {
           y += textLines.length * 5 + 1;
         });
         
-        // Saldo conta value - Updated to handle 0 value correctly
+        // Saldo conta value - Updated to correctly show the value
         if (ensureBoolean(tasks.turno3.validarSaldoConta)) {
           y = checkPageSpace(y, 8);
-          // Show "0" if value is empty or "0"
+          // Show the actual value from the form or "0" if empty
           const saldoValue = tasks.turno3.saldoContaValor || "0";
           doc.text(`Valor: ${saldoValue}`, 30, y);
           y += 6;
