@@ -585,7 +585,7 @@ const Taskboard = () => {
               const itemKey = subItem.key as keyof Turno1Tasks;
               drawCheckbox(xOffset, y - 3, ensureBoolean(tasks.turno1[itemKey]));
               doc.text(subItem.text, xOffset + 5, y);
-              xOffset += doc.getTextWidth(subItem.text) + 15;
+              xOffset += 20;
             });
             
             y += 6;
@@ -666,6 +666,12 @@ const Taskboard = () => {
           const splitText = doc.splitTextToSize(turn.observations, pageWidth - 30);
           doc.text(splitText, 15, y);
           y += splitText.length * 5 + 5;
+        } else {
+          // Always add Observações section even if empty
+          y = checkPageSpace(y, 20);
+          doc.setFont("helvetica", "bold");
+          doc.text("Observações:", 15, y);
+          y += 6;
         }
       }
       
@@ -766,6 +772,12 @@ const Taskboard = () => {
           const splitText = doc.splitTextToSize(turn.observations, pageWidth - 30);
           doc.text(splitText, 15, y);
           y += splitText.length * 5 + 5;
+        } else {
+          // Always add Observações section even if empty
+          y = checkPageSpace(y, 20);
+          doc.setFont("helvetica", "bold");
+          doc.text("Observações:", 15, y);
+          y += 6;
         }
       }
       
@@ -957,6 +969,12 @@ const Taskboard = () => {
           const splitText = doc.splitTextToSize(turn.observations, pageWidth - 30);
           doc.text(splitText, 15, y);
           y += splitText.length * 5 + 5;
+        } else {
+          // Always add Observações section even if empty
+          y = checkPageSpace(y, 20);
+          doc.setFont("helvetica", "bold");
+          doc.text("Observações:", 15, y);
+          y += 6;
         }
       }
     });
