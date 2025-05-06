@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -877,10 +876,12 @@ const Taskboard = () => {
           y += textLines.length * 5 + 1;
         });
         
-        // Saldo conta value
+        // Saldo conta value - Updated to handle 0 value correctly
         if (ensureBoolean(tasks.turno3.validarSaldoConta)) {
           y = checkPageSpace(y, 8);
-          doc.text(`Valor: ${tasks.turno3.saldoContaValor || ""}`, 30, y);
+          // Show "0" if value is empty or "0"
+          const saldoValue = tasks.turno3.saldoContaValor || "0";
+          doc.text(`Valor: ${saldoValue}`, 30, y);
           y += 6;
           
           // Checkboxes for saldo type
