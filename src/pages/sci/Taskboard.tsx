@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -1112,10 +1111,12 @@ const Taskboard = () => {
                     </div>
                   </div>
                   
-                  {/* Turno 1 tasks component */}
+                  {/* Updated Turno 1 tasks component with correct props */}
                   <Turno1TasksComponent 
                     tasks={tasks.turno1} 
-                    setTasks={(newTasks) => handleTaskChange('turno1', Object.keys(newTasks)[0], Object.values(newTasks)[0])} 
+                    onTaskChange={(task, checked) => handleTaskChange('turno1', task, checked)} 
+                    observations={turnData.turno1.observations}
+                    onObservationsChange={(value) => handleTurnDataChange('turno1', 'observations', value)}
                   />
                   
                   <div className="mt-6">
@@ -1180,10 +1181,12 @@ const Taskboard = () => {
                     </div>
                   </div>
                   
-                  {/* Turno 2 tasks component */}
+                  {/* Updated Turno 2 tasks component with correct props */}
                   <Turno2TasksComponent 
                     tasks={tasks.turno2} 
-                    setTasks={(newTasks) => handleTaskChange('turno2', Object.keys(newTasks)[0], Object.values(newTasks)[0])}
+                    onTaskChange={(task, checked) => handleTaskChange('turno2', task, checked)}
+                    observations={turnData.turno2.observations}
+                    onObservationsChange={(value) => handleTurnDataChange('turno2', 'observations', value)}
                   />
                   
                   <div className="mt-6">
@@ -1248,10 +1251,12 @@ const Taskboard = () => {
                     </div>
                   </div>
                   
-                  {/* Turno 3 tasks component */}
+                  {/* Updated Turno 3 tasks component with correct props */}
                   <Turno3TasksComponent 
                     tasks={tasks.turno3} 
-                    setTasks={(newTasks) => handleTaskChange('turno3', Object.keys(newTasks)[0], Object.values(newTasks)[0])}
+                    onTaskChange={(task, value) => handleTaskChange('turno3', task, value)}
+                    observations={turnData.turno3.observations}
+                    onObservationsChange={(value) => handleTurnDataChange('turno3', 'observations', value)}
                   />
                   
                   <div className="mt-6">
