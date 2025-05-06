@@ -745,4 +745,42 @@ const Taskboard = () => {
           {key: 'fecharServidores', text: "Fechar Servidores Teste e Produção"},
           {key: 'fecharImpressoras', text: "Fechar Impressoras e balcões centrais abertos exceto 14 - DSI"},
           {key: 'userFecho', text: "User Fecho Executar o percurso 7624 Save SYS1OB"},
-          {key: 'listaRequisicoesCheques', text: "Lista requisições de cheques do dia 7633. > do que 5, sem comprov. Estornar, 219
+          {key: 'listaRequisicoesCheques', text: "Lista requisições de cheques do dia 7633. > do que 5, sem comprov. Estornar, 21911"}
+        ];
+        
+        // Process basic tasks
+        beforeCloseTasks.forEach(item => {
+          y = checkPageSpace(y, 8);
+          drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3[item.key]));
+          doc.setFontSize(10);
+          doc.text(item.text, 20, y);
+          y += 6;
+        });
+        
+        // Observations
+        if (turn.observations) {
+          y = checkPageSpace(y, 20);
+          doc.setFont("helvetica", "bold");
+          doc.text("Observações:", 15, y);
+          y += 6;
+          doc.setFont("helvetica", "normal");
+          
+          const splitText = doc.splitTextToSize(turn.observations, pageWidth - 30);
+          doc.text(splitText, 15, y);
+          y += splitText.length * 5 + 5;
+        }
+      }
+    });
+    
+    doc.save(`taskboard-${formattedDate}.pdf`);
+    toast.success('PDF gerado com sucesso!');
+  };
+
+  return (
+    <div>
+      {/* Component rendering JSX */}
+    </div>
+  );
+};
+
+export default Taskboard;
