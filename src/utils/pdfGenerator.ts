@@ -1,4 +1,3 @@
-
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { TasksType, TurnDataType, TurnKey } from '@/types/taskboard';
@@ -398,19 +397,19 @@ export const generateTaskboardPDF = (
       // Handle "Interromper o Real-Time" separately because it has a time field
       y = checkPageSpace(y, 8);
       drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3.fecharRealTime));
-      doc.text("Interromper o Real-Time com a SISP", 20, y);
-      if (tasks.turno3.fecharRealTimeHora) {
-        doc.text(`Hora: ${tasks.turno3.fecharRealTimeHora}`, 130, y);
-      }
+      const realTimeText = tasks.turno3.fecharRealTimeHora ? 
+        `Interromper o Real-Time com a SISP - ${tasks.turno3.fecharRealTimeHora}` :
+        "Interromper o Real-Time com a SISP";
+      doc.text(realTimeText, 20, y);
       y += 6;
       
       // Handle "Início do Fecho" separately because it has a time field
       y = checkPageSpace(y, 8);
       drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3.inicioFecho));
-      doc.text("Início do Fecho", 20, y);
-      if (tasks.turno3.inicioFechoHora) {
-        doc.text(`Hora: ${tasks.turno3.inicioFechoHora}`, 130, y);
-      }
+      const inicioFechoText = tasks.turno3.inicioFechoHora ? 
+        `Início do Fecho - ${tasks.turno3.inicioFechoHora}` :
+        "Início do Fecho";
+      doc.text(inicioFechoText, 20, y);
       y += 6;
       
       // Add header for "Depois do Fecho" section
@@ -435,10 +434,10 @@ export const generateTaskboardPDF = (
       // Handle "Validar saldo da conta" with value and checkboxes
       y = checkPageSpace(y, 8);
       drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3.validarSaldoConta));
-      doc.text("Validar saldo da conta 18/5488102:", 20, y);
-      if (tasks.turno3.saldoContaValor) {
-        doc.text(`Valor: ${tasks.turno3.saldoContaValor}`, 130, y);
-      }
+      const saldoText = tasks.turno3.saldoContaValor ? 
+        `Validar saldo da conta 18/5488102 - ${tasks.turno3.saldoContaValor}` :
+        "Validar saldo da conta 18/5488102";
+      doc.text(saldoText, 20, y);
       y += 6;
       
       // Add the saldoPositivo and saldoNegativo checkboxes
@@ -452,10 +451,10 @@ export const generateTaskboardPDF = (
       // Handle "Abrir o Real-Time" separately because it has a time field
       y = checkPageSpace(y, 8);
       drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3.abrirRealTime));
-      doc.text("Abrir o Real-Time", 20, y);
-      if (tasks.turno3.abrirRealTimeHora) {
-        doc.text(`Hora: ${tasks.turno3.abrirRealTimeHora}`, 130, y);
-      }
+      const abrirRealTimeText = tasks.turno3.abrirRealTimeHora ? 
+        `Abrir o Real-Time - ${tasks.turno3.abrirRealTimeHora}` :
+        "Abrir o Real-Time";
+      doc.text(abrirRealTimeText, 20, y);
       y += 6;
       
       // Remaining tasks
@@ -487,10 +486,10 @@ export const generateTaskboardPDF = (
       // Handle "Término do Fecho" separately because it has a time field
       y = checkPageSpace(y, 8);
       drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3.terminoFecho));
-      doc.text("Término do Fecho", 20, y);
-      if (tasks.turno3.terminoFechoHora) {
-        doc.text(`Hora: ${tasks.turno3.terminoFechoHora}`, 130, y);
-      }
+      const terminoFechoText = tasks.turno3.terminoFechoHora ? 
+        `Término do Fecho - ${tasks.turno3.terminoFechoHora}` :
+        "Término do Fecho";
+      doc.text(terminoFechoText, 20, y);
       y += 6;
       
       // Final task
