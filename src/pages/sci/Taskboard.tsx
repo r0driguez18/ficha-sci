@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -758,6 +759,7 @@ const Taskboard = () => {
         
         // Final tasks
         const finalTasks: {key: keyof Turno2Tasks, text: string}[] = [
+          {key: 'confirmarAtualizacaoSisp', text: "Confirmar Atualização à SISP do Ficheiro EDV"},
           {key: 'confirmarAtualizacaoFicheiros', text: "Confirmar Atualização Ficheiros Enviados à SISP (ECI * ENV/IMA)"},
           {key: 'validarSaco', text: "Validar Saco 1935"},
           {key: 'verificarPendentes', text: "Verificar Pendentes dos Balcões"},
@@ -767,4 +769,614 @@ const Taskboard = () => {
         finalTasks.forEach(item => {
           y = checkPageSpace(y, 8);
           drawCheckbox(15, y - 3, ensureBoolean(tasks.turno2[item.key]));
-          doc.text(item.text, 20, y
+          doc.text(item.text, 20, y);
+          y += 6;
+        });
+        
+        // Observations
+        if (turn.observations) {
+          y = checkPageSpace(y, 20);
+          doc.setFont("helvetica", "bold");
+          doc.text("Observações:", 15, y);
+          y += 6;
+          doc.setFont("helvetica", "normal");
+          
+          // Draw a rectangle for observations
+          const obsWidth = pageWidth - 30;
+          const splitText = doc.splitTextToSize(turn.observations, obsWidth - 10);
+          const obsHeight = splitText.length * 5 + 10;
+          doc.rect(15, y - 4, obsWidth, obsHeight);
+          
+          // Add the text inside the rectangle with a margin
+          doc.text(splitText, 20, y);
+          y += obsHeight + 5;
+        } else {
+          // Draw an empty observations box
+          y = checkPageSpace(y, 20);
+          doc.setFont("helvetica", "bold");
+          doc.text("Observações:", 15, y);
+          y += 6;
+          doc.setFont("helvetica", "normal");
+          
+          const obsWidth = pageWidth - 30;
+          const obsHeight = 20; // Empty box height
+          doc.rect(15, y - 4, obsWidth, obsHeight);
+          y += obsHeight + 5;
+        }
+      }
+      
+      // Process tasks for Turno 3
+      if (turnKey === 'turno3') {
+        // Define task list for Turno 3 using the same labels as in the UI
+        const taskList: {key: keyof Turno3Tasks, text: string}[] = [
+          {key: 'verificarDebitos', text: "Verificar Débitos/Créditos Aplicados no Turno Anterior"},
+          {key: 'tratarTapes', text: "Tratar Tapes Usadas"},
+          {key: 'fecharServidores', text: "Fechar Servidores (Swift, OPDIF,CDGOV,TRMSG, AML)"},
+          {key: 'fecharImpressoras', text: "Fechar Servidores das Impressoras"},
+          {key: 'userFecho', text: "USERP FECHO DIÁRIO"},
+          {key: 'listaRequisicoesCheques', text: "Lista das Requisições de Cheques"},
+          {key: 'cancelarCartoesClientes', text: "Cancelar Cartões de Clientes"},
+          {key: 'prepararEnviarAsc', text: "Preparar e Enviar Ficheiro ASC"},
+          {key: 'adicionarRegistrosBanka', text: "Adicionar Registros (Cravar) no Sistema BANKA"},
+          {key: 'fecharServidoresBanka', text: "Fechar Servidores do BANKA"},
+          {key: 'alterarInternetBanking', text: "Alterar Internet Banking"},
+          {key: 'prepararEnviarCsv', text: "Preparar e Enviar Ficheiro CSV"},
+          {key: 'fecharRealTime', text: "Fechar Real Time"},
+          {key: 'prepararEnviarEtr', text: "Preparar e Enviar Ficheiro ETR"},
+          {key: 'fazerLoggOffAml', text: "Fazer LoggOff no AML"},
+          {key: 'aplicarFicheiroErroEtr', text: "Aplicar Ficheiro Erro ETR"},
+          {key: 'validarBalcao14', text: "Validar Balcão 14"},
+          {key: 'fecharBalcao14', text: "Fechar Balcão 14 (Obrigatório após a Validação)"},
+          {key: 'arranqueManual', text: "Arranque Manual (BCACV1)"},
+          {key: 'inicioFecho', text: "Início do Fecho"}
+        ];
+        
+        // Process first part of tasks
+        taskList.forEach(item => {
+          y = checkPageSpace(y, 8);
+          drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3[item.key]));
+          doc.setFontSize(10);
+          
+          // Special handling for items with time inputs
+          if (item.key === 'fecharRealTime') {
+            doc.text(`${item.text}:`, 20, y);
+            // Add the time value after the label
+            const timeValue = tasks.turno3.fecharRealTimeHora || '--:--';
+            doc.text(timeValue, 70, y);
+          } else if (item.key === 'inicioFecho') {
+            doc.text(`${item.text}:`, 20, y);
+            // Add the time value after the label
+            const timeValue = tasks.turno3.inicioFechoHora || '--:--';
+            doc.text(timeValue, 70, y);
+          } else {
+            doc.text(item.text, 20, y);
+          }
+          
+          y += 6;
+        });
+        
+        // Second part of Turno 3 tasks
+        const taskListPart2: {key: keyof Turno3Tasks, text: string}[] = [
+          {key: 'validarEnvioEmail', text: "Validar Envio de Email com a Listagem"},
+          {key: 'controlarTrabalhos', text: "Controlar Trabalhos"},
+          {key: 'saveBmbck', text: "Save BMBCK"},
+          {key: 'abrirServidoresInternet', text: "Abrir Servidores para Internet Banking"},
+          {key: 'imprimirCheques', text: "Imprimir Cheques Pedidos durante o dia"},
+          {key: 'backupBm', text: "Backup BM"},
+          {key: 'validarFicheiroCcln', text: "Validar Ficheiro CCLN"},
+          {key: 'aplicarFicheirosCompensacao', text: "Aplicar Ficheiros Compensação"},
+          {key: 'validarSaldoConta', text: "Validar Saldo Conta 12110101"}
+        ];
+        
+        taskListPart2.forEach(item => {
+          y = checkPageSpace(y, 8);
+          drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3[item.key]));
+          
+          // Special handling for saldoConta
+          if (item.key === 'validarSaldoConta') {
+            doc.text(`${item.text}:`, 20, y);
+            
+            // Display the saldo value next to the item
+            const saldoValue = tasks.turno3.saldoContaValor || '';
+            if (saldoValue) {
+              doc.text(saldoValue, 100, y);
+            }
+            
+            // Add checkboxes for Positivo/Negativo on the same line
+            let xOffset = 150;
+            doc.text("Positivo:", xOffset, y);
+            drawCheckbox(xOffset + 25, y - 3, ensureBoolean(tasks.turno3.saldoPositivo));
+            
+            xOffset += 40;
+            doc.text("Negativo:", xOffset, y);
+            drawCheckbox(xOffset + 25, y - 3, ensureBoolean(tasks.turno3.saldoNegativo));
+          } else {
+            doc.text(item.text, 20, y);
+          }
+          
+          y += 6;
+        });
+        
+        // Third part of Turno 3 tasks
+        const taskListPart3: {key: keyof Turno3Tasks, text: string}[] = [
+          {key: 'abrirRealTime', text: "Abrir Real Time"},
+          {key: 'verificarTransacoes', text: "Verificar Transações (Se não houver, pode inicializar)"},
+          {key: 'aplicarFicheiroVisa', text: "Aplicar Ficheiro Visa (Quando aplicavél)"},
+          {key: 'cativarCartoes', text: "Cativar Cartões MB e MB/VISA"},
+          {key: 'abrirBcaDireto', text: "Abrir BCA Directo"},
+          {key: 'abrirServidoresBanka', text: "Abrir Servidores BANKA"},
+          {key: 'atualizarTelefonesOffline', text: "Atualizar BD Telefones Offline"},
+          {key: 'verificarReplicacao', text: "Verificar se Replicação está a funcionar"},
+          {key: 'enviarFicheiroCsv', text: "Enviar Ficheiro CSV"},
+          {key: 'transferirFicheirosLiquidity', text: "Transferir Ficheiros Liquidity"},
+          {key: 'percurso76921', text: "Percurso 76921"},
+          {key: 'percurso76922', text: "Percurso 76922"},
+          {key: 'percurso76923', text: "Percurso 76923"},
+          {key: 'abrirServidoresTesteProducao', text: "Abrir Servidores de teste e produção (SWIFT, OPDIF, TRMSG, CDGOV)"},
+          {key: 'impressaoCheques', text: "Impressão de Cheques (Disponibilizar as cheques)"},
+          {key: 'arquivarCheques', text: "Arquivar os cheques por balcão"},
+          {key: 'terminoFecho', text: "Término do Fecho"},
+          {key: 'transferirFicheirosDsi', text: "Transferir Ficheiros DSI"}
+        ];
+        
+        taskListPart3.forEach(item => {
+          y = checkPageSpace(y, 8);
+          drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3[item.key]));
+          
+          // Special handling for items with time inputs
+          if (item.key === 'abrirRealTime') {
+            doc.text(`${item.text}:`, 20, y);
+            // Add the time value after the label
+            const timeValue = tasks.turno3.abrirRealTimeHora || '--:--';
+            doc.text(timeValue, 70, y);
+          } else if (item.key === 'terminoFecho') {
+            doc.text(`${item.text}:`, 20, y);
+            // Add the time value after the label
+            const timeValue = tasks.turno3.terminoFechoHora || '--:--';
+            doc.text(timeValue, 70, y);
+          } else {
+            doc.text(item.text, 20, y);
+          }
+          
+          y += 6;
+        });
+        
+        // Observations
+        if (turn.observations) {
+          y = checkPageSpace(y, 20);
+          doc.setFont("helvetica", "bold");
+          doc.text("Observações:", 15, y);
+          y += 6;
+          doc.setFont("helvetica", "normal");
+          
+          // Draw a rectangle for observations
+          const obsWidth = pageWidth - 30;
+          const splitText = doc.splitTextToSize(turn.observations, obsWidth - 10);
+          const obsHeight = splitText.length * 5 + 10;
+          doc.rect(15, y - 4, obsWidth, obsHeight);
+          
+          // Add the text inside the rectangle with a margin
+          doc.text(splitText, 20, y);
+          y += obsHeight + 5;
+        } else {
+          // Draw an empty observations box
+          y = checkPageSpace(y, 20);
+          doc.setFont("helvetica", "bold");
+          doc.text("Observações:", 15, y);
+          y += 6;
+          doc.setFont("helvetica", "normal");
+          
+          const obsWidth = pageWidth - 30;
+          const obsHeight = 20; // Empty box height
+          doc.rect(15, y - 4, obsWidth, obsHeight);
+          y += obsHeight + 5;
+        }
+      }
+    });
+    
+    // Add a table with the table rows data at the end
+    y = checkPageSpace(y, 40); // Ensure enough space for the table header
+    
+    doc.setFont("helvetica", "bold");
+    doc.text("Registo de Processamentos Executados:", 15, y);
+    y += 10;
+    
+    const tableData = tableRows
+      .filter(row => row.hora || row.tarefa || row.nomeAs || row.operacao || row.executado)
+      .map(row => [
+        row.hora,
+        row.tarefa || '',
+        row.nomeAs || '',
+        row.operacao,
+        row.executado
+      ]);
+    
+    if (tableData.length > 0) {
+      autoTable(doc, {
+        startY: y,
+        head: [['Hora', 'Tarefa', 'Nome AS400', 'Nº Operação', 'Executado Por']],
+        body: tableData,
+        theme: 'striped',
+        headStyles: { fillColor: [100, 100, 100] },
+        margin: { left: 15, right: 15 }
+      });
+    }
+    
+    // Save the PDF
+    doc.save(`ficha_procedimentos_${formattedDate}.pdf`);
+  };
+
+  return (
+    <div className="container mx-auto py-6">
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-2xl">Ficha de Procedimentos</CardTitle>
+          <CardDescription>
+            Preencha os dados dos turnos e tarefas executadas
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex justify-between mb-6">
+            <div>
+              <Label htmlFor="date">Data</Label>
+              <Input
+                id="date"
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="w-[200px]"
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={resetForm}
+                className="gap-1"
+              >
+                <RotateCcw className="w-4 h-4" />
+                Reiniciar
+              </Button>
+
+              <Button 
+                variant="outline" 
+                onClick={generatePDF}
+                className="gap-1"
+              >
+                <FileDown className="w-4 h-4" />
+                PDF
+              </Button>
+              
+              <Button 
+                onClick={handleSave}
+                className="gap-1"
+              >
+                <Save className="w-4 h-4" />
+                Guardar
+              </Button>
+            </div>
+          </div>
+
+          <Tabs defaultValue="turno1">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="turno1">Turno 1</TabsTrigger>
+              <TabsTrigger value="turno2">Turno 2</TabsTrigger>
+              <TabsTrigger value="turno3">Turno 3</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="turno1">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Turno 1</CardTitle>
+                  <CardDescription>
+                    Tarefas realizadas durante o Turno 1
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex gap-4 mb-6">
+                    <div className="flex-1">
+                      <Label htmlFor="turno1Operator">Operador</Label>
+                      <Select
+                        value={turnData.turno1.operator}
+                        onValueChange={(value) => handleTurnDataChange('turno1', 'operator', value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecionar operador" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {operatorsList.map(op => (
+                            <SelectItem key={op.value} value={op.value}>
+                              {op.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="w-[150px]">
+                      <Label htmlFor="turno1Entrada">Entrada</Label>
+                      <Input 
+                        id="turno1Entrada" 
+                        type="time"
+                        value={turnData.turno1.entrada}
+                        onChange={(e) => handleTurnDataChange('turno1', 'entrada', e.target.value)}
+                      />
+                    </div>
+                    <div className="w-[150px]">
+                      <Label htmlFor="turno1Saida">Saída</Label>
+                      <Input 
+                        id="turno1Saida" 
+                        type="time"
+                        value={turnData.turno1.saida}
+                        onChange={(e) => handleTurnDataChange('turno1', 'saida', e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Turno 1 tasks component */}
+                  <Turno1TasksComponent 
+                    tasks={tasks.turno1} 
+                    setTasks={(newTasks) => handleTaskChange('turno1', Object.keys(newTasks)[0], Object.values(newTasks)[0])} 
+                  />
+                  
+                  <div className="mt-6">
+                    <Label htmlFor="turno1Obs">Observações</Label>
+                    <Textarea
+                      id="turno1Obs"
+                      placeholder="Adicionar observações para este turno..."
+                      value={turnData.turno1.observations}
+                      onChange={(e) => handleTurnDataChange('turno1', 'observations', e.target.value)}
+                      rows={3}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="turno2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Turno 2</CardTitle>
+                  <CardDescription>
+                    Tarefas realizadas durante o Turno 2
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex gap-4 mb-6">
+                    <div className="flex-1">
+                      <Label htmlFor="turno2Operator">Operador</Label>
+                      <Select
+                        value={turnData.turno2.operator}
+                        onValueChange={(value) => handleTurnDataChange('turno2', 'operator', value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecionar operador" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {operatorsList.map(op => (
+                            <SelectItem key={op.value} value={op.value}>
+                              {op.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="w-[150px]">
+                      <Label htmlFor="turno2Entrada">Entrada</Label>
+                      <Input 
+                        id="turno2Entrada" 
+                        type="time"
+                        value={turnData.turno2.entrada}
+                        onChange={(e) => handleTurnDataChange('turno2', 'entrada', e.target.value)}
+                      />
+                    </div>
+                    <div className="w-[150px]">
+                      <Label htmlFor="turno2Saida">Saída</Label>
+                      <Input 
+                        id="turno2Saida" 
+                        type="time"
+                        value={turnData.turno2.saida}
+                        onChange={(e) => handleTurnDataChange('turno2', 'saida', e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Turno 2 tasks component */}
+                  <Turno2TasksComponent 
+                    tasks={tasks.turno2} 
+                    setTasks={(newTasks) => handleTaskChange('turno2', Object.keys(newTasks)[0], Object.values(newTasks)[0])}
+                  />
+                  
+                  <div className="mt-6">
+                    <Label htmlFor="turno2Obs">Observações</Label>
+                    <Textarea
+                      id="turno2Obs"
+                      placeholder="Adicionar observações para este turno..."
+                      value={turnData.turno2.observations}
+                      onChange={(e) => handleTurnDataChange('turno2', 'observations', e.target.value)}
+                      rows={3}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="turno3">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Turno 3</CardTitle>
+                  <CardDescription>
+                    Tarefas realizadas durante o Turno 3
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex gap-4 mb-6">
+                    <div className="flex-1">
+                      <Label htmlFor="turno3Operator">Operador</Label>
+                      <Select
+                        value={turnData.turno3.operator}
+                        onValueChange={(value) => handleTurnDataChange('turno3', 'operator', value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecionar operador" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {operatorsList.map(op => (
+                            <SelectItem key={op.value} value={op.value}>
+                              {op.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="w-[150px]">
+                      <Label htmlFor="turno3Entrada">Entrada</Label>
+                      <Input 
+                        id="turno3Entrada" 
+                        type="time"
+                        value={turnData.turno3.entrada}
+                        onChange={(e) => handleTurnDataChange('turno3', 'entrada', e.target.value)}
+                      />
+                    </div>
+                    <div className="w-[150px]">
+                      <Label htmlFor="turno3Saida">Saída</Label>
+                      <Input 
+                        id="turno3Saida" 
+                        type="time"
+                        value={turnData.turno3.saida}
+                        onChange={(e) => handleTurnDataChange('turno3', 'saida', e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Turno 3 tasks component */}
+                  <Turno3TasksComponent 
+                    tasks={tasks.turno3} 
+                    setTasks={(newTasks) => handleTaskChange('turno3', Object.keys(newTasks)[0], Object.values(newTasks)[0])}
+                  />
+                  
+                  <div className="mt-6">
+                    <Label htmlFor="turno3Obs">Observações</Label>
+                    <Textarea
+                      id="turno3Obs"
+                      placeholder="Adicionar observações para este turno..."
+                      value={turnData.turno3.observations}
+                      onChange={(e) => handleTurnDataChange('turno3', 'observations', e.target.value)}
+                      rows={3}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+      
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Processamentos Realizados</CardTitle>
+          <CardDescription>
+            Registe os processamentos realizados durante o dia
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <UITableRow>
+                <TableHead>Hora</TableHead>
+                <TableHead>Tarefa</TableHead>
+                <TableHead>Nome AS/400</TableHead>
+                <TableHead>Nº Operação</TableHead>
+                <TableHead>Executado Por</TableHead>
+                <TableHead className="w-[100px]"></TableHead>
+              </UITableRow>
+            </TableHeader>
+            <TableBody>
+              {tableRows.map((row) => (
+                <UITableRow key={row.id}>
+                  <TableCell>
+                    <Input 
+                      type="time" 
+                      value={row.hora}
+                      onChange={(e) => handleInputChange(row.id, 'hora', e.target.value)}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Input 
+                      type="text" 
+                      placeholder="Descrição da tarefa"
+                      value={row.tarefa}
+                      onChange={(e) => handleInputChange(row.id, 'tarefa', e.target.value)}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Input 
+                      type="text" 
+                      placeholder="Nome no AS/400"
+                      value={row.nomeAs}
+                      onChange={(e) => handleInputChange(row.id, 'nomeAs', e.target.value)}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Input 
+                      type="text" 
+                      placeholder="Nº Operação"
+                      value={row.operacao}
+                      onChange={(e) => handleInputChange(row.id, 'operacao', e.target.value)}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Select
+                      value={row.executado}
+                      onValueChange={(value) => handleInputChange(row.id, 'executado', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecionar operador" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {operatorsList.map(op => (
+                          <SelectItem key={op.value} value={op.value}>
+                            {op.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell>
+                    {row.id === tableRows.length && (
+                      <div className="flex justify-end gap-2">
+                        {tableRows.length > 1 && (
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={removeTableRow}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={addTableRow}
+                        >
+                          <PlusCircle className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </TableCell>
+                </UITableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+        <CardFooter className="flex justify-end">
+          <Button onClick={handleSave} className="gap-1">
+            <Save className="w-4 h-4" />
+            Guardar
+          </Button>
+        </CardFooter>
+      </Card>
+    </div>
+  );
+};
+
+export default Taskboard;
