@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -197,7 +196,7 @@ const Taskboard = () => {
       ...tasks,
       [turno]: {
         ...tasks[turno],
-        [task]: checked
+        [task]: checked === 'indeterminate' ? false : Boolean(checked)
       }
     });
   };
