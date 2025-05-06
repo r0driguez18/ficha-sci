@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -1030,17 +1029,12 @@ const Taskboard = () => {
               </div>
             </div>
             
-            <Turno1TasksComponent tasks={tasks.turno1} onTaskChange={(task, checked) => handleTaskChange('turno1', task, checked)} />
-            
-            <div className="mt-6">
-              <Label htmlFor="turno1-observations">Observações</Label>
-              <Textarea 
-                id="turno1-observations"
-                value={turnData.turno1.observations}
-                onChange={(e) => handleTurnDataChange('turno1', 'observations', e.target.value)}
-                className="min-h-[100px]"
-              />
-            </div>
+            <Turno1TasksComponent 
+              tasks={tasks.turno1} 
+              onTaskChange={(task, checked) => handleTaskChange('turno1', task, checked)} 
+              observations={turnData.turno1.observations}
+              onObservationsChange={(value) => handleTurnDataChange('turno1', 'observations', value)}
+            />
           </TabsContent>
           
           <TabsContent value="turno2">
@@ -1081,17 +1075,12 @@ const Taskboard = () => {
               </div>
             </div>
             
-            <Turno2TasksComponent tasks={tasks.turno2} onTaskChange={(task, checked) => handleTaskChange('turno2', task, checked)} />
-            
-            <div className="mt-6">
-              <Label htmlFor="turno2-observations">Observações</Label>
-              <Textarea 
-                id="turno2-observations"
-                value={turnData.turno2.observations}
-                onChange={(e) => handleTurnDataChange('turno2', 'observations', e.target.value)}
-                className="min-h-[100px]"
-              />
-            </div>
+            <Turno2TasksComponent 
+              tasks={tasks.turno2} 
+              onTaskChange={(task, checked) => handleTaskChange('turno2', task, checked)}
+              observations={turnData.turno2.observations}
+              onObservationsChange={(value) => handleTurnDataChange('turno2', 'observations', value)}
+            />
           </TabsContent>
           
           <TabsContent value="turno3">
@@ -1132,17 +1121,12 @@ const Taskboard = () => {
               </div>
             </div>
             
-            <Turno3TasksComponent tasks={tasks.turno3} onTaskChange={(task, checked) => handleTaskChange('turno3', task, checked)} />
-            
-            <div className="mt-6">
-              <Label htmlFor="turno3-observations">Observações</Label>
-              <Textarea 
-                id="turno3-observations"
-                value={turnData.turno3.observations}
-                onChange={(e) => handleTurnDataChange('turno3', 'observations', e.target.value)}
-                className="min-h-[100px]"
-              />
-            </div>
+            <Turno3TasksComponent 
+              tasks={tasks.turno3} 
+              onTaskChange={(task, checked) => handleTaskChange('turno3', task, checked)}
+              observations={turnData.turno3.observations}
+              onObservationsChange={(value) => handleTurnDataChange('turno3', 'observations', value)}
+            />
           </TabsContent>
         </Tabs>
         
