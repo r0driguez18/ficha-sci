@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -675,8 +676,9 @@ const Taskboard = () => {
           {key: 'datacenter', text: "Verificar Alarmes e Sistemas/Climatização DATA CENTER"},
           {key: 'sistemas', text: "Verificar Sistemas: BCACV1/BCACV2"},
           {key: 'servicos', text: "Verificar Serviços: Vinti24/BCADireto/Replicação/Servidor MIA"},
-          {key: 'verificarReportes', text: "Verificar envio de reportes(INPS, VISTO USA, BCV, IMPC)"},
-          {key: 'verificarDebitos', text: "Verificar Débitos/Créditos Aplicados no Turno Anterior"}
+          {key: 'verificarReportes', text: "Verificar envio de reportes (INPS, VISTO USA, BCV, IMPC)"},
+          {key: 'verificarDebitos', text: "Verificar Débitos/Créditos Aplicados no Turno Anterior"},
+          {key: 'confirmarAtualizacaoSisp', text: "Confirmar Atualização SISP"}
         ];
         
         // Process basic tasks
@@ -744,7 +746,7 @@ const Taskboard = () => {
           {key: 'confirmarAtualizacaoFicheiros', text: "Confirmar Atualização Ficheiros Enviados à SISP (ECI * ENV/IMA)"},
           {key: 'validarSaco', text: "Validar Saco 1935"},
           {key: 'verificarPendentes', text: "Verificar Pendentes dos Balcões"},
-          {key: 'fecharBalcoes', text: "Fechar os Balcoes Centrais"}
+          {key: 'fecharBalcoes', text: "Fechar os Balcões Centrais"}
         ];
         
         finalTasks.forEach(item => {
@@ -785,7 +787,7 @@ const Taskboard = () => {
           {key: 'userFecho', text: "User Fecho Executar o percurso 7624 Save SYS1OB"},
           {key: 'listaRequisicoesCheques', text: "Lista requisições de cheques do dia 7633. > do que 5, sem comprov. Estornar, 21911"},
           {key: 'cancelarCartoesClientes', text: "User Fecho Cancela os cartões dos Clientes Bloqueados - percurso 76857"},
-          {key: 'prepararEnviarAsc', text: "Preparar e enviar ficheiro e ASC (alteração situação cartão) – percurso 4132"},
+          {key: 'prepararEnviarAsc', text: "Preparar e enviar ficheiro ASC (alteração situação cartão) – percurso 4132"},
           {key: 'adicionarRegistrosBanka', text: "User Fecho Adiciona registos na Banka Remota- percurso 768975"},
           {key: 'fecharServidoresBanka', text: "User Fecho, fechar servidores Banka remota IN1/IN3/IN4"},
           {key: 'alterarInternetBanking', text: "User Fecho Alterar Internet Banking para OFFLINE – percurso 49161"},
@@ -816,7 +818,7 @@ const Taskboard = () => {
         
         // Draw checkbox and include time in the same line
         drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3.fecharRealTime));
-        doc.text(`Interromper o Real-Time com a SISP: ${tasks.turno3.fecharRealTimeHora || ""}`, 20, y);
+        doc.text(`Fechar o Real-Time com a SISP: ${tasks.turno3.fecharRealTimeHora || ""}`, 20, y);
         y += 8;
         
         // Next group of tasks
@@ -824,7 +826,7 @@ const Taskboard = () => {
           {key: 'prepararEnviarEtr', text: "Preparar e enviar Ficheiro ETR - percurso 7538, consultar conta 18 5488103"},
           {key: 'fazerLoggOffAml', text: "Fazer Logg-Off do utilizador AML – Percurso 161 (utilizadores ativos)"},
           {key: 'aplicarFicheiroErroEtr', text: "Aplicar Ficheiro Erro ETR"},
-          {key: 'validarBalcao14', text: "Validar balção 14 7185"},
+          {key: 'validarBalcao14', text: "Validar balcão 14 7185"},
           {key: 'fecharBalcao14', text: "Fechar o balcão 14 - DSI e confirmar se todos os balcões encontram-se fechados"},
           {key: 'arranqueManual', text: "Arranque Manual - Verificar Data da Aplicação – Percurso 431"}
         ];
@@ -854,7 +856,7 @@ const Taskboard = () => {
           {key: 'validarEnvioEmail', text: "Validar envio email (Notificação Inicio Fecho) a partir do ISeries"},
           {key: 'controlarTrabalhos', text: "Controlar os trabalhos no QBATCH (opções 5, 10, F10, F5, F18)"},
           {key: 'saveBmbck', text: "Save BMBCK – Automático"},
-          {key: 'abrirServidoresInternet', text: "Abrir Servidores Internet Banking – Percurso 161–"},
+          {key: 'abrirServidoresInternet', text: "Abrir Servidores Internet Banking – Percurso 161"},
           {key: 'imprimirCheques', text: "Imprimir Cheques e Diários de Cheques (depois do Save BMBCK)"},
           {key: 'backupBm', text: "Backup BM – Automático"},
           {key: 'validarFicheiroCcln', text: "Validar ficheiro CCLN - 76853"},
@@ -906,8 +908,8 @@ const Taskboard = () => {
           {key: 'aplicarFicheiroVisa', text: "Aplicar ficheiro VISA DAF - com o user FECHO 4131"},
           {key: 'cativarCartoes', text: "Cativar cartões de crédito em incumprimento - com o user FECHO – 7675"},
           {key: 'abrirBcaDireto', text: "Abrir o BCADireto percurso 49162 – Validar transações"},
-          {key: 'abrirServidoresBanka', text: "User Fecho, Abril servidores Banka remota IN1/IN3/IN4"},
-          {key: 'atualizarTelefonesOffline', text: "Atualiza Telefones tratados no OFFLINE- percurso 768976"},
+          {key: 'abrirServidoresBanka', text: "User Fecho, Abrir servidores Banka remota IN1/IN3/IN4"},
+          {key: 'atualizarTelefonesOffline', text: "Atualizar Telefones tratados no OFFLINE- percurso 768976"},
           {key: 'verificarReplicacao', text: "Verificar Replicação"},
           {key: 'enviarFicheiroCsv', text: "Enviar ficheiro CSV (Comunicação Saldo Véspera)"},
           {key: 'transferirFicheirosLiquidity', text: "Transferência ficheiros SSM Liquidity Exercices (Confirmação)"},
@@ -942,7 +944,7 @@ const Taskboard = () => {
         // Add the missing transferirFicheirosDsi task
         y = checkPageSpace(y, 8);
         drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3.transferirFicheirosDsi));
-        doc.text("Transferência ficheiros SSM Liquidity ExercicesDSI-CI/2023", 20, y);
+        doc.text("Transferência ficheiros DSI-CI/2023", 20, y);
         y += 8;
         
         // Observations
