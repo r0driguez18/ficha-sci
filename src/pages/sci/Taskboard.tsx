@@ -598,8 +598,9 @@ const Taskboard = () => {
           // Handle the "Enviar:" special case
           if (item.key === 'enviar') {
             doc.text(item.text, 20, y);
+            y += 6;  // Add extra line space after "Enviar:" label
             
-            // Process sub-items inline for "Enviar"
+            // Process sub-items in rows rather than inline for "Enviar"
             const enviarSubItems = [
               { key: 'etr', text: 'ETR' },
               { key: 'impostos', text: 'Impostos' },
@@ -609,15 +610,24 @@ const Taskboard = () => {
               { key: 'bcta', text: 'BCTA' }
             ];
             
-            let xOffset = 35;
-            enviarSubItems.forEach(subItem => {
-              const itemKey = subItem.key as keyof Turno1Tasks;
-              drawCheckbox(xOffset, y - 3, ensureBoolean(tasks.turno1[itemKey]));
-              doc.text(subItem.text, xOffset + 5, y);
-              xOffset += 20;
-            });
-            
-            y += 6;
+            // Display in two columns, 3 items per row
+            for (let i = 0; i < enviarSubItems.length; i += 3) {
+              y = checkPageSpace(y, 8);
+              
+              // First column items (up to 3 per row)
+              for (let j = 0; j < 3; j++) {
+                if (i + j < enviarSubItems.length) {
+                  const subItem = enviarSubItems[i + j];
+                  const itemKey = subItem.key as keyof Turno1Tasks;
+                  const xOffset = 25 + (j * 40); // Space items horizontally
+                  
+                  drawCheckbox(xOffset, y - 3, ensureBoolean(tasks.turno1[itemKey]));
+                  doc.text(subItem.text, xOffset + 5, y);
+                }
+              }
+              
+              y += 6; // Move to next row after displaying up to 3 items
+            }
           } else if (item.key === 'verificarRecepcaoSisp') {
             // Handle Verificar Recepção SISP with ASC, CSV, ECI checkboxes
             doc.text(item.text, 20, y);
