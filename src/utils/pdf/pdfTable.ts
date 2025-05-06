@@ -15,7 +15,7 @@ export const renderTaskTable = (doc: jsPDF, tableRows: TaskTableRow[]): void => 
   
   if (validRows.length > 0) {
     doc.addPage();
-    doc.setFont("helvetica", "normal"); // Normal font (not bold)
+    doc.setFont("helvetica", "bold");
     doc.text("Tabela de Processamentos", 15, 20);
     
     const data = validRows.map(row => [

@@ -13,7 +13,7 @@ export const renderTurno3Tasks = (
   
   // Add Header for Turno 3
   y = checkPageSpace(doc, y, 10);
-  doc.setFont("helvetica", "normal"); // Changed to normal, not bold
+  doc.setFont("helvetica", "bold");
   doc.text("Operações Fecho Dia", 15, y);
   y += 8;
   doc.setFont("helvetica", "normal");
@@ -96,7 +96,7 @@ export const renderTurno3Tasks = (
   
   // Add header for "Depois do Fecho" section
   y = checkPageSpace(doc, y, 15);
-  doc.setFont("helvetica", "normal"); // Changed to normal, not bold
+  doc.setFont("helvetica", "bold");
   doc.text("Depois do Fecho", 15, y);
   y += 8;
   doc.setFont("helvetica", "normal");
