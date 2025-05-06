@@ -672,8 +672,7 @@ const Taskboard = () => {
           {key: 'sistemas', text: "Verificar Sistemas: BCACV1/BCACV2"},
           {key: 'servicos', text: "Verificar Serviços: Vinti24/BCADireto/Replicação/Servidor MIA"},
           {key: 'verificarReportes', text: "Verificar envio de reportes(INPS, VISTO USA, BCV, IMPC)"},
-          {key: 'verificarDebitos', text: "Verificar Débitos/Créditos Aplicados no Turno Anterior"},
-          {key: 'confirmarAtualizacaoSisp', text: "Confirmar Atualização SISP"}
+          {key: 'verificarDebitos', text: "Verificar Débitos/Créditos Aplicados no Turno Anterior"}
         ];
         
         // Process basic tasks
@@ -893,8 +892,7 @@ const Taskboard = () => {
           {key: 'percurso76923', text: "Percurso 76923 – Cancelo"},
           {key: 'abrirServidoresTesteProducao', text: "Abrir Servidores Teste e Produção"},
           {key: 'impressaoCheques', text: "Impressão de cheques"},
-          {key: 'arquivarCheques', text: "Arquivar Cheques para enviar aos balcões"},
-          {key: 'transferirFicheirosDsi', text: "Transferir Ficheiros DSI (BCV/DGCI/etc...)"}
+          {key: 'arquivarCheques', text: "Arquivar Cheques para enviar aos balcões"}
         ];
         
         finalTasks.forEach(item => {
@@ -911,6 +909,12 @@ const Taskboard = () => {
         doc.text(`Término Fecho: ${tasks.turno3.terminoFechoHora || ""}`, 20, y);
         y += 8;
         
+        // Add the missing transferirFicheirosDsi task
+        y = checkPageSpace(y, 8);
+        drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3.transferirFicheirosDsi));
+        doc.text("Transferir Ficheiros DSI (BCV/DGCI/etc...)", 20, y);
+        y += 8;
+        
         // Observations
         if (turn.observations) {
           y = checkPageSpace(y, 20);
@@ -925,6 +929,36 @@ const Taskboard = () => {
         }
       }
     });
+    
+    // Add Processos table
+    if (tableRows.length > 0) {
+      y = checkPageSpace(y, 30);
+      
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(14);
+      doc.text("Tabela de Processamentos", 15, y);
+      y += 10;
+      
+      // Create table header
+      const headers = ["Hora", "Tarefa", "Nome AS400", "Nº Operação", "Executado por"];
+      const data = tableRows.map(row => [
+        row.hora,
+        row.tarefa,
+        row.nomeAs,
+        row.operacao,
+        row.executado
+      ]);
+      
+      // Add the table to the PDF
+      autoTable(doc, {
+        startY: y,
+        head: [headers],
+        body: data,
+        theme: 'grid',
+        headStyles: { fillColor: [200, 200, 200], textColor: [0, 0, 0], fontStyle: 'bold' },
+        margin: { top: 15, right: 15, bottom: 15, left: 15 }
+      });
+    }
     
     doc.save(`taskboard-${formattedDate}.pdf`);
     toast.success('PDF gerado com sucesso!');
