@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -19,33 +18,9 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
   observations,
   onObservationsChange
 }) => {
-  // Helper functions to handle input changes for time and numeric fields
-  const handleTimeChange = (field: keyof Turno3Tasks, value: string) => {
-    onTaskChange(field, value);
-  };
-  
-  const handleNumberChange = (field: keyof Turno3Tasks, value: string) => {
-    // Allow only numbers and decimal point
-    const numericValue = value.replace(/[^0-9.]/g, '');
-    onTaskChange(field, numericValue);
-  };
-  
-  // Helper function to handle radio/toggle inputs
-  const handleToggleChange = (positiveField: keyof Turno3Tasks, negativeField: keyof Turno3Tasks, isPositive: boolean) => {
-    if (isPositive) {
-      onTaskChange(positiveField, true);
-      onTaskChange(negativeField, false);
-    } else {
-      onTaskChange(positiveField, false);
-      onTaskChange(negativeField, true);
-    }
-  };
-
   return (
     <div className="space-y-2">
       <h4 className="font-medium mb-4">Operações Fecho Dia</h4>
-      
-      {/* Verificar Débitos */}
       <div className="flex items-center space-x-2">
         <Checkbox 
           id="verificarDebitos3" 
@@ -160,15 +135,14 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
           checked={tasks.fecharRealTime}
           onCheckedChange={(checked) => onTaskChange('fecharRealTime', !!checked)}
         />
-        <Label htmlFor="fecharRealTime" className="cursor-pointer ml-2">
+        <Label htmlFor="fecharRealTime" className="cursor-pointer flex-grow ml-2">
           Interromper o Real-Time com a SISP
         </Label>
         <Input
           type="time"
-          id="fecharRealTimeHora"
-          value={tasks.fecharRealTimeHora || ''}
-          onChange={(e) => handleTimeChange('fecharRealTimeHora', e.target.value)}
-          className="w-32"
+          value={tasks.fecharRealTimeHora}
+          onChange={(e) => onTaskChange('fecharRealTimeHora', e.target.value)}
+          className="w-32 ml-2"
         />
       </div>
       
@@ -232,15 +206,14 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
           checked={tasks.inicioFecho}
           onCheckedChange={(checked) => onTaskChange('inicioFecho', !!checked)}
         />
-        <Label htmlFor="inicioFecho" className="cursor-pointer ml-2">
+        <Label htmlFor="inicioFecho" className="cursor-pointer flex-grow ml-2">
           Início do Fecho
         </Label>
         <Input
           type="time"
-          id="inicioFechoHora"
-          value={tasks.inicioFechoHora || ''}
-          onChange={(e) => handleTimeChange('inicioFechoHora', e.target.value)}
-          className="w-32"
+          value={tasks.inicioFechoHora}
+          onChange={(e) => onTaskChange('inicioFechoHora', e.target.value)}
+          className="w-32 ml-2"
         />
       </div>
       
@@ -324,17 +297,15 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
           checked={tasks.validarSaldoConta}
           onCheckedChange={(checked) => onTaskChange('validarSaldoConta', !!checked)}
         />
-        <Label htmlFor="validarSaldoConta" className="cursor-pointer ml-2">
+        <Label htmlFor="validarSaldoConta" className="cursor-pointer flex-grow ml-2">
           Validar saldo da conta 18/5488102:
         </Label>
         <Input
-          type="text"
-          id="saldoContaValor"
-          value={tasks.saldoContaValor || ''}
-          onChange={(e) => handleNumberChange('saldoContaValor', e.target.value)}
-          className="w-32"
+          type="number"
+          value={tasks.saldoContaValor}
+          onChange={(e) => onTaskChange('saldoContaValor', e.target.value)}
+          className="w-32 ml-2"
           placeholder="0.00"
-          inputMode="decimal"
         />
       </div>
       
@@ -343,9 +314,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
           <Checkbox 
             id="saldoNegativo"
             checked={tasks.saldoNegativo}
-            onCheckedChange={(checked) => {
-              if (checked) handleToggleChange('saldoNegativo', 'saldoPositivo', false);
-            }}
+            onCheckedChange={(checked) => onTaskChange('saldoNegativo', !!checked)}
           />
           <Label htmlFor="saldoNegativo" className="cursor-pointer">Negativo</Label>
         </div>
@@ -353,9 +322,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
           <Checkbox 
             id="saldoPositivo"
             checked={tasks.saldoPositivo}
-            onCheckedChange={(checked) => {
-              if (checked) handleToggleChange('saldoPositivo', 'saldoNegativo', true);
-            }}
+            onCheckedChange={(checked) => onTaskChange('saldoPositivo', !!checked)}
           />
           <Label htmlFor="saldoPositivo" className="cursor-pointer">Positivo</Label>
         </div>
@@ -367,15 +334,14 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
           checked={tasks.abrirRealTime}
           onCheckedChange={(checked) => onTaskChange('abrirRealTime', !!checked)}
         />
-        <Label htmlFor="abrirRealTime" className="cursor-pointer ml-2">
+        <Label htmlFor="abrirRealTime" className="cursor-pointer flex-grow ml-2">
           Abrir o Real-Time
         </Label>
         <Input
           type="time"
-          id="abrirRealTimeHora"
-          value={tasks.abrirRealTimeHora || ''}
-          onChange={(e) => handleTimeChange('abrirRealTimeHora', e.target.value)}
-          className="w-32"
+          value={tasks.abrirRealTimeHora}
+          onChange={(e) => onTaskChange('abrirRealTimeHora', e.target.value)}
+          className="w-32 ml-2"
         />
       </div>
       
@@ -520,15 +486,14 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
           checked={tasks.terminoFecho}
           onCheckedChange={(checked) => onTaskChange('terminoFecho', !!checked)}
         />
-        <Label htmlFor="terminoFecho" className="cursor-pointer ml-2">
+        <Label htmlFor="terminoFecho" className="cursor-pointer flex-grow ml-2">
           Término do Fecho
         </Label>
         <Input
           type="time"
-          id="terminoFechoHora"
-          value={tasks.terminoFechoHora || ''}
-          onChange={(e) => handleTimeChange('terminoFechoHora', e.target.value)}
-          className="w-32"
+          value={tasks.terminoFechoHora}
+          onChange={(e) => onTaskChange('terminoFechoHora', e.target.value)}
+          className="w-32 ml-2"
         />
       </div>
       
@@ -542,7 +507,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
       </div>
       
       <div className="mt-6">
-        <Label htmlFor="observations3">Outras Intervenções/Observações/Comunicações/Ocorrências</Label>
+        <Label htmlFor="observations3">Observaçes</Label>
         <Textarea 
           id="observations3" 
           value={observations}

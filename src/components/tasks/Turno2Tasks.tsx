@@ -1,9 +1,9 @@
+
 import React from 'react';
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Turno2Tasks } from '@/types/taskboard';
-import { ensureBoolean } from '@/utils/taskUtils';
 
 interface Turno2TasksProps {
   tasks: Turno2Tasks;
@@ -18,8 +18,9 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
   observations,
   onObservationsChange 
 }) => {
-  const handleCheckboxChange = (task: keyof Turno2Tasks, value: boolean | "indeterminate") => {
-    onTaskChange(task, value === true);
+  // Helper function to ensure we only pass boolean values to onTaskChange
+  const handleCheckboxChange = (task: keyof Turno2Tasks, value: boolean | string) => {
+    onTaskChange(task, Boolean(value));
   };
 
   return (
@@ -69,15 +70,6 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
           onCheckedChange={(checked) => handleCheckboxChange('verificarDebitos', checked)}
         />
         <Label htmlFor="verificarDebitos2" className="cursor-pointer">Verificar Débitos/Créditos Aplicados no Turno Anterior</Label>
-      </div>
-
-      <div className="flex items-center space-x-2">
-        <Checkbox 
-          id="confirmarAtualizacaoSisp"
-          checked={tasks.confirmarAtualizacaoSisp}
-          onCheckedChange={(checked) => handleCheckboxChange('confirmarAtualizacaoSisp', checked)}
-        />
-        <Label htmlFor="confirmarAtualizacaoSisp" className="cursor-pointer">Confirmar Atualização SISP</Label>
       </div>
 
       <div className="border rounded-md p-3 bg-gray-50 dark:bg-gray-800">
@@ -144,17 +136,6 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
 
       <div className="flex items-center space-x-2">
         <Checkbox 
-          id="confirmarAtualizacaoFicheirosSisp"
-          checked={tasks.confirmarAtualizacaoFicheirosSisp}
-          onCheckedChange={(checked) => handleCheckboxChange('confirmarAtualizacaoFicheirosSisp', checked)}
-        />
-        <Label htmlFor="confirmarAtualizacaoFicheirosSisp" className="cursor-pointer">
-          Confirmar Atualização Ficheiros Enviados à SISP (ECI * ENV/IMA)
-        </Label>
-      </div>
-
-      <div className="flex items-center space-x-2">
-        <Checkbox 
           id="validarSaco"
           checked={tasks.validarSaco}
           onCheckedChange={(checked) => handleCheckboxChange('validarSaco', checked)}
@@ -181,7 +162,7 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
       </div>
 
       <div className="mt-6">
-        <Label htmlFor="observations2">Outras Intervenções/Observações/Comunicações/Ocorrências</Label>
+        <Label htmlFor="observations2">Observações</Label>
         <Textarea 
           id="observations2" 
           value={observations}
