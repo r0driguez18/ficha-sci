@@ -33,6 +33,9 @@ export const generateTaskboardPDF = (
   
   const drawCheckbox = (x: number, y: number, checked: boolean | string) => {
     const isChecked = ensureBoolean(checked);
+    // Standardize all checkbox colors to black
+    doc.setDrawColor(0, 0, 0);
+    doc.setFillColor(0, 0, 0);
     doc.rect(x, y, 3, 3);
     if (isChecked) {
       doc.line(x, y, x + 3, y + 3);
@@ -63,7 +66,7 @@ export const generateTaskboardPDF = (
     
     // Draw rectangle with padding
     const boxHeight = Math.max(20, textHeight + padding * 2); // Minimum 20px height
-    doc.setDrawColor(200, 200, 200); // Light gray border
+    doc.setDrawColor(0, 0, 0); // Always black
     doc.setLineWidth(0.5);
     doc.rect(15 - padding, startY - padding, pageWidth - 30, boxHeight);
     
@@ -347,8 +350,8 @@ export const generateTaskboardPDF = (
       y += 8;
       doc.setFont("helvetica", "normal");
       
-      // List all turno3 tasks with their labels from the component
-      const turno3Tasks = [
+      // List all turno3 tasks in the correct order
+      const operacoesFechoTasks = [
         {key: 'verificarDebitos', text: "Verificar Débitos/Créditos Aplicados no Turno Anterior"},
         {key: 'tratarTapes', text: "Tratar e trocar Tapes BM, BMBCK – percurso 7622"},
         {key: 'fecharServidores', text: "Fechar Servidores Teste e Produção"},
@@ -360,41 +363,18 @@ export const generateTaskboardPDF = (
         {key: 'adicionarRegistrosBanka', text: "User Fecho Adiciona registos na Banka Remota- percurso 768975"},
         {key: 'fecharServidoresBanka', text: "User Fecho, fechar servidores Banka remota IN1/IN3/IN4"},
         {key: 'alterarInternetBanking', text: "User Fecho Alterar Internet Banking para OFFLINE – percurso 49161"},
-        {key: 'prepararEnviarCsv', text: "Preparar e enviar ficheiro CSV (saldos)"},
-        {key: 'prepararEnviarEtr', text: "Preparar e enviar Ficheiro ETR - percurso 7538, consultar conta 18 5488103"},
-        {key: 'fazerLoggOffAml', text: "Fazer Logg-Off do utilizador AML – Percurso 161 (utilizadores ativos)"},
-        {key: 'aplicarFicheiroErroEtr', text: "Aplicar Ficheiro Erro ETR"},
-        {key: 'validarBalcao14', text: "Validar balção 14 7185"},
-        {key: 'fecharBalcao14', text: "Fechar o balcão 14 - DSI e confirmar se todos os balcões encontram-se fechados"},
-        {key: 'arranqueManual', text: "Arranque Manual - Verificar Data da Aplicação – Percurso 431"},
-        {key: 'validarEnvioEmail', text: "Validar envio email (Notificação Inicio Fecho) a partir do ISeries"},
-        {key: 'controlarTrabalhos', text: "Controlar os trabalhos no QBATCH (opções 5, 10, F10, F5, F18)"},
-        {key: 'saveBmbck', text: "Save BMBCK – Automático"},
-        {key: 'abrirServidoresInternet', text: "Abrir Servidores Internet Banking – Percurso 161–"},
-        {key: 'imprimirCheques', text: "Imprimir Cheques e Diários de Cheques (depois do Save BMBCK)"},
-        {key: 'backupBm', text: "Backup BM – Automático"},
+        {key: 'prepararEnviarCsv', text: "Preparar e enviar ficheiro CSV (saldos)"}
       ];
       
-      turno3Tasks.forEach(item => {
+      operacoesFechoTasks.forEach(item => {
         y = checkPageSpace(y, 8);
         drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3[item.key as keyof typeof tasks.turno3]));
+        doc.setFontSize(10);
         doc.text(item.text, 20, y);
         y += 6;
-        
-        // Special handling for items with time inputs
-        if (item.key === 'fecharRealTime') {
-          const timeValue = tasks.turno3.fecharRealTimeHora || '';
-          doc.text(`Hora: ${timeValue}`, 30, y);
-          y += 6;
-        } 
-        else if (item.key === 'inicioFecho') {
-          const timeValue = tasks.turno3.inicioFechoHora || '';
-          doc.text(`Hora: ${timeValue}`, 30, y);
-          y += 6;
-        }
       });
-      
-      // Handle "Interromper o Real-Time" separately because it has a time field
+
+      // Handle "Interromper o Real-Time" with time inline
       y = checkPageSpace(y, 8);
       drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3.fecharRealTime));
       const realTimeText = tasks.turno3.fecharRealTimeHora ? 
@@ -403,7 +383,24 @@ export const generateTaskboardPDF = (
       doc.text(realTimeText, 20, y);
       y += 6;
       
-      // Handle "Início do Fecho" separately because it has a time field
+      // Continue with remaining tasks in order
+      const midTasks = [
+        {key: 'prepararEnviarEtr', text: "Preparar e enviar Ficheiro ETR - percurso 7538, consultar conta 18 5488103"},
+        {key: 'fazerLoggOffAml', text: "Fazer Logg-Off do utilizador AML – Percurso 161 (utilizadores ativos)"},
+        {key: 'aplicarFicheiroErroEtr', text: "Aplicar Ficheiro Erro ETR"},
+        {key: 'validarBalcao14', text: "Validar balção 14 7185"},
+        {key: 'fecharBalcao14', text: "Fechar o balcão 14 - DSI e confirmar se todos os balcões encontram-se fechados"},
+        {key: 'arranqueManual', text: "Arranque Manual - Verificar Data da Aplicação – Percurso 431"}
+      ];
+      
+      midTasks.forEach(item => {
+        y = checkPageSpace(y, 8);
+        drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3[item.key as keyof typeof tasks.turno3]));
+        doc.text(item.text, 20, y);
+        y += 6;
+      });
+      
+      // Handle "Início do Fecho" with time inline
       y = checkPageSpace(y, 8);
       drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3.inicioFecho));
       const inicioFechoText = tasks.turno3.inicioFechoHora ? 
@@ -411,6 +408,23 @@ export const generateTaskboardPDF = (
         "Início do Fecho";
       doc.text(inicioFechoText, 20, y);
       y += 6;
+      
+      // Continue with the rest of the tasks
+      const finalOperacoesTasks = [
+        {key: 'validarEnvioEmail', text: "Validar envio email (Notificação Inicio Fecho) a partir do ISeries"},
+        {key: 'controlarTrabalhos', text: "Controlar os trabalhos no QBATCH (opções 5, 10, F10, F5, F18)"},
+        {key: 'saveBmbck', text: "Save BMBCK – Automático"},
+        {key: 'abrirServidoresInternet', text: "Abrir Servidores Internet Banking – Percurso 161–"},
+        {key: 'imprimirCheques', text: "Imprimir Cheques e Diários de Cheques (depois do Save BMBCK)"},
+        {key: 'backupBm', text: "Backup BM – Automático"}
+      ];
+      
+      finalOperacoesTasks.forEach(item => {
+        y = checkPageSpace(y, 8);
+        drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3[item.key as keyof typeof tasks.turno3]));
+        doc.text(item.text, 20, y);
+        y += 6;
+      });
       
       // Add header for "Depois do Fecho" section
       y = checkPageSpace(y, 15);
@@ -448,7 +462,7 @@ export const generateTaskboardPDF = (
       doc.text("Negativo", 65, y);
       y += 6;
       
-      // Handle "Abrir o Real-Time" separately because it has a time field
+      // Handle "Abrir o Real-Time" with time inline
       y = checkPageSpace(y, 8);
       drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3.abrirRealTime));
       const abrirRealTimeText = tasks.turno3.abrirRealTimeHora ? 
@@ -483,7 +497,7 @@ export const generateTaskboardPDF = (
         y += 6;
       });
       
-      // Handle "Término do Fecho" separately because it has a time field
+      // Handle "Término do Fecho" with time inline
       y = checkPageSpace(y, 8);
       drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3.terminoFecho));
       const terminoFechoText = tasks.turno3.terminoFechoHora ? 
@@ -532,9 +546,12 @@ export const generateTaskboardPDF = (
       startY: 25,
       theme: 'grid',
       headStyles: {
-        fillColor: [200, 200, 200],
-        textColor: [0, 0, 0],
+        fillColor: [0, 0, 0], // Changed to black
+        textColor: [255, 255, 255], // White text
         fontStyle: 'bold'
+      },
+      bodyStyles: {
+        textColor: [0, 0, 0] // Black text
       }
     });
   }
