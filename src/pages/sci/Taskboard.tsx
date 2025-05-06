@@ -583,6 +583,8 @@ const Taskboard = () => {
               doc.text(subItem.text, xOffset + 5, y);
               xOffset += doc.getTextWidth(subItem.text) + 15;
             });
+            
+            y += 6;
           } else if (item.key === 'verificarRecepcaoSisp') {
             // Handle Verificar Recepção SISP with ASC, CSV, ECI checkboxes
             doc.text(item.text, 20, y);
@@ -600,14 +602,15 @@ const Taskboard = () => {
               doc.text(subItem.text, xOffset + 5, y);
               xOffset += doc.getTextWidth(subItem.text) + 15;
             });
+            
+            y += 6;
           } else {
             doc.text(item.text, 20, y);
+            y += 6;
           }
           
-          y += 6;
-          
           // Add sub-items for backupsDiferidos
-          if (item.key === 'backupsDiferidos' && ensureBoolean(tasks.turno1.backupsDiferidos)) {
+          if (item.key === 'backupsDiferidos') {
             const backupItems = [
               { key: 'bmjrn', text: "BMJRN (2 tapes/alterar 1 por mês/inicializar no inicio do mês)" },
               { key: 'grjrcv', text: "GRJRCV (1 tape)" },
@@ -626,7 +629,7 @@ const Taskboard = () => {
           }
           
           // Add sub-items for enviarFicheiroCom
-          if (item.key === 'enviarFicheiroCom' && ensureBoolean(tasks.turno1.enviarFicheiroCom)) {
+          if (item.key === 'enviarFicheiroCom') {
             y = checkPageSpace(y, 8);
             doc.text("Dias:", 25, y);
             
@@ -670,13 +673,7 @@ const Taskboard = () => {
           {key: 'servicos', text: "Verificar Serviços: Vinti24/BCADireto/Replicação/Servidor MIA"},
           {key: 'verificarReportes', text: "Verificar envio de reportes(INPS, VISTO USA, BCV, IMPC)"},
           {key: 'verificarDebitos', text: "Verificar Débitos/Créditos Aplicados no Turno Anterior"},
-          {key: 'confirmarAtualizacaoSisp', text: "Confirmar Atualização SISP"},
-          {key: 'processarTef', text: "Processar ficheiros TEF - ERR/RTR/RCT"},
-          {key: 'processarTelecomp', text: "Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR"},
-          {key: 'confirmarAtualizacaoFicheiros', text: "Confirmar Atualização Ficheiros Enviados à SISP (ECI * ENV/IMA)"},
-          {key: 'validarSaco', text: "Validar Saco 1935"},
-          {key: 'verificarPendentes', text: "Verificar Pendentes dos Balcões"},
-          {key: 'fecharBalcoes', text: "Fechar os Balcoes Centrais"}
+          {key: 'confirmarAtualizacaoSisp', text: "Confirmar Atualização SISP"}
         ];
         
         // Process basic tasks
@@ -689,34 +686,70 @@ const Taskboard = () => {
         });
         
         // Ficheiros INPS
-        y = checkPageSpace(y, 8);
-        doc.setFontSize(10);
-        doc.text("Ficheiros INPS:", 20, y);
+        y = checkPageSpace(y, 10);
+        doc.setFont("helvetica", "bold");
+        doc.text("Ficheiros INPS:", 15, y);
+        y += 6;
+        doc.setFont("helvetica", "normal");
         
-        let xOffset = 55;
-        drawCheckbox(xOffset, y - 3, ensureBoolean(tasks.turno2.inpsProcessar));
-        doc.text("Processar", xOffset + 5, y);
+        const inpsItems = [
+          { key: 'inpsProcessar', text: "Processar" },
+          { key: 'inpsEnviarRetorno', text: "Enviar Retorno" }
+        ];
         
-        xOffset += 35;
-        drawCheckbox(xOffset, y - 3, ensureBoolean(tasks.turno2.inpsEnviarRetorno));
-        doc.text("Enviar Retorno", xOffset + 5, y);
+        inpsItems.forEach(item => {
+          y = checkPageSpace(y, 8);
+          drawCheckbox(20, y - 3, ensureBoolean(tasks.turno2[item.key]));
+          doc.text(item.text, 25, y);
+          y += 6;
+        });
         
-        y += 8;
+        // Continue with remaining tasks in order
+        const remainingTasks: {key: keyof Turno2Tasks, text: string}[] = [
+          {key: 'processarTef', text: "Processar ficheiros TEF - ERR/RTR/RCT"},
+          {key: 'processarTelecomp', text: "Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR"}
+        ];
+        
+        remainingTasks.forEach(item => {
+          y = checkPageSpace(y, 8);
+          drawCheckbox(15, y - 3, ensureBoolean(tasks.turno2[item.key]));
+          doc.text(item.text, 20, y);
+          y += 6;
+        });
         
         // Enviar Ficheiro
-        y = checkPageSpace(y, 8);
-        doc.setFontSize(10);
-        doc.text("Enviar Ficheiro:", 20, y);
+        y = checkPageSpace(y, 10);
+        doc.setFont("helvetica", "bold");
+        doc.text("Enviar Ficheiro:", 15, y);
+        y += 6;
+        doc.setFont("helvetica", "normal");
         
-        xOffset = 55;
-        drawCheckbox(xOffset, y - 3, ensureBoolean(tasks.turno2.enviarEci));
-        doc.text("ECI", xOffset + 5, y);
+        const ficheirosItems = [
+          { key: 'enviarEci', text: "ECI" },
+          { key: 'enviarEdv', text: "EDV" }
+        ];
         
-        xOffset += 20;
-        drawCheckbox(xOffset, y - 3, ensureBoolean(tasks.turno2.enviarEdv));
-        doc.text("EDV", xOffset + 5, y);
+        ficheirosItems.forEach(item => {
+          y = checkPageSpace(y, 8);
+          drawCheckbox(20, y - 3, ensureBoolean(tasks.turno2[item.key]));
+          doc.text(item.text, 25, y);
+          y += 6;
+        });
         
-        y += 8;
+        // Final tasks
+        const finalTasks: {key: keyof Turno2Tasks, text: string}[] = [
+          {key: 'confirmarAtualizacaoFicheiros', text: "Confirmar Atualização Ficheiros Enviados à SISP (ECI * ENV/IMA)"},
+          {key: 'validarSaco', text: "Validar Saco 1935"},
+          {key: 'verificarPendentes', text: "Verificar Pendentes dos Balcões"},
+          {key: 'fecharBalcoes', text: "Fechar os Balcoes Centrais"}
+        ];
+        
+        finalTasks.forEach(item => {
+          y = checkPageSpace(y, 8);
+          drawCheckbox(15, y - 3, ensureBoolean(tasks.turno2[item.key]));
+          doc.text(item.text, 20, y);
+          y += 6;
+        });
         
         // Observations
         if (turn.observations) {
@@ -772,8 +805,9 @@ const Taskboard = () => {
         y += 8;
         doc.setFont("helvetica", "normal");
         
+        // Draw checkbox and include time in the same line
         drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3.fecharRealTime));
-        doc.text(`Fechar Real Time: ${tasks.turno3.fecharRealTimeHora || ''}`, 20, y);
+        doc.text(`Fechar Real Time: ${tasks.turno3.fecharRealTimeHora || ""}`, 20, y);
         y += 8;
         
         // Next group of tasks
@@ -797,7 +831,7 @@ const Taskboard = () => {
         // Inicio Fecho with time
         y = checkPageSpace(y, 8);
         drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3.inicioFecho));
-        doc.text(`Inicio Fecho: ${tasks.turno3.inicioFechoHora || ''}`, 20, y);
+        doc.text(`Inicio Fecho: ${tasks.turno3.inicioFechoHora || ""}`, 20, y);
         y += 8;
         
         // More tasks
@@ -822,9 +856,9 @@ const Taskboard = () => {
         });
         
         // Saldo conta value
-        if (tasks.turno3.validarSaldoConta) {
+        if (ensureBoolean(tasks.turno3.validarSaldoConta)) {
           y = checkPageSpace(y, 8);
-          doc.text(`Valor: ${tasks.turno3.saldoContaValor || ''}`, 30, y);
+          doc.text(`Valor: ${tasks.turno3.saldoContaValor || ""}`, 30, y);
           y += 6;
           
           // Checkboxes for saldo type
@@ -840,7 +874,7 @@ const Taskboard = () => {
         // Abrir Real Time with time
         y = checkPageSpace(y, 8);
         drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3.abrirRealTime));
-        doc.text(`Abrir Real Time: ${tasks.turno3.abrirRealTimeHora || ''}`, 20, y);
+        doc.text(`Abrir Real Time: ${tasks.turno3.abrirRealTimeHora || ""}`, 20, y);
         y += 8;
         
         // Final tasks
@@ -874,7 +908,7 @@ const Taskboard = () => {
         // Término Fecho with time
         y = checkPageSpace(y, 8);
         drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3.terminoFecho));
-        doc.text(`Término Fecho: ${tasks.turno3.terminoFechoHora || ''}`, 20, y);
+        doc.text(`Término Fecho: ${tasks.turno3.terminoFechoHora || ""}`, 20, y);
         y += 8;
         
         // Observations
