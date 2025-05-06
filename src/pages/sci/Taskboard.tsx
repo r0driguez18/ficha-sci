@@ -780,12 +780,12 @@ const Taskboard = () => {
           {key: 'fecharImpressoras', text: "Fechar Impressoras e balcões centrais abertos exceto 14 - DSI"},
           {key: 'userFecho', text: "User Fecho Executar o percurso 7624 Save SYS1OB"},
           {key: 'listaRequisicoesCheques', text: "Lista requisições de cheques do dia 7633. > do que 5, sem comprov. Estornar, 21911"},
-          {key: 'cancelarCartoesClientes', text: "Cancelar Cartões de Clientes – PC CRGD 22"},
-          {key: 'prepararEnviarAsc', text: "Preparar e Enviar ASC"},
-          {key: 'adicionarRegistrosBanka', text: "Adicionar Registos BANKA (CADEIXOS)"},
-          {key: 'fecharServidoresBanka', text: "Fechar Servidores BANKA"},
-          {key: 'alterarInternetBanking', text: "Alterar Internet Banking para download/upload"},
-          {key: 'prepararEnviarCsv', text: "Preparar e Enviar CSV"}
+          {key: 'cancelarCartoesClientes', text: "User Fecho Cancela os cartões dos Clientes Bloqueados - percurso 76857"},
+          {key: 'prepararEnviarAsc', text: "Preparar e enviar ficheiro e ASC (alteração situação cartão) – percurso 4132"},
+          {key: 'adicionarRegistrosBanka', text: "User Fecho Adiciona registos na Banka Remota- percurso 768975"},
+          {key: 'fecharServidoresBanka', text: "User Fecho, fechar servidores Banka remota IN1/IN3/IN4"},
+          {key: 'alterarInternetBanking', text: "User Fecho Alterar Internet Banking para OFFLINE – percurso 49161"},
+          {key: 'prepararEnviarCsv', text: "Preparar e enviar ficheiro CSV (saldos)"}
         ];
         
         // Process before close tasks
@@ -793,8 +793,14 @@ const Taskboard = () => {
           y = checkPageSpace(y, 8);
           drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3[item.key]));
           doc.setFontSize(10);
-          doc.text(item.text, 20, y);
-          y += 6;
+          
+          // Split long text if necessary to ensure it fits width
+          const maxWidth = pageWidth - 25; // 15px left margin + 10px buffer
+          const textLines = doc.splitTextToSize(item.text, maxWidth);
+          doc.text(textLines, 20, y);
+          
+          // Adjust y position based on number of lines
+          y += textLines.length * 5 + 1;
         });
 
         // Real Time Closing Section
@@ -806,52 +812,64 @@ const Taskboard = () => {
         
         // Draw checkbox and include time in the same line
         drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3.fecharRealTime));
-        doc.text(`Fechar Real Time: ${tasks.turno3.fecharRealTimeHora || ""}`, 20, y);
+        doc.text(`Interromper o Real-Time com a SISP: ${tasks.turno3.fecharRealTimeHora || ""}`, 20, y);
         y += 8;
         
         // Next group of tasks
         const middleTasks: {key: keyof Turno3Tasks, text: string}[] = [
-          {key: 'prepararEnviarEtr', text: "Preparar e Enviar ETR"},
-          {key: 'fazerLoggOffAml', text: "Fazer Loggoff na aplicação AML"},
-          {key: 'aplicarFicheiroErroEtr', text: "Aplicar ficheiro de Erro ETR"},
-          {key: 'validarBalcao14', text: "Validar Balcão 14"},
-          {key: 'fecharBalcao14', text: "Fechar Balcão 14"},
-          {key: 'arranqueManual', text: "Arranque manual (Apenas se for Necessário)"}
+          {key: 'prepararEnviarEtr', text: "Preparar e enviar Ficheiro ETR - percurso 7538, consultar conta 18 5488103"},
+          {key: 'fazerLoggOffAml', text: "Fazer Logg-Off do utilizador AML – Percurso 161 (utilizadores ativos)"},
+          {key: 'aplicarFicheiroErroEtr', text: "Aplicar Ficheiro Erro ETR"},
+          {key: 'validarBalcao14', text: "Validar balção 14 7185"},
+          {key: 'fecharBalcao14', text: "Fechar o balcão 14 - DSI e confirmar se todos os balcões encontram-se fechados"},
+          {key: 'arranqueManual', text: "Arranque Manual - Verificar Data da Aplicação – Percurso 431"}
         ];
         
         middleTasks.forEach(item => {
           y = checkPageSpace(y, 8);
           drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3[item.key]));
           doc.setFontSize(10);
-          doc.text(item.text, 20, y);
-          y += 6;
+          
+          // Split long text if necessary
+          const maxWidth = pageWidth - 25;
+          const textLines = doc.splitTextToSize(item.text, maxWidth);
+          doc.text(textLines, 20, y);
+          
+          // Adjust y position based on number of lines
+          y += textLines.length * 5 + 1;
         });
         
         // Inicio Fecho with time
         y = checkPageSpace(y, 8);
         drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3.inicioFecho));
-        doc.text(`Inicio Fecho: ${tasks.turno3.inicioFechoHora || ""}`, 20, y);
+        doc.text(`Início do Fecho: ${tasks.turno3.inicioFechoHora || ""}`, 20, y);
         y += 8;
         
         // More tasks
         const moreTasks: {key: keyof Turno3Tasks, text: string}[] = [
-          {key: 'validarEnvioEmail', text: "Validar Envio de email aos Balcões"},
-          {key: 'controlarTrabalhos', text: "Controlar Trabalhos"},
-          {key: 'saveBmbck', text: "Save BMBCK"},
-          {key: 'abrirServidoresInternet', text: "Abrir Servidores Internet"},
-          {key: 'imprimirCheques', text: "Imprimir Cheques (Percurso 7628)"},
-          {key: 'backupBm', text: "Backup BM/BMBCK"},
-          {key: 'validarFicheiroCcln', text: "Validar Ficheiro CCLN (pesquisa INFSPLE)"},
-          {key: 'aplicarFicheirosCompensacao', text: "Aplicar Ficheiros Compensação"},
-          {key: 'validarSaldoConta', text: "Validar Saldo Conta 106881"}
+          {key: 'validarEnvioEmail', text: "Validar envio email (Notificação Inicio Fecho) a partir do ISeries"},
+          {key: 'controlarTrabalhos', text: "Controlar os trabalhos no QBATCH (opções 5, 10, F10, F5, F18)"},
+          {key: 'saveBmbck', text: "Save BMBCK – Automático"},
+          {key: 'abrirServidoresInternet', text: "Abrir Servidores Internet Banking – Percurso 161–"},
+          {key: 'imprimirCheques', text: "Imprimir Cheques e Diários de Cheques (depois do Save BMBCK)"},
+          {key: 'backupBm', text: "Backup BM – Automático"},
+          {key: 'validarFicheiroCcln', text: "Validar ficheiro CCLN - 76853"},
+          {key: 'aplicarFicheirosCompensacao', text: "Aplicar ficheiros compensação SISP (CCLN, EDST, EORI, ERMB)"},
+          {key: 'validarSaldoConta', text: "Validar saldo da conta 18/5488102:"}
         ];
         
         moreTasks.forEach(item => {
           y = checkPageSpace(y, 8);
           drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3[item.key]));
           doc.setFontSize(10);
-          doc.text(item.text, 20, y);
-          y += 6;
+          
+          // Split long text if necessary
+          const maxWidth = pageWidth - 25;
+          const textLines = doc.splitTextToSize(item.text, maxWidth);
+          doc.text(textLines, 20, y);
+          
+          // Adjust y position based on number of lines
+          y += textLines.length * 5 + 1;
         });
         
         // Saldo conta value
@@ -873,46 +891,52 @@ const Taskboard = () => {
         // Abrir Real Time with time
         y = checkPageSpace(y, 8);
         drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3.abrirRealTime));
-        doc.text(`Abrir Real Time: ${tasks.turno3.abrirRealTimeHora || ""}`, 20, y);
+        doc.text(`Abrir o Real-Time: ${tasks.turno3.abrirRealTimeHora || ""}`, 20, y);
         y += 8;
         
         // Final tasks
         const finalTasks: {key: keyof Turno3Tasks, text: string}[] = [
-          {key: 'verificarTransacoes', text: "Verificar Transações"},
-          {key: 'aplicarFicheiroVisa', text: "Aplicar Ficheiro VISA"},
-          {key: 'cativarCartoes', text: "Cativar Cartões"},
-          {key: 'abrirBcaDireto', text: "Abrir BCA Direto"},
-          {key: 'abrirServidoresBanka', text: "Abrir Servidores BANKA"},
-          {key: 'atualizarTelefonesOffline', text: "Atualizar Telefones OffLine"},
+          {key: 'verificarTransacoes', text: "Verificar a entrada de transações 3100 4681"},
+          {key: 'aplicarFicheiroVisa', text: "Aplicar ficheiro VISA DAF - com o user FECHO 4131"},
+          {key: 'cativarCartoes', text: "Cativar cartões de crédito em incumprimento - com o user FECHO – 7675"},
+          {key: 'abrirBcaDireto', text: "Abrir o BCADireto percurso 49162 – Validar transações"},
+          {key: 'abrirServidoresBanka', text: "User Fecho, Abril servidores Banka remota IN1/IN3/IN4"},
+          {key: 'atualizarTelefonesOffline', text: "Atualiza Telefones tratados no OFFLINE- percurso 768976"},
           {key: 'verificarReplicacao', text: "Verificar Replicação"},
-          {key: 'enviarFicheiroCsv', text: "Enviar Ficheiro CSV"},
-          {key: 'transferirFicheirosLiquidity', text: "Transferir Ficheiros LIQUIDITY"},
-          {key: 'percurso76921', text: "Percurso 76921 – Pedido Emissão"},
-          {key: 'percurso76922', text: "Percurso 76922 - Autorizo"},
-          {key: 'percurso76923', text: "Percurso 76923 – Cancelo"},
+          {key: 'enviarFicheiroCsv', text: "Enviar ficheiro CSV (Comunicação Saldo Véspera)"},
+          {key: 'transferirFicheirosLiquidity', text: "Transferência ficheiros SSM Liquidity Exercices (Confirmação)"},
+          {key: 'percurso76921', text: "Fazer o percurso 76921 – Limpeza Ficheiro BRLOGED (Dia 1 de cada Mês)"},
+          {key: 'percurso76922', text: "Fazer o percurso 76922 - Reorganiza BRLOGED (Dia 2 de cada Mês)"},
+          {key: 'percurso76923', text: "Fazer o percurso 76923 - Reorganiza GBMVCO (Dia 3 de cada Mês)"},
           {key: 'abrirServidoresTesteProducao', text: "Abrir Servidores Teste e Produção"},
-          {key: 'impressaoCheques', text: "Impressão de cheques"},
-          {key: 'arquivarCheques', text: "Arquivar Cheques para enviar aos balcões"}
+          {key: 'impressaoCheques', text: "Impressão Cheques e respectivos Diários (verificação dos mesmos)"},
+          {key: 'arquivarCheques', text: "Arquivar Cheques e respectivos Diários"}
         ];
         
         finalTasks.forEach(item => {
           y = checkPageSpace(y, 8);
           drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3[item.key]));
           doc.setFontSize(10);
-          doc.text(item.text, 20, y);
-          y += 6;
+          
+          // Split long text if necessary
+          const maxWidth = pageWidth - 25;
+          const textLines = doc.splitTextToSize(item.text, maxWidth);
+          doc.text(textLines, 20, y);
+          
+          // Adjust y position based on number of lines
+          y += textLines.length * 5 + 1;
         });
         
         // Término Fecho with time
         y = checkPageSpace(y, 8);
         drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3.terminoFecho));
-        doc.text(`Término Fecho: ${tasks.turno3.terminoFechoHora || ""}`, 20, y);
+        doc.text(`Término do Fecho: ${tasks.turno3.terminoFechoHora || ""}`, 20, y);
         y += 8;
         
         // Add the missing transferirFicheirosDsi task
         y = checkPageSpace(y, 8);
         drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3.transferirFicheirosDsi));
-        doc.text("Transferir Ficheiros DSI (BCV/DGCI/etc...)", 20, y);
+        doc.text("Transferência ficheiros SSM Liquidity ExercicesDSI-CI/2023", 20, y);
         y += 8;
         
         // Observations
