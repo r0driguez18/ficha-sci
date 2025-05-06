@@ -464,9 +464,15 @@ const Taskboard = () => {
       doc.text(text, x, y);
     };
     
-    const drawCheckbox = (x: number, y: number, checked: boolean) => {
+    // Helper function to ensure we only pass boolean values to drawCheckbox
+    const ensureBoolean = (value: boolean | string): boolean => {
+      return value === 'indeterminate' ? false : Boolean(value);
+    };
+    
+    const drawCheckbox = (x: number, y: number, checked: boolean | string) => {
+      const isChecked = ensureBoolean(checked);
       doc.rect(x, y, 3, 3);
-      if (checked) {
+      if (isChecked) {
         doc.line(x, y, x + 3, y + 3);
         doc.line(x + 3, y, x, y + 3);
       }
@@ -527,7 +533,7 @@ const Taskboard = () => {
         // Processar tarefas básicas
         taskList.forEach(item => {
           y = checkPageSpace(y, 8);
-          drawCheckbox(15, y - 3, tasks.turno1[item.key]);
+          drawCheckbox(15, y - 3, ensureBoolean(tasks.turno1[item.key]));
           doc.setFontSize(10);
           doc.text(item.text, 20, y);
           y += 6;
@@ -535,7 +541,7 @@ const Taskboard = () => {
         
         // Enviar grupo
         y = checkPageSpace(y, 8);
-        drawCheckbox(15, y - 3, tasks.turno1.enviar);
+        drawCheckbox(15, y - 3, ensureBoolean(tasks.turno1.enviar));
         doc.setFontSize(10);
         doc.text("Enviar:", 20, y);
         
@@ -552,7 +558,7 @@ const Taskboard = () => {
         
         enviarSubItems.forEach(item => {
           const itemKey = item.key as keyof Turno1Tasks;
-          drawCheckbox(xOffset, y - 3, tasks.turno1[itemKey]);
+          drawCheckbox(xOffset, y - 3, ensureBoolean(tasks.turno1[itemKey]));
           doc.text(item.text, xOffset + 5, y);
           xOffset += doc.getTextWidth(item.text) + 15;
         });
@@ -561,14 +567,14 @@ const Taskboard = () => {
         
         // Verificar débitos
         y = checkPageSpace(y, 8);
-        drawCheckbox(15, y - 3, tasks.turno1.verificarDebitos);
+        drawCheckbox(15, y - 3, ensureBoolean(tasks.turno1.verificarDebitos));
         doc.setFontSize(10);
         doc.text("Verificar Débitos/Créditos aplicados no dia Anterior", 20, y);
         y += 8;
         
         // Backups Diferidos grupo
         y = checkPageSpace(y, 8);
-        drawCheckbox(15, y - 3, tasks.turno1.backupsDiferidos);
+        drawCheckbox(15, y - 3, ensureBoolean(tasks.turno1.backupsDiferidos));
         doc.setFontSize(10);
         doc.text("Backups Diferidos:", 20, y);
         y += 8;
@@ -585,32 +591,32 @@ const Taskboard = () => {
         
         backupItems.forEach(item => {
           y = checkPageSpace(y, 8);
-          drawCheckbox(25, y - 3, tasks.turno1[item.key as keyof Turno1Tasks]);
+          drawCheckbox(25, y - 3, ensureBoolean(tasks.turno1[item.key as keyof Turno1Tasks]));
           doc.text(item.text, 30, y);
           y += 6;
         });
         
         // Processar TEF
         y = checkPageSpace(y, 8);
-        drawCheckbox(15, y - 3, tasks.turno1.processarTef);
+        drawCheckbox(15, y - 3, ensureBoolean(tasks.turno1.processarTef));
         doc.text("Processar ficheiros TEF - ERR/RTR/RCT", 20, y);
         y += 8;
         
         // Processar Telecomp
         y = checkPageSpace(y, 8);
-        drawCheckbox(15, y - 3, tasks.turno1.processarTelecomp);
+        drawCheckbox(15, y - 3, ensureBoolean(tasks.turno1.processarTelecomp));
         doc.text("Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR", 20, y);
         y += 8;
         
         // Enviar 2º Ficheiro ETR
         y = checkPageSpace(y, 8);
-        drawCheckbox(15, y - 3, tasks.turno1.enviarSegundoEtr);
+        drawCheckbox(15, y - 3, ensureBoolean(tasks.turno1.enviarSegundoEtr));
         doc.text("Enviar 2º Ficheiro ETR (13h:30)", 20, y);
         y += 8;
         
         // Enviar Ficheiro COM grupo
         y = checkPageSpace(y, 8);
-        drawCheckbox(15, y - 3, tasks.turno1.enviarFicheiroCom);
+        drawCheckbox(15, y - 3, ensureBoolean(tasks.turno1.enviarFicheiroCom));
         doc.text("Enviar Ficheiro COM, dias:", 20, y);
         y += 6;
         
@@ -624,7 +630,7 @@ const Taskboard = () => {
         ];
         
         comDaysItems.forEach(item => {
-          drawCheckbox(xOffset, y - 3, tasks.turno1[item.key as keyof Turno1Tasks]);
+          drawCheckbox(xOffset, y - 3, ensureBoolean(tasks.turno1[item.key as keyof Turno1Tasks]));
           doc.text(item.text, xOffset + 5, y);
           xOffset += 20;
         });
@@ -633,7 +639,7 @@ const Taskboard = () => {
         
         // Atualizar Central Risco
         y = checkPageSpace(y, 8);
-        drawCheckbox(15, y - 3, tasks.turno1.atualizarCentralRisco);
+        drawCheckbox(15, y - 3, ensureBoolean(tasks.turno1.atualizarCentralRisco));
         doc.text("Atualizar Nº Central de Risco (Todas as Sextas-Feiras)", 20, y);
         y += 10;
         
@@ -665,7 +671,7 @@ const Taskboard = () => {
         // Processar tarefas básicas
         taskList.forEach(item => {
           y = checkPageSpace(y, 8);
-          drawCheckbox(15, y - 3, tasks.turno2[item.key]);
+          drawCheckbox(15, y - 3, ensureBoolean(tasks.turno2[item.key]));
           doc.setFontSize(10);
           doc.text(item.text, 20, y);
           y += 6;
@@ -673,7 +679,7 @@ const Taskboard = () => {
         
         // Confirmar Atualização SISP
         y = checkPageSpace(y, 8);
-        drawCheckbox(15, y - 3, tasks.turno2.confirmarAtualizacaoSisp);
+        drawCheckbox(15, y - 3, ensureBoolean(tasks.turno2.confirmarAtualizacaoSisp));
         doc.text("Confirmar atualização SISP", 20, y);
         y += 8;
         
@@ -683,24 +689,24 @@ const Taskboard = () => {
         doc.text("Ficheiros INPS:", 20, y);
         
         let xOffset = 55;
-        drawCheckbox(xOffset, y - 3, tasks.turno2.inpsProcessar);
+        drawCheckbox(xOffset, y - 3, ensureBoolean(tasks.turno2.inpsProcessar));
         doc.text("Processar", xOffset + 5, y);
         
         xOffset += 35;
-        drawCheckbox(xOffset, y - 3, tasks.turno2.inpsEnviarRetorno);
+        drawCheckbox(xOffset, y - 3, ensureBoolean(tasks.turno2.inpsEnviarRetorno));
         doc.text("Enviar Retorno", xOffset + 5, y);
         
         y += 8;
         
         // Processar TEF
         y = checkPageSpace(y, 8);
-        drawCheckbox(15, y - 3, tasks.turno2.processarTef);
+        drawCheckbox(15, y - 3, ensureBoolean(tasks.turno2.processarTef));
         doc.text("Processar ficheiros TEF - ERR/RTR/RCT", 20, y);
         y += 8;
         
         // Processar Telecomp
         y = checkPageSpace(y, 8);
-        drawCheckbox(15, y - 3, tasks.turno2.processarTelecomp);
+        drawCheckbox(15, y - 3, ensureBoolean(tasks.turno2.processarTelecomp));
         doc.text("Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR", 20, y);
         y += 8;
         
@@ -710,30 +716,30 @@ const Taskboard = () => {
         doc.text("Enviar Ficheiro:", 20, y);
         
         xOffset = 55;
-        drawCheckbox(xOffset, y - 3, tasks.turno2.enviarEci);
+        drawCheckbox(xOffset, y - 3, ensureBoolean(tasks.turno2.enviarEci));
         doc.text("ECI", xOffset + 5, y);
         
         xOffset += 20;
-        drawCheckbox(xOffset, y - 3, tasks.turno2.enviarEdv);
+        drawCheckbox(xOffset, y - 3, ensureBoolean(tasks.turno2.enviarEdv));
         doc.text("EDV", xOffset + 5, y);
         
         y += 8;
         
         // Validar Saco
         y = checkPageSpace(y, 8);
-        drawCheckbox(15, y - 3, tasks.turno2.validarSaco);
+        drawCheckbox(15, y - 3, ensureBoolean(tasks.turno2.validarSaco));
         doc.text("Validar Saco 1935", 20, y);
         y += 8;
         
         // Verificar Pendentes
         y = checkPageSpace(y, 8);
-        drawCheckbox(15, y - 3, tasks.turno2.verificarPendentes);
+        drawCheckbox(15, y - 3, ensureBoolean(tasks.turno2.verificarPendentes));
         doc.text("Verificar Pendentes dos Balcões", 20, y);
         y += 8;
         
         // Fechar Balcões
         y = checkPageSpace(y, 8);
-        drawCheckbox(15, y - 3, tasks.turno2.fecharBalcoes);
+        drawCheckbox(15, y - 3, ensureBoolean(tasks.turno2.fecharBalcoes));
         doc.text("Fechar os Balcoes Centrais", 20, y);
         y += 10;
         
@@ -777,7 +783,7 @@ const Taskboard = () => {
         
         beforeCloseTasks.forEach(task => {
           y = checkPageSpace(y, 8);
-          drawCheckbox(15, y - 3, tasks.turno3[task.key]);
+          drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3[task.key]));
           doc.setFontSize(10);
           doc.text(task.text, 20, y);
           y += 6;
@@ -802,7 +808,7 @@ const Taskboard = () => {
         
         moreTasks.forEach(task => {
           y = checkPageSpace(y, 8);
-          drawCheckbox(15, y - 3, tasks.turno3[task.key]);
+          drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3[task.key]));
           doc.setFontSize(10);
           doc.text(task.text, 20, y);
           y += 6;
@@ -826,7 +832,7 @@ const Taskboard = () => {
         
         finalBeforeTasks.forEach(task => {
           y = checkPageSpace(y, 8);
-          drawCheckbox(15, y - 3, tasks.turno3[task.key]);
+          drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3[task.key]));
           doc.setFontSize(10);
           doc.text(task.text, 20, y);
           y += 6;
@@ -847,7 +853,7 @@ const Taskboard = () => {
         
         afterCloseTasks.forEach(task => {
           y = checkPageSpace(y, 8);
-          drawCheckbox(15, y - 3, tasks.turno3[task.key]);
+          drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3[task.key]));
           doc.setFontSize(10);
           doc.text(task.text, 20, y);
           y += 6;
@@ -860,11 +866,11 @@ const Taskboard = () => {
             }
             
             let xOffset = 30;
-            drawCheckbox(xOffset, y - 3, tasks.turno3.saldoNegativo);
+            drawCheckbox(xOffset, y - 3, ensureBoolean(tasks.turno3.saldoNegativo));
             doc.text("Negativo", xOffset + 5, y);
             
             xOffset += 40;
-            drawCheckbox(xOffset, y - 3, tasks.turno3.saldoPositivo);
+            drawCheckbox(xOffset, y - 3, ensureBoolean(tasks.turno3.saldoPositivo));
             doc.text("Positivo", xOffset + 5, y);
             y += 6;
           }
@@ -886,7 +892,7 @@ const Taskboard = () => {
         
         moreAfterTasks.forEach(task => {
           y = checkPageSpace(y, 8);
-          drawCheckbox(15, y - 3, tasks.turno3[task.key]);
+          drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3[task.key]));
           doc.setFontSize(10);
           doc.text(task.text, 20, y);
           y += 6;
@@ -912,7 +918,7 @@ const Taskboard = () => {
         
         finalAfterTasks.forEach(task => {
           y = checkPageSpace(y, 8);
-          drawCheckbox(15, y - 3, tasks.turno3[task.key]);
+          drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3[task.key]));
           doc.setFontSize(10);
           doc.text(task.text, 20, y);
           y += 6;
