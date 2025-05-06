@@ -72,6 +72,15 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
         <Label htmlFor="verificarDebitos2" className="cursor-pointer">Verificar Débitos/Créditos Aplicados no Turno Anterior</Label>
       </div>
 
+      <div className="flex items-center space-x-2">
+        <Checkbox 
+          id="confirmarAtualizacaoSisp"
+          checked={tasks.confirmarAtualizacaoSisp}
+          onCheckedChange={(checked) => handleCheckboxChange('confirmarAtualizacaoSisp', checked)}
+        />
+        <Label htmlFor="confirmarAtualizacaoSisp" className="cursor-pointer">Confirmar atualização SISP</Label>
+      </div>
+
       <div className="border rounded-md p-3 bg-gray-50 dark:bg-gray-800">
         <h4 className="font-medium mb-2">Ficheiros INPS:</h4>
         <div className="ml-4 space-y-2">
@@ -132,6 +141,15 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
             <Label htmlFor="enviarEdv" className="cursor-pointer">EDV</Label>
           </div>
         </div>
+      </div>
+
+      <div className="flex items-center space-x-2">
+        <Checkbox 
+          id="confirmarAtualizacaoFicheiros"
+          checked={tasks.confirmarAtualizacaoFicheiros}
+          onCheckedChange={(checked) => handleCheckboxChange('confirmarAtualizacaoFicheiros', checked)}
+        />
+        <Label htmlFor="confirmarAtualizacaoFicheiros" className="cursor-pointer">Confirmar Atualização Ficheiros Enviados à SISP (ECI * ENV/IMA)</Label>
       </div>
 
       <div className="flex items-center space-x-2">

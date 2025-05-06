@@ -1,4 +1,3 @@
-
 export interface Turno1Tasks {
   datacenter: boolean;
   sistemas: boolean;
@@ -13,6 +12,8 @@ export interface Turno1Tasks {
   ben: boolean;
   bcta: boolean;
   verificarDebitos: boolean;
+  enviarReportes: boolean;
+  verificarRecepcaoSisp: boolean;
   backupsDiferidos: boolean;
   processarTef: boolean;
   processarTelecomp: boolean;
@@ -44,6 +45,7 @@ export interface Turno2Tasks {
   processarTelecomp: boolean;
   enviarEci: boolean;
   enviarEdv: boolean;
+  confirmarAtualizacaoFicheiros: boolean;
   validarSaco: boolean;
   verificarPendentes: boolean;
   fecharBalcoes: boolean;

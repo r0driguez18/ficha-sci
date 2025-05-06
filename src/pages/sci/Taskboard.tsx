@@ -80,9 +80,11 @@ const Taskboard = () => {
       ben: false,
       bcta: false,
       verificarDebitos: false,
+      enviarReportes: false,
+      verificarRecepcaoSisp: false,
+      backupsDiferidos: false,
       processarTef: false,
       processarTelecomp: false,
-      backupsDiferidos: false,
       enviarSegundoEtr: false,
       enviarFicheiroCom: false,
       dia01: false,
@@ -110,6 +112,7 @@ const Taskboard = () => {
       processarTelecomp: false,
       enviarEci: false,
       enviarEdv: false,
+      confirmarAtualizacaoFicheiros: false,
       validarSaco: false,
       verificarPendentes: false,
       fecharBalcoes: false
@@ -347,9 +350,11 @@ const Taskboard = () => {
         ben: false,
         bcta: false,
         verificarDebitos: false,
+        enviarReportes: false,
+        verificarRecepcaoSisp: false,
+        backupsDiferidos: false,
         processarTef: false,
         processarTelecomp: false,
-        backupsDiferidos: false,
         enviarSegundoEtr: false,
         enviarFicheiroCom: false,
         dia01: false,
@@ -377,6 +382,7 @@ const Taskboard = () => {
         processarTelecomp: false,
         enviarEci: false,
         enviarEdv: false,
+        confirmarAtualizacaoFicheiros: false,
         validarSaco: false,
         verificarPendentes: false,
         fecharBalcoes: false
@@ -531,10 +537,13 @@ const Taskboard = () => {
           {key: 'servicos', text: "Verificar Serviços: Vinti24/BCADireto/Replicação/Servidor MIA"},
           {key: 'abrirServidores', text: "Abrir Servidores (SWIFT, OPDIF, TRMSG, CDGOV, AML)"},
           {key: 'percurso76931', text: "Percurso 76931 - Atualiza os alertas nos clientes com dados desatualizados"},
+          {key: 'enviar', text: "Enviar:"},
           {key: 'verificarDebitos', text: "Verificar Débitos/Créditos aplicados no dia Anterior"},
+          {key: 'enviarReportes', text: "Enviar Reportes (INPS, Visto USA, BCV, IMPC)"},
+          {key: 'verificarRecepcaoSisp', text: "Verificar Recep. dos Ficheiros Enviados à SISP: ASC CSV ECI"},
+          {key: 'backupsDiferidos', text: "Backups Diferidos"},
           {key: 'processarTef', text: "Processar ficheiros TEF - ERR/RTR/RCT"},
           {key: 'processarTelecomp', text: "Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR"},
-          {key: 'backupsDiferidos', text: "Backups Diferidos"},
           {key: 'enviarSegundoEtr', text: "Enviar 2º Ficheiro ETR (13h:30)"},
           {key: 'enviarFicheiroCom', text: "Enviar Ficheiro COM, dias específicos"},
           {key: 'atualizarCentralRisco', text: "Atualizar Nº Central de Risco (Todas as Sextas-Feiras)"}
@@ -543,9 +552,35 @@ const Taskboard = () => {
         // Processar tarefas básicas
         taskList.forEach(item => {
           y = checkPageSpace(y, 8);
+          
           drawCheckbox(15, y - 3, ensureBoolean(tasks.turno1[item.key]));
           doc.setFontSize(10);
-          doc.text(item.text, 20, y);
+          
+          // Handle the "Enviar:" special case
+          if (item.key === 'enviar') {
+            doc.text(item.text, 20, y);
+            
+            // Process sub-items inline for "Enviar"
+            const enviarSubItems = [
+              { key: 'etr', text: 'ETR' },
+              { key: 'impostos', text: 'Impostos' },
+              { key: 'inpsExtrato', text: 'INPS/Extrato' },
+              { key: 'vistoUsa', text: 'Visto USA' },
+              { key: 'ben', text: 'BEN' },
+              { key: 'bcta', text: 'BCTA' }
+            ];
+            
+            let xOffset = 35;
+            enviarSubItems.forEach(subItem => {
+              const itemKey = subItem.key as keyof Turno1Tasks;
+              drawCheckbox(xOffset, y - 3, ensureBoolean(tasks.turno1[itemKey]));
+              doc.text(subItem.text, xOffset + 5, y);
+              xOffset += doc.getTextWidth(subItem.text) + 15;
+            });
+          } else {
+            doc.text(item.text, 20, y);
+          }
+          
           y += 6;
           
           // Adicionar sub-itens para backupsDiferidos
@@ -589,32 +624,6 @@ const Taskboard = () => {
           }
         });
         
-        // Enviar grupo
-        y = checkPageSpace(y, 8);
-        drawCheckbox(15, y - 3, ensureBoolean(tasks.turno1.enviar));
-        doc.setFontSize(10);
-        doc.text("Enviar:", 20, y);
-        
-        // Sub-itens do grupo "Enviar"
-        let xOffset = 35;
-        const enviarSubItems = [
-          { key: 'etr', text: 'ETR' },
-          { key: 'impostos', text: 'Impostos' },
-          { key: 'inpsExtrato', text: 'INPS/Extrato' },
-          { key: 'vistoUsa', text: 'Visto USA' },
-          { key: 'ben', text: 'BEN' },
-          { key: 'bcta', text: 'BCTA' }
-        ];
-        
-        enviarSubItems.forEach(item => {
-          const itemKey = item.key as keyof Turno1Tasks;
-          drawCheckbox(xOffset, y - 3, ensureBoolean(tasks.turno1[itemKey]));
-          doc.text(item.text, xOffset + 5, y);
-          xOffset += doc.getTextWidth(item.text) + 15;
-        });
-        
-        y += 8;
-        
         // Observações
         if (turn.observations) {
           y = checkPageSpace(y, 20);
@@ -641,6 +650,7 @@ const Taskboard = () => {
           {key: 'confirmarAtualizacaoSisp', text: "Confirmar atualização SISP"},
           {key: 'processarTef', text: "Processar ficheiros TEF - ERR/RTR/RCT"},
           {key: 'processarTelecomp', text: "Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR"},
+          {key: 'confirmarAtualizacaoFicheiros', text: "Confirmar Atualização Ficheiros Enviados à SISP (ECI * ENV/IMA)"},
           {key: 'validarSaco', text: "Validar Saco 1935"},
           {key: 'verificarPendentes', text: "Verificar Pendentes dos Balcões"},
           {key: 'fecharBalcoes', text: "Fechar os Balcoes Centrais"}
@@ -729,7 +739,7 @@ const Taskboard = () => {
           doc.setFontSize(10);
           
           let taskText = task.text;
-          if (task.hasTime && tasks.turno3[`${task.key}Hora`]) {
+          if (task.hasTime && tasks.turno3[`${task.key}Hora` as keyof Turno3Tasks]) {
             taskText += ` ${tasks.turno3[`${task.key}Hora` as keyof Turno3Tasks]}`;
           }
           
