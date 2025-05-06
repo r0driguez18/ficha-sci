@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow as UITableRow } from '@/components/ui/table';
-import { PlusCircle, Trash2, Save, FileDown, RotateCcw, Calendar as CalendarIcon } from 'lucide-react';
+import { PlusCircle, Trash2, Save, FileDown, RotateCcw } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { jsPDF } from 'jspdf';
@@ -670,6 +670,7 @@ const Taskboard = () => {
           {key: 'servicos', text: "Verificar Serviços: Vinti24/BCADireto/Replicação/Servidor MIA"},
           {key: 'verificarReportes', text: "Verificar envio de reportes(INPS, VISTO USA, BCV, IMPC)"},
           {key: 'verificarDebitos', text: "Verificar Débitos/Créditos Aplicados no Turno Anterior"},
+          {key: 'confirmarAtualizacaoSisp', text: "Confirmar Atualização SISP"},
           {key: 'processarTef', text: "Processar ficheiros TEF - ERR/RTR/RCT"},
           {key: 'processarTelecomp', text: "Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR"},
           {key: 'confirmarAtualizacaoFicheiros', text: "Confirmar Atualização Ficheiros Enviados à SISP (ECI * ENV/IMA)"},
@@ -733,22 +734,29 @@ const Taskboard = () => {
       
       // Process tasks for Turno 3
       if (turnKey === 'turno3') {
+        // Section: Antes do Fecho
         y = checkPageSpace(y, 8);
         doc.setFont("helvetica", "bold");
         doc.text("Antes do Fecho", 15, y);
         y += 8;
         doc.setFont("helvetica", "normal");
         
-        const beforeCloseTasks: {key: keyof Turno3Tasks, text: string, hasTime?: boolean}[] = [
+        const beforeCloseTasks: {key: keyof Turno3Tasks, text: string}[] = [
           {key: 'verificarDebitos', text: "Verificar Débitos/Créditos Aplicados no Turno Anterior"},
           {key: 'tratarTapes', text: "Tratar e trocar Tapes BM, BMBCK – percurso 7622"},
           {key: 'fecharServidores', text: "Fechar Servidores Teste e Produção"},
           {key: 'fecharImpressoras', text: "Fechar Impressoras e balcões centrais abertos exceto 14 - DSI"},
           {key: 'userFecho', text: "User Fecho Executar o percurso 7624 Save SYS1OB"},
-          {key: 'listaRequisicoesCheques', text: "Lista requisições de cheques do dia 7633. > do que 5, sem comprov. Estornar, 21911"}
+          {key: 'listaRequisicoesCheques', text: "Lista requisições de cheques do dia 7633. > do que 5, sem comprov. Estornar, 21911"},
+          {key: 'cancelarCartoesClientes', text: "Cancelar Cartões de Clientes – PC CRGD 22"},
+          {key: 'prepararEnviarAsc', text: "Preparar e Enviar ASC"},
+          {key: 'adicionarRegistrosBanka', text: "Adicionar Registos BANKA (CADEIXOS)"},
+          {key: 'fecharServidoresBanka', text: "Fechar Servidores BANKA"},
+          {key: 'alterarInternetBanking', text: "Alterar Internet Banking para download/upload"},
+          {key: 'prepararEnviarCsv', text: "Preparar e Enviar CSV"}
         ];
         
-        // Process basic tasks
+        // Process before close tasks
         beforeCloseTasks.forEach(item => {
           y = checkPageSpace(y, 8);
           drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3[item.key]));
@@ -756,6 +764,118 @@ const Taskboard = () => {
           doc.text(item.text, 20, y);
           y += 6;
         });
+
+        // Real Time Closing Section
+        y = checkPageSpace(y, 12);
+        doc.setFont("helvetica", "bold");
+        doc.text("Fecho Real Time", 15, y);
+        y += 8;
+        doc.setFont("helvetica", "normal");
+        
+        drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3.fecharRealTime));
+        doc.text(`Fechar Real Time: ${tasks.turno3.fecharRealTimeHora || ''}`, 20, y);
+        y += 8;
+        
+        // Next group of tasks
+        const middleTasks: {key: keyof Turno3Tasks, text: string}[] = [
+          {key: 'prepararEnviarEtr', text: "Preparar e Enviar ETR"},
+          {key: 'fazerLoggOffAml', text: "Fazer Loggoff na aplicação AML"},
+          {key: 'aplicarFicheiroErroEtr', text: "Aplicar ficheiro de Erro ETR"},
+          {key: 'validarBalcao14', text: "Validar Balcão 14"},
+          {key: 'fecharBalcao14', text: "Fechar Balcão 14"},
+          {key: 'arranqueManual', text: "Arranque manual (Apenas se for Necessário)"}
+        ];
+        
+        middleTasks.forEach(item => {
+          y = checkPageSpace(y, 8);
+          drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3[item.key]));
+          doc.setFontSize(10);
+          doc.text(item.text, 20, y);
+          y += 6;
+        });
+        
+        // Inicio Fecho with time
+        y = checkPageSpace(y, 8);
+        drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3.inicioFecho));
+        doc.text(`Inicio Fecho: ${tasks.turno3.inicioFechoHora || ''}`, 20, y);
+        y += 8;
+        
+        // More tasks
+        const moreTasks: {key: keyof Turno3Tasks, text: string}[] = [
+          {key: 'validarEnvioEmail', text: "Validar Envio de email aos Balcões"},
+          {key: 'controlarTrabalhos', text: "Controlar Trabalhos"},
+          {key: 'saveBmbck', text: "Save BMBCK"},
+          {key: 'abrirServidoresInternet', text: "Abrir Servidores Internet"},
+          {key: 'imprimirCheques', text: "Imprimir Cheques (Percurso 7628)"},
+          {key: 'backupBm', text: "Backup BM/BMBCK"},
+          {key: 'validarFicheiroCcln', text: "Validar Ficheiro CCLN (pesquisa INFSPLE)"},
+          {key: 'aplicarFicheirosCompensacao', text: "Aplicar Ficheiros Compensação"},
+          {key: 'validarSaldoConta', text: "Validar Saldo Conta 106881"}
+        ];
+        
+        moreTasks.forEach(item => {
+          y = checkPageSpace(y, 8);
+          drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3[item.key]));
+          doc.setFontSize(10);
+          doc.text(item.text, 20, y);
+          y += 6;
+        });
+        
+        // Saldo conta value
+        if (tasks.turno3.validarSaldoConta) {
+          y = checkPageSpace(y, 8);
+          doc.text(`Valor: ${tasks.turno3.saldoContaValor || ''}`, 30, y);
+          y += 6;
+          
+          // Checkboxes for saldo type
+          y = checkPageSpace(y, 8);
+          drawCheckbox(30, y - 3, ensureBoolean(tasks.turno3.saldoPositivo));
+          doc.text("Positivo", 35, y);
+          
+          drawCheckbox(70, y - 3, ensureBoolean(tasks.turno3.saldoNegativo));
+          doc.text("Negativo", 75, y);
+          y += 8;
+        }
+        
+        // Abrir Real Time with time
+        y = checkPageSpace(y, 8);
+        drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3.abrirRealTime));
+        doc.text(`Abrir Real Time: ${tasks.turno3.abrirRealTimeHora || ''}`, 20, y);
+        y += 8;
+        
+        // Final tasks
+        const finalTasks: {key: keyof Turno3Tasks, text: string}[] = [
+          {key: 'verificarTransacoes', text: "Verificar Transações"},
+          {key: 'aplicarFicheiroVisa', text: "Aplicar Ficheiro VISA"},
+          {key: 'cativarCartoes', text: "Cativar Cartões"},
+          {key: 'abrirBcaDireto', text: "Abrir BCA Direto"},
+          {key: 'abrirServidoresBanka', text: "Abrir Servidores BANKA"},
+          {key: 'atualizarTelefonesOffline', text: "Atualizar Telefones OffLine"},
+          {key: 'verificarReplicacao', text: "Verificar Replicação"},
+          {key: 'enviarFicheiroCsv', text: "Enviar Ficheiro CSV"},
+          {key: 'transferirFicheirosLiquidity', text: "Transferir Ficheiros LIQUIDITY"},
+          {key: 'percurso76921', text: "Percurso 76921 – Pedido Emissão"},
+          {key: 'percurso76922', text: "Percurso 76922 - Autorizo"},
+          {key: 'percurso76923', text: "Percurso 76923 – Cancelo"},
+          {key: 'abrirServidoresTesteProducao', text: "Abrir Servidores Teste e Produção"},
+          {key: 'impressaoCheques', text: "Impressão de cheques"},
+          {key: 'arquivarCheques', text: "Arquivar Cheques para enviar aos balcões"},
+          {key: 'transferirFicheirosDsi', text: "Transferir Ficheiros DSI (BCV/DGCI/etc...)"}
+        ];
+        
+        finalTasks.forEach(item => {
+          y = checkPageSpace(y, 8);
+          drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3[item.key]));
+          doc.setFontSize(10);
+          doc.text(item.text, 20, y);
+          y += 6;
+        });
+        
+        // Término Fecho with time
+        y = checkPageSpace(y, 8);
+        drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3.terminoFecho));
+        doc.text(`Término Fecho: ${tasks.turno3.terminoFechoHora || ''}`, 20, y);
+        y += 8;
         
         // Observations
         if (turn.observations) {
