@@ -35,6 +35,7 @@ export const renderTurno1Tasks = (
     
     drawCheckbox(doc, 15, y - 3, ensureBoolean(tasks[item.key as keyof typeof tasks]));
     doc.setFontSize(10);
+    doc.setFont("helvetica", "normal"); // Ensure normal font weight, not bold
     
     // Handle the "Enviar:" special case
     if (item.key === 'enviar') {
@@ -107,6 +108,7 @@ export const renderTurno1Tasks = (
       backupItems.forEach(item => {
         y = checkPageSpace(doc, y, 8);
         drawCheckbox(doc, 25, y - 3, ensureBoolean(tasks[item.key as keyof typeof tasks]));
+        doc.setFont("helvetica", "normal"); // Ensure normal font weight
         doc.text(item.text, 30, y);
         y += 6;
       });
@@ -115,6 +117,7 @@ export const renderTurno1Tasks = (
     // Add sub-items for enviarFicheiroCom
     if (item.key === 'enviarFicheiroCom') {
       y = checkPageSpace(doc, y, 8);
+      doc.setFont("helvetica", "normal"); // Ensure normal font weight
       doc.text("Dias:", 25, y);
       
       let xOffset = 40;

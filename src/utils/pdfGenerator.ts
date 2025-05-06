@@ -28,7 +28,7 @@ export const generateTaskboardPDF = (
   y += 15;
   
   doc.setFontSize(12);
-  doc.setFont("helvetica", "normal");
+  doc.setFont("helvetica", "normal"); // Set font to normal, not bold
   doc.text("Processamentos Diários", 15, y);
   doc.text(`Data: ${date}`, doc.internal.pageSize.width - 50, y);
   y += 10;
@@ -46,7 +46,7 @@ export const generateTaskboardPDF = (
       y += 15;
     }
     
-    doc.setFont("helvetica", "bold");
+    doc.setFont("helvetica", "normal"); // Set font to normal, not bold - for all turn headers
     doc.setFontSize(12);
     doc.text(`${turnName}:`, 15, y);
     doc.setFont("helvetica", "normal");
