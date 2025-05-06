@@ -150,7 +150,38 @@ export const Turno1TasksComponent: React.FC<Turno1TasksProps> = ({
           checked={tasks.verificarRecepcaoSisp}
           onCheckedChange={(checked) => onTaskChange('verificarRecepcaoSisp', !!checked)}
         />
-        <Label htmlFor="verificarRecepcaoSisp" className="cursor-pointer">Verificar Recep. dos Ficheiros Enviados à SISP: ASC CSV ECI</Label>
+        <Label htmlFor="verificarRecepcaoSisp" className="cursor-pointer">
+          Verificar Recep. dos Ficheiros Enviados à SISP: 
+          <span className="inline-flex items-center ml-2 space-x-4">
+            <span className="flex items-center">
+              <Checkbox 
+                id="verificarAsc"
+                checked={tasks.verificarAsc}
+                onCheckedChange={(checked) => onTaskChange('verificarAsc', !!checked)}
+                className="mr-1"
+              />
+              <Label htmlFor="verificarAsc" className="cursor-pointer">ASC</Label>
+            </span>
+            <span className="flex items-center">
+              <Checkbox 
+                id="verificarCsv"
+                checked={tasks.verificarCsv}
+                onCheckedChange={(checked) => onTaskChange('verificarCsv', !!checked)}
+                className="mr-1"
+              />
+              <Label htmlFor="verificarCsv" className="cursor-pointer">CSV</Label>
+            </span>
+            <span className="flex items-center">
+              <Checkbox 
+                id="verificarEci"
+                checked={tasks.verificarEci}
+                onCheckedChange={(checked) => onTaskChange('verificarEci', !!checked)}
+                className="mr-1"
+              />
+              <Label htmlFor="verificarEci" className="cursor-pointer">ECI</Label>
+            </span>
+          </span>
+        </Label>
       </div>
 
       <div className="border rounded-md p-3 bg-gray-50 dark:bg-gray-800">
