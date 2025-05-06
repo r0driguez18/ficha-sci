@@ -523,6 +523,11 @@ const Taskboard = () => {
       const turnName = turnNames[index];
       const turn = turnData[turnKey];
       
+      // Add extra spacing between turns
+      if (index > 0) {
+        y += 10;
+      }
+      
       y = checkPageSpace(y, 30);
       
       doc.setFont("helvetica", "bold");
@@ -658,10 +663,15 @@ const Taskboard = () => {
           y += 6;
           doc.setFont("helvetica", "normal");
           
-          // Break long text into multiple lines
-          const splitText = doc.splitTextToSize(turn.observations, pageWidth - 30);
-          doc.text(splitText, 15, y);
-          y += splitText.length * 5 + 5;
+          // Draw a rectangle for observations
+          const obsWidth = pageWidth - 30;
+          const splitText = doc.splitTextToSize(turn.observations, obsWidth - 10);
+          const obsHeight = splitText.length * 5 + 10;
+          doc.rect(15, y - 4, obsWidth, obsHeight);
+          
+          // Add the text inside the rectangle with a margin
+          doc.text(splitText, 20, y);
+          y += obsHeight + 5;
         }
       }
       
@@ -758,9 +768,15 @@ const Taskboard = () => {
           y += 6;
           doc.setFont("helvetica", "normal");
           
-          const splitText = doc.splitTextToSize(turn.observations, pageWidth - 30);
-          doc.text(splitText, 15, y);
-          y += splitText.length * 5 + 5;
+          // Draw a rectangle for observations
+          const obsWidth = pageWidth - 30;
+          const splitText = doc.splitTextToSize(turn.observations, obsWidth - 10);
+          const obsHeight = splitText.length * 5 + 10;
+          doc.rect(15, y - 4, obsWidth, obsHeight);
+          
+          // Add the text inside the rectangle with a margin
+          doc.text(splitText, 20, y);
+          y += obsHeight + 5;
         }
       }
       
@@ -794,8 +810,8 @@ const Taskboard = () => {
           drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3[item.key]));
           doc.setFontSize(10);
           
-          // Split long text if necessary to ensure it fits width
-          const maxWidth = pageWidth - 25; // 15px left margin + 10px buffer
+          // Ensure long text fits width by splitting it across multiple lines if needed
+          const maxWidth = pageWidth - 25;
           const textLines = doc.splitTextToSize(item.text, maxWidth);
           doc.text(textLines, 20, y);
           
@@ -803,14 +819,8 @@ const Taskboard = () => {
           y += textLines.length * 5 + 1;
         });
 
-        // Real Time Closing Section
-        y = checkPageSpace(y, 12);
-        doc.setFont("helvetica", "bold");
-        doc.text("Fecho Real Time", 15, y);
-        y += 8;
-        doc.setFont("helvetica", "normal");
-        
-        // Draw checkbox and include time in the same line
+        // Draw checkbox and include time in the same line for "Interromper o Real-Time"
+        y = checkPageSpace(y, 8);
         drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3.fecharRealTime));
         doc.text(`Interromper o Real-Time com a SISP: ${tasks.turno3.fecharRealTimeHora || ""}`, 20, y);
         y += 8;
@@ -947,9 +957,15 @@ const Taskboard = () => {
           y += 6;
           doc.setFont("helvetica", "normal");
           
-          const splitText = doc.splitTextToSize(turn.observations, pageWidth - 30);
-          doc.text(splitText, 15, y);
-          y += splitText.length * 5 + 5;
+          // Draw a rectangle for observations
+          const obsWidth = pageWidth - 30;
+          const splitText = doc.splitTextToSize(turn.observations, obsWidth - 10);
+          const obsHeight = splitText.length * 5 + 10;
+          doc.rect(15, y - 4, obsWidth, obsHeight);
+          
+          // Add the text inside the rectangle with a margin
+          doc.text(splitText, 20, y);
+          y += obsHeight + 5;
         }
       }
     });
