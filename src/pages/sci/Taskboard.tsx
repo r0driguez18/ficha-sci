@@ -810,18 +810,18 @@ const Taskboard = () => {
         // First section of tasks
         const taskList1: {key: keyof Turno3Tasks, text: string}[] = [
           {key: 'verificarDebitos', text: "Verificar Débitos/Créditos Aplicados no Turno Anterior"},
-          {key: 'tratarTapes', text: "Tratar os Tapes para o INE, no início/final de cada mês"},
-          {key: 'fecharServidores', text: "Fechar os Servidores (SWIFT, OPDIF, TRMSG, CDGOV, AML)"},
-          {key: 'fecharImpressoras', text: "Fechar Impressoras Verificar as Pendentes"},
-          {key: 'userFecho', text: "User fecho - Abrir Sessão (usr/pd)"},
-          {key: 'listaRequisicoesCheques', text: "Lista Requisições de Cheques"},
-          {key: 'cancelarCartoesClientes', text: "Cancelar Cartões Clientes Desatualizados"},
-          {key: 'prepararEnviarAsc', text: "Preparar e Enviar ASC à SISP"},
-          {key: 'adicionarRegistrosBanka', text: "Adicionar Registros do Terminal no BANKA"},
-          {key: 'fecharServidoresBanka', text: "Fechar os 3 Servidores do BANKA"},
-          {key: 'alterarInternetBanking', text: "Alterar Internet Backin para Manutenção"},
-          {key: 'prepararEnviarCsv', text: "Preparar e Enviar CSV à SISP"},
-          {key: 'fecharRealTime', text: "Fechar o Real Time"}
+          {key: 'tratarTapes', text: "Tratar e trocar Tapes BM, BMBCK – percurso 7622"},
+          {key: 'fecharServidores', text: "Fechar Servidores Teste e Produção"},
+          {key: 'fecharImpressoras', text: "Fechar Impressoras e balcões centrais abertos exceto 14 - DSI"},
+          {key: 'userFecho', text: "User Fecho Executar o percurso 7624 Save SYS1OB"},
+          {key: 'listaRequisicoesCheques', text: "Lista requisições de cheques do dia 7633. {> } do que 5, sem comprov. Estornar, 21911"},
+          {key: 'cancelarCartoesClientes', text: "User Fecho Cancela os cartões dos Clientes Bloqueados - percurso 76857"},
+          {key: 'prepararEnviarAsc', text: "Preparar e enviar ficheiro e ASC (alteração situação cartão) – percurso 4132"},
+          {key: 'adicionarRegistrosBanka', text: "User Fecho Adiciona registos na Banka Remota- percurso 768975"},
+          {key: 'fecharServidoresBanka', text: "User Fecho, fechar servidores Banka remota IN1/IN3/IN4"},
+          {key: 'alterarInternetBanking', text: "User Fecho Alterar Internet Banking para OFFLINE – percurso 49161"},
+          {key: 'prepararEnviarCsv', text: "Preparar e enviar ficheiro CSV (saldos)"},
+          {key: 'fecharRealTime', text: "Interromper o Real-Time com a SISP"}
         ];
         
         taskList1.forEach(item => {
@@ -845,13 +845,13 @@ const Taskboard = () => {
         
         // Second section of tasks
         const taskList2: {key: keyof Turno3Tasks, text: string}[] = [
-          {key: 'prepararEnviarEtr', text: "Preparar e Enviar ETR da noite à SISP"},
-          {key: 'fazerLoggOffAml', text: "Fazer LogOff no AML"},
-          {key: 'aplicarFicheiroErroEtr', text: "Aplicar ficheiro de erro ETR da manhã"},
-          {key: 'validarBalcao14', text: "Validar Balcão 14"},
-          {key: 'fecharBalcao14', text: "Fechar Balcão 14"},
-          {key: 'arranqueManual', text: "Arranque Manual"},
-          {key: 'inicioFecho', text: "Início Fecho"}
+          {key: 'prepararEnviarEtr', text: "Preparar e enviar Ficheiro ETR - percurso 7538, consultar conta 18 5488103"},
+          {key: 'fazerLoggOffAml', text: "Fazer Logg-Off do utilizador AML – Percurso 161 (utilizadores ativos)"},
+          {key: 'aplicarFicheiroErroEtr', text: "Aplicar Ficheiro Erro ETR"},
+          {key: 'validarBalcao14', text: "Validar balção 14 7185"},
+          {key: 'fecharBalcao14', text: "Fechar o balcão 14 - DSI e confirmar se todos os balcões encontram-se fechados"},
+          {key: 'arranqueManual', text: "Arranque Manual - Verificar Data da Aplicação – Percurso 431"},
+          {key: 'inicioFecho', text: "Início do Fecho"}
         ];
         
         taskList2.forEach(item => {
@@ -874,14 +874,14 @@ const Taskboard = () => {
         
         // Third section of tasks
         const taskList3: {key: keyof Turno3Tasks, text: string}[] = [
-          {key: 'validarEnvioEmail', text: "Validar o envio de Email para o BCV LOT 2"},
-          {key: 'controlarTrabalhos', text: "Controlar os trabalhos pendentes até ao fim"},
-          {key: 'saveBmbck', text: "Save BMBCK"},
-          {key: 'abrirServidoresInternet', text: "Abrir Servidores Internet"},
-          {key: 'imprimirCheques', text: "Imprimir cheques pendentes"},
-          {key: 'backupBm', text: "Backup do BM"},
-          {key: 'validarFicheiroCcln', text: "Validar Ficheiro CCLN"},
-          {key: 'aplicarFicheirosCompensacao', text: "Aplicar Ficheiros de Compensação"}
+          {key: 'validarEnvioEmail', text: "Validar envio email (Notificação Inicio Fecho) a partir do ISeries"},
+          {key: 'controlarTrabalhos', text: "Controlar os trabalhos no QBATCH (opções 5, 10, F10, F5, F18)"},
+          {key: 'saveBmbck', text: "Save BMBCK – Automático"},
+          {key: 'abrirServidoresInternet', text: "Abrir Servidores Internet Banking – Percurso 161–"},
+          {key: 'imprimirCheques', text: "Imprimir Cheques e Diários de Cheques (depois do Save BMBCK)"},
+          {key: 'backupBm', text: "Backup BM – Automático"},
+          {key: 'validarFicheiroCcln', text: "Validar ficheiro CCLN - 76853"},
+          {key: 'aplicarFicheirosCompensacao', text: "Aplicar ficheiros compensação SISP (CCLN, EDST, EORI, ERMB)"}
         ];
         
         taskList3.forEach(item => {
@@ -894,7 +894,7 @@ const Taskboard = () => {
         // Handle special section for validarSaldoConta
         y = checkPageSpace(y, 10);
         drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3.validarSaldoConta));
-        doc.text("Validar Saldo da Conta 100390701", 20, y);
+        doc.text("Validar saldo da conta 18/5488102:", 20, y);
         
         // Add value field and checkboxes inline
         if (tasks.turno3.saldoContaValor) {
@@ -905,21 +905,21 @@ const Taskboard = () => {
         // Add checkboxes for saldo negativo/positivo indented
         y = checkPageSpace(y, 8);
         drawCheckbox(25, y - 3, ensureBoolean(tasks.turno3.saldoNegativo));
-        doc.text("Saldo Negativo", 30, y);
+        doc.text("Negativo", 30, y);
         drawCheckbox(70, y - 3, ensureBoolean(tasks.turno3.saldoPositivo));
-        doc.text("Saldo Positivo", 75, y);
+        doc.text("Positivo", 75, y);
         y += 6;
         
         // Continue with more tasks
         const taskList4: {key: keyof Turno3Tasks, text: string}[] = [
-          {key: 'abrirRealTime', text: "Abrir Real Time"}
+          {key: 'abrirRealTime', text: "Abrir o Real-Time"}
         ];
         
         taskList4.forEach(item => {
           y = checkPageSpace(y, 8);
           drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3[item.key]));
           
-          // Special handling for inicioFecho
+          // Special handling for abrirRealTime
           if (item.key === 'abrirRealTime') {
             doc.text(item.text, 20, y);
             
@@ -935,22 +935,22 @@ const Taskboard = () => {
         
         // Final section of tasks
         const taskList5: {key: keyof Turno3Tasks, text: string}[] = [
-          {key: 'verificarTransacoes', text: "Verificar Transações"},
-          {key: 'aplicarFicheiroVisa', text: "Aplicar ficheiro VISA"},
-          {key: 'cativarCartoes', text: "Cativar Cartões"},
-          {key: 'abrirBcaDireto', text: "Abrir BCA Direto"},
-          {key: 'abrirServidoresBanka', text: "Abrir os 3 Servidores do BANKA"},
-          {key: 'atualizarTelefonesOffline', text: "Atualizar Telefones Offline"},
+          {key: 'verificarTransacoes', text: "Verificar a entrada de transações 3100 4681"},
+          {key: 'aplicarFicheiroVisa', text: "Aplicar ficheiro VISA DAF - com o user FECHO 4131"},
+          {key: 'cativarCartoes', text: "Cativar cartões de crédito em incumprimento - com o user FECHO – 7675"},
+          {key: 'abrirBcaDireto', text: "Abrir o BCADireto percurso 49162 – Validar transações"},
+          {key: 'abrirServidoresBanka', text: "User Fecho, Abril servidores Banka remota IN1/IN3/IN4"},
+          {key: 'atualizarTelefonesOffline', text: "Atualiza Telefones tratados no OFFLINE- percurso 768976"},
           {key: 'verificarReplicacao', text: "Verificar Replicação"},
-          {key: 'enviarFicheiroCsv', text: "Enviar Ficheiro CSV para GESCARTÕES"},
-          {key: 'transferirFicheirosLiquidity', text: "Transferir ficheiros AS400 para LIQUIDITY MONITOR"},
-          {key: 'percurso76921', text: "Percurso 76921 - Criação dos ficheiros para o GES"},
-          {key: 'percurso76922', text: "Percurso 76922 - Criação dos ficheiros que detetam abusos de Multicanal"},
-          {key: 'percurso76923', text: "Percurso 76923 - Validar envio p/ BCV"},
-          {key: 'abrirServidoresTesteProducao', text: "Abrir Servidores de Teste/Produção"},
-          {key: 'impressaoCheques', text: "Impressão de Cheques no período da tarde"},
-          {key: 'arquivarCheques', text: "Arquivar Cheques FPBM+TAD(SM2) + Cheques Normais(CM)"},
-          {key: 'terminoFecho', text: "Término fecho"}
+          {key: 'enviarFicheiroCsv', text: "Enviar ficheiro CSV (Comunicação Saldo Véspera)"},
+          {key: 'transferirFicheirosLiquidity', text: "Transferência ficheiros SSM Liquidity Exercices (Confirmação)"},
+          {key: 'percurso76921', text: "Fazer o percurso 76921 – Limpeza Ficheiro BRLOGED (Dia 1 de cada Mês)"},
+          {key: 'percurso76922', text: "Fazer o percurso 76922 - Reorganiza BRLOGED (Dia 2 de cada Mês)"},
+          {key: 'percurso76923', text: "Fazer o percurso 76923 - Reorganiza GBMVCO (Dia 3 de cada Mês)"},
+          {key: 'abrirServidoresTesteProducao', text: "Abrir Servidores Teste e Produção"},
+          {key: 'impressaoCheques', text: "Impressão Cheques e respectivos Diários (verificação dos mesmos)"},
+          {key: 'arquivarCheques', text: "Arquivar Cheques e respectivos Diários"},
+          {key: 'terminoFecho', text: "Término do Fecho"}
         ];
         
         taskList5.forEach(item => {
@@ -974,7 +974,7 @@ const Taskboard = () => {
         // Last task
         y = checkPageSpace(y, 8);
         drawCheckbox(15, y - 3, ensureBoolean(tasks.turno3.transferirFicheirosDsi));
-        doc.text("Transferir Ficheiros DSI", 20, y);
+        doc.text("Transferência ficheiros SSM Liquidity ExercicesDSI-CI/2023", 20, y);
         y += 6;
         
         // Observations
