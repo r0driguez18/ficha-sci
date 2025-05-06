@@ -902,20 +902,18 @@ const Taskboard = () => {
           y = checkPageSpace(y, 8);
           // Show the actual value from the form
           const saldoValue = tasks.turno3.saldoContaValor || "0";
-          doc.text(`Valor: ${saldoValue}`, 30, y);
-          y += 6;
+          doc.text(`Valor: ${saldoValue}`, 150, y);
+          y += 8;
           
-          // Display the checkboxes for Positivo/Negativo with proper checked state
-          y = checkPageSpace(y, 8);
-          
-          // Positive checkbox with its actual state
+          // Add positive/negative checkboxes with appropriate spacing
           drawCheckbox(30, y - 3, ensureBoolean(tasks.turno3.saldoPositivo));
           doc.text("Positivo", 35, y);
           
-          // Negative checkbox with its actual state
           drawCheckbox(70, y - 3, ensureBoolean(tasks.turno3.saldoNegativo));
           doc.text("Negativo", 75, y);
           y += 8;
+        } else {
+          y += 8; // Just move to the next line if the validarSaldoConta is not checked
         }
         
         // Abrir Real Time with time
