@@ -20,7 +20,7 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
 }) => {
   // Helper function to ensure we only pass boolean values to onTaskChange
   const handleCheckboxChange = (task: keyof Turno2Tasks, value: boolean | string) => {
-    onTaskChange(task, Boolean(value));
+    onTaskChange(task, value === 'indeterminate' ? false : Boolean(value));
   };
 
   return (
