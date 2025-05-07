@@ -13,7 +13,7 @@ export const renderTurno3Tasks = (
   
   // Add Header for Turno 3
   y = checkPageSpace(doc, y, 10);
-  doc.setFont("helvetica", "bold");
+  doc.setFont("helvetica", "normal"); // Changed from bold to normal
   doc.text("Operações Fecho Dia", 15, y);
   y += 8;
   doc.setFont("helvetica", "normal");
@@ -38,6 +38,7 @@ export const renderTurno3Tasks = (
     y = checkPageSpace(doc, y, 8);
     drawCheckbox(doc, 15, y - 3, ensureBoolean(tasks[item.key as keyof typeof tasks]));
     doc.setFontSize(10);
+    doc.setFont("helvetica", "normal"); // Ensure consistent normal font weight
     doc.text(item.text, 20, y);
     y += 6;
   });
@@ -96,7 +97,7 @@ export const renderTurno3Tasks = (
   
   // Add header for "Depois do Fecho" section
   y = checkPageSpace(doc, y, 15);
-  doc.setFont("helvetica", "bold");
+  doc.setFont("helvetica", "normal"); // Changed from bold to normal
   doc.text("Depois do Fecho", 15, y);
   y += 8;
   doc.setFont("helvetica", "normal");

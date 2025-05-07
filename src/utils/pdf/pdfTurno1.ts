@@ -1,4 +1,3 @@
-
 import { jsPDF } from 'jspdf';
 import { Turno1Tasks } from '@/types/taskboard';
 import { checkPageSpace, drawCheckbox, drawObservationsBox, ensureBoolean } from './pdfCommon';
@@ -35,6 +34,7 @@ export const renderTurno1Tasks = (
     
     drawCheckbox(doc, 15, y - 3, ensureBoolean(tasks[item.key as keyof typeof tasks]));
     doc.setFontSize(10);
+    doc.setFont("helvetica", "normal"); // Ensure consistent normal font weight
     
     // Handle the "Enviar:" special case
     if (item.key === 'enviar') {
