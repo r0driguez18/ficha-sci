@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 export interface FileProcessData {
@@ -42,22 +43,22 @@ export const saveFileProcess = async (data: FileProcessData) => {
     
     console.log('Dados a inserir:', processData);
     
-    // Check for duplicate entries
-    const { data: existingProcesses, error: checkError } = await supabase
-      .from('file_processes')
-      .select('*')
-      .eq('time_registered', data.time_registered)
-      .eq('task', data.task || '')
-      .eq('executed_by', data.executed_by);
-    
-    if (checkError) {
-      console.error('Erro ao verificar processos existentes:', checkError);
-      return { error: checkError };
-    }
-    
-    if (existingProcesses && existingProcesses.length > 0) {
-      console.warn('Este processo já existe no sistema');
-      return { error: { message: 'Este processamento já existe no sistema' } };
+    // Only check for duplicate operation number if one is provided
+    if (processData.operation_number) {
+      const { data: existingProcesses, error: checkError } = await supabase
+        .from('file_processes')
+        .select('*')
+        .eq('operation_number', processData.operation_number);
+      
+      if (checkError) {
+        console.error('Erro ao verificar processos existentes:', checkError);
+        return { error: checkError };
+      }
+      
+      if (existingProcesses && existingProcesses.length > 0) {
+        console.warn('Número de operação já existe no sistema');
+        return { error: { message: 'Este número de operação já existe no sistema' } };
+      }
     }
     
     // Insert new process

@@ -56,7 +56,7 @@ const EasyVistaDashboards = () => {
     loadData();
   };
 
-  // Handle navigation to statistics page
+  // Handle navigation to statistics page with correct path
   const goToStatistics = () => {
     navigate('/easyvista/estatisticas');
   };
