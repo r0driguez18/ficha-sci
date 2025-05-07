@@ -20,9 +20,11 @@ export const ensureBoolean = (value: boolean | string): boolean => {
 // Helper function to draw a checkbox
 export const drawCheckbox = (doc: jsPDF, x: number, y: number, checked: boolean | string) => {
   const isChecked = ensureBoolean(checked);
-  // Always use black for checkbox color
-  doc.setDrawColor(0, 0, 0);
-  doc.setFillColor(0, 0, 0);
+  
+  // Set consistent styling for all checkboxes
+  doc.setDrawColor(0, 0, 0); // Black outline
+  doc.setFillColor(255, 255, 255); // White fill
+  doc.setLineWidth(0.1); // Thin lines
   
   // Draw checkbox rectangle
   doc.rect(x, y, 3, 3);
@@ -50,7 +52,7 @@ export const drawObservationsBox = (doc: jsPDF, startY: number, text: string): n
   const padding = 5;
   const lineHeight = 5;
   
-  doc.setFont("helvetica", "bold");
+  doc.setFont("helvetica", "normal"); // Set normal font weight for title
   doc.text("Observações:", 15, startY);
   startY += 6;
   
@@ -66,7 +68,7 @@ export const drawObservationsBox = (doc: jsPDF, startY: number, text: string): n
   
   // If there is text, add it inside the rectangle
   if (text) {
-    doc.setFont("helvetica", "normal");
+    doc.setFont("helvetica", "normal"); // Ensure normal font weight
     doc.text(splitText, 15, startY + padding);
     return startY + textHeight + (padding * 2);
   }
