@@ -61,6 +61,24 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
   }), [isDarkMode]);
 
   const isMobile = useIsMobile();
+  
+  // Format month labels to be more readable
+  const formatXAxis = (tickItem: string) => {
+    // If it's already in MM/YY format, return it as is
+    if (/^\d{1,2}\/\d{2}$/.test(tickItem)) {
+      return tickItem;
+    }
+    
+    // Try to parse it as a date if needed
+    try {
+      // This is a simple formatting function, for more complex use cases we could use date-fns
+      const [month, year] = tickItem.split('/');
+      return `${month}/${year.slice(-2)}`;
+    } catch (error) {
+      console.log('Error formatting date:', tickItem);
+      return tickItem;
+    }
+  };
 
   if (!data || data.length === 0) {
     return (
@@ -88,28 +106,34 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
                 data={data}
                 margin={isMobile ? 
                   { top: 20, right: 10, left: 0, bottom: 80 } : 
-                  { top: 20, right: 30, left: 40, bottom: 60 }
+                  { top: 20, right: 30, left: 60, bottom: 60 }
                 }
+                barGap={4}
+                barSize={isMobile ? 12 : 24}
               >
-                <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.3} />
+                <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.3} vertical={false} />
                 <XAxis 
                   dataKey="month" 
-                  angle={-45}
-                  textAnchor="end"
-                  height={80}
+                  angle={0}
+                  textAnchor="middle"
+                  height={50}
+                  tickFormatter={formatXAxis}
                   interval={0}
                   tick={{ 
                     fontSize: isMobile ? 10 : 12,
-                    dx: isMobile ? -5 : 0,
                     fill: isDarkMode ? '#e5e7eb' : '#374151'
                   }}
+                  padding={{ left: 20, right: 20 }}
                 />
                 <YAxis 
                   tick={{ 
                     fontSize: isMobile ? 10 : 12,
                     fill: isDarkMode ? '#e5e7eb' : '#374151'
                   }}
-                  width={isMobile ? 35 : 60}
+                  width={isMobile ? 30 : 50}
+                  tickCount={7}
+                  domain={[0, 'auto']}
+                  allowDecimals={false}
                   label={{ 
                     value: 'Quantidade', 
                     angle: -90, 
@@ -117,8 +141,8 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
                     style: { 
                       textAnchor: 'middle',
                       fontSize: isMobile ? 10 : 12,
-                      dy: isMobile ? 0 : 50,
-                      fill: isDarkMode ? '#e5e7eb' : '#374151'
+                      fill: isDarkMode ? '#e5e7eb' : '#374151',
+                      dy: isMobile ? 10 : 50
                     }
                   }}
                 />
@@ -157,6 +181,10 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
                     fontSize: isMobile ? 10 : 12,
                     color: isDarkMode ? '#e5e7eb' : '#374151'
                   }}
+                  layout="horizontal"
+                  align="center"
+                  iconSize={10}
+                  iconType="circle"
                 />
                 <Bar 
                   dataKey="salary" 

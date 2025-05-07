@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export interface FileProcessData {
@@ -198,7 +197,7 @@ export const getDebitCreditProcesses = async () => {
   }
 };
 
-// Function to get processes stats by month with correct categorization
+// Function to get processes stats by month with correct categorization and formatting
 export const getProcessesStatsByMonth = async () => {
   try {
     // Get all processes
@@ -225,9 +224,15 @@ export const getProcessesStatsByMonth = async () => {
       other: number;
     }> = {};
     
+    // Helper function to format date properly
+    const formatMonthKey = (date: Date) => {
+      // Format as MM/YY for better display
+      return `${date.getMonth() + 1}/${date.getFullYear().toString().slice(-2)}`;
+    };
+    
     data?.forEach(process => {
-      const date = new Date(process.date_registered);
-      const monthKey = `${date.getMonth() + 1}/${date.getFullYear().toString().substr(2, 2)}`;
+      const date = new Date(process.time_registered);
+      const monthKey = formatMonthKey(date);
       
       if (!monthlyStats[monthKey]) {
         monthlyStats[monthKey] = {
