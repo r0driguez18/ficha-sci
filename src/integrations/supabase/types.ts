@@ -11,7 +11,7 @@ export type Database = {
     Tables: {
       file_processes: {
         Row: {
-          as400_name: string
+          as400_name: string | null
           created_at: string | null
           date_registered: string
           executed_by: string | null
@@ -22,7 +22,7 @@ export type Database = {
           time_registered: string
         }
         Insert: {
-          as400_name: string
+          as400_name?: string | null
           created_at?: string | null
           date_registered?: string
           executed_by?: string | null
@@ -33,7 +33,7 @@ export type Database = {
           time_registered: string
         }
         Update: {
-          as400_name?: string
+          as400_name?: string | null
           created_at?: string | null
           date_registered?: string
           executed_by?: string | null
