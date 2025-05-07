@@ -23,7 +23,11 @@ export const drawCheckbox = (doc: jsPDF, x: number, y: number, checked: boolean 
   // Always use black for checkbox color
   doc.setDrawColor(0, 0, 0);
   doc.setFillColor(0, 0, 0);
+  
+  // Draw checkbox rectangle
   doc.rect(x, y, 3, 3);
+  
+  // Draw X mark if checked
   if (isChecked) {
     doc.line(x, y, x + 3, y + 3);
     doc.line(x + 3, y, x, y + 3);
