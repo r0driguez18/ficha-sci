@@ -7,14 +7,22 @@ export const renderTurno3Tasks = (
   doc: jsPDF, 
   tasks: Turno3Tasks,
   observations: string,
-  startY: number
+  startY: number,
+  isDiaNaoUtil: boolean = false // New parameter to handle the non-utility day case
 ): number => {
   let y = startY;
   
   // Add Header for Turno 3
   y = checkPageSpace(doc, y, 10);
   doc.setFont("helvetica", "normal"); // Changed from bold to normal
-  doc.text("Operações Fecho Dia", 15, y);
+  
+  // If it's a "Dia Não Útil", change the header
+  if (isDiaNaoUtil) {
+    doc.text("Operações Dia Não Útil", 15, y);
+  } else {
+    doc.text("Operações Fecho Dia", 15, y);
+  }
+  
   y += 8;
   doc.setFont("helvetica", "normal");
   

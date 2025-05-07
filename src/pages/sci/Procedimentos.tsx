@@ -12,6 +12,20 @@ const Procedimentos = () => {
   const goToTaskboard = () => {
     navigate('/sci/taskboard');
   };
+  
+  const goToTaskboardDiaNaoUtil = () => {
+    navigate('/sci/taskboard-nao-util');
+  };
+  
+  const goToTaskboardFinalMesUtil = () => {
+    // This will be implemented later
+    navigate('/sci/taskboard');
+  };
+  
+  const goToTaskboardFinalMesNaoUtil = () => {
+    // This will be implemented later
+    navigate('/sci/taskboard-nao-util');
+  };
 
   return (
     <div className="animate-fade-in container mx-auto px-4">
@@ -37,7 +51,7 @@ const Procedimentos = () => {
             <Button 
               variant="outline" 
               className="bg-[#18467e] text-white hover:bg-[#103662] h-14 text-lg justify-start"
-              onClick={goToTaskboard}
+              onClick={goToTaskboardDiaNaoUtil}
             >
               <FileText className="mr-2 h-5 w-5" />
               FD Dia Não Útil
@@ -46,7 +60,7 @@ const Procedimentos = () => {
             <Button 
               variant="outline" 
               className="bg-[#18467e] text-white hover:bg-[#103662] h-14 text-lg justify-start"
-              onClick={goToTaskboard}
+              onClick={goToTaskboardFinalMesUtil}
             >
               <FileText className="mr-2 h-5 w-5" />
               FD Final do Mês Dia Útil
@@ -55,7 +69,7 @@ const Procedimentos = () => {
             <Button 
               variant="outline" 
               className="bg-[#18467e] text-white hover:bg-[#103662] h-14 text-lg justify-start"
-              onClick={goToTaskboard}
+              onClick={goToTaskboardFinalMesNaoUtil}
             >
               <FileText className="mr-2 h-5 w-5" />
               FD Final do Mês Dia Não Útil
