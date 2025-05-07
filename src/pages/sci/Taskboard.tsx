@@ -243,22 +243,25 @@ const Taskboard = () => {
       const rowsToSave = tableRows.filter(row => {
         const hasRequiredCommonFields = 
           row.hora.trim() !== '' && 
-          row.operacao.trim() !== '' && 
           row.executado.trim() !== '';
         
+        // Modified validation logic:
+        // If nomeAs is filled, then operacao is required
         const option1Valid = 
           hasRequiredCommonFields && 
-          row.tarefa.trim() !== '';
+          row.nomeAs.trim() !== '' &&
+          row.operacao.trim() !== '';
                            
+        // If only tarefa is filled, operacao is not required
         const option2Valid = 
           hasRequiredCommonFields && 
-          row.nomeAs.trim() !== '';
+          row.tarefa.trim() !== '';
                            
         return option1Valid || option2Valid;
       });
       
       if (rowsToSave.length === 0) {
-        toast.error("Nenhum dado válido para salvar. Preencha pelo menos Hora, (Tarefa OU Nome AS400), Nº Operação e Executado Por.");
+        toast.error("Nenhum dado válido para salvar. Preencha pelo menos Hora, (Tarefa OU (Nome AS400 E Nº Operação)), e Executado Por.");
         return { savedCount: 0, duplicateCount: 0 };
       }
       
