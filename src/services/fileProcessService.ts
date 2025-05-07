@@ -27,10 +27,14 @@ export const saveFileProcess = async (data: FileProcessData) => {
     console.log('Tentando salvar processo:', data);
     
     // Prepare data based on what's available
-    const processData: FileProcessData = {
+    const processData: Record<string, any> = {
       time_registered: data.time_registered,
       executed_by: data.executed_by,
-      is_salary: data.is_salary || false
+      is_salary: data.is_salary || false,
+      // Always include task (may be empty string)
+      task: data.task || '',
+      // Include as400_name only if provided, otherwise explicitly set to null
+      as400_name: data.as400_name || null
     };
     
     // Only include non-empty fields (allow null for as400_name if task exists)
@@ -39,12 +43,6 @@ export const saveFileProcess = async (data: FileProcessData) => {
     } else {
       processData.operation_number = null;
     }
-    
-    // Always include task (may be empty string)
-    processData.task = data.task || '';
-    
-    // Include as400_name only if provided, otherwise null
-    processData.as400_name = data.as400_name || null;
     
     console.log('Dados a inserir:', processData);
     
