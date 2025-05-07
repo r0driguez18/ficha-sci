@@ -7,11 +7,12 @@ interface PageHeaderProps {
   subtitle?: string;
   children?: React.ReactNode;
   className?: string;
+  id?: string; // Added id property
 }
 
-export function PageHeader({ title, subtitle, children, className }: PageHeaderProps) {
+export function PageHeader({ title, subtitle, children, className, id }: PageHeaderProps) {
   return (
-    <div className={cn("flex items-center justify-between pb-6 mb-6 border-b", className)}>
+    <div id={id} className={cn("flex items-center justify-between pb-6 mb-6 border-b", className)}>
       <div className="space-y-1">
         <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>
         {subtitle && <p className="text-muted-foreground">{subtitle}</p>}
