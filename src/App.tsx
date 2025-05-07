@@ -13,6 +13,7 @@ import Login from "./pages/auth/Login";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 import Taskboard from "./pages/sci/Taskboard";
+import TaskboardDiaNaoUtil from "./pages/sci/TaskboardDiaNaoUtil";
 import Procedimentos from "./pages/sci/Procedimentos";
 import CrcTratamento from "./pages/crc/Tratamento";
 import DisDados from "./pages/dis/Dados";
@@ -53,6 +54,7 @@ const App = () => (
               <Route path="/sci" element={<Navigate to="/sci/procedimentos" replace />} />
               <Route path="/sci/procedimentos" element={<PrivateRoute><DashboardLayout><Procedimentos /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/taskboard" element={<PrivateRoute><DashboardLayout><Taskboard /></DashboardLayout></PrivateRoute>} />
+              <Route path="/sci/taskboard-nao-util" element={<PrivateRoute><DashboardLayout><TaskboardDiaNaoUtil /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/calendar" element={<PrivateRoute><DashboardLayout><CalendarPage /></DashboardLayout></PrivateRoute>} />
               
               {/* CRC Routes */}
