@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -245,19 +244,18 @@ const Taskboard = () => {
           row.hora.trim() !== '' && 
           row.executado.trim() !== '';
         
-        // Modified validation logic:
+        // If tarefa is filled, we don't need nomeAs or operacao
+        const taskOnlyOption = 
+          hasRequiredCommonFields && 
+          row.tarefa.trim() !== '';
+                           
         // If nomeAs is filled, then operacao is required
-        const option1Valid = 
+        const asWithOperationOption = 
           hasRequiredCommonFields && 
           row.nomeAs.trim() !== '' &&
           row.operacao.trim() !== '';
                            
-        // If only tarefa is filled, operacao is not required
-        const option2Valid = 
-          hasRequiredCommonFields && 
-          row.tarefa.trim() !== '';
-                           
-        return option1Valid || option2Valid;
+        return taskOnlyOption || asWithOperationOption;
       });
       
       if (rowsToSave.length === 0) {
@@ -273,8 +271,8 @@ const Taskboard = () => {
         const result = await saveFileProcess({
           time_registered: row.hora,
           task: row.tarefa,
-          as400_name: row.nomeAs,
-          operation_number: row.operacao,
+          as400_name: row.tarefa.trim() !== '' && row.nomeAs.trim() === '' ? null : row.nomeAs,
+          operation_number: row.operacao || null,
           executed_by: row.executado
         });
         
