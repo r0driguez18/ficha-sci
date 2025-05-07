@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -397,7 +396,8 @@ const TaskboardDiaNaoUtil = () => {
         }
       };
 
-      const doc = generateTaskboardPDF(date, completeTurnData, completeTasksData, tableRows);
+      // Pass isDiaNaoUtil=true to indicate this is a non-working day PDF
+      const doc = generateTaskboardPDF(date, completeTurnData, completeTasksData, tableRows, true);
       doc.save(`taskboard_nao_util_${date.replace(/-/g, '')}.pdf`);
       toast.success('PDF gerado com sucesso!');
     } catch (error) {
