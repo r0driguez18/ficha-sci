@@ -197,33 +197,80 @@ export const getProcessesStatsByMonth = async () => {
     }
     
     // Process data to group by month
-    const monthlyStats: Record<string, { month: string; total: number; salary: number; other: number }> = {};
+    const monthlyStats: Record<string, { 
+      month: string; 
+      salary: number; 
+      ga_processes: number;
+      im_processes: number;
+      ena_processes: number;
+      inp_processes: number;
+      bn_processes: number;
+      fcvt_processes: number;
+      other: number;
+    }> = {};
     
     data?.forEach(process => {
       const date = new Date(process.date_registered);
-      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      const monthName = date.toLocaleString('pt-BR', { month: 'short', year: 'numeric' });
+      const monthKey = `${date.getMonth() + 1}/${date.getFullYear().toString().substr(2, 2)}`;
       
       if (!monthlyStats[monthKey]) {
         monthlyStats[monthKey] = {
-          month: monthName,
-          total: 0,
+          month: monthKey,
           salary: 0,
+          ga_processes: 0,
+          im_processes: 0,
+          ena_processes: 0,
+          inp_processes: 0,
+          bn_processes: 0,
+          fcvt_processes: 0,
           other: 0
         };
       }
       
-      monthlyStats[monthKey].total += 1;
-      
+      // Categorize by process type
       if (process.is_salary) {
         monthlyStats[monthKey].salary += 1;
+      } else if (process.as400_name) {
+        // Categorize by AS400 name prefix
+        const as400Prefix = (process.as400_name || '').toLowerCase().substring(0, 2);
+        
+        switch (as400Prefix) {
+          case 'ga':
+            monthlyStats[monthKey].ga_processes += 1;
+            break;
+          case 'im':
+            monthlyStats[monthKey].im_processes += 1;
+            break;
+          case 'en':
+            monthlyStats[monthKey].ena_processes += 1;
+            break;
+          case 'in':
+            monthlyStats[monthKey].inp_processes += 1;
+            break;
+          case 'bn':
+            monthlyStats[monthKey].bn_processes += 1;
+            break;
+          case 'fc':
+            monthlyStats[monthKey].fcvt_processes += 1;
+            break;
+          default:
+            monthlyStats[monthKey].other += 1;
+        }
       } else {
         monthlyStats[monthKey].other += 1;
       }
     });
     
-    // Convert to array and sort by month
-    return Object.values(monthlyStats);
+    // Convert to array and sort by month/year
+    return Object.values(monthlyStats).sort((a, b) => {
+      const [aMonth, aYear] = a.month.split('/').map(Number);
+      const [bMonth, bYear] = b.month.split('/').map(Number);
+      
+      if (aYear !== bYear) {
+        return aYear - bYear;
+      }
+      return aMonth - bMonth;
+    });
   } catch (error) {
     console.error('Erro ao processar estatísticas:', error);
     return [];
