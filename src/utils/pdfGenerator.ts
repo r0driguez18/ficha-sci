@@ -83,7 +83,7 @@ export const generateTaskboardPDF = (
     });
   }
   
-  // Add table of task records
+  // Add table of task records - Always include the table regardless of isDiaNaoUtil
   renderTaskTable(doc, tableRows);
   
   return doc;
