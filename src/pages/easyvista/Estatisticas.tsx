@@ -22,6 +22,15 @@ const EasyVistaEstatisticas = () => {
   const [refreshing, setRefreshing] = useState(false);
   const { isDarkMode } = useTheme();
 
+  // Use this for URL hash navigation
+  useEffect(() => {
+    // Check if there's a hash in the URL and set the active tab accordingly
+    const hash = window.location.hash.replace('#', '');
+    if (hash && ['all', 'salary', 'debit_credit'].includes(hash)) {
+      setActiveTab(hash);
+    }
+  }, []);
+
   const loadData = async () => {
     setLoading(true);
     try {
@@ -78,12 +87,19 @@ const EasyVistaEstatisticas = () => {
     loadData();
   };
 
+  // Handle tab change
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    window.location.hash = value; // Update the URL hash
+  };
+
   return (
     <div className="animate-fade-in space-y-6">
       <div className="flex justify-between items-center">
         <PageHeader 
           title="Processamentos - Estatísticas" 
           subtitle="Visualização detalhada dos dados de processamento"
+          id="estatisticas-page" // Add ID for linking
         />
         <Button 
           variant="outline" 
@@ -153,7 +169,7 @@ const EasyVistaEstatisticas = () => {
             </CardContent>
           </Card>
           
-          <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <Tabs defaultValue="all" value={activeTab} onValueChange={handleTabChange} className="space-y-4">
             <TabsList className="grid grid-cols-1 md:grid-cols-3 gap-2">
               <TabsTrigger value="all">Todos os Processamentos</TabsTrigger>
               <TabsTrigger value="salary">Processamentos de Salário</TabsTrigger>
