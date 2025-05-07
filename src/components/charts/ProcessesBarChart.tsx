@@ -129,7 +129,6 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
                         <div className={`p-2 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border rounded shadow-lg w-auto min-w-32`}>
                           <p className={`text-xs font-medium text-center ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{label}</p>
                           {payload.map((entry, index) => {
-                            // Fix the type comparison by checking if value is truthy rather than comparing with '> 0'
                             if (entry.value && entry.value !== 0) {
                               return (
                                 <div key={index} className="flex justify-between items-center mt-1">
