@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,8 +10,10 @@ import { getFileProcesses, getSalaryProcesses, getProcessesStatsByMonth, cleanup
 import { Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
 const EasyVistaDashboards = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('summary');
   const [processesData, setProcessesData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,6 +54,11 @@ const EasyVistaDashboards = () => {
   const handleRefresh = () => {
     toast.info("Atualizando dados...");
     loadData();
+  };
+
+  // Handle navigation to statistics page
+  const goToStatistics = () => {
+    navigate('/easyvista/estatisticas');
   };
 
   const handleCleanupData = async () => {
@@ -300,6 +308,12 @@ const EasyVistaDashboards = () => {
                 <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} /> 
                 Atualizar Dados
               </Button>
+              <Button
+                onClick={goToStatistics}
+                size="sm"
+              >
+                Ver Estatísticas Completas
+              </Button>
             </div>
           </div>
           
@@ -313,7 +327,7 @@ const EasyVistaDashboards = () => {
               <div className="w-full">
                 <ProcessesBarChart 
                   data={processesData} 
-                  title="Processamentos por Mês (Salários vs Outros)" 
+                  title="Processamentos por Mês" 
                 />
               </div>
               

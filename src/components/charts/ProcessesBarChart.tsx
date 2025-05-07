@@ -111,7 +111,7 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
                   }}
                   width={isMobile ? 35 : 60}
                   label={{ 
-                    value: 'Quantidade de Processos', 
+                    value: 'Quantidade', 
                     angle: -90, 
                     position: 'insideLeft',
                     style: { 
