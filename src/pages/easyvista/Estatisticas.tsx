@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -99,7 +98,7 @@ const EasyVistaEstatisticas = () => {
         <PageHeader 
           title="Processamentos - Estatísticas" 
           subtitle="Visualização detalhada dos dados de processamento"
-          id="estatisticas-page" // Add ID for linking
+          id="estatisticas-page" // Now using the updated prop
         />
         <Button 
           variant="outline" 
