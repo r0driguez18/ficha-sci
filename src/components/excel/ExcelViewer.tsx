@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { FileSpreadsheet, Download, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -18,15 +17,24 @@ interface ExcelViewerProps {
   initialData?: ExcelData;
   title?: string;
   height?: string;
+  onDataUpdate?: (data: ExcelData) => void;
 }
 
 const ExcelViewer: React.FC<ExcelViewerProps> = ({ 
   initialData,
   title = "Excel Workbook", 
-  height = "500px" 
+  height = "500px",
+  onDataUpdate
 }) => {
   const [excelData, setExcelData] = useState<ExcelData | null>(initialData || null);
   const [fileName, setFileName] = useState<string>('workbook.xlsx');
+
+  // Update parent component when excelData changes
+  useEffect(() => {
+    if (excelData && onDataUpdate) {
+      onDataUpdate(excelData);
+    }
+  }, [excelData, onDataUpdate]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -49,10 +57,17 @@ const ExcelViewer: React.FC<ExcelViewerProps> = ({
           const headers = jsonData[0] as string[];
           const rows = jsonData.slice(1) as any[][];
           
-          setExcelData({
+          const newData = {
             headers,
             data: rows
-          });
+          };
+          
+          setExcelData(newData);
+          
+          if (onDataUpdate) {
+            onDataUpdate(newData);
+          }
+          
           toast.success(`Arquivo "${file.name}" carregado com sucesso`);
         } else {
           toast.error("O arquivo parece estar vazio");
@@ -88,6 +103,45 @@ const ExcelViewer: React.FC<ExcelViewerProps> = ({
     XLSX.writeFile(wb, fileName);
   };
 
+  const handleCellChange = (rowIndex: number, colIndex: number, value: any) => {
+    if (!excelData) return;
+    
+    const updatedData = {
+      headers: [...excelData.headers],
+      data: excelData.data.map((row, rIdx) => {
+        if (rIdx === rowIndex) {
+          const newRow = [...row];
+          newRow[colIndex] = value;
+          return newRow;
+        }
+        return row;
+      })
+    };
+    
+    setExcelData(updatedData);
+    
+    if (onDataUpdate) {
+      onDataUpdate(updatedData);
+    }
+  };
+
+  const addRow = () => {
+    if (!excelData) return;
+    
+    const newRow = Array(excelData.headers.length).fill('');
+    
+    const updatedData = {
+      headers: excelData.headers,
+      data: [...excelData.data, newRow]
+    };
+    
+    setExcelData(updatedData);
+    
+    if (onDataUpdate) {
+      onDataUpdate(updatedData);
+    }
+  };
+
   return (
     <Card className="w-full">
       <CardHeader className="flex flex-row items-center justify-between">
@@ -116,7 +170,7 @@ const ExcelViewer: React.FC<ExcelViewerProps> = ({
         </div>
       </CardHeader>
       <CardContent>
-        <ScrollArea className={`border rounded-md h-[${height}]`} style={{ height }}>
+        <div className="border rounded-md" style={{ height, overflowY: 'auto' }}>
           {excelData ? (
             <Table>
               <TableHeader>
@@ -130,7 +184,12 @@ const ExcelViewer: React.FC<ExcelViewerProps> = ({
                 {excelData.data.map((row, rowIndex) => (
                   <TableRow key={rowIndex}>
                     {row.map((cell, cellIndex) => (
-                      <TableCell key={cellIndex}>{cell}</TableCell>
+                      <TableCell key={cellIndex}>
+                        <Input
+                          value={cell}
+                          onChange={(e) => handleCellChange(rowIndex, cellIndex, e.target.value)}
+                        />
+                      </TableCell>
                     ))}
                   </TableRow>
                 ))}
@@ -143,8 +202,15 @@ const ExcelViewer: React.FC<ExcelViewerProps> = ({
               <p>Importe um arquivo Excel para visualizar os dados aqui</p>
             </div>
           )}
-        </ScrollArea>
+        </div>
       </CardContent>
+      {excelData && (
+        <CardFooter className="flex justify-end">
+          <Button variant="outline" onClick={addRow}>
+            Adicionar Linha
+          </Button>
+        </CardFooter>
+      )}
     </Card>
   );
 };
