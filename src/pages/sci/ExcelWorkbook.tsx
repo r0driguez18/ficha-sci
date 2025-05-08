@@ -18,8 +18,8 @@ const ExcelWorkbook = () => {
   return (
     <div className="animate-fade-in space-y-6">
       <PageHeader 
-        title="Excel Workbook" 
-        subtitle="Visualize e edite arquivos Excel diretamente no navegador"
+        title="Gerador PS2" 
+        subtitle="Visualize e edite arquivos Excel para processamento PS2"
         id="excel-workbook-page"
       />
       
@@ -27,7 +27,7 @@ const ExcelWorkbook = () => {
         <Card>
           <CardContent className="pt-6">
             <ExcelViewer 
-              title="Planilha de Trabalho" 
+              title="Gerador PS2" 
               initialData={sampleData}
               height="500px"
             />

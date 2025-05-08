@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
-import { FileText } from 'lucide-react';
+import { FileText, FileSpreadsheet } from 'lucide-react';
 
 const Procedimentos = () => {
   const navigate = useNavigate();
@@ -27,6 +27,10 @@ const Procedimentos = () => {
     navigate('/sci/taskboard-nao-util');
   };
 
+  const goToExcelWorkbook = () => {
+    navigate('/sci/excel-workbook');
+  };
+
   return (
     <div className="animate-fade-in container mx-auto px-4">
       <PageHeader 
@@ -34,7 +38,7 @@ const Procedimentos = () => {
         subtitle="Selecione o tipo de ficha de procedimentos"
       />
 
-      <div className="flex justify-center items-center">
+      <div className="flex justify-center items-center flex-col gap-6">
         <Card className="p-6 w-full max-w-md">
           <CardContent className="p-0 flex flex-col space-y-4">
             <h3 className="text-xl font-semibold mb-4 text-center">Selecione o tipo de procedimento</h3>
@@ -73,6 +77,19 @@ const Procedimentos = () => {
             >
               <FileText className="mr-2 h-5 w-5" />
               FD Final do Mês Dia Não Útil
+            </Button>
+          </CardContent>
+        </Card>
+        
+        <Card className="p-6 w-full max-w-md">
+          <CardContent className="p-0">
+            <Button 
+              variant="outline" 
+              className="bg-[#18467e] text-white hover:bg-[#103662] h-14 text-lg justify-start w-full"
+              onClick={goToExcelWorkbook}
+            >
+              <FileSpreadsheet className="mr-2 h-5 w-5" />
+              Gerador PS2
             </Button>
           </CardContent>
         </Card>
