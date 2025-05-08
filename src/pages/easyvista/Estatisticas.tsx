@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,12 +8,10 @@ import { Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import ProcessesTable from '@/components/charts/ProcessesTable';
-import ProcessesBarChart from '@/components/charts/ProcessesBarChart';
 import { useTheme } from '@/hooks/use-theme';
 
 const EasyVistaEstatisticas = () => {
   const [activeTab, setActiveTab] = useState('all');
-  const [processesData, setProcessesData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [allProcesses, setAllProcesses] = useState<any[]>([]);
   const [salaryProcesses, setSalaryProcesses] = useState<any[]>([]);
@@ -33,11 +32,6 @@ const EasyVistaEstatisticas = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Carregar estatísticas agrupadas por mês
-      const stats = await getProcessesStatsByMonth();
-      console.log("Estatísticas carregadas (página Estatisticas):", stats);
-      setProcessesData(stats);
-      
       // Carregar todos os processos
       const processes = await getFileProcesses();
       console.log("Processos carregados (página Estatisticas):", processes);
@@ -58,7 +52,7 @@ const EasyVistaEstatisticas = () => {
       console.log("Outros processamentos carregados:", others);
       setOtherProcesses(others);
       
-      if (stats.length === 0 && processes.length === 0) {
+      if (processes.length === 0) {
         toast.info("Nenhum dado de processamento disponível. Adicione alguns processos para visualizá-los aqui.");
       }
     } catch (error) {
@@ -98,7 +92,7 @@ const EasyVistaEstatisticas = () => {
         <PageHeader 
           title="Processamentos - Estatísticas" 
           subtitle="Visualização detalhada dos dados de processamento"
-          id="estatisticas-page" // Now using the updated prop
+          id="estatisticas-page"
         />
         <Button 
           variant="outline" 
@@ -118,11 +112,6 @@ const EasyVistaEstatisticas = () => {
         </div>
       ) : (
         <div className="space-y-6">
-          <ProcessesBarChart 
-            data={processesData} 
-            title="Processamentos por Mês" 
-          />
-          
           <Card>
             <CardHeader>
               <CardTitle>Estatísticas de Processamentos</CardTitle>
