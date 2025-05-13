@@ -370,7 +370,6 @@ const TaskboardDiaNaoUtil = () => {
           servicos: false,
           verificarReportes: false,
           verificarDebitos: false,
-          confirmarAtualizacaoSisp: false,
           inpsProcessar: false,
           inpsEnviarRetorno: false,
           processarTef: false,
