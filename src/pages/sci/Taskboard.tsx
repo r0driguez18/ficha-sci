@@ -158,7 +158,8 @@ const Taskboard = () => {
       arquivarCheques: false,
       terminoFecho: false,
       terminoFechoHora: '',
-      transferirFicheirosDsi: false
+      transferirFicheirosDsi: false,
+      limpaGbtrlogFimMes: false
     }
   });
 
@@ -446,7 +447,8 @@ const Taskboard = () => {
         arquivarCheques: false,
         terminoFecho: false,
         terminoFechoHora: '',
-        transferirFicheirosDsi: false
+        transferirFicheirosDsi: false,
+        limpaGbtrlogFimMes: false
       }
     });
     setTableRows([{ id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '' }]);
