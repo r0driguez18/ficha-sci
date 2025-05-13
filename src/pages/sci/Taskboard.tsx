@@ -158,6 +158,7 @@ const Taskboard = () => {
       arquivarCheques: false,
       terminoFecho: false,
       terminoFechoHora: '',
+      limparGbtrlog: false,
       transferirFicheirosDsi: false
     }
   });
@@ -433,6 +434,7 @@ const Taskboard = () => {
         arquivarCheques: false,
         terminoFecho: false,
         terminoFechoHora: '',
+        limparGbtrlog: false,
         transferirFicheirosDsi: false
       }
     });
