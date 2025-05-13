@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { saveFileProcess } from '@/services/fileProcessService';
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { useAuth } from '@/components/auth/AuthProvider';
 import { Turno1TasksComponent } from '@/components/tasks/Turno1Tasks';
 import { Turno2TasksComponent } from '@/components/tasks/Turno2Tasks';
 import { Turno3TasksComponent } from '@/components/tasks/Turno3Tasks';
@@ -16,8 +16,10 @@ import { generateTaskboardPDF } from '@/utils/pdfGenerator';
 import { TurnInfoSection } from '@/components/taskboard/TurnInfoSection';
 import { TableRowsSection } from '@/components/taskboard/TableRowsSection';
 import { FormActions } from '@/components/taskboard/FormActions';
+import { useTaskboardSync } from '@/services/taskboardService';
 import type { TurnKey, TasksType, TurnDataType } from '@/types/taskboard';
 import type { TaskTableRow } from '@/types/taskTableRow';
+import { Loader2 } from 'lucide-react';
 
 const operatorsList = [
   { value: "nalves", label: "Nelson Alves" },
@@ -38,12 +40,15 @@ const processFormSchema = z.object({
 
 const Taskboard = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [isEndOfMonth, setIsEndOfMonth] = useState<boolean>(false);
   const [tableRows, setTableRows] = useState<TaskTableRow[]>([
     { id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '' }
   ]);
+  const [activeTab, setActiveTab] = useState('turno1');
+  const [isLoading, setIsLoading] = useState(true);
 
   const [turnData, setTurnData] = useState<TurnDataType>({
     turno1: { operator: '', entrada: '', saida: '', observations: '' },
@@ -164,26 +169,72 @@ const Taskboard = () => {
     }
   });
 
-  useEffect(() => {
-    const savedDate = localStorage.getItem('taskboard-date');
-    const savedTurnData = localStorage.getItem('taskboard-turnData');
-    const savedTasks = localStorage.getItem('taskboard-tasks');
-    const savedTableRows = localStorage.getItem('taskboard-tableRows');
-
-    if (savedDate) setDate(savedDate);
-    if (savedTurnData) setTurnData(JSON.parse(savedTurnData));
-    if (savedTasks) setTasks(JSON.parse(savedTasks));
-    if (savedTableRows) setTableRows(JSON.parse(savedTableRows));
-  }, []);
+  const { syncData, loadData, resetData } = useTaskboardSync(
+    'dia-util',
+    date,
+    turnData,
+    tasks,
+    tableRows,
+    activeTab
+  );
 
   useEffect(() => {
-    localStorage.setItem('taskboard-date', date);
-    localStorage.setItem('taskboard-turnData', JSON.stringify(turnData));
-    localStorage.setItem('taskboard-tasks', JSON.stringify(tasks));
-    localStorage.setItem('taskboard-tableRows', JSON.stringify(tableRows));
-  }, [date, turnData, tasks, tableRows]);
+    async function fetchData() {
+      setIsLoading(true);
+      try {
+        if (user) {
+          const taskboardData = await loadData();
+          if (taskboardData) {
+            if (taskboardData.date) setDate(taskboardData.date);
+            if (taskboardData.turn_data) setTurnData(taskboardData.turn_data);
+            if (taskboardData.tasks) setTasks(taskboardData.tasks);
+            if (taskboardData.table_rows) setTableRows(taskboardData.table_rows);
+            if (taskboardData.active_tab) setActiveTab(taskboardData.active_tab);
+          } else {
+            // Try to load from localStorage as fallback
+            const savedDate = localStorage.getItem('taskboard-date');
+            const savedTurnData = localStorage.getItem('taskboard-turnData');
+            const savedTasks = localStorage.getItem('taskboard-tasks');
+            const savedTableRows = localStorage.getItem('taskboard-tableRows');
+            const savedActiveTab = localStorage.getItem('taskboard-activeTab');
 
-  // Add effect to check if the date is the last day of month
+            if (savedDate) setDate(savedDate);
+            if (savedTurnData) setTurnData(JSON.parse(savedTurnData));
+            if (savedTasks) setTasks(JSON.parse(savedTasks));
+            if (savedTableRows) setTableRows(JSON.parse(savedTableRows));
+            if (savedActiveTab) setActiveTab(savedActiveTab);
+          }
+        } else {
+          // No user, just use localStorage
+          const savedDate = localStorage.getItem('taskboard-date');
+          const savedTurnData = localStorage.getItem('taskboard-turnData');
+          const savedTasks = localStorage.getItem('taskboard-tasks');
+          const savedTableRows = localStorage.getItem('taskboard-tableRows');
+          const savedActiveTab = localStorage.getItem('taskboard-activeTab');
+
+          if (savedDate) setDate(savedDate);
+          if (savedTurnData) setTurnData(JSON.parse(savedTurnData));
+          if (savedTasks) setTasks(JSON.parse(savedTasks));
+          if (savedTableRows) setTableRows(JSON.parse(savedTableRows));
+          if (savedActiveTab) setActiveTab(savedActiveTab);
+        }
+      } catch (error) {
+        console.error("Error loading taskboard data:", error);
+        toast.error("Erro ao carregar dados. Usando configuração padrão.");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    
+    fetchData();
+  }, [user]);
+
+  useEffect(() => {
+    if (!isLoading) {
+      syncData();
+    }
+  }, [date, turnData, tasks, tableRows, activeTab, isLoading]);
+
   useEffect(() => {
     if (date) {
       const currentDate = new Date(date);
@@ -333,13 +384,14 @@ const Taskboard = () => {
     }
   };
 
-  const resetForm = () => {
+  const resetForm = async () => {
     setDate(new Date().toISOString().split('T')[0]);
     setTurnData({
       turno1: { operator: '', entrada: '', saida: '', observations: '' },
       turno2: { operator: '', entrada: '', saida: '', observations: '' },
       turno3: { operator: '', entrada: '', saida: '', observations: '' }
     });
+    
     setTasks({
       turno1: {
         datacenter: false,
@@ -449,15 +501,14 @@ const Taskboard = () => {
         terminoFecho: false,
         terminoFechoHora: '',
         transferirFicheirosDsi: false,
-        limpaGbtrlogFimMes: false // Make sure it's also included in the reset state
+        limpaGbtrlogFimMes: false
       }
     });
     setTableRows([{ id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '' }]);
+    setActiveTab('turno1');
     
-    localStorage.removeItem('taskboard-date');
-    localStorage.removeItem('taskboard-turnData');
-    localStorage.removeItem('taskboard-tasks');
-    localStorage.removeItem('taskboard-tableRows');
+    // Reset both localStorage and Supabase
+    await resetData();
     
     toast.success('Formulário reiniciado com sucesso!');
   };
@@ -473,12 +524,22 @@ const Taskboard = () => {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin mr-2" />
+        <p>A carregar dados...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="container py-6">
       <Card>
         <CardHeader>
           <CardTitle>Ficha de Procedimentos</CardTitle>
           <CardDescription>Preencha as informações necessárias para cada turno</CardDescription>
+          {user && <p className="text-sm text-muted-foreground">Dados sincronizados na nuvem</p>}
         </CardHeader>
         <CardContent>
           <div className="mb-6">
@@ -492,7 +553,7 @@ const Taskboard = () => {
             />
           </div>
 
-          <Tabs defaultValue="turno1">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="mb-4">
               <TabsTrigger value="turno1">Turno 1</TabsTrigger>
               <TabsTrigger value="turno2">Turno 2</TabsTrigger>
