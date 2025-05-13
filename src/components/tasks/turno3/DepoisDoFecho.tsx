@@ -31,6 +31,7 @@ interface DepoisDoFechoProps {
     arquivarCheques: boolean;
     terminoFecho: boolean;
     terminoFechoHora: string;
+    limparGbtrlog: boolean; // New task field
     transferirFicheirosDsi: boolean;
   };
   onTaskChange: (task: string, value: boolean | string) => void;
@@ -195,6 +196,13 @@ export const DepoisDoFecho: React.FC<DepoisDoFechoProps> = ({
         onCheckedChange={(checked) => handleCheckboxChange('terminoFecho', checked)}
         onTimeChange={(value) => onTaskChange('terminoFechoHora', value)}
         label="Término do Fecho"
+      />
+      
+      <CheckboxField 
+        id="limparGbtrlog" 
+        checked={tasks.limparGbtrlog}
+        onCheckedChange={(checked) => handleCheckboxChange('limparGbtrlog', checked)}
+        label="Chamar Opção 16 - Limpa GBTRLOG Após o Fecho"
       />
       
       <CheckboxField 

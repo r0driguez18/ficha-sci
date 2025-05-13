@@ -183,6 +183,12 @@ export const renderTurno3Tasks = (
   doc.text(terminoFechoText, 20, y);
   y += 6;
   
+  // Add the new task "Chamar Opção 16 - Limpa GBTRLOG Após o Fecho"
+  y = checkPageSpace(doc, y, 8);
+  drawCheckbox(doc, 15, y - 3, ensureBoolean(tasks.limparGbtrlog));
+  doc.text("Chamar Opção 16 - Limpa GBTRLOG Após o Fecho", 20, y);
+  y += 6;
+  
   // Final task
   y = checkPageSpace(doc, y, 8);
   drawCheckbox(doc, 15, y - 3, ensureBoolean(tasks.transferirFicheirosDsi));
