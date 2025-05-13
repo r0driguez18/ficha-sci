@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { CheckboxField } from './CheckboxField';
 import { TimeCheckboxField } from './TimeCheckboxField';
@@ -31,15 +30,17 @@ interface DepoisDoFechoProps {
     arquivarCheques: boolean;
     terminoFecho: boolean;
     terminoFechoHora: string;
-    limparGbtrlog: boolean; // New task field
+    limparGbtrlog: boolean;
     transferirFicheirosDsi: boolean;
   };
   onTaskChange: (task: string, value: boolean | string) => void;
+  isEndOfMonth?: boolean;
 }
 
 export const DepoisDoFecho: React.FC<DepoisDoFechoProps> = ({
   tasks,
-  onTaskChange
+  onTaskChange,
+  isEndOfMonth = false
 }) => {
   // Helper function to handle checkbox changes
   const handleCheckboxChange = (task: string, checked: boolean | "indeterminate") => {
@@ -198,12 +199,15 @@ export const DepoisDoFecho: React.FC<DepoisDoFechoProps> = ({
         label="Término do Fecho"
       />
       
-      <CheckboxField 
-        id="limparGbtrlog" 
-        checked={tasks.limparGbtrlog}
-        onCheckedChange={(checked) => handleCheckboxChange('limparGbtrlog', checked)}
-        label="Chamar Opção 16 - Limpa GBTRLOG Após o Fecho"
-      />
+      {/* Only show the Limpar GBTRLOG option if it's end of month */}
+      {isEndOfMonth && (
+        <CheckboxField 
+          id="limparGbtrlog" 
+          checked={tasks.limparGbtrlog}
+          onCheckedChange={(checked) => handleCheckboxChange('limparGbtrlog', checked)}
+          label="Chamar Opção 16 - Limpa GBTRLOG Após o Fecho"
+        />
+      )}
       
       <CheckboxField 
         id="transferirFicheirosDsi" 
