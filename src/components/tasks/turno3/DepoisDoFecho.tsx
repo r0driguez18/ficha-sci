@@ -200,7 +200,7 @@ export const DepoisDoFecho: React.FC<DepoisDoFechoProps> = ({
         label="Término do Fecho"
       />
       
-      {/* Show only at the end of the month - Moved right after Término do Fecho */}
+      {/* Show only at the end of the month - Placed right after Término do Fecho */}
       {isEndOfMonth && (
         <CheckboxField 
           id="limpaGbtrlogFimMes" 

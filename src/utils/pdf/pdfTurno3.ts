@@ -184,8 +184,8 @@ export const renderTurno3Tasks = (
   doc.text(terminoFechoText, 20, y);
   y += 6;
   
-  // Add end-of-month task right after "Término do Fecho"
-  if (isEndOfMonth && tasks.limpaGbtrlogFimMes !== undefined) {
+  // Add end-of-month task right after "Término do Fecho" - Make sure this is present and correctly rendered
+  if (isEndOfMonth) {
     y = checkPageSpace(doc, y, 8);
     drawCheckbox(doc, 15, y - 3, ensureBoolean(tasks.limpaGbtrlogFimMes));
     doc.text("Chamar Opção 16 - Limpa o GBTRLOG após o Fecho do mês", 20, y);
