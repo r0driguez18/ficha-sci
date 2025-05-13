@@ -18,13 +18,11 @@ const Procedimentos = () => {
   };
   
   const goToTaskboardFinalMesUtil = () => {
-    // This will be implemented later
-    navigate('/sci/taskboard');
+    navigate('/sci/taskboard-final-mes-util');
   };
   
   const goToTaskboardFinalMesNaoUtil = () => {
-    // This will be implemented later
-    navigate('/sci/taskboard-nao-util');
+    navigate('/sci/taskboard-final-mes-nao-util');
   };
 
   return (
