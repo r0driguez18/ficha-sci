@@ -45,30 +45,6 @@ export type Database = {
         }
         Relationships: []
       }
-      shift_maps: {
-        Row: {
-          content: Json
-          file_name: string
-          file_size: number
-          id: string
-          uploaded_at: string | null
-        }
-        Insert: {
-          content: Json
-          file_name: string
-          file_size: number
-          id?: string
-          uploaded_at?: string | null
-        }
-        Update: {
-          content?: Json
-          file_name?: string
-          file_size?: number
-          id?: string
-          uploaded_at?: string | null
-        }
-        Relationships: []
-      }
       taskboard_data: {
         Row: {
           active_tab: string | null

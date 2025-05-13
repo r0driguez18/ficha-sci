@@ -6,7 +6,7 @@ import Taskboard from '../pages/sci/Taskboard';
 import TaskboardDiaNaoUtil from '../pages/sci/TaskboardDiaNaoUtil';
 import TaskboardFinalMesUtil from '../pages/sci/TaskboardFinalMesUtil';
 import TaskboardFinalMesNaoUtil from '../pages/sci/TaskboardFinalMesNaoUtil';
-import MapaTurno from '../pages/sci/MapaTurno';
+import Calendar from '../pages/sci/Calendar';
 
 export const sciRoutes = (
   <>
@@ -15,6 +15,6 @@ export const sciRoutes = (
     <Route path="/sci/taskboard-nao-util" element={<TaskboardDiaNaoUtil />} />
     <Route path="/sci/taskboard-final-mes-util" element={<TaskboardFinalMesUtil />} />
     <Route path="/sci/taskboard-final-mes-nao-util" element={<TaskboardFinalMesNaoUtil />} />
-    <Route path="/sci/mapa-turno" element={<MapaTurno />} />
+    <Route path="/sci/calendar" element={<Calendar />} />
   </>
 );
