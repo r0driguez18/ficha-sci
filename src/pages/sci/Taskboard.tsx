@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -448,7 +449,7 @@ const Taskboard = () => {
         terminoFecho: false,
         terminoFechoHora: '',
         transferirFicheirosDsi: false,
-        limpaGbtrlogFimMes: false
+        limpaGbtrlogFimMes: false // Make sure it's also included in the reset state
       }
     });
     setTableRows([{ id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '' }]);

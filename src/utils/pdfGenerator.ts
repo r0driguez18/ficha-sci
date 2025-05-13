@@ -84,7 +84,7 @@ export const generateTaskboardPDF = (
     });
   }
   
-  // Always add task table no matter what - this is the fix for the missing table
+  // Always add task table no matter what
   renderTaskTable(doc, tableRows);
   
   return doc;
