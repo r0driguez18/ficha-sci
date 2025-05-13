@@ -15,6 +15,6 @@ export const sciRoutes = (
     <Route path="/sci/taskboard-nao-util" element={<TaskboardDiaNaoUtil />} />
     <Route path="/sci/taskboard-final-mes-util" element={<TaskboardFinalMesUtil />} />
     <Route path="/sci/taskboard-final-mes-nao-util" element={<TaskboardFinalMesNaoUtil />} />
-    <Route path="/sci/calendar" element={<MapaTurno />} />
+    <Route path="/sci/mapa-turno" element={<MapaTurno />} />
   </>
 );

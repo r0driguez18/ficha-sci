@@ -1,3 +1,4 @@
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -58,7 +59,8 @@ const App = () => (
               <Route path="/sci/taskboard-nao-util" element={<PrivateRoute><DashboardLayout><TaskboardDiaNaoUtil /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/taskboard-final-mes-util" element={<PrivateRoute><DashboardLayout><TaskboardFinalMesUtil /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/taskboard-final-mes-nao-util" element={<PrivateRoute><DashboardLayout><TaskboardFinalMesNaoUtil /></DashboardLayout></PrivateRoute>} />
-              <Route path="/sci/calendar" element={<PrivateRoute><DashboardLayout><MapaTurno /></DashboardLayout></PrivateRoute>} />
+              <Route path="/sci/mapa-turno" element={<PrivateRoute><DashboardLayout><MapaTurno /></DashboardLayout></PrivateRoute>} />
+              <Route path="/sci/calendar" element={<Navigate to="/sci/mapa-turno" replace />} />
               
               {/* CRC Routes */}
               <Route path="/crc" element={<Navigate to="/crc/tratamento" replace />} />
