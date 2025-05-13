@@ -159,14 +159,14 @@ const TaskboardFinalMesNaoUtil = () => {
     }
     
     fetchData();
-  }, [user]);
+  }, [user, loadData]);
 
   // Save data to localStorage and Supabase whenever it changes
   useEffect(() => {
     if (!isLoading) {
       syncData();
     }
-  }, [date, turnData, tasks, tableRows, isLoading]);
+  }, [date, turnData, tasks, tableRows, isLoading, syncData]);
 
   const handleTaskChange = (task: keyof Turno3Tasks, checked: boolean | string) => {
     setTasks({
