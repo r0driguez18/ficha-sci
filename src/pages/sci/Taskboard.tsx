@@ -459,6 +459,14 @@ const Taskboard = () => {
     }
   };
 
+  // Check if current date is end of month
+  const isEndOfMonth = React.useMemo(() => {
+    if (!date) return false;
+    const currentDate = new Date(date);
+    const lastDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
+    return currentDate.getDate() === lastDayOfMonth;
+  }, [date]);
+
   return (
     <div className="container py-6">
       <Card>
@@ -476,6 +484,12 @@ const Taskboard = () => {
               onChange={(e) => setDate(e.target.value)}
               className="max-w-xs"
             />
+            
+            {isEndOfMonth && (
+              <div className="mt-2 text-sm text-green-600 font-medium">
+                Final do mês - Tarefas adicionais disponíveis
+              </div>
+            )}
           </div>
 
           <Tabs defaultValue="turno1">
@@ -549,6 +563,7 @@ const Taskboard = () => {
                     onTaskChange={(task, value) => handleTaskChange('turno3', task, value)}
                     observations={turnData.turno3.observations}
                     onObservationsChange={(value) => handleTurnDataChange('turno3', 'observations', value)}
+                    isEndOfMonth={isEndOfMonth}
                   />
                 </div>
               </div>

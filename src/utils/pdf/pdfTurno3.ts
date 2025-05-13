@@ -3,7 +3,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { Turno3Tasks } from '@/types/taskboard';
 
-export function addTurno3TasksToPDF(doc: jsPDF, tasks: Turno3Tasks, startY: number): number {
+export function addTurno3TasksToPDF(doc: jsPDF, tasks: Turno3Tasks, startY: number, isEndOfMonth: boolean = false): number {
   let currentY = startY;
   
   doc.setFontSize(12);
@@ -11,7 +11,8 @@ export function addTurno3TasksToPDF(doc: jsPDF, tasks: Turno3Tasks, startY: numb
   doc.text("Turno 3 Tasks:", 14, currentY);
   currentY += 6;
 
-  const taskList = [
+  // Standard task list regardless of month date
+  const standardTaskList = [
     { label: "Verificar Débitos", value: tasks.verificarDebitos },
     { label: "Tratar Tapes", value: tasks.tratarTapes },
     { label: "Fechar Servidores", value: tasks.fecharServidores },
@@ -58,9 +59,16 @@ export function addTurno3TasksToPDF(doc: jsPDF, tasks: Turno3Tasks, startY: numb
     { label: "Impressão Cheques", value: tasks.impressaoCheques },
     { label: "Arquivar Cheques", value: tasks.arquivarCheques },
     { label: "Término do Fecho", value: tasks.terminoFecho },
-    { label: "Limpar Gbtrlog", value: tasks.limparGbtrlog }, // Added the new task
     { label: "Transferir Ficheiros DSI", value: tasks.transferirFicheirosDsi },
   ];
+  
+  // Create the taskList based on whether it's end of month or not
+  let taskList = [...standardTaskList];
+  
+  // Add the limparGbtrlog task only if it's end of month
+  if (isEndOfMonth) {
+    taskList.push({ label: "Chamar Opção 16 - Limpa GBTRLOG Após o Fecho", value: tasks.limparGbtrlog });
+  }
 
   doc.setFont('helvetica', 'normal');
   taskList.forEach(task => {
@@ -73,10 +81,10 @@ export function addTurno3TasksToPDF(doc: jsPDF, tasks: Turno3Tasks, startY: numb
   return currentY;
 }
 
-// Adding the missing export function that's referenced in pdfGenerator.ts
-export function renderTurno3Tasks(doc: jsPDF, tasks: Turno3Tasks, observations: string, y: number, isDiaNaoUtil: boolean = false): number {
-  // Start with adding the tasks
-  let currentY = addTurno3TasksToPDF(doc, tasks, y);
+// Export function that's referenced in pdfGenerator.ts
+export function renderTurno3Tasks(doc: jsPDF, tasks: Turno3Tasks, observations: string, y: number, isDiaNaoUtil: boolean = false, isEndOfMonth: boolean = false): number {
+  // Start with adding the tasks, passing the isEndOfMonth parameter
+  let currentY = addTurno3TasksToPDF(doc, tasks, y, isEndOfMonth);
   
   // Add observation section if there are observations
   if (observations && observations.trim() !== '') {
