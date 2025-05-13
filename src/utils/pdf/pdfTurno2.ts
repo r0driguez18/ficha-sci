@@ -17,8 +17,7 @@ export const renderTurno2Tasks = (
     {key: 'sistemas', text: "Verificar Sistemas: BCACV1/BCACV2"},
     {key: 'servicos', text: "Verificar Serviços: Vinti24/BCADireto/Replicação/Servidor MIA"},
     {key: 'verificarReportes', text: "Verificar envio de reportes (INPS, VISTO USA, BCV, IMPC)"},
-    {key: 'verificarDebitos', text: "Verificar Débitos/Créditos Aplicados no Turno Anterior"},
-    {key: 'confirmarAtualizacaoSisp', text: "Confirmar Atualização SISP"}
+    {key: 'verificarDebitos', text: "Verificar Débitos/Créditos Aplicados no Turno Anterior"}
   ];
   
   // Process basic tasks
