@@ -109,6 +109,7 @@ export interface Turno3Tasks {
   terminoFecho: boolean;
   terminoFechoHora: string;
   transferirFicheirosDsi: boolean;
+  limpaGbtrlogFimMes: boolean; // Added this property for end-of-month task
 }
 
 export type TurnKey = 'turno1' | 'turno2' | 'turno3';
