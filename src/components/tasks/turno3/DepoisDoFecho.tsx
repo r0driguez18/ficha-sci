@@ -170,16 +170,6 @@ export const DepoisDoFecho: React.FC<DepoisDoFechoProps> = ({
         label="Fazer o percurso 76923 - Reorganiza GBMVCO (Dia 3 de cada Mês)"
       />
       
-      {/* Show only at the end of the month */}
-      {isEndOfMonth && (
-        <CheckboxField 
-          id="limpaGbtrlogFimMes" 
-          checked={tasks.limpaGbtrlogFimMes || false}
-          onCheckedChange={(checked) => handleCheckboxChange('limpaGbtrlogFimMes', checked)}
-          label="Chamar Opção 16 - Limpa o GBTRLOG após o Fecho do mês"
-        />
-      )}
-      
       <CheckboxField 
         id="abrirServidoresTesteProducao" 
         checked={tasks.abrirServidoresTesteProducao}
@@ -209,6 +199,16 @@ export const DepoisDoFecho: React.FC<DepoisDoFechoProps> = ({
         onTimeChange={(value) => onTaskChange('terminoFechoHora', value)}
         label="Término do Fecho"
       />
+      
+      {/* Show only at the end of the month - Moved right after Término do Fecho */}
+      {isEndOfMonth && (
+        <CheckboxField 
+          id="limpaGbtrlogFimMes" 
+          checked={tasks.limpaGbtrlogFimMes || false}
+          onCheckedChange={(checked) => handleCheckboxChange('limpaGbtrlogFimMes', checked)}
+          label="Chamar Opção 16 - Limpa o GBTRLOG após o Fecho do mês"
+        />
+      )}
       
       <CheckboxField 
         id="transferirFicheirosDsi" 
