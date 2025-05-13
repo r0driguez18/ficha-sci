@@ -32,13 +32,16 @@ interface DepoisDoFechoProps {
     terminoFecho: boolean;
     terminoFechoHora: string;
     transferirFicheirosDsi: boolean;
+    limpaGbtrlogFimMes?: boolean;
   };
   onTaskChange: (task: string, value: boolean | string) => void;
+  isEndOfMonth?: boolean;
 }
 
 export const DepoisDoFecho: React.FC<DepoisDoFechoProps> = ({
   tasks,
-  onTaskChange
+  onTaskChange,
+  isEndOfMonth = false
 }) => {
   // Helper function to handle checkbox changes
   const handleCheckboxChange = (task: string, checked: boolean | "indeterminate") => {
@@ -166,6 +169,16 @@ export const DepoisDoFecho: React.FC<DepoisDoFechoProps> = ({
         onCheckedChange={(checked) => handleCheckboxChange('percurso76923', checked)}
         label="Fazer o percurso 76923 - Reorganiza GBMVCO (Dia 3 de cada Mês)"
       />
+      
+      {/* Show only at the end of the month */}
+      {isEndOfMonth && (
+        <CheckboxField 
+          id="limpaGbtrlogFimMes" 
+          checked={tasks.limpaGbtrlogFimMes || false}
+          onCheckedChange={(checked) => handleCheckboxChange('limpaGbtrlogFimMes', checked)}
+          label="Chamar Opção 16 - Limpa o GBTRLOG após o Fecho do mês"
+        />
+      )}
       
       <CheckboxField 
         id="abrirServidoresTesteProducao" 

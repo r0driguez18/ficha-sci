@@ -13,7 +13,8 @@ export const generateTaskboardPDF = (
   turnData: TurnDataType, 
   tasks: TasksType,
   tableRows: TaskTableRow[],
-  isDiaNaoUtil: boolean = false
+  isDiaNaoUtil: boolean = false,
+  isEndOfMonth: boolean = false
 ) => {
   const doc = new jsPDF();
   let y = 20;
@@ -47,7 +48,7 @@ export const generateTaskboardPDF = (
     y += 10;
     
     // Process only Turn 3 tasks
-    y = renderTurno3Tasks(doc, tasks.turno3, turnData.turno3.observations, y, true);
+    y = renderTurno3Tasks(doc, tasks.turno3, turnData.turno3.observations, y, true, isEndOfMonth);
   } else {
     // Process all three turns for regular days
     const turnKeys: TurnKey[] = ['turno1', 'turno2', 'turno3'];
@@ -78,7 +79,7 @@ export const generateTaskboardPDF = (
       } else if (turnKey === 'turno2') {
         y = renderTurno2Tasks(doc, tasks.turno2, turn.observations, y);
       } else if (turnKey === 'turno3') {
-        y = renderTurno3Tasks(doc, tasks.turno3, turn.observations, y);
+        y = renderTurno3Tasks(doc, tasks.turno3, turn.observations, y, false, isEndOfMonth);
       }
     });
   }
