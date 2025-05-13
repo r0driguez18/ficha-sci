@@ -8,13 +8,6 @@ import { renderTurno2Tasks } from './pdf/pdfTurno2';
 import { renderTurno3Tasks } from './pdf/pdfTurno3';
 import { renderTaskTable } from './pdf/pdfTable';
 
-// Helper function to check if a date is end of month
-function isEndOfMonth(dateString: string): boolean {
-  const date = new Date(dateString);
-  const lastDayOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-  return date.getDate() === lastDayOfMonth;
-}
-
 export const generateTaskboardPDF = (
   date: string,
   turnData: TurnDataType, 
@@ -24,9 +17,6 @@ export const generateTaskboardPDF = (
 ) => {
   const doc = new jsPDF();
   let y = 20;
-  
-  // Check if it's end of month
-  const isDateEndOfMonth = isEndOfMonth(date);
   
   // Document header
   doc.setFont("helvetica", "bold");
@@ -56,8 +46,8 @@ export const generateTaskboardPDF = (
     doc.text(`Saída: ${turnData.turno3.saida}`, 170, y);
     y += 10;
     
-    // Process only Turn 3 tasks, pass isEndOfMonth parameter
-    y = renderTurno3Tasks(doc, tasks.turno3, turnData.turno3.observations, y, true, isDateEndOfMonth);
+    // Process only Turn 3 tasks
+    y = renderTurno3Tasks(doc, tasks.turno3, turnData.turno3.observations, y, true);
   } else {
     // Process all three turns for regular days
     const turnKeys: TurnKey[] = ['turno1', 'turno2', 'turno3'];
@@ -88,8 +78,7 @@ export const generateTaskboardPDF = (
       } else if (turnKey === 'turno2') {
         y = renderTurno2Tasks(doc, tasks.turno2, turn.observations, y);
       } else if (turnKey === 'turno3') {
-        // Pass isEndOfMonth parameter for turn 3
-        y = renderTurno3Tasks(doc, tasks.turno3, turn.observations, y, false, isDateEndOfMonth);
+        y = renderTurno3Tasks(doc, tasks.turno3, turn.observations, y);
       }
     });
   }

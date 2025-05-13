@@ -96,7 +96,6 @@ const TaskboardDiaNaoUtil = () => {
     arquivarCheques: false,
     terminoFecho: false,
     terminoFechoHora: '',
-    limparGbtrlog: false, // Added the new property with default value
     transferirFicheirosDsi: false
   });
 
@@ -313,7 +312,6 @@ const TaskboardDiaNaoUtil = () => {
       arquivarCheques: false,
       terminoFecho: false,
       terminoFechoHora: '',
-      limparGbtrlog: false, // Added here too
       transferirFicheirosDsi: false
     });
     setTableRows([{ id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '' }]);
@@ -408,14 +406,6 @@ const TaskboardDiaNaoUtil = () => {
     }
   };
 
-  // Check if current date is end of month
-  const isEndOfMonth = React.useMemo(() => {
-    if (!date) return false;
-    const currentDate = new Date(date);
-    const lastDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
-    return currentDate.getDate() === lastDayOfMonth;
-  }, [date]);
-
   return (
     <div className="container py-6">
       <Card>
@@ -433,12 +423,6 @@ const TaskboardDiaNaoUtil = () => {
               onChange={(e) => setDate(e.target.value)}
               className="max-w-xs"
             />
-            
-            {isEndOfMonth && (
-              <div className="mt-2 text-sm text-green-600 font-medium">
-                Final do mês - Tarefas adicionais disponíveis
-              </div>
-            )}
           </div>
 
           <div className="space-y-6">
@@ -458,7 +442,6 @@ const TaskboardDiaNaoUtil = () => {
                 onTaskChange={handleTaskChange}
                 observations={turnData.observations}
                 onObservationsChange={(value) => handleTurnDataChange('observations', value)}
-                isEndOfMonth={isEndOfMonth}
               />
             </div>
           </div>

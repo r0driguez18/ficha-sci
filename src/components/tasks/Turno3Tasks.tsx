@@ -11,15 +11,13 @@ interface Turno3TasksProps {
   onTaskChange: (task: keyof Turno3Tasks, value: boolean | string) => void;
   observations: string;
   onObservationsChange: (value: string) => void;
-  isEndOfMonth?: boolean;
 }
 
 export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
   tasks,
   onTaskChange,
   observations,
-  onObservationsChange,
-  isEndOfMonth = false
+  onObservationsChange
 }) => {
   return (
     <div className="space-y-2">
@@ -31,7 +29,6 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
       <DepoisDoFecho 
         tasks={tasks} 
         onTaskChange={onTaskChange}
-        isEndOfMonth={isEndOfMonth}
       />
       
       <div className="mt-6">
