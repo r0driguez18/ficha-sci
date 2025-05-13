@@ -96,7 +96,8 @@ const TaskboardDiaNaoUtil = () => {
     arquivarCheques: false,
     terminoFecho: false,
     terminoFechoHora: '',
-    transferirFicheirosDsi: false
+    transferirFicheirosDsi: false,
+    limpaGbtrlogFimMes: false
   });
 
   // Load data from localStorage if available
@@ -312,7 +313,8 @@ const TaskboardDiaNaoUtil = () => {
       arquivarCheques: false,
       terminoFecho: false,
       terminoFechoHora: '',
-      transferirFicheirosDsi: false
+      transferirFicheirosDsi: false,
+      limpaGbtrlogFimMes: false
     });
     setTableRows([{ id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '' }]);
     
