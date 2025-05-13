@@ -79,10 +79,10 @@ const MapaTurno = () => {
 
           if (storageError) throw storageError;
 
-          // Save metadata to database
+          // Save metadata to database - Fix the type issue by explicitly providing the content as Json
           const { error: dbError } = await supabase.from('shift_maps').insert({
             file_name: file.name,
-            content: jsonData,
+            content: jsonData as any, // Cast to any to match the Json type expected by Supabase
             file_size: file.size
           });
 
@@ -107,6 +107,7 @@ const MapaTurno = () => {
           if (newFileData) {
             setSelectedFile(newFileData);
             if (newFileData.content) {
+              // Ensure content is treated as an array
               setFileData(Array.isArray(newFileData.content) ? newFileData.content : []);
             }
           }
