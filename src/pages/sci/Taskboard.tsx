@@ -39,6 +39,7 @@ const Taskboard = () => {
   const navigate = useNavigate();
   
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [isEndOfMonth, setIsEndOfMonth] = useState<boolean>(false);
   const [tableRows, setTableRows] = useState<TaskTableRow[]>([
     { id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '' }
   ]);
@@ -179,6 +180,20 @@ const Taskboard = () => {
     localStorage.setItem('taskboard-tasks', JSON.stringify(tasks));
     localStorage.setItem('taskboard-tableRows', JSON.stringify(tableRows));
   }, [date, turnData, tasks, tableRows]);
+
+  // Add effect to check if the date is the last day of month
+  useEffect(() => {
+    if (date) {
+      const currentDate = new Date(date);
+      const lastDayOfMonth = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth() + 1,
+        0
+      ).getDate();
+      
+      setIsEndOfMonth(currentDate.getDate() === lastDayOfMonth);
+    }
+  }, [date]);
 
   const handleTaskChange = (turno: TurnKey, task: string, checked: boolean | string) => {
     setTasks({
@@ -446,7 +461,7 @@ const Taskboard = () => {
 
   const exportToPDF = () => {
     try {
-      const doc = generateTaskboardPDF(date, turnData, tasks, tableRows);
+      const doc = generateTaskboardPDF(date, turnData, tasks, tableRows, false, isEndOfMonth);
       doc.save(`taskboard_${date.replace(/-/g, '')}.pdf`);
       toast.success('PDF gerado com sucesso!');
     } catch (error) {
@@ -545,6 +560,7 @@ const Taskboard = () => {
                     onTaskChange={(task, value) => handleTaskChange('turno3', task, value)}
                     observations={turnData.turno3.observations}
                     onObservationsChange={(value) => handleTurnDataChange('turno3', 'observations', value)}
+                    isEndOfMonth={isEndOfMonth}
                   />
                 </div>
               </div>

@@ -25,6 +25,7 @@ const TaskboardDiaNaoUtil = () => {
   const navigate = useNavigate();
   
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [isEndOfMonth, setIsEndOfMonth] = useState<boolean>(false);
   const [tableRows, setTableRows] = useState<TaskTableRow[]>([
     { id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '' }
   ]);
@@ -120,6 +121,20 @@ const TaskboardDiaNaoUtil = () => {
     localStorage.setItem('taskboard-nao-util-tasks', JSON.stringify(tasks));
     localStorage.setItem('taskboard-nao-util-tableRows', JSON.stringify(tableRows));
   }, [date, turnData, tasks, tableRows]);
+
+  // Add effect to check if the date is the last day of month
+  useEffect(() => {
+    if (date) {
+      const currentDate = new Date(date);
+      const lastDayOfMonth = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth() + 1,
+        0
+      ).getDate();
+      
+      setIsEndOfMonth(currentDate.getDate() === lastDayOfMonth);
+    }
+  }, [date]);
 
   const handleTaskChange = (task: keyof Turno3Tasks, checked: boolean | string) => {
     setTasks({
@@ -397,8 +412,8 @@ const TaskboardDiaNaoUtil = () => {
         }
       };
 
-      // Pass isDiaNaoUtil=true to indicate this is a non-working day PDF
-      const doc = generateTaskboardPDF(date, completeTurnData, completeTasksData, tableRows, true);
+      // Pass isDiaNaoUtil=true AND isEndOfMonth to indicate this is a non-working day PDF
+      const doc = generateTaskboardPDF(date, completeTurnData, completeTasksData, tableRows, true, isEndOfMonth);
       doc.save(`taskboard_nao_util_${date.replace(/-/g, '')}.pdf`);
       toast.success('PDF gerado com sucesso!');
     } catch (error) {
@@ -443,6 +458,7 @@ const TaskboardDiaNaoUtil = () => {
                 onTaskChange={handleTaskChange}
                 observations={turnData.observations}
                 onObservationsChange={(value) => handleTurnDataChange('observations', value)}
+                isEndOfMonth={isEndOfMonth}
               />
             </div>
           </div>
