@@ -5,13 +5,16 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { saveFileProcess } from '@/services/fileProcessService';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { Turno3TasksComponent } from '@/components/tasks/Turno3Tasks';
 import { generateTaskboardPDF } from '@/utils/pdfGenerator';
 import { TurnInfoSection } from '@/components/taskboard/TurnInfoSection';
 import { TableRowsSection } from '@/components/taskboard/TableRowsSection';
 import { FormActions } from '@/components/taskboard/FormActions';
+import { useTaskboardSync } from '@/services/taskboardService';
 import type { TurnKey, TasksType, TurnDataType, Turno3Tasks } from '@/types/taskboard';
 import type { TaskTableRow } from '@/types/taskTableRow';
+import { Loader2 } from 'lucide-react';
 
 const operatorsList = [
   { value: "nalves", label: "Nelson Alves" },
@@ -23,12 +26,14 @@ const operatorsList = [
 
 const TaskboardDiaNaoUtil = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [isEndOfMonth, setIsEndOfMonth] = useState<boolean>(false);
   const [tableRows, setTableRows] = useState<TaskTableRow[]>([
     { id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '' }
   ]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // For non-working days, we only have one turn (Turn 3)
   const [turnData, setTurnData] = useState<{
@@ -101,26 +106,67 @@ const TaskboardDiaNaoUtil = () => {
     limpaGbtrlogFimMes: false
   });
 
-  // Load data from localStorage if available
-  useEffect(() => {
-    const savedDate = localStorage.getItem('taskboard-nao-util-date');
-    const savedTurnData = localStorage.getItem('taskboard-nao-util-turnData');
-    const savedTasks = localStorage.getItem('taskboard-nao-util-tasks');
-    const savedTableRows = localStorage.getItem('taskboard-nao-util-tableRows');
+  const { syncData, loadData, resetData } = useTaskboardSync(
+    'dia-nao-util',
+    date,
+    { turno3: turnData },
+    { turno3: tasks },
+    tableRows
+  );
 
-    if (savedDate) setDate(savedDate);
-    if (savedTurnData) setTurnData(JSON.parse(savedTurnData));
-    if (savedTasks) setTasks(JSON.parse(savedTasks));
-    if (savedTableRows) setTableRows(JSON.parse(savedTableRows));
-  }, []);
-
-  // Save data to localStorage whenever it changes
+  // Load data from Supabase or localStorage on component mount
   useEffect(() => {
-    localStorage.setItem('taskboard-nao-util-date', date);
-    localStorage.setItem('taskboard-nao-util-turnData', JSON.stringify(turnData));
-    localStorage.setItem('taskboard-nao-util-tasks', JSON.stringify(tasks));
-    localStorage.setItem('taskboard-nao-util-tableRows', JSON.stringify(tableRows));
-  }, [date, turnData, tasks, tableRows]);
+    async function fetchData() {
+      setIsLoading(true);
+      try {
+        if (user) {
+          const taskboardData = await loadData();
+          if (taskboardData) {
+            if (taskboardData.date) setDate(taskboardData.date);
+            if (taskboardData.turn_data?.turno3) setTurnData(taskboardData.turn_data.turno3);
+            if (taskboardData.tasks?.turno3) setTasks(taskboardData.tasks.turno3);
+            if (taskboardData.table_rows) setTableRows(taskboardData.table_rows);
+          } else {
+            // Try to load from localStorage as fallback
+            const savedDate = localStorage.getItem('taskboard-nao-util-date');
+            const savedTurnData = localStorage.getItem('taskboard-nao-util-turnData');
+            const savedTasks = localStorage.getItem('taskboard-nao-util-tasks');
+            const savedTableRows = localStorage.getItem('taskboard-nao-util-tableRows');
+
+            if (savedDate) setDate(savedDate);
+            if (savedTurnData) setTurnData(JSON.parse(savedTurnData));
+            if (savedTasks) setTasks(JSON.parse(savedTasks));
+            if (savedTableRows) setTableRows(JSON.parse(savedTableRows));
+          }
+        } else {
+          // No user, just use localStorage
+          const savedDate = localStorage.getItem('taskboard-nao-util-date');
+          const savedTurnData = localStorage.getItem('taskboard-nao-util-turnData');
+          const savedTasks = localStorage.getItem('taskboard-nao-util-tasks');
+          const savedTableRows = localStorage.getItem('taskboard-nao-util-tableRows');
+
+          if (savedDate) setDate(savedDate);
+          if (savedTurnData) setTurnData(JSON.parse(savedTurnData));
+          if (savedTasks) setTasks(JSON.parse(savedTasks));
+          if (savedTableRows) setTableRows(JSON.parse(savedTableRows));
+        }
+      } catch (error) {
+        console.error("Error loading taskboard data:", error);
+        toast.error("Erro ao carregar dados. Usando configuração padrão.");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    
+    fetchData();
+  }, [user]);
+
+  // Save data to localStorage and Supabase whenever it changes
+  useEffect(() => {
+    if (!isLoading) {
+      syncData();
+    }
+  }, [date, turnData, tasks, tableRows, isLoading]);
 
   // Add effect to check if the date is the last day of month
   useEffect(() => {
@@ -266,7 +312,7 @@ const TaskboardDiaNaoUtil = () => {
     }
   };
 
-  const resetForm = () => {
+  const resetForm = async () => {
     setDate(new Date().toISOString().split('T')[0]);
     setTurnData({
       operator: '',
@@ -274,6 +320,7 @@ const TaskboardDiaNaoUtil = () => {
       saida: '',
       observations: ''
     });
+    
     setTasks({
       verificarDebitos: false,
       tratarTapes: false,
@@ -331,12 +378,11 @@ const TaskboardDiaNaoUtil = () => {
       transferirFicheirosDsi: false,
       limpaGbtrlogFimMes: false
     });
+    
     setTableRows([{ id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '' }]);
     
-    localStorage.removeItem('taskboard-nao-util-date');
-    localStorage.removeItem('taskboard-nao-util-turnData');
-    localStorage.removeItem('taskboard-nao-util-tasks');
-    localStorage.removeItem('taskboard-nao-util-tableRows');
+    // Reset both localStorage and Supabase
+    await resetData();
     
     toast.success('Formulário reiniciado com sucesso!');
   };
@@ -422,12 +468,22 @@ const TaskboardDiaNaoUtil = () => {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin mr-2" />
+        <p>A carregar dados...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="container py-6">
       <Card>
         <CardHeader>
           <CardTitle>Ficha de Procedimentos - Dia Não Útil</CardTitle>
           <CardDescription>Preencha as informações necessárias para o dia não útil</CardDescription>
+          {user && <p className="text-sm text-muted-foreground">Dados sincronizados na nuvem</p>}
         </CardHeader>
         <CardContent>
           <div className="mb-6">

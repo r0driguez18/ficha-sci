@@ -45,6 +45,45 @@ export type Database = {
         }
         Relationships: []
       }
+      taskboard_data: {
+        Row: {
+          active_tab: string | null
+          created_at: string | null
+          date: string
+          form_type: string
+          id: string
+          table_rows: Json
+          tasks: Json
+          turn_data: Json
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          active_tab?: string | null
+          created_at?: string | null
+          date: string
+          form_type: string
+          id?: string
+          table_rows: Json
+          tasks: Json
+          turn_data: Json
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          active_tab?: string | null
+          created_at?: string | null
+          date?: string
+          form_type?: string
+          id?: string
+          table_rows?: Json
+          tasks?: Json
+          turn_data?: Json
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       salary_processes: {
