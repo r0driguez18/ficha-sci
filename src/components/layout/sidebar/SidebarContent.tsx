@@ -22,7 +22,7 @@ export const SidebarContent = ({ collapsed }: SidebarContentProps) => {
       <nav className="space-y-6">
         <div>
           <div className={cn("mb-2", collapsed ? "px-2 sr-only" : "px-3 text-xs font-semibold text-white/40 uppercase")}>
-            Main
+            Principal
           </div>
           <SidebarItem
             icon={ClipboardCheck}
@@ -31,7 +31,7 @@ export const SidebarContent = ({ collapsed }: SidebarContentProps) => {
             collapsed={collapsed}
             subItems={[
               { label: "Ficha de Procedimentos", to: "/sci/procedimentos" },
-              { label: "Calendar", to: "/sci/calendar" }
+              { label: "Mapa de Turno", to: "/sci/calendar" }
             ]}
           />
           <SidebarItem
@@ -65,17 +65,17 @@ export const SidebarContent = ({ collapsed }: SidebarContentProps) => {
         
         <div>
           <div className={cn("mb-2", collapsed ? "px-2 sr-only" : "px-3 text-xs font-semibold text-white/40 uppercase")}>
-            System
+            Sistema
           </div>
           <SidebarItem
             icon={Settings}
-            label="Settings"
+            label="Definições"
             to="/settings"
             collapsed={collapsed}
           />
           <SidebarItem
             icon={FileText}
-            label="Documentation"
+            label="Documentação"
             to="/docs"
             collapsed={collapsed}
           />
