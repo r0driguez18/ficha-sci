@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { SidebarItem } from './SidebarItem';
@@ -30,7 +31,7 @@ export const SidebarContent = ({ collapsed }: SidebarContentProps) => {
             collapsed={collapsed}
             subItems={[
               { label: "Ficha de Procedimentos", to: "/sci/procedimentos" },
-              { label: "Mapa de Turno", to: "/sci/calendar" }
+              { label: "Mapa de Turno", to: "/sci/mapa-turno" }
             ]}
           />
           <SidebarItem
