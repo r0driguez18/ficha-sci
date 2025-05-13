@@ -5,15 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { Upload, File, Trash2, FileSpreadsheet } from 'lucide-react';
+import { Upload, FileSpreadsheet, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import * as XLSX from 'xlsx';
+import { Tables } from '@/integrations/supabase/types';
 
-interface ShiftMap {
-  id: string;
-  file_name: string;
-  uploaded_at: string;
-  file_size: number;
+// Define interface for ShiftMap with correct typing
+interface ShiftMap extends Tables<'shift_maps'> {
+  content: any;
 }
 
 const MapaTurno = () => {
@@ -73,7 +72,7 @@ const MapaTurno = () => {
           // Save metadata to database
           const { error: dbError } = await supabase.from('shift_maps').insert({
             file_name: file.name,
-            content: jsonData,
+            content: jsonData as any, // Type assertion for Supabase Json type
             file_size: file.size
           });
 
@@ -92,8 +91,11 @@ const MapaTurno = () => {
             .single();
             
           if (newFileData) {
-            setSelectedFile(newFileData);
-            setFileData(newFileData.content);
+            setSelectedFile(newFileData as ShiftMap);
+            // Ensure content is parsed as an array
+            if (newFileData.content) {
+              setFileData(Array.isArray(newFileData.content) ? newFileData.content : []);
+            }
           }
         } catch (error) {
           console.error('Erro ao processar ficheiro:', error);
@@ -113,7 +115,10 @@ const MapaTurno = () => {
 
   const handleFileSelect = async (file: ShiftMap) => {
     setSelectedFile(file);
-    setFileData(file.content);
+    // Ensure content is parsed as an array
+    if (file.content) {
+      setFileData(Array.isArray(file.content) ? file.content : []);
+    }
   };
 
   const handleFileDelete = async (id: string, event: React.MouseEvent) => {
@@ -208,7 +213,7 @@ const MapaTurno = () => {
                     <p className="font-medium truncate">{file.file_name}</p>
                     <div className="flex text-xs mt-1">
                       <span className={selectedFile?.id === file.id ? 'text-white/80' : 'text-gray-500'}>
-                        {formatDate(file.uploaded_at)}
+                        {formatDate(file.uploaded_at || '')}
                       </span>
                       <span className={`ml-2 ${selectedFile?.id === file.id ? 'text-white/80' : 'text-gray-500'}`}>
                         {formatFileSize(file.file_size)}
@@ -243,7 +248,7 @@ const MapaTurno = () => {
           
           {!selectedFile ? (
             <div className="text-center py-16 text-gray-500">
-              <File className="mx-auto h-16 w-16 mb-3 text-gray-400" />
+              <FileSpreadsheet className="mx-auto h-16 w-16 mb-3 text-gray-400" />
               <p className="text-lg">Selecione um ficheiro para visualizar o conteúdo</p>
             </div>
           ) : (
