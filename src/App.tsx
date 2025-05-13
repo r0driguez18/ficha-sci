@@ -22,7 +22,7 @@ import DisDados from "./pages/dis/Dados";
 import EasyVistaEstatisticas from "./pages/easyvista/Estatisticas";
 import Settings from "./pages/Settings";
 import Documentation from "./pages/Documentation";
-import MapaTurno from './pages/sci/MapaTurno';
+import CalendarPage from './pages/sci/Calendar';
 
 // Initialize theme from localStorage
 const initTheme = () => {
@@ -59,8 +59,7 @@ const App = () => (
               <Route path="/sci/taskboard-nao-util" element={<PrivateRoute><DashboardLayout><TaskboardDiaNaoUtil /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/taskboard-final-mes-util" element={<PrivateRoute><DashboardLayout><TaskboardFinalMesUtil /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/taskboard-final-mes-nao-util" element={<PrivateRoute><DashboardLayout><TaskboardFinalMesNaoUtil /></DashboardLayout></PrivateRoute>} />
-              <Route path="/sci/mapa-turno" element={<PrivateRoute><DashboardLayout><MapaTurno /></DashboardLayout></PrivateRoute>} />
-              <Route path="/sci/calendar" element={<Navigate to="/sci/mapa-turno" replace />} />
+              <Route path="/sci/calendar" element={<PrivateRoute><DashboardLayout><CalendarPage /></DashboardLayout></PrivateRoute>} />
               
               {/* CRC Routes */}
               <Route path="/crc" element={<Navigate to="/crc/tratamento" replace />} />

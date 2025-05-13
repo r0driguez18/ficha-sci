@@ -9,7 +9,7 @@ import {
   LayoutDashboard,
   PieChart,
   Settings,
-  FileSpreadsheet
+  Calendar
 } from 'lucide-react';
 
 interface SidebarContentProps {
@@ -22,7 +22,7 @@ export const SidebarContent = ({ collapsed }: SidebarContentProps) => {
       <nav className="space-y-6">
         <div>
           <div className={cn("mb-2", collapsed ? "px-2 sr-only" : "px-3 text-xs font-semibold text-white/40 uppercase")}>
-            Principal
+            Main
           </div>
           <SidebarItem
             icon={ClipboardCheck}
@@ -31,7 +31,7 @@ export const SidebarContent = ({ collapsed }: SidebarContentProps) => {
             collapsed={collapsed}
             subItems={[
               { label: "Ficha de Procedimentos", to: "/sci/procedimentos" },
-              { label: "Mapa de Turno", to: "/sci/mapa-turno" }
+              { label: "Calendar", to: "/sci/calendar" }
             ]}
           />
           <SidebarItem
@@ -60,6 +60,24 @@ export const SidebarContent = ({ collapsed }: SidebarContentProps) => {
             subItems={[
               { label: "Estatísticas", to: "/easyvista/estatisticas" }
             ]}
+          />
+        </div>
+        
+        <div>
+          <div className={cn("mb-2", collapsed ? "px-2 sr-only" : "px-3 text-xs font-semibold text-white/40 uppercase")}>
+            System
+          </div>
+          <SidebarItem
+            icon={Settings}
+            label="Settings"
+            to="/settings"
+            collapsed={collapsed}
+          />
+          <SidebarItem
+            icon={FileText}
+            label="Documentation"
+            to="/docs"
+            collapsed={collapsed}
           />
         </div>
       </nav>
