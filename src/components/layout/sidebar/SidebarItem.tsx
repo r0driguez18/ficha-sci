@@ -18,9 +18,16 @@ export const SidebarItem = ({ icon: Icon, label, to, collapsed, subItems }: Side
   const isActive = location.pathname === to || location.pathname.startsWith(`${to}/`);
   const [open, setOpen] = React.useState(isActive);
 
+  const linkClasses = ({ isActive }: { isActive: boolean }) => cn(
+    "flex items-center px-3 py-2 rounded-md text-sm transition-colors",
+    isActive 
+      ? "bg-white/20 text-white" 
+      : "text-white/70 hover:text-white hover:bg-white/10"
+  );
+
   const LinkContent = (
     <>
-      <Icon className="h-5 w-5" />
+      <Icon className="h-5 w-5 text-white" />
       {!collapsed && <span className="ml-3">{label}</span>}
     </>
   );
@@ -33,12 +40,7 @@ export const SidebarItem = ({ icon: Icon, label, to, collapsed, subItems }: Side
             <TooltipTrigger asChild>
               <NavLink 
                 to={to}
-                className={({ isActive }) => cn(
-                  "flex items-center px-3 py-2 rounded-md text-sm transition-colors",
-                  isActive 
-                    ? "bg-white/20 text-white" 
-                    : "text-white/70 hover:text-white hover:bg-white/10"
-                )}
+                className={linkClasses}
               >
                 {LinkContent}
               </NavLink>
@@ -51,12 +53,7 @@ export const SidebarItem = ({ icon: Icon, label, to, collapsed, subItems }: Side
       ) : (
         <NavLink 
           to={to}
-          className={({ isActive }) => cn(
-            "flex items-center px-3 py-2 rounded-md text-sm transition-colors",
-            isActive 
-              ? "bg-white/20 text-white" 
-              : "text-white/70 hover:text-white hover:bg-white/10"
-          )}
+          className={linkClasses}
           onClick={() => subItems && setOpen(!open)}
         >
           {LinkContent}
