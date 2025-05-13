@@ -4,6 +4,7 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { TurnDataType, TasksType } from '@/types/taskboard';
 import { TaskTableRow, TaskTableRowJson } from '@/types/taskTableRow';
 import { toast } from '@/components/ui/use-toast';
+import { Json } from '@/integrations/supabase/types';
 
 export type FormType = 'dia-util' | 'dia-nao-util' | 'final-mes-util' | 'final-mes-nao-util';
 
@@ -46,9 +47,9 @@ export const saveTaskboardData = async (data: TaskboardData): Promise<{ data: an
       user_id: data.user_id,
       form_type: data.form_type,
       date: data.date,
-      turn_data: data.turn_data as Record<string, any>,
-      tasks: data.tasks as Record<string, any>,
-      table_rows: data.table_rows as unknown as Record<string, any>[],
+      turn_data: data.turn_data as Json,
+      tasks: data.tasks as Json,
+      table_rows: data.table_rows as unknown as Json,
       active_tab: data.active_tab || null
     };
     
@@ -117,12 +118,13 @@ export const loadTaskboardData = async (
     
     console.log('Taskboard data loaded:', data);
     if (data) {
+      // Explicitly cast the JSON data to the expected types
       const typedData: TaskboardData = {
         ...data,
         form_type: data.form_type as FormType,
-        turn_data: data.turn_data,
-        tasks: data.tasks,
-        table_rows: data.table_rows as TaskTableRow[]
+        turn_data: data.turn_data as Record<string, any>,
+        tasks: data.tasks as Record<string, any>,
+        table_rows: data.table_rows as unknown as TaskTableRow[]
       };
       return { data: typedData, error: null };
     }
@@ -185,9 +187,9 @@ export const loadAllTaskboardsByType = async (
     const typedData: TaskboardData[] = data ? data.map(item => ({
       ...item,
       form_type: item.form_type as FormType,
-      turn_data: item.turn_data,
-      tasks: item.tasks,
-      table_rows: item.table_rows as TaskTableRow[]
+      turn_data: item.turn_data as Record<string, any>,
+      tasks: item.tasks as Record<string, any>,
+      table_rows: item.table_rows as unknown as TaskTableRow[]
     })) : [];
     
     return { data: typedData, error: null };
@@ -349,3 +351,4 @@ export const useTaskboardSync = (
   
   return { syncData, loadData, resetData };
 };
+
