@@ -59,13 +59,6 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
         onCheckedChange={(checked) => handleCheckboxChange('verificarDebitos', checked)}
         label="Verificar Débitos/Créditos Aplicados no Turno Anterior"
       />
-      
-      <CheckboxField
-        id="confirmarAtualizacaoSisp"
-        checked={tasks.confirmarAtualizacaoSisp}
-        onCheckedChange={(checked) => handleCheckboxChange('confirmarAtualizacaoSisp', checked)}
-        label="Confirmar Atualização SISP"
-      />
 
       <div className="border rounded-md p-3 bg-gray-50 dark:bg-gray-800">
         <h4 className="font-medium mb-2">Ficheiros INPS:</h4>
