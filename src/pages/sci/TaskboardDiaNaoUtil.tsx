@@ -96,6 +96,7 @@ const TaskboardDiaNaoUtil = () => {
     arquivarCheques: false,
     terminoFecho: false,
     terminoFechoHora: '',
+    limparGbtrlog: false, // Added the new property with default value
     transferirFicheirosDsi: false
   });
 
@@ -312,6 +313,7 @@ const TaskboardDiaNaoUtil = () => {
       arquivarCheques: false,
       terminoFecho: false,
       terminoFechoHora: '',
+      limparGbtrlog: false, // Added here too
       transferirFicheirosDsi: false
     });
     setTableRows([{ id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '' }]);

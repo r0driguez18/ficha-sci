@@ -1,3 +1,4 @@
+
 export interface Turno1Tasks {
   datacenter: boolean;
   sistemas: boolean;
@@ -108,6 +109,7 @@ export interface Turno3Tasks {
   arquivarCheques: boolean;
   terminoFecho: boolean;
   terminoFechoHora: string;
+  limparGbtrlog: boolean; // Added the new property
   transferirFicheirosDsi: boolean;
 }
 
