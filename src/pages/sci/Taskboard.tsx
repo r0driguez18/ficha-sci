@@ -186,8 +186,24 @@ const Taskboard = () => {
           const taskboardData = await loadData();
           if (taskboardData) {
             if (taskboardData.date) setDate(taskboardData.date);
-            if (taskboardData.turn_data) setTurnData(taskboardData.turn_data);
-            if (taskboardData.tasks) setTasks(taskboardData.tasks);
+            if (taskboardData.turn_data) {
+              // Ensure we have the correct TurnDataType structure
+              const typedTurnData: TurnDataType = {
+                turno1: taskboardData.turn_data.turno1 || turnData.turno1,
+                turno2: taskboardData.turn_data.turno2 || turnData.turno2,
+                turno3: taskboardData.turn_data.turno3 || turnData.turno3
+              };
+              setTurnData(typedTurnData);
+            }
+            if (taskboardData.tasks) {
+              // Ensure we have the correct TasksType structure
+              const typedTasks: TasksType = {
+                turno1: taskboardData.tasks.turno1 || tasks.turno1,
+                turno2: taskboardData.tasks.turno2 || tasks.turno2,
+                turno3: taskboardData.tasks.turno3 || tasks.turno3
+              };
+              setTasks(typedTasks);
+            }
             if (taskboardData.table_rows) setTableRows(taskboardData.table_rows);
             if (taskboardData.active_tab) setActiveTab(taskboardData.active_tab);
           } else {

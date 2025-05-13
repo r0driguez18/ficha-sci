@@ -105,6 +105,15 @@ const TaskboardFinalMesNaoUtil = () => {
     limpaGbtrlogFimMes: false // Ensure this is in the initial state
   });
 
+  // Initialize the sync hooks
+  const { syncData, loadData, resetData } = useTaskboardSync(
+    'final-mes-nao-util',
+    date,
+    { turno3: turnData },
+    { turno3: tasks },
+    tableRows
+  );
+
   // Load data from Supabase or localStorage on component mount
   useEffect(() => {
     async function fetchData() {

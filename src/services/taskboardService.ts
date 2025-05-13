@@ -2,7 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { TurnDataType, TasksType } from '@/types/taskboard';
-import { TaskTableRow } from '@/types/taskTableRow';
+import { TaskTableRow, TaskTableRowJson } from '@/types/taskTableRow';
 import { toast } from '@/components/ui/use-toast';
 
 export type FormType = 'dia-util' | 'dia-nao-util' | 'final-mes-util' | 'final-mes-nao-util';
@@ -12,8 +12,8 @@ export interface TaskboardData {
   user_id: string;
   form_type: FormType;
   date: string;
-  turn_data: TurnDataType | Record<string, any>;
-  tasks: TasksType | Record<string, any>;
+  turn_data: Record<string, any>;
+  tasks: Record<string, any>;
   table_rows: TaskTableRow[];
   active_tab?: string;
   created_at?: string;
@@ -41,15 +41,26 @@ export const saveTaskboardData = async (data: TaskboardData): Promise<{ data: an
       return { data: null, error: fetchError };
     }
     
+    // Prepare data for Supabase by ensuring it conforms to Json type
+    const supabaseData = {
+      user_id: data.user_id,
+      form_type: data.form_type,
+      date: data.date,
+      turn_data: data.turn_data as Record<string, any>,
+      tasks: data.tasks as Record<string, any>,
+      table_rows: data.table_rows as unknown as Record<string, any>[],
+      active_tab: data.active_tab || null
+    };
+    
     if (existingData) {
       // Update existing record
       const { data: updatedData, error: updateError } = await supabase
         .from('taskboard_data')
         .update({
-          turn_data: data.turn_data,
-          tasks: data.tasks,
-          table_rows: data.table_rows,
-          active_tab: data.active_tab || null
+          turn_data: supabaseData.turn_data,
+          tasks: supabaseData.tasks,
+          table_rows: supabaseData.table_rows,
+          active_tab: supabaseData.active_tab
         })
         .eq('id', existingData.id);
       
@@ -64,7 +75,7 @@ export const saveTaskboardData = async (data: TaskboardData): Promise<{ data: an
       // Insert new record
       const { data: insertedData, error: insertError } = await supabase
         .from('taskboard_data')
-        .insert(data);
+        .insert(supabaseData);
       
       if (insertError) {
         console.error('Error inserting taskboard data:', insertError);
@@ -105,7 +116,17 @@ export const loadTaskboardData = async (
     }
     
     console.log('Taskboard data loaded:', data);
-    return { data, error: null };
+    if (data) {
+      const typedData: TaskboardData = {
+        ...data,
+        form_type: data.form_type as FormType,
+        turn_data: data.turn_data,
+        tasks: data.tasks,
+        table_rows: data.table_rows as TaskTableRow[]
+      };
+      return { data: typedData, error: null };
+    }
+    return { data: null, error: null };
   } catch (error) {
     console.error('Error loading taskboard data:', error);
     return { data: null, error };
@@ -159,8 +180,17 @@ export const loadAllTaskboardsByType = async (
       console.error('Error fetching all taskboard data:', error);
       return { data: [], error };
     }
+
+    // Transform and type-cast the data
+    const typedData: TaskboardData[] = data ? data.map(item => ({
+      ...item,
+      form_type: item.form_type as FormType,
+      turn_data: item.turn_data,
+      tasks: item.tasks,
+      table_rows: item.table_rows as TaskTableRow[]
+    })) : [];
     
-    return { data: data || [], error: null };
+    return { data: typedData, error: null };
   } catch (error) {
     console.error('Error loading all taskboard data:', error);
     return { data: [], error };
@@ -199,8 +229,8 @@ export const useTaskboardSync = (
         user_id: user.id,
         form_type: formType,
         date,
-        turn_data: turnData,
-        tasks,
+        turn_data: turnData as Record<string, any>,
+        tasks: tasks as Record<string, any>,
         table_rows: tableRows,
         active_tab: activeTab
       };
