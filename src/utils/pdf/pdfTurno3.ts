@@ -162,32 +162,13 @@ export const renderTurno3Tasks = (
     {key: 'transferirFicheirosLiquidity', text: "Transferência ficheiros SSM Liquidity Exercices (Confirmação)"},
     {key: 'percurso76921', text: "Fazer o percurso 76921 – Limpeza Ficheiro BRLOGED (Dia 1 de cada Mês)"},
     {key: 'percurso76922', text: "Fazer o percurso 76922 - Reorganiza BRLOGED (Dia 2 de cada Mês)"},
-    {key: 'percurso76923', text: "Fazer o percurso 76923 - Reorganiza GBMVCO (Dia 3 de cada Mês)"}
-  ];
-  
-  remainingTasks.forEach(item => {
-    y = checkPageSpace(doc, y, 8);
-    drawCheckbox(doc, 15, y - 3, ensureBoolean(tasks[item.key as keyof typeof tasks]));
-    doc.text(item.text, 20, y);
-    y += 6;
-  });
-  
-  // End of month specific task
-  if (isEndOfMonth && tasks.limpaGbtrlogFimMes !== undefined) {
-    y = checkPageSpace(doc, y, 8);
-    drawCheckbox(doc, 15, y - 3, ensureBoolean(tasks.limpaGbtrlogFimMes));
-    doc.text("Chamar Opção 16 - Limpa o GBTRLOG após o Fecho do mês", 20, y);
-    y += 6;
-  }
-  
-  // Final tasks
-  const finalTasks = [
+    {key: 'percurso76923', text: "Fazer o percurso 76923 - Reorganiza GBMVCO (Dia 3 de cada Mês)"},
     {key: 'abrirServidoresTesteProducao', text: "Abrir Servidores Teste e Produção"},
     {key: 'impressaoCheques', text: "Impressão Cheques e respectivos Diários (verificação dos mesmos)"},
     {key: 'arquivarCheques', text: "Arquivar Cheques e respectivos Diários"}
   ];
   
-  finalTasks.forEach(item => {
+  remainingTasks.forEach(item => {
     y = checkPageSpace(doc, y, 8);
     drawCheckbox(doc, 15, y - 3, ensureBoolean(tasks[item.key as keyof typeof tasks]));
     doc.text(item.text, 20, y);
@@ -202,6 +183,14 @@ export const renderTurno3Tasks = (
     "Término do Fecho";
   doc.text(terminoFechoText, 20, y);
   y += 6;
+  
+  // Add end-of-month task right after "Término do Fecho"
+  if (isEndOfMonth && tasks.limpaGbtrlogFimMes !== undefined) {
+    y = checkPageSpace(doc, y, 8);
+    drawCheckbox(doc, 15, y - 3, ensureBoolean(tasks.limpaGbtrlogFimMes));
+    doc.text("Chamar Opção 16 - Limpa o GBTRLOG após o Fecho do mês", 20, y);
+    y += 6;
+  }
   
   // Final task
   y = checkPageSpace(doc, y, 8);
