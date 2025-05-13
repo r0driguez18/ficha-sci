@@ -24,10 +24,10 @@ export const SidebarHeader = ({ collapsed, setCollapsed }: SidebarHeaderProps) =
       <Button
         variant="ghost"
         size="icon"
-        className={`text-white/70 hover:text-white hover:bg-white/10 ${collapsed ? "mx-auto" : "ml-auto"}`}
+        className="text-white hover:text-white hover:bg-white/10 ml-auto"
         onClick={() => setCollapsed(!collapsed)}
       >
-        {collapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
+        {collapsed ? <ChevronRight className="h-5 w-5 text-white" /> : <ChevronLeft className="h-5 w-5" />}
       </Button>
     </div>
   );
