@@ -84,7 +84,7 @@ export const generateTaskboardPDF = (
     });
   }
   
-  // Add table of task records - Always include the table regardless of isDiaNaoUtil
+  // Always add task table no matter what - this is the fix for the missing table
   renderTaskTable(doc, tableRows);
   
   return doc;

@@ -13,11 +13,13 @@ export const renderTaskTable = (doc: jsPDF, tableRows: TaskTableRow[]): void => 
     row.executado.trim() !== ''
   );
   
+  // Always add a table page, even if there are no rows
+  doc.addPage();
+  doc.setFont("helvetica", "bold");
+  doc.text("Tabela de Processamentos", 15, 20);
+  
+  // If we have valid rows, render them
   if (validRows.length > 0) {
-    doc.addPage();
-    doc.setFont("helvetica", "bold");
-    doc.text("Tabela de Processamentos", 15, 20);
-    
     const data = validRows.map(row => [
       row.hora, 
       row.tarefa, 
@@ -29,6 +31,22 @@ export const renderTaskTable = (doc: jsPDF, tableRows: TaskTableRow[]): void => 
     autoTable(doc, {
       head: [['Hora', 'Tarefa', 'Nome AS400', 'Nº Operação', 'Executado Por']],
       body: data,
+      startY: 25,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [0, 0, 255], // Blue header
+        textColor: [255, 255, 255], // White text
+        fontStyle: 'bold'
+      },
+      bodyStyles: {
+        textColor: [0, 0, 0] // Black text
+      }
+    });
+  } else {
+    // If no data, show an empty table with just headers
+    autoTable(doc, {
+      head: [['Hora', 'Tarefa', 'Nome AS400', 'Nº Operação', 'Executado Por']],
+      body: [],
       startY: 25,
       theme: 'grid',
       headStyles: {
