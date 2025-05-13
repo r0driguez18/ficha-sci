@@ -1,3 +1,4 @@
+
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { Turno3Tasks } from '@/types/taskboard';
@@ -57,7 +58,7 @@ export function addTurno3TasksToPDF(doc: jsPDF, tasks: Turno3Tasks, startY: numb
     { label: "Impressão Cheques", value: tasks.impressaoCheques },
     { label: "Arquivar Cheques", value: tasks.arquivarCheques },
     { label: "Término do Fecho", value: tasks.terminoFecho },
-    { label: "Limpar Gbtrlog", value: tasks.limparGbtrlog },
+    { label: "Limpar Gbtrlog", value: tasks.limparGbtrlog }, // Added the new task
     { label: "Transferir Ficheiros DSI", value: tasks.transferirFicheirosDsi },
   ];
 
@@ -69,5 +70,26 @@ export function addTurno3TasksToPDF(doc: jsPDF, tasks: Turno3Tasks, startY: numb
     }
   });
 
+  return currentY;
+}
+
+// Adding the missing export function that's referenced in pdfGenerator.ts
+export function renderTurno3Tasks(doc: jsPDF, tasks: Turno3Tasks, observations: string, y: number, isDiaNaoUtil: boolean = false): number {
+  // Start with adding the tasks
+  let currentY = addTurno3TasksToPDF(doc, tasks, y);
+  
+  // Add observation section if there are observations
+  if (observations && observations.trim() !== '') {
+    currentY += 10;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Observações:', 14, currentY);
+    currentY += 6;
+    
+    doc.setFont('helvetica', 'normal');
+    const observationLines = doc.splitTextToSize(observations, 180);
+    doc.text(observationLines, 14, currentY);
+    currentY += 10 * (observationLines.length || 1);
+  }
+  
   return currentY;
 }
