@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { SidebarItem } from './SidebarItem';
@@ -9,7 +8,7 @@ import {
   LayoutDashboard,
   PieChart,
   Settings,
-  Calendar
+  FileSpreadsheet
 } from 'lucide-react';
 
 interface SidebarContentProps {
@@ -60,24 +59,6 @@ export const SidebarContent = ({ collapsed }: SidebarContentProps) => {
             subItems={[
               { label: "Estatísticas", to: "/easyvista/estatisticas" }
             ]}
-          />
-        </div>
-        
-        <div>
-          <div className={cn("mb-2", collapsed ? "px-2 sr-only" : "px-3 text-xs font-semibold text-white/40 uppercase")}>
-            Sistema
-          </div>
-          <SidebarItem
-            icon={Settings}
-            label="Definições"
-            to="/settings"
-            collapsed={collapsed}
-          />
-          <SidebarItem
-            icon={FileText}
-            label="Documentação"
-            to="/docs"
-            collapsed={collapsed}
           />
         </div>
       </nav>
