@@ -166,7 +166,7 @@ const TaskboardFinalMesNaoUtil = () => {
     if (!isLoading) {
       syncData();
     }
-  }, [date, turnData, tasks, tableRows, isLoading, syncData]);
+  }, [date, turnData, tasks, tableRows, isLoading]);
 
   const handleTaskChange = (task: keyof Turno3Tasks, checked: boolean | string) => {
     setTasks({
