@@ -50,7 +50,7 @@ const App = () => (
               <Route path="/auth/login" element={<Login />} />
               
               {/* Protected Routes */}
-              <Route path="/" element={<PrivateRoute><DashboardLayout><Dashboard /></DashboardLayout></PrivateRoute>} />
+              <Route path="/dashboard" element={<PrivateRoute><DashboardLayout><Dashboard /></DashboardLayout></PrivateRoute>} />
               
               {/* SCI Routes */}
               <Route path="/sci" element={<Navigate to="/sci/procedimentos" replace />} />
@@ -81,7 +81,7 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
-          <Toaster richColors />
+          
         </TooltipProvider>
       </ThemeProvider>
     </AuthProvider>
