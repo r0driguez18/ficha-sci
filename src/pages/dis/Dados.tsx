@@ -32,18 +32,18 @@ const DisDados = () => {
     { id: 3, name: "Mike Johnson", age: 35, city: "Chicago" },
   ]);
   const [newItem, setNewItem] = useState({ id: 4, name: "", age: 0, city: "" });
-  const [editItem, setEditItem] = useState(null);
+  const [editItem, setEditItem] = useState<any>(null);
   const [editedValues, setEditedValues] = useState({ name: "", age: 0, city: "" });
   const [open, setOpen] = useState(false);
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setNewItem(prevState => ({ ...prevState, [name]: value }));
+    setNewItem(prevState => ({ ...prevState, [name]: name === 'age' ? parseInt(value) || 0 : value }));
   };
 
-  const handleEditInputChange = (e) => {
+  const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setEditedValues(prevState => ({ ...prevState, [name]: value }));
+    setEditedValues(prevState => ({ ...prevState, [name]: name === 'age' ? parseInt(value) || 0 : value }));
   };
 
   const handleAddItem = () => {
