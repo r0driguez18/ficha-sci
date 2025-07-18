@@ -11,7 +11,7 @@ import { generateTaskboardPDF } from '@/utils/pdfGenerator';
 import { TurnInfoSection } from '@/components/taskboard/TurnInfoSection';
 import { TableRowsSection } from '@/components/taskboard/TableRowsSection';
 import { FormActions } from '@/components/taskboard/FormActions';
-import { useTaskboardSync } from '@/services/taskboardService';
+
 import type { TurnKey, TasksType, TurnDataType, Turno3Tasks } from '@/types/taskboard';
 import type { TaskTableRow } from '@/types/taskTableRow';
 import { Loader2 } from 'lucide-react';
@@ -105,22 +105,16 @@ const TaskboardFinalMesNaoUtil = () => {
     limpaGbtrlogFimMes: false // Ensure this is in the initial state
   });
 
-  // Initialize the sync hooks
-  const { syncData, loadData, resetData } = useTaskboardSync(
-    'final-mes-nao-util',
-    date,
-    { turno3: turnData },
-    { turno3: tasks },
-    tableRows
-  );
-
   // Load data from Supabase or localStorage on component mount
   useEffect(() => {
     async function fetchData() {
       setIsLoading(true);
       try {
         if (user) {
-          const taskboardData = await loadData();
+          // Direct async calls without the problematic hook
+          const { loadTaskboardData } = await import('@/services/taskboardService');
+          const { data: taskboardData } = await loadTaskboardData(user.id, 'final-mes-nao-util', date);
+          
           if (taskboardData) {
             if (taskboardData.date) setDate(taskboardData.date);
             if (taskboardData.turn_data?.turno3) setTurnData(taskboardData.turn_data.turno3);
@@ -159,14 +153,36 @@ const TaskboardFinalMesNaoUtil = () => {
     }
     
     fetchData();
-  }, [user, loadData]);
+  }, [user]);
 
-  // Save data to localStorage and Supabase whenever it changes
-  useEffect(() => {
-    if (!isLoading) {
-      syncData();
+  // Save data to localStorage and Supabase whenever it changes - with debounce
+  React.useEffect(() => {
+    if (!isLoading && user) {
+      const timeoutId = setTimeout(async () => {
+        try {
+          const { saveTaskboardData } = await import('@/services/taskboardService');
+          await saveTaskboardData({
+            user_id: user.id,
+            form_type: 'final-mes-nao-util',
+            date,
+            turn_data: { turno3: turnData },
+            tasks: { turno3: tasks },
+            table_rows: tableRows
+          });
+          
+          // Also save to localStorage as backup
+          localStorage.setItem('taskboard-final-mes-nao-util-date', date);
+          localStorage.setItem('taskboard-final-mes-nao-util-turnData', JSON.stringify(turnData));
+          localStorage.setItem('taskboard-final-mes-nao-util-tasks', JSON.stringify(tasks));
+          localStorage.setItem('taskboard-final-mes-nao-util-tableRows', JSON.stringify(tableRows));
+        } catch (error) {
+          console.error('Error syncing data:', error);
+        }
+      }, 500); // Debounce for 500ms
+
+      return () => clearTimeout(timeoutId);
     }
-  }, [date, turnData, tasks, tableRows, isLoading]);
+  }, [date, turnData, tasks, tableRows, isLoading, user]);
 
   const handleTaskChange = (task: keyof Turno3Tasks, checked: boolean | string) => {
     setTasks({
@@ -367,8 +383,21 @@ const TaskboardFinalMesNaoUtil = () => {
     
     setTableRows([{ id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '' }]);
     
-    // Reset both localStorage and Supabase
-    await resetData();
+    // Reset localStorage and Supabase
+    if (user) {
+      try {
+        const { deleteTaskboardData } = await import('@/services/taskboardService');
+        await deleteTaskboardData(user.id, 'final-mes-nao-util', date);
+        
+        // Clear localStorage
+        localStorage.removeItem('taskboard-final-mes-nao-util-date');
+        localStorage.removeItem('taskboard-final-mes-nao-util-turnData');
+        localStorage.removeItem('taskboard-final-mes-nao-util-tasks');
+        localStorage.removeItem('taskboard-final-mes-nao-util-tableRows');
+      } catch (error) {
+        console.error('Error resetting data:', error);
+      }
+    }
     
     toast.success('Formulário reiniciado com sucesso!');
   };
