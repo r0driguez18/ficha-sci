@@ -23,18 +23,6 @@ const Documentation = () => {
       description: 'Manual de operação da base de dados',
       icon: HelpCircle,
       content: 'O DIS oferece uma interface completa para operações CRUD (Criar, Ler, Atualizar, Deletar) em suas tabelas de dados. Também é possível exportar dados para Excel para análises mais detalhadas.'
-    },
-    {
-      title: 'EasyVista - Dashboards',
-      description: 'Guia de uso e interpretação de dashboards',
-      icon: ExternalLink,
-      content: 'Os dashboards do EasyVista apresentam visualizações gráficas para monitoramento de métricas importantes. Utilize esses painéis para tomar decisões baseadas em dados e acompanhar o desempenho do sistema.'
-    },
-    {
-      title: 'Configuração de Base de Dados',
-      description: 'Como alterar a configuração da base de dados Supabase',
-      icon: Book,
-      content: 'Para alterar a base de dados Supabase: 1) Edite o arquivo src/integrations/supabase/client.ts com as novas credenciais (SUPABASE_URL e SUPABASE_PUBLISHABLE_KEY). 2) Atualize o arquivo supabase/config.toml com o novo project_id. 3) Execute as migrações necessárias na nova base de dados. 4) Verifique se as tabelas e políticas RLS estão corretas. As credenciais encontram-se no painel do Supabase em Settings > API.'
     }
   ];
 

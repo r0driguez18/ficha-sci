@@ -129,6 +129,29 @@ Ferramenta para geração de ficheiros bancários no formato PS2, com:
 - `npm run build` - Compila o projeto para produção
 - `npm run preview` - Visualiza a build de produção localmente
 
+## Configuração de Base de Dados
+
+Para alterar a configuração da base de dados Supabase:
+
+### Ficheiros a Modificar
+
+1. **`src/integrations/supabase/client.ts`**
+   - Altere as variáveis `SUPABASE_URL` e `SUPABASE_PUBLISHABLE_KEY` com as novas credenciais
+   - As credenciais encontram-se no painel do Supabase em Settings > API
+
+2. **`supabase/config.toml`**
+   - Atualize o campo `project_id` com o ID do novo projeto
+
+### Migrações e Verificações
+
+3. **Execute as migrações necessárias na nova base de dados**
+   - Acesse o SQL Editor no painel do Supabase
+   - Execute os scripts SQL da pasta `supabase/migrations/` na ordem cronológica
+
+4. **Verifique se as tabelas e políticas RLS estão corretas**
+   - Confirme se todas as tabelas foram criadas corretamente
+   - Verifique se as políticas de Row Level Security (RLS) estão ativas e configuradas adequadamente
+
 ## Dependências Principais
 
 - React Router para navegação
