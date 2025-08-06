@@ -1,10 +1,10 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent } from '@/components/ui/card';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { Button } from '@/components/ui/button';
-import { FileText } from 'lucide-react';
+import { EnhancedCard, EnhancedCardContent, EnhancedCardDescription, EnhancedCardHeader, EnhancedCardTitle } from '@/components/ui/enhanced-card';
+import { StatusBadge } from '@/components/ui/status-badge';
+import { FileText, Calendar, CalendarDays, Clock, ArrowRight } from 'lucide-react';
 
 const Procedimentos = () => {
   const navigate = useNavigate();
@@ -29,51 +29,131 @@ const Procedimentos = () => {
     <div className="animate-fade-in container mx-auto px-4">
       <PageHeader 
         title="Ficha de Procedimentos" 
-        subtitle="Selecione o tipo de ficha de procedimentos"
+        subtitle="Selecione o tipo de ficha de procedimentos que deseja executar"
       />
 
-      <div className="flex justify-center items-center">
-        <Card className="p-6 w-full max-w-md">
-          <CardContent className="p-0 flex flex-col space-y-4">
-            <h3 className="text-xl font-semibold mb-4 text-center">Selecione o tipo de procedimento</h3>
-            
-            <Button 
-              variant="outline" 
-              className="bg-[#18467e] text-white hover:bg-[#103662] h-14 text-lg justify-start"
-              onClick={goToTaskboard}
-            >
-              <FileText className="mr-2 h-5 w-5" />
-              FD Dia Útil
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              className="bg-[#18467e] text-white hover:bg-[#103662] h-14 text-lg justify-start"
-              onClick={goToTaskboardDiaNaoUtil}
-            >
-              <FileText className="mr-2 h-5 w-5" />
-              FD Dia Não Útil
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              className="bg-[#18467e] text-white hover:bg-[#103662] h-14 text-lg justify-start"
-              onClick={goToTaskboardFinalMesUtil}
-            >
-              <FileText className="mr-2 h-5 w-5" />
-              FD Final do Mês Dia Útil
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              className="bg-[#18467e] text-white hover:bg-[#103662] h-14 text-lg justify-start"
-              onClick={goToTaskboardFinalMesNaoUtil}
-            >
-              <FileText className="mr-2 h-5 w-5" />
-              FD Final do Mês Dia Não Útil
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="flex justify-center">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl">
+          <EnhancedCard 
+            variant="interactive" 
+            className="group cursor-pointer"
+            onClick={goToTaskboard}
+          >
+            <EnhancedCardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-primary/10 rounded-lg">
+                    <FileText className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <EnhancedCardTitle className="text-lg">FD Dia Útil</EnhancedCardTitle>
+                    <EnhancedCardDescription>Procedimentos normais</EnhancedCardDescription>
+                  </div>
+                </div>
+                <StatusBadge variant="success" size="sm">Ativo</StatusBadge>
+              </div>
+            </EnhancedCardHeader>
+            <EnhancedCardContent>
+              <p className="text-sm text-muted-foreground mb-4">
+                Execute os procedimentos padrão para dias úteis normais.
+              </p>
+              <div className="flex items-center text-primary group-hover:translate-x-1 transition-transform">
+                <span className="text-sm font-medium">Iniciar procedimentos</span>
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </div>
+            </EnhancedCardContent>
+          </EnhancedCard>
+
+          <EnhancedCard 
+            variant="interactive" 
+            className="group cursor-pointer"
+            onClick={goToTaskboardDiaNaoUtil}
+          >
+            <EnhancedCardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-warning/10 rounded-lg">
+                    <Calendar className="h-6 w-6 text-warning" />
+                  </div>
+                  <div>
+                    <EnhancedCardTitle className="text-lg">FD Dia Não Útil</EnhancedCardTitle>
+                    <EnhancedCardDescription>Fins de semana e feriados</EnhancedCardDescription>
+                  </div>
+                </div>
+                <StatusBadge variant="warning" size="sm">Especial</StatusBadge>
+              </div>
+            </EnhancedCardHeader>
+            <EnhancedCardContent>
+              <p className="text-sm text-muted-foreground mb-4">
+                Procedimentos específicos para dias não úteis.
+              </p>
+              <div className="flex items-center text-primary group-hover:translate-x-1 transition-transform">
+                <span className="text-sm font-medium">Iniciar procedimentos</span>
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </div>
+            </EnhancedCardContent>
+          </EnhancedCard>
+
+          <EnhancedCard 
+            variant="interactive" 
+            className="group cursor-pointer"
+            onClick={goToTaskboardFinalMesUtil}
+          >
+            <EnhancedCardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-info/10 rounded-lg">
+                    <CalendarDays className="h-6 w-6 text-info" />
+                  </div>
+                  <div>
+                    <EnhancedCardTitle className="text-lg">FD Final Mês Útil</EnhancedCardTitle>
+                    <EnhancedCardDescription>Fechamento mensal</EnhancedCardDescription>
+                  </div>
+                </div>
+                <StatusBadge variant="info" size="sm">Mensal</StatusBadge>
+              </div>
+            </EnhancedCardHeader>
+            <EnhancedCardContent>
+              <p className="text-sm text-muted-foreground mb-4">
+                Procedimentos de final de mês em dias úteis.
+              </p>
+              <div className="flex items-center text-primary group-hover:translate-x-1 transition-transform">
+                <span className="text-sm font-medium">Iniciar procedimentos</span>
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </div>
+            </EnhancedCardContent>
+          </EnhancedCard>
+
+          <EnhancedCard 
+            variant="interactive" 
+            className="group cursor-pointer"
+            onClick={goToTaskboardFinalMesNaoUtil}
+          >
+            <EnhancedCardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-destructive/10 rounded-lg">
+                    <Clock className="h-6 w-6 text-destructive" />
+                  </div>
+                  <div>
+                    <EnhancedCardTitle className="text-lg">FD Final Mês Não Útil</EnhancedCardTitle>
+                    <EnhancedCardDescription>Fechamento especial</EnhancedCardDescription>
+                  </div>
+                </div>
+                <StatusBadge variant="destructive" size="sm">Crítico</StatusBadge>
+              </div>
+            </EnhancedCardHeader>
+            <EnhancedCardContent>
+              <p className="text-sm text-muted-foreground mb-4">
+                Procedimentos de final de mês em dias não úteis.
+              </p>
+              <div className="flex items-center text-primary group-hover:translate-x-1 transition-transform">
+                <span className="text-sm font-medium">Iniciar procedimentos</span>
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </div>
+            </EnhancedCardContent>
+          </EnhancedCard>
+        </div>
       </div>
     </div>
   );

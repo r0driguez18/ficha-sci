@@ -27,7 +27,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
         <main 
           className={cn(
-            "flex-1 overflow-auto transition-all duration-300 ease-in-out",
+            "flex-1 overflow-auto transition-all duration-300 ease-in-out bg-background",
             collapsed ? "ml-20" : "ml-64"
           )}
         >
