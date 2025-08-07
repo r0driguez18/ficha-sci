@@ -11,6 +11,7 @@ import { generateTaskboardPDF } from '@/utils/pdfGenerator';
 import { TurnInfoSection } from '@/components/taskboard/TurnInfoSection';
 import { TableRowsSection } from '@/components/taskboard/TableRowsSection';
 import { FormActions } from '@/components/taskboard/FormActions';
+import { SignatureSection } from '@/components/taskboard/SignatureSection';
 
 import type { TurnKey, TasksType, TurnDataType, Turno3Tasks } from '@/types/taskboard';
 import type { TaskTableRow } from '@/types/taskTableRow';
@@ -33,6 +34,10 @@ const TaskboardFinalMesNaoUtil = () => {
     { id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '' }
   ]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Assinatura digital
+  const [signerName, setSignerName] = useState("");
+  const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
 
   // For non-working days, we only have one turn (Turn 3)
   const [turnData, setTurnData] = useState<{
@@ -383,6 +388,10 @@ const TaskboardFinalMesNaoUtil = () => {
     
     setTableRows([{ id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '' }]);
     
+    // clear signature
+    setSignerName("");
+    setSignatureDataUrl(null);
+    
     // Reset localStorage and Supabase
     if (user) {
       try {
@@ -474,7 +483,15 @@ const TaskboardFinalMesNaoUtil = () => {
       };
 
       // Pass isDiaNaoUtil=true AND isEndOfMonth=true to indicate this is a non-working end-of-month day PDF
-      const doc = generateTaskboardPDF(date, completeTurnData, completeTasksData, tableRows, true, true);
+      const doc = generateTaskboardPDF(
+        date,
+        completeTurnData,
+        completeTasksData,
+        tableRows,
+        true,
+        true,
+        { imageDataUrl: signatureDataUrl, signerName, signedAt: new Date().toLocaleString('pt-PT') }
+      );
       doc.save(`taskboard_final_mes_nao_util_${date.replace(/-/g, '')}.pdf`);
       toast.success('PDF gerado com sucesso!');
     } catch (error) {
@@ -540,6 +557,13 @@ const TaskboardFinalMesNaoUtil = () => {
             onAddRow={addTableRow}
             onRemoveRow={removeTableRow}
             onInputChange={handleInputChange}
+          />
+
+          <SignatureSection
+            signerName={signerName}
+            onSignerNameChange={setSignerName}
+            signatureDataUrl={signatureDataUrl}
+            onSignatureChange={setSignatureDataUrl}
           />
           
           <FormActions

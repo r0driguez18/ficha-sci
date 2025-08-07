@@ -14,7 +14,8 @@ export const generateTaskboardPDF = (
   tasks: TasksType,
   tableRows: TaskTableRow[],
   isDiaNaoUtil: boolean = false,
-  isEndOfMonth: boolean = false
+  isEndOfMonth: boolean = false,
+  signature?: { imageDataUrl: string | null; signerName?: string; signedAt?: string }
 ) => {
   const doc = new jsPDF();
   let y = 20;
@@ -86,6 +87,50 @@ export const generateTaskboardPDF = (
   
   // Always add task table no matter what
   renderTaskTable(doc, tableRows);
+
+  // Signature page (simple and safe: new page)
+  doc.addPage();
+  y = 20;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  doc.text("Validação e Assinatura", 15, y);
+  y += 8;
+
+  // Signature box
+  const pageWidth = doc.internal.pageSize.width;
+  const boxX = 15;
+  const boxY = y + 4;
+  const boxW = pageWidth - 30;
+  const boxH = 70;
+  doc.setDrawColor(150);
+  doc.rect(boxX, boxY, boxW, boxH);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(12);
+  const signerName = signature?.signerName || "";
+  const signedAt = signature?.signedAt || "";
+  doc.text(`Assinado por: ${signerName || '-'}`, boxX, y);
+  doc.text(`Data/Hora: ${signedAt || '-'}`, boxX + 100, y);
+
+  // Render signature image if present
+  if (signature?.imageDataUrl) {
+    try {
+      // Fit image inside the box keeping margins
+      const imgW = 120;
+      const imgH = 40;
+      const imgX = boxX + 10;
+      const imgY = boxY + 10;
+      // @ts-ignore - addImage accepts data URL
+      doc.addImage(signature.imageDataUrl, 'PNG', imgX, imgY, imgW, imgH);
+    } catch (e) {
+      /* ignore image errors */
+    }
+  } else {
+    doc.setFontSize(10);
+    doc.setTextColor(120);
+    doc.text("Assine no espaço acima.", boxX + 10, boxY + boxH / 2);
+    doc.setTextColor(0);
+  }
   
   return doc;
 };
