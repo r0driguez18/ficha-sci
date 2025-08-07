@@ -14,6 +14,7 @@ import { generateTaskboardPDF } from '@/utils/pdfGenerator';
 import { TurnInfoSection } from '@/components/taskboard/TurnInfoSection';
 import { TableRowsSection } from '@/components/taskboard/TableRowsSection';
 import { FormActions } from '@/components/taskboard/FormActions';
+import { SignatureSection } from '@/components/taskboard/SignatureSection';
 import type { TurnKey, TasksType, TurnDataType, Turno1Tasks, Turno2Tasks, Turno3Tasks } from '@/types/taskboard';
 import type { TaskTableRow } from '@/types/taskTableRow';
 
@@ -34,6 +35,9 @@ const TaskboardFinalMesUtil = () => {
     { id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '' }
   ]);
 
+  // Assinatura digital
+  const [signerName, setSignerName] = useState("");
+  const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
   const [turnData, setTurnData] = useState<TurnDataType>({
     turno1: { operator: '', entrada: '', saida: '', observations: '' },
     turno2: { operator: '', entrada: '', saida: '', observations: '' },
@@ -438,6 +442,8 @@ const TaskboardFinalMesUtil = () => {
     });
     setActiveTab('turno1');
     setTableRows([{ id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '' }]);
+    setSignerName("");
+    setSignatureDataUrl(null);
     
     localStorage.removeItem('taskboard-final-mes-util-date');
     localStorage.removeItem('taskboard-final-mes-util-turnData');
@@ -562,6 +568,13 @@ const TaskboardFinalMesUtil = () => {
             onAddRow={addTableRow}
             onRemoveRow={removeTableRow}
             onInputChange={handleInputChange}
+          />
+          
+          <SignatureSection
+            signerName={signerName}
+            onSignerNameChange={setSignerName}
+            signatureDataUrl={signatureDataUrl}
+            onSignatureChange={setSignatureDataUrl}
           />
           
           <FormActions

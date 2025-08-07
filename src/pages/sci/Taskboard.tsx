@@ -16,6 +16,7 @@ import { generateTaskboardPDF } from '@/utils/pdfGenerator';
 import { TurnInfoSection } from '@/components/taskboard/TurnInfoSection';
 import { TableRowsSection } from '@/components/taskboard/TableRowsSection';
 import { FormActions } from '@/components/taskboard/FormActions';
+import { SignatureSection } from '@/components/taskboard/SignatureSection';
 import { useTaskboardSync } from '@/services/taskboardService';
 import type { TurnKey, TasksType, TurnDataType } from '@/types/taskboard';
 import type { TaskTableRow } from '@/types/taskTableRow';
@@ -48,7 +49,11 @@ const Taskboard = () => {
     { id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '' }
   ]);
   const [activeTab, setActiveTab] = useState('turno1');
-  const [isLoading, setIsLoading] = useState(true);
+const [isLoading, setIsLoading] = useState(true);
+
+  // Assinatura digital
+  const [signerName, setSignerName] = useState("");
+  const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
 
   const [turnData, setTurnData] = useState<TurnDataType>({
     turno1: { operator: '', entrada: '', saida: '', observations: '' },
@@ -522,6 +527,8 @@ const Taskboard = () => {
     });
     setTableRows([{ id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '' }]);
     setActiveTab('turno1');
+    setSignerName("");
+    setSignatureDataUrl(null);
     
     // Reset both localStorage and Supabase
     await resetData();
@@ -531,7 +538,15 @@ const Taskboard = () => {
 
   const exportToPDF = () => {
     try {
-      const doc = generateTaskboardPDF(date, turnData, tasks, tableRows, false, isEndOfMonth);
+      const doc = generateTaskboardPDF(
+        date,
+        turnData,
+        tasks,
+        tableRows,
+        false,
+        isEndOfMonth,
+        { imageDataUrl: signatureDataUrl, signerName, signedAt: new Date().toLocaleString('pt-PT') }
+      );
       doc.save(`taskboard_${date.replace(/-/g, '')}.pdf`);
       toast.success('PDF gerado com sucesso!');
     } catch (error) {
@@ -653,6 +668,13 @@ const Taskboard = () => {
             onAddRow={addTableRow}
             onRemoveRow={removeTableRow}
             onInputChange={handleInputChange}
+          />
+
+          <SignatureSection
+            signerName={signerName}
+            onSignerNameChange={setSignerName}
+            signatureDataUrl={signatureDataUrl}
+            onSignatureChange={setSignatureDataUrl}
           />
           
           <FormActions

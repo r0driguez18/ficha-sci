@@ -11,6 +11,7 @@ import { generateTaskboardPDF } from '@/utils/pdfGenerator';
 import { TurnInfoSection } from '@/components/taskboard/TurnInfoSection';
 import { TableRowsSection } from '@/components/taskboard/TableRowsSection';
 import { FormActions } from '@/components/taskboard/FormActions';
+import { SignatureSection } from '@/components/taskboard/SignatureSection';
 import { useTaskboardSync } from '@/services/taskboardService';
 import type { TurnKey, TasksType, TurnDataType, Turno3Tasks } from '@/types/taskboard';
 import type { TaskTableRow } from '@/types/taskTableRow';
@@ -33,7 +34,11 @@ const TaskboardDiaNaoUtil = () => {
   const [tableRows, setTableRows] = useState<TaskTableRow[]>([
     { id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '' }
   ]);
-  const [isLoading, setIsLoading] = useState(true);
+const [isLoading, setIsLoading] = useState(true);
+
+  // Assinatura digital
+  const [signerName, setSignerName] = useState("");
+  const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
 
   // For non-working days, we only have one turn (Turn 3)
   const [turnData, setTurnData] = useState<{
@@ -381,6 +386,10 @@ const TaskboardDiaNaoUtil = () => {
     
     setTableRows([{ id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '' }]);
     
+    // clear signature
+    setSignerName("");
+    setSignatureDataUrl(null);
+    
     // Reset both localStorage and Supabase
     await resetData();
     
@@ -459,7 +468,15 @@ const TaskboardDiaNaoUtil = () => {
       };
 
       // Pass isDiaNaoUtil=true AND isEndOfMonth to indicate this is a non-working day PDF
-      const doc = generateTaskboardPDF(date, completeTurnData, completeTasksData, tableRows, true, isEndOfMonth);
+      const doc = generateTaskboardPDF(
+        date,
+        completeTurnData,
+        completeTasksData,
+        tableRows,
+        true,
+        isEndOfMonth,
+        { imageDataUrl: signatureDataUrl, signerName, signedAt: new Date().toLocaleString('pt-PT') }
+      );
       doc.save(`taskboard_nao_util_${date.replace(/-/g, '')}.pdf`);
       toast.success('PDF gerado com sucesso!');
     } catch (error) {
@@ -525,6 +542,13 @@ const TaskboardDiaNaoUtil = () => {
             onAddRow={addTableRow}
             onRemoveRow={removeTableRow}
             onInputChange={handleInputChange}
+          />
+
+          <SignatureSection
+            signerName={signerName}
+            onSignerNameChange={setSignerName}
+            signatureDataUrl={signatureDataUrl}
+            onSignatureChange={setSignatureDataUrl}
           />
           
           <FormActions
