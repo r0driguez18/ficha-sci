@@ -3,8 +3,8 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { EnhancedCard, EnhancedCardContent, EnhancedCardDescription, EnhancedCardHeader, EnhancedCardTitle } from '@/components/ui/enhanced-card';
-import { StatusBadge } from '@/components/ui/status-badge';
-import { FileText, Calendar, CalendarDays, Clock, ArrowRight } from 'lucide-react';
+
+import { FileText, ArrowRight } from 'lucide-react';
 
 const Procedimentos = () => {
   const navigate = useNavigate();
@@ -40,7 +40,7 @@ const Procedimentos = () => {
             onClick={goToTaskboard}
           >
             <EnhancedCardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-start">
                 <div className="flex items-center gap-3">
                   <div className="p-3 bg-primary/10 rounded-lg">
                     <FileText className="h-6 w-6 text-primary" />
@@ -50,7 +50,7 @@ const Procedimentos = () => {
                     <EnhancedCardDescription>Procedimentos normais</EnhancedCardDescription>
                   </div>
                 </div>
-                <StatusBadge variant="success" size="sm">Ativo</StatusBadge>
+                
               </div>
             </EnhancedCardHeader>
             <EnhancedCardContent>
@@ -70,17 +70,17 @@ const Procedimentos = () => {
             onClick={goToTaskboardDiaNaoUtil}
           >
             <EnhancedCardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-start">
                 <div className="flex items-center gap-3">
-                  <div className="p-3 bg-warning/10 rounded-lg">
-                    <Calendar className="h-6 w-6 text-warning" />
+                  <div className="p-3 bg-primary/10 rounded-lg">
+                    <FileText className="h-6 w-6 text-primary" />
                   </div>
                   <div>
                     <EnhancedCardTitle className="text-lg">FD Dia Não Útil</EnhancedCardTitle>
                     <EnhancedCardDescription>Fins de semana e feriados</EnhancedCardDescription>
                   </div>
                 </div>
-                <StatusBadge variant="warning" size="sm">Especial</StatusBadge>
+                
               </div>
             </EnhancedCardHeader>
             <EnhancedCardContent>
@@ -100,17 +100,17 @@ const Procedimentos = () => {
             onClick={goToTaskboardFinalMesUtil}
           >
             <EnhancedCardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-start">
                 <div className="flex items-center gap-3">
-                  <div className="p-3 bg-info/10 rounded-lg">
-                    <CalendarDays className="h-6 w-6 text-info" />
+                  <div className="p-3 bg-primary/10 rounded-lg">
+                    <FileText className="h-6 w-6 text-primary" />
                   </div>
                   <div>
                     <EnhancedCardTitle className="text-lg">FD Final Mês Útil</EnhancedCardTitle>
                     <EnhancedCardDescription>Fechamento mensal</EnhancedCardDescription>
                   </div>
                 </div>
-                <StatusBadge variant="info" size="sm">Mensal</StatusBadge>
+                
               </div>
             </EnhancedCardHeader>
             <EnhancedCardContent>
@@ -130,17 +130,17 @@ const Procedimentos = () => {
             onClick={goToTaskboardFinalMesNaoUtil}
           >
             <EnhancedCardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-start">
                 <div className="flex items-center gap-3">
-                  <div className="p-3 bg-destructive/10 rounded-lg">
-                    <Clock className="h-6 w-6 text-destructive" />
+                  <div className="p-3 bg-primary/10 rounded-lg">
+                    <FileText className="h-6 w-6 text-primary" />
                   </div>
                   <div>
                     <EnhancedCardTitle className="text-lg">FD Final Mês Não Útil</EnhancedCardTitle>
                     <EnhancedCardDescription>Fechamento especial</EnhancedCardDescription>
                   </div>
                 </div>
-                <StatusBadge variant="destructive" size="sm">Crítico</StatusBadge>
+                
               </div>
             </EnhancedCardHeader>
             <EnhancedCardContent>
