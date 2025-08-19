@@ -267,6 +267,12 @@ const TaskboardFinalMesUtil = () => {
         return { savedCount: 0, duplicateCount: 0 };
       }
       
+      // Verificar se está assinado
+      if (!signerName || !signatureDataUrl) {
+        toast.error("Não é possível guardar sem assinatura. Preencha o nome do responsável e assine a ficha.");
+        return { savedCount: 0, duplicateCount: 0 };
+      }
+      
       let savedCount = 0;
       let duplicateCount = 0;
       
