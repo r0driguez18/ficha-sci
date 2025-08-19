@@ -681,6 +681,7 @@ const [isLoading, setIsLoading] = useState(true);
             onSave={handleSave}
             onExportPDF={exportToPDF}
             onReset={resetForm}
+            isValidated={!!signerName && !!signatureDataUrl}
           />
         </CardContent>
       </Card>
