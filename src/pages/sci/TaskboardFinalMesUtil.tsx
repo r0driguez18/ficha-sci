@@ -581,6 +581,7 @@ const TaskboardFinalMesUtil = () => {
             onSave={handleSave}
             onExportPDF={exportToPDF}
             onReset={resetForm}
+            isValidated={!!signerName && !!signatureDataUrl}
           />
         </CardContent>
       </Card>
