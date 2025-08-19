@@ -23,6 +23,7 @@ import EasyVistaEstatisticas from "./pages/easyvista/Estatisticas";
 import Settings from "./pages/Settings";
 import Documentation from "./pages/Documentation";
 import CalendarPage from './pages/sci/Calendar';
+import HistoricoFichas from './pages/sci/HistoricoFichas';
 
 // Initialize theme from localStorage
 const initTheme = () => {
@@ -60,6 +61,7 @@ const App = () => (
               <Route path="/sci/taskboard-final-mes-util" element={<PrivateRoute><DashboardLayout><TaskboardFinalMesUtil /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/taskboard-final-mes-nao-util" element={<PrivateRoute><DashboardLayout><TaskboardFinalMesNaoUtil /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/calendar" element={<PrivateRoute><DashboardLayout><CalendarPage /></DashboardLayout></PrivateRoute>} />
+              <Route path="/sci/historico" element={<PrivateRoute><DashboardLayout><HistoricoFichas /></DashboardLayout></PrivateRoute>} />
               
               {/* CRC Routes */}
               <Route path="/crc" element={<Navigate to="/crc/tratamento" replace />} />

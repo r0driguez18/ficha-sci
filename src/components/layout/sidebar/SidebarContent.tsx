@@ -13,7 +13,8 @@ import {
   PieChart,
   Settings,
   Calendar,
-  Search
+  Search,
+  History
 } from 'lucide-react';
 
 interface SidebarContentProps {
@@ -27,6 +28,7 @@ export const SidebarContent = ({ collapsed }: SidebarContentProps) => {
   const searchItems = [
     { label: 'SCI - Procedimentos', path: '/sci/procedimentos', keywords: ['sci', 'taskboard', 'procedimentos'] },
     { label: 'SCI - Calendário', path: '/sci/calendar', keywords: ['sci', 'calendar', 'calendário'] },
+    { label: 'SCI - Histórico', path: '/sci/historico', keywords: ['sci', 'histórico', 'fichas', 'guardadas'] },
     { label: 'CRC - Tratamento', path: '/crc/tratamento', keywords: ['crc', 'tratamento', 'ficheiros'] },
     { label: 'DIS - Dados', path: '/dis/dados', keywords: ['dis', 'dados', 'database'] },
     { label: 'Processamentos - Estatísticas', path: '/easyvista/estatisticas', keywords: ['processamentos', 'estatísticas', 'charts'] },
@@ -64,7 +66,8 @@ export const SidebarContent = ({ collapsed }: SidebarContentProps) => {
               collapsed={collapsed}
               subItems={[
                 { label: "Ficha de Procedimentos", to: "/sci/procedimentos" },
-                { label: "Calendar", to: "/sci/calendar" }
+                { label: "Calendar", to: "/sci/calendar" },
+                { label: "Histórico de Fichas", to: "/sci/historico" }
               ]}
             />
             <SidebarItem
