@@ -33,7 +33,7 @@ export const SidebarContent = ({ collapsed }: SidebarContentProps) => {
     { label: 'DIS - Dados', path: '/dis/dados', keywords: ['dis', 'dados', 'database'] },
     { label: 'Processamentos - Estatísticas', path: '/easyvista/estatisticas', keywords: ['processamentos', 'estatísticas', 'charts'] },
     { label: 'Configurações', path: '/settings', keywords: ['settings', 'configurações', 'config'] },
-    { label: 'Documentação', path: '/documentation', keywords: ['docs', 'documentação', 'help', 'ajuda'] },
+    { label: 'Documentação', path: '/docs', keywords: ['docs', 'documentação', 'help', 'ajuda'] },
   ];
 
   return (
@@ -112,7 +112,7 @@ export const SidebarContent = ({ collapsed }: SidebarContentProps) => {
             <SidebarItem
               icon={FileText}
               label="Documentation"
-              to="/documentation"
+              to="/docs"
               collapsed={collapsed}
             />
           </div>
