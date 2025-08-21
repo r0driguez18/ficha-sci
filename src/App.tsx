@@ -25,15 +25,11 @@ import Documentation from "./pages/Documentation";
 import CalendarPage from './pages/sci/Calendar';
 import HistoricoFichas from './pages/sci/HistoricoFichas';
 
-// Initialize theme from localStorage
+// Initialize theme from localStorage - Always use light mode
 const initTheme = () => {
-  const savedTheme = localStorage.getItem('theme');
-  if (savedTheme === 'dark' || 
-      (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-    document.documentElement.classList.add('dark');
-  } else {
-    document.documentElement.classList.remove('dark');
-  }
+  // Force light mode always
+  document.documentElement.classList.remove('dark');
+  localStorage.setItem('theme', 'light');
 };
 // Execute theme initialization
 initTheme();
