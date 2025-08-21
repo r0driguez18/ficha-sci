@@ -26,7 +26,6 @@ export const FormActions: React.FC<FormActionsProps> = ({ onSave, onExportPDF, o
       <Button
         variant="outline"
         onClick={onExportPDF}
-        disabled={!isValidated}
         className="flex items-center gap-2"
       >
         <FileDown className="h-4 w-4" />
