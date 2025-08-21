@@ -22,43 +22,44 @@ interface ProcessesChartProps {
 }
 
 const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Processos por Mês" }) => {
-  const { isDarkMode } = useTheme();
+  // Remove dark mode dependency
+  // const { isDarkMode } = useTheme();
   
-  // Updated color configuration with better contrast for dark mode
+  // Updated color configuration - Always light mode
   const chartConfig = React.useMemo(() => ({
     salary: {
-      color: isDarkMode ? "#FF9B5E" : "#FF8042",
+      color: "#FF8042",
       label: "Salários"
     },
     ga_processes: {
-      color: isDarkMode ? "#54A9FF" : "#0088FE",
+      color: "#0088FE",
       label: "GA"
     },
     im_processes: {
-      color: isDarkMode ? "#22DDAA" : "#00C49F",
+      color: "#00C49F",
       label: "IM"
     },
     ena_processes: {
-      color: isDarkMode ? "#FFDD4A" : "#FFBB28",
+      color: "#FFBB28",
       label: "ENA"
     },
     inp_processes: {
-      color: isDarkMode ? "#FF8A8A" : "#FF6B6B",
+      color: "#FF6B6B",
       label: "INP"
     },
     bn_processes: {
-      color: isDarkMode ? "#6ECD6E" : "#4CAF50",
+      color: "#4CAF50",
       label: "BN"
     },
     fcvt_processes: {
-      color: isDarkMode ? "#C167D9" : "#9C27B0",
+      color: "#9C27B0",
       label: "FCVT"
     },
     other: {
-      color: isDarkMode ? "#8EA5B4" : "#607D8B",
+      color: "#607D8B",
       label: "Outros"
     }
-  }), [isDarkMode]);
+  }), []);
 
   const isMobile = useIsMobile();
   
@@ -121,14 +122,14 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
                   interval={0}
                   tick={{ 
                     fontSize: isMobile ? 10 : 12,
-                    fill: isDarkMode ? '#e5e7eb' : '#374151'
+                    fill: '#374151'
                   }}
                   padding={{ left: 20, right: 20 }}
                 />
                 <YAxis 
                   tick={{ 
                     fontSize: isMobile ? 10 : 12,
-                    fill: isDarkMode ? '#e5e7eb' : '#374151'
+                    fill: '#374151'
                   }}
                   width={isMobile ? 30 : 50}
                   tickCount={7}
@@ -141,7 +142,7 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
                     style: { 
                       textAnchor: 'middle',
                       fontSize: isMobile ? 10 : 12,
-                      fill: isDarkMode ? '#e5e7eb' : '#374151',
+                      fill: '#374151',
                       dy: isMobile ? 10 : 50
                     }
                   }}
@@ -150,16 +151,16 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
                   content={({ active, payload, label }) => {
                     if (active && payload && payload.length) {
                       return (
-                        <div className={`p-2 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border rounded shadow-lg w-auto min-w-32`}>
-                          <p className={`text-xs font-medium text-center ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{label}</p>
+                        <div className="p-2 bg-white border-gray-200 border rounded shadow-lg w-auto min-w-32">
+                          <p className="text-xs font-medium text-center text-gray-800">{label}</p>
                           {payload.map((entry, index) => {
                             if (entry.value && entry.value !== 0) {
                               return (
                                 <div key={index} className="flex justify-between items-center mt-1">
-                                  <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} style={{ color: entry.color }}>
+                                  <span className="text-xs text-gray-500" style={{ color: entry.color }}>
                                     {chartConfig[entry.dataKey as keyof typeof chartConfig]?.label || entry.dataKey}:
                                   </span>
-                                  <span className={`text-xs font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                                  <span className="text-xs font-medium text-gray-800">
                                     {entry.value}
                                   </span>
                                 </div>
@@ -179,7 +180,7 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
                   wrapperStyle={{ 
                     bottom: isMobile ? -10 : 0,
                     fontSize: isMobile ? 10 : 12,
-                    color: isDarkMode ? '#e5e7eb' : '#374151'
+                    color: '#374151'
                   }}
                   layout="horizontal"
                   align="center"

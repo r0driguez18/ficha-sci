@@ -56,6 +56,7 @@
     --sidebar-ring: 224 76% 48%;
   }
 
+  /*
   .dark {
     --background: 222 47% 11%;
     --foreground: 210 40% 98%;
@@ -103,6 +104,7 @@
     --sidebar-border: 216 34% 17%;
     --sidebar-ring: 224 76% 48%;
   }
+  */
 }
 
 @layer base {
@@ -165,7 +167,7 @@
 
 /* Glass morphism utility class */
 .glass-morphism {
-  @apply bg-white/75 dark:bg-black/30 backdrop-blur-md border border-white/20 dark:border-white/10;
+  @apply bg-white/75 backdrop-blur-md border border-white/20;
 }
 
 /* Table styles */
@@ -190,7 +192,8 @@
   @apply transition-all duration-300 hover:translate-y-[-5px] hover:shadow-lg;
 }
 
-/* Dark mode specific styles */
+/*
+Dark mode specific styles - DISABLED
 .dark .recharts-cartesian-grid-horizontal line,
 .dark .recharts-cartesian-grid-vertical line {
   stroke: rgba(255, 255, 255, 0.1);
@@ -200,3 +203,4 @@
   background-color: rgba(30, 30, 30, 0.9) !important;
   border-color: rgba(80, 80, 80, 0.5) !important;
 }
+*/

@@ -60,7 +60,7 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
         label="Verificar Débitos/Créditos Aplicados no Turno Anterior"
       />
 
-      <div className="border rounded-md p-3 bg-gray-50 dark:bg-gray-800">
+      <div className="border rounded-md p-3 bg-gray-50">
         <h4 className="font-medium mb-2">Ficheiros INPS:</h4>
         <div className="ml-4 space-y-2">
           <CheckboxField
@@ -92,7 +92,7 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
         label="Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR"
       />
 
-      <div className="border rounded-md p-3 bg-gray-50 dark:bg-gray-800">
+      <div className="border rounded-md p-3 bg-gray-50">
         <h4 className="font-medium mb-2">Enviar Ficheiro:</h4>
         <div className="ml-4 space-y-2">
           <CheckboxField

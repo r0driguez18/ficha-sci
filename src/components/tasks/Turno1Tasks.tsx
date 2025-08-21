@@ -65,7 +65,7 @@ export const Turno1TasksComponent: React.FC<Turno1TasksProps> = ({
         <Label htmlFor="percurso76931" className="cursor-pointer text-black">Percurso 76931 - Atualiza os alertas nos clientes com dados desatualizados</Label>
       </div>
       
-      <div className="border rounded-md p-3 bg-gray-50 dark:bg-gray-800">
+      <div className="border rounded-md p-3 bg-gray-50">
         <div className="flex items-start space-x-2">
           <Checkbox 
             id="enviar"
@@ -181,7 +181,7 @@ export const Turno1TasksComponent: React.FC<Turno1TasksProps> = ({
         </Label>
       </div>
 
-      <div className="border rounded-md p-3 bg-gray-50 dark:bg-gray-800">
+      <div className="border rounded-md p-3 bg-gray-50">
         <div className="flex items-start space-x-2">
           <Checkbox 
             id="backupsDiferidos"
@@ -269,7 +269,7 @@ export const Turno1TasksComponent: React.FC<Turno1TasksProps> = ({
         <Label htmlFor="enviarSegundoEtr" className="cursor-pointer text-black">Enviar 2º Ficheiro ETR (13h:30)</Label>
       </div>
       
-      <div className="border rounded-md p-3 bg-gray-50 dark:bg-gray-800">
+      <div className="border rounded-md p-3 bg-gray-50">
         <div className="flex items-start space-x-2">
           <Checkbox 
             id="enviarFicheiroCom"

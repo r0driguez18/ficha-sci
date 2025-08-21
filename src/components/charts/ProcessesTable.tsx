@@ -15,7 +15,7 @@ const ProcessesTable: React.FC<ProcessesTableProps> = ({ processes, title = "Úl
     if (process.as400_name) {
       // Check for Salary processes (starting with SA)
       if (process.as400_name.toUpperCase().startsWith("SA")) {
-        return { label: 'Salários', classes: 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300' };
+        return { label: 'Salários', classes: 'bg-orange-100 text-orange-800' };
       }
       
       // Check for Company processes (GA, IM, ENA, INP, BN, FCVT)
@@ -25,15 +25,15 @@ const ProcessesTable: React.FC<ProcessesTableProps> = ({ processes, title = "Úl
       const longLongPrefix = process.as400_name.substring(0, 4).toUpperCase();
       
       if (companyPrefixes.includes(prefix) || companyPrefixes.includes(longPrefix) || companyPrefixes.includes(longLongPrefix)) {
-        return { label: 'Processamentos de Empresas', classes: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300' };
+        return { label: 'Processamentos de Empresas', classes: 'bg-blue-100 text-blue-800' };
       }
       
       // Default for other AS400 processes
-      return { label: 'Processamentos de Empresas', classes: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300' };
+      return { label: 'Processamentos de Empresas', classes: 'bg-blue-100 text-blue-800' };
     } else if (process.task) {
-      return { label: 'Outros Processamentos', classes: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300' };
+      return { label: 'Outros Processamentos', classes: 'bg-green-100 text-green-800' };
     }
-    return { label: 'Desconhecido', classes: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300' };
+    return { label: 'Desconhecido', classes: 'bg-gray-100 text-gray-800' };
   };
 
   return (
