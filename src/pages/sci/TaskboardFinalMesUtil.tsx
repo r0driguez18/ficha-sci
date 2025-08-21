@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { saveFileProcess } from '@/services/fileProcessService';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { Turno1TasksComponent } from '@/components/tasks/Turno1Tasks';
 import { Turno2TasksComponent } from '@/components/tasks/Turno2Tasks';
 import { Turno3TasksComponent } from '@/components/tasks/Turno3Tasks';
@@ -28,6 +29,7 @@ const operatorsList = [
 
 const TaskboardFinalMesUtil = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [activeTab, setActiveTab] = useState<TurnKey>('turno1');
@@ -302,28 +304,51 @@ const TaskboardFinalMesUtil = () => {
   };
 
   const handleSave = async () => {
-    const { savedCount, duplicateCount } = await saveTableRowsToSupabase();
-    
-    if (savedCount > 0) {
-      toast.success(`${savedCount} processamentos salvos com sucesso!`);
+    // Verificar se está assinado primeiro
+    if (!signerName || !signatureDataUrl) {
+      toast.error("Não é possível guardar sem assinatura. Preencha o nome do responsável e assine a ficha.");
+      return;
+    }
+
+    try {
+      // Salvar ficha completa (turnos, tarefas, etc.)
+      const { saveTaskboardData } = await import('@/services/taskboardService');
+      await saveTaskboardData({
+        user_id: user?.id || 'anonymous',
+        form_type: 'final-mes-util',
+        date,
+        turn_data: { turno1: turnData.turno1, turno2: turnData.turno2, turno3: turnData.turno3 },
+        tasks: { turno1: tasks.turno1, turno2: tasks.turno2, turno3: tasks.turno3 },
+        table_rows: tableRows
+      });
+
+      // Salvar processamentos da tabela
+      const { savedCount, duplicateCount } = await saveTableRowsToSupabase();
       
-      if (duplicateCount > 0) {
-        toast.info(`${duplicateCount} processamentos foram ignorados por já existirem no sistema.`);
-      }
+      toast.success("Ficha guardada com sucesso!");
       
-      toast.message(
-        "Dados salvos com sucesso!",
-        {
-          action: {
-            label: "Ver Gráficos",
-            onClick: () => navigate("/easyvista/dashboards")
-          }
+      if (savedCount > 0) {
+        toast.success(`${savedCount} processamentos salvos com sucesso!`);
+        
+        if (duplicateCount > 0) {
+          toast.info(`${duplicateCount} processamentos foram ignorados por já existirem no sistema.`);
         }
-      );
-    } else if (duplicateCount > 0) {
-      toast.info(`Todos os ${duplicateCount} processamentos já existem no sistema.`);
-    } else {
-      toast.error('Nenhum processamento foi salvo. Verifique os dados.');
+        
+        toast.message(
+          "Dados salvos com sucesso!",
+          {
+            action: {
+              label: "Ver Gráficos",
+              onClick: () => navigate("/easyvista/dashboards")
+            }
+          }
+        );
+      } else if (duplicateCount > 0) {
+        toast.info(`Todos os ${duplicateCount} processamentos já existem no sistema.`);
+      }
+    } catch (error) {
+      console.error('Erro ao guardar ficha:', error);
+      toast.error('Erro ao guardar ficha. Tente novamente.');
     }
   };
 

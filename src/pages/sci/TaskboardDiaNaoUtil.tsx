@@ -298,28 +298,51 @@ const [isLoading, setIsLoading] = useState(true);
   };
 
   const handleSave = async () => {
-    const { savedCount, duplicateCount } = await saveTableRowsToSupabase();
-    
-    if (savedCount > 0) {
-      toast.success(`${savedCount} processamentos salvos com sucesso!`);
+    // Verificar se está assinado primeiro
+    if (!signerName || !signatureDataUrl) {
+      toast.error("Não é possível guardar sem assinatura. Preencha o nome do responsável e assine a ficha.");
+      return;
+    }
+
+    try {
+      // Salvar ficha completa (turnos, tarefas, etc.)
+      const { saveTaskboardData } = await import('@/services/taskboardService');
+      await saveTaskboardData({
+        user_id: user?.id || 'anonymous',
+        form_type: 'dia-nao-util',
+        date,
+        turn_data: { turno3: turnData },
+        tasks: { turno3: tasks },
+        table_rows: tableRows
+      });
+
+      // Salvar processamentos da tabela
+      const { savedCount, duplicateCount } = await saveTableRowsToSupabase();
       
-      if (duplicateCount > 0) {
-        toast.info(`${duplicateCount} processamentos foram ignorados por já existirem no sistema.`);
-      }
+      toast.success("Ficha guardada com sucesso!");
       
-      toast.message(
-        "Dados salvos com sucesso!",
-        {
-          action: {
-            label: "Ver Gráficos",
-            onClick: () => navigate("/easyvista/dashboards")
-          }
+      if (savedCount > 0) {
+        toast.success(`${savedCount} processamentos salvos com sucesso!`);
+        
+        if (duplicateCount > 0) {
+          toast.info(`${duplicateCount} processamentos foram ignorados por já existirem no sistema.`);
         }
-      );
-    } else if (duplicateCount > 0) {
-      toast.info(`Todos os ${duplicateCount} processamentos já existem no sistema.`);
-    } else {
-      toast.error('Nenhum processamento foi salvo. Verifique os dados.');
+        
+        toast.message(
+          "Dados salvos com sucesso!",
+          {
+            action: {
+              label: "Ver Gráficos",
+              onClick: () => navigate("/easyvista/dashboards")
+            }
+          }
+        );
+      } else if (duplicateCount > 0) {
+        toast.info(`Todos os ${duplicateCount} processamentos já existem no sistema.`);
+      }
+    } catch (error) {
+      console.error('Erro ao guardar ficha:', error);
+      toast.error('Erro ao guardar ficha. Tente novamente.');
     }
   };
 
