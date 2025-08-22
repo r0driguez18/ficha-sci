@@ -8,6 +8,7 @@ export interface TaskTableRow {
   nomeAs: string;
   operacao: string;
   executado: string;
+  tipo: string;
 }
 
 // This ensures compatibility with Supabase's Json type

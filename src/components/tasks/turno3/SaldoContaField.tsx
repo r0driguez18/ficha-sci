@@ -27,20 +27,20 @@ export const SaldoContaField: React.FC<SaldoContaFieldProps> = ({
 }) => {
   return (
     <>
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-3">
         <Checkbox 
           id="validarSaldoConta" 
           checked={checked}
           onCheckedChange={onCheckedChange}
         />
-        <Label htmlFor="validarSaldoConta" className="cursor-pointer flex-grow ml-2">
+        <Label htmlFor="validarSaldoConta" className="cursor-pointer flex-grow">
           Validar saldo da conta 18/5488102:
         </Label>
         <Input
           type="text"
           value={saldoValue || ""}
           onChange={(e) => onSaldoValueChange(e.target.value)}
-          className="w-32 ml-2"
+          className="w-32"
           placeholder="0.00"
         />
       </div>

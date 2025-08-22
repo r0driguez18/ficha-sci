@@ -31,7 +31,7 @@ const TaskboardFinalMesNaoUtil = () => {
   
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [tableRows, setTableRows] = useState<TaskTableRow[]>([
-    { id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '' }
+    { id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '', tipo: '' }
   ]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -210,7 +210,8 @@ const TaskboardFinalMesNaoUtil = () => {
       tarefa: '',
       nomeAs: '',
       operacao: '',
-      executado: ''
+      executado: '',
+      tipo: ''
     };
     setTableRows([...tableRows, newRow]);
   };
@@ -415,7 +416,7 @@ const TaskboardFinalMesNaoUtil = () => {
       limpaGbtrlogFimMes: false // Ensure this is included in the reset state
     });
     
-    setTableRows([{ id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '' }]);
+    setTableRows([{ id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '', tipo: '' }]);
     
     // clear signature
     setSignerName("");
@@ -441,6 +442,12 @@ const TaskboardFinalMesNaoUtil = () => {
   };
 
   const exportToPDF = () => {
+    // Verificar se está assinado primeiro
+    if (!signerName || !signatureDataUrl) {
+      toast.error("Não é possível exportar PDF sem assinatura. Preencha o nome do responsável e assine a ficha.");
+      return;
+    }
+
     try {
       // Create the complete data structure needed for PDF generation
       const completeTasksData: TasksType = {

@@ -24,7 +24,7 @@ const EasyVistaEstatisticas = () => {
   useEffect(() => {
     // Check if there's a hash in the URL and set the active tab accordingly
     const hash = window.location.hash.replace('#', '');
-    if (hash && ['all', 'salary', 'debit_credit'].includes(hash)) {
+    if (hash && ['all', 'salary', 'cobrancas', 'compensacao', 'debit_credit'].includes(hash)) {
       setActiveTab(hash);
     }
   }, []);
@@ -117,8 +117,8 @@ const EasyVistaEstatisticas = () => {
               <CardTitle>Estatísticas de Processamentos</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card className={isDarkMode ? "bg-blue-950/30" : "bg-blue-50"}>
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <Card className="bg-blue-50">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-lg">Total de Processamentos</CardTitle>
                   </CardHeader>
@@ -127,16 +127,34 @@ const EasyVistaEstatisticas = () => {
                   </CardContent>
                 </Card>
                 
-                <Card className={isDarkMode ? "bg-orange-950/30" : "bg-orange-50"}>
+                <Card className="bg-orange-50">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">Processamentos de Salário</CardTitle>
+                    <CardTitle className="text-lg">Salário</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-3xl font-bold">{salaryProcesses.length}</p>
                   </CardContent>
                 </Card>
                 
-                <Card className={isDarkMode ? "bg-blue-900/30" : "bg-blue-100"}>
+                <Card className="bg-purple-50">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg">Cobranças</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-3xl font-bold">{allProcesses.filter(p => p.tipo === 'cobrancas').length}</p>
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-green-50">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg">Compensação</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-3xl font-bold">{allProcesses.filter(p => p.tipo === 'compensacao').length}</p>
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-cyan-50">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-lg">Processamentos de Empresas</CardTitle>
                   </CardHeader>
@@ -144,24 +162,17 @@ const EasyVistaEstatisticas = () => {
                     <p className="text-3xl font-bold">{debitCreditProcesses.length}</p>
                   </CardContent>
                 </Card>
-                
-                <Card className={isDarkMode ? "bg-green-950/30" : "bg-green-50"}>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">Outros Processamentos</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-3xl font-bold">{otherProcesses.length}</p>
-                  </CardContent>
-                </Card>
               </div>
             </CardContent>
           </Card>
           
           <Tabs defaultValue="all" value={activeTab} onValueChange={handleTabChange} className="space-y-4">
-            <TabsList className="grid grid-cols-1 md:grid-cols-3 gap-2">
-              <TabsTrigger value="all">Todos os Processamentos</TabsTrigger>
-              <TabsTrigger value="salary">Processamentos de Salário</TabsTrigger>
-              <TabsTrigger value="debit_credit">Processamentos de Empresas</TabsTrigger>
+            <TabsList className="grid grid-cols-1 md:grid-cols-5 gap-2">
+              <TabsTrigger value="all">Todos</TabsTrigger>
+              <TabsTrigger value="salary">Salário</TabsTrigger>
+              <TabsTrigger value="cobrancas">Cobranças</TabsTrigger>
+              <TabsTrigger value="compensacao">Compensação</TabsTrigger>
+              <TabsTrigger value="debit_credit">Empresas</TabsTrigger>
             </TabsList>
             
             <TabsContent value="all">
@@ -175,6 +186,20 @@ const EasyVistaEstatisticas = () => {
               <ProcessesTable 
                 processes={salaryProcesses} 
                 title="Processamentos de Salário" 
+              />
+            </TabsContent>
+
+            <TabsContent value="cobrancas">
+              <ProcessesTable 
+                processes={allProcesses.filter(p => p.tipo === 'cobrancas')} 
+                title="Cobranças" 
+              />
+            </TabsContent>
+
+            <TabsContent value="compensacao">
+              <ProcessesTable 
+                processes={allProcesses.filter(p => p.tipo === 'compensacao')} 
+                title="Compensação" 
               />
             </TabsContent>
 

@@ -46,7 +46,7 @@ const Taskboard = () => {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [isEndOfMonth, setIsEndOfMonth] = useState<boolean>(false);
   const [tableRows, setTableRows] = useState<TaskTableRow[]>([
-    { id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '' }
+    { id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '', tipo: '' }
   ]);
   const [activeTab, setActiveTab] = useState('turno1');
 const [isLoading, setIsLoading] = useState(true);
@@ -296,7 +296,8 @@ const [isLoading, setIsLoading] = useState(true);
       tarefa: '',
       nomeAs: '',
       operacao: '',
-      executado: ''
+      executado: '',
+      tipo: ''
     };
     setTableRows([...tableRows, newRow]);
   };
@@ -554,7 +555,7 @@ const [isLoading, setIsLoading] = useState(true);
         limpaGbtrlogFimMes: false
       }
     });
-    setTableRows([{ id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '' }]);
+    setTableRows([{ id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '', tipo: '' }]);
     setActiveTab('turno1');
     setSignerName("");
     setSignatureDataUrl(null);
@@ -566,6 +567,12 @@ const [isLoading, setIsLoading] = useState(true);
   };
 
   const exportToPDF = () => {
+    // Verificar se está assinado primeiro
+    if (!signerName || !signatureDataUrl) {
+      toast.error("Não é possível exportar PDF sem assinatura. Preencha o nome do responsável e assine a ficha.");
+      return;
+    }
+
     try {
       const doc = generateTaskboardPDF(
         date,

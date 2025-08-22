@@ -51,10 +51,11 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
         <TableHeader>
           <TableRow>
             <TableHead className="w-20">Hora</TableHead>
-            <TableHead className="w-1/4">Tarefa</TableHead>
-            <TableHead className="w-1/4">Nome AS400</TableHead>
-            <TableHead className="w-28">Nº Operação</TableHead>
-            <TableHead className="w-28">Executado Por</TableHead>
+            <TableHead className="w-1/5">Tarefa</TableHead>
+            <TableHead className="w-1/5">Nome AS400</TableHead>
+            <TableHead className="w-24">Nº Operação</TableHead>
+            <TableHead className="w-1/5">Tipo de Processamento</TableHead>
+            <TableHead className="w-1/5">Executado Por</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -89,6 +90,23 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
                   pattern="[0-9]*"
                   maxLength={9}
                 />
+              </TableCell>
+              <TableCell>
+                <Select 
+                  value={row.tipo} 
+                  onValueChange={(value) => onInputChange(row.id, 'tipo', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="salario">Salário</SelectItem>
+                    <SelectItem value="cobrancas">Cobranças</SelectItem>
+                    <SelectItem value="compensacao">Compensação</SelectItem>
+                    <SelectItem value="empresas">Processamentos de Empresas</SelectItem>
+                    <SelectItem value="outros">Outros</SelectItem>
+                  </SelectContent>
+                </Select>
               </TableCell>
               <TableCell>
                 <Select 
