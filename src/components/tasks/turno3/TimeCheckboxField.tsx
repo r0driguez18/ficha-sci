@@ -22,20 +22,20 @@ export const TimeCheckboxField: React.FC<TimeCheckboxFieldProps> = ({
   label
 }) => {
   return (
-    <div className="flex items-center space-x-2">
+    <div className="flex items-center space-x-3">
       <Checkbox 
         id={id} 
         checked={checked}
         onCheckedChange={onCheckedChange}
       />
-      <Label htmlFor={id} className="cursor-pointer flex-grow ml-2">
+      <Label htmlFor={id} className="cursor-pointer flex-grow">
         {label}
       </Label>
       <Input
         type="time"
         value={timeValue || ""}
         onChange={(e) => onTimeChange(e.target.value)}
-        className="w-32 ml-2"
+        className="w-32"
       />
     </div>
   );

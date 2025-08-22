@@ -10,7 +10,8 @@ export const renderTaskTable = (doc: jsPDF, tableRows: TaskTableRow[]): void => 
     row.tarefa.trim() !== '' || 
     row.nomeAs.trim() !== '' || 
     row.operacao.trim() !== '' || 
-    row.executado.trim() !== ''
+    row.executado.trim() !== '' ||
+    row.tipo.trim() !== ''
   );
   
   // Always add a table page, even if there are no rows
@@ -25,11 +26,12 @@ export const renderTaskTable = (doc: jsPDF, tableRows: TaskTableRow[]): void => 
       row.tarefa, 
       row.nomeAs, 
       row.operacao, 
+      row.tipo || 'N/A',
       row.executado
     ]);
     
     autoTable(doc, {
-      head: [['Hora', 'Tarefa', 'Nome AS400', 'Nº Operação', 'Executado Por']],
+      head: [['Hora', 'Tarefa', 'Nome AS400', 'Nº Operação', 'Tipo', 'Executado Por']],
       body: data,
       startY: 25,
       theme: 'grid',
@@ -45,7 +47,7 @@ export const renderTaskTable = (doc: jsPDF, tableRows: TaskTableRow[]): void => 
   } else {
     // If no data, show an empty table with just headers
     autoTable(doc, {
-      head: [['Hora', 'Tarefa', 'Nome AS400', 'Nº Operação', 'Executado Por']],
+      head: [['Hora', 'Tarefa', 'Nome AS400', 'Nº Operação', 'Tipo', 'Executado Por']],
       body: [],
       startY: 25,
       theme: 'grid',

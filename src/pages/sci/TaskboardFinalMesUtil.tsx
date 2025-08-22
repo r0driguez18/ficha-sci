@@ -34,7 +34,7 @@ const TaskboardFinalMesUtil = () => {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [activeTab, setActiveTab] = useState<TurnKey>('turno1');
   const [tableRows, setTableRows] = useState<TaskTableRow[]>([
-    { id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '' }
+    { id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '', tipo: '' }
   ]);
 
   // Assinatura digital
@@ -214,7 +214,8 @@ const TaskboardFinalMesUtil = () => {
       tarefa: '',
       nomeAs: '',
       operacao: '',
-      executado: ''
+      executado: '',
+      tipo: ''
     };
     setTableRows([...tableRows, newRow]);
   };
@@ -472,7 +473,7 @@ const TaskboardFinalMesUtil = () => {
       }
     });
     setActiveTab('turno1');
-    setTableRows([{ id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '' }]);
+    setTableRows([{ id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '', tipo: '' }]);
     setSignerName("");
     setSignatureDataUrl(null);
     
@@ -486,8 +487,22 @@ const TaskboardFinalMesUtil = () => {
   };
 
   const exportToPDF = () => {
+    // Verificar se está assinado primeiro
+    if (!signerName || !signatureDataUrl) {
+      toast.error("Não é possível exportar PDF sem assinatura. Preencha o nome do responsável e assine a ficha.");
+      return;
+    }
+
     try {
-      const doc = generateTaskboardPDF(date, turnData, tasks, tableRows, false, true); // Set isEndOfMonth to true
+      const doc = generateTaskboardPDF(
+        date, 
+        turnData, 
+        tasks, 
+        tableRows, 
+        false, 
+        true,
+        { imageDataUrl: signatureDataUrl, signerName, signedAt: new Date().toLocaleString('pt-PT') }
+      ); // Set isEndOfMonth to true
       doc.save(`taskboard_final_mes_util_${date.replace(/-/g, '')}.pdf`);
       toast.success('PDF gerado com sucesso!');
     } catch (error) {
