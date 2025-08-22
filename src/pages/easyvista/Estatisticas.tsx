@@ -24,7 +24,7 @@ const EasyVistaEstatisticas = () => {
   useEffect(() => {
     // Check if there's a hash in the URL and set the active tab accordingly
     const hash = window.location.hash.replace('#', '');
-    if (hash && ['all', 'salary', 'cobrancas', 'compensacao', 'debit_credit'].includes(hash)) {
+    if (hash && ['all', 'salary', 'cobrancas', 'compensacao'].includes(hash)) {
       setActiveTab(hash);
     }
   }, []);
@@ -117,7 +117,7 @@ const EasyVistaEstatisticas = () => {
               <CardTitle>Estatísticas de Processamentos</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card className="bg-blue-50">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-lg">Total de Processamentos</CardTitle>
@@ -153,26 +153,16 @@ const EasyVistaEstatisticas = () => {
                     <p className="text-3xl font-bold">{allProcesses.filter(p => p.tipo === 'compensacao').length}</p>
                   </CardContent>
                 </Card>
-                
-                <Card className="bg-cyan-50">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">Processamentos de Empresas</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-3xl font-bold">{debitCreditProcesses.length}</p>
-                  </CardContent>
-                </Card>
               </div>
             </CardContent>
           </Card>
           
           <Tabs defaultValue="all" value={activeTab} onValueChange={handleTabChange} className="space-y-4">
-            <TabsList className="grid grid-cols-1 md:grid-cols-5 gap-2">
+            <TabsList className="grid grid-cols-1 md:grid-cols-4 gap-2">
               <TabsTrigger value="all">Todos</TabsTrigger>
               <TabsTrigger value="salary">Salário</TabsTrigger>
               <TabsTrigger value="cobrancas">Cobranças</TabsTrigger>
               <TabsTrigger value="compensacao">Compensação</TabsTrigger>
-              <TabsTrigger value="debit_credit">Empresas</TabsTrigger>
             </TabsList>
             
             <TabsContent value="all">
@@ -200,13 +190,6 @@ const EasyVistaEstatisticas = () => {
               <ProcessesTable 
                 processes={allProcesses.filter(p => p.tipo === 'compensacao')} 
                 title="Compensação" 
-              />
-            </TabsContent>
-
-            <TabsContent value="debit_credit">
-              <ProcessesTable 
-                processes={debitCreditProcesses} 
-                title="Processamentos de Empresas" 
               />
             </TabsContent>
           </Tabs>
