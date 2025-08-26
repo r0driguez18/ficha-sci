@@ -7,13 +7,85 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "13.0.4"
   }
   public: {
     Tables: {
+      cobrancas_retornos: {
+        Row: {
+          created_at: string
+          data_aplicacao: string
+          data_retorno_enviado: string | null
+          data_retorno_esperada: string
+          ficheiro_nome: string
+          id: string
+          observacoes: string | null
+          retorno_enviado: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_aplicacao: string
+          data_retorno_enviado?: string | null
+          data_retorno_esperada: string
+          ficheiro_nome: string
+          id?: string
+          observacoes?: string | null
+          retorno_enviado?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data_aplicacao?: string
+          data_retorno_enviado?: string | null
+          data_retorno_esperada?: string
+          ficheiro_nome?: string
+          id?: string
+          observacoes?: string | null
+          retorno_enviado?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      daily_alerts: {
+        Row: {
+          alert_name: string
+          alert_time: string
+          created_at: string
+          days_of_week: Json
+          description: string | null
+          id: string
+          is_active: boolean
+          updated_at: string
+        }
+        Insert: {
+          alert_name: string
+          alert_time: string
+          created_at?: string
+          days_of_week?: Json
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Update: {
+          alert_name?: string
+          alert_time?: string
+          created_at?: string
+          days_of_week?: Json
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       file_processes: {
         Row: {
           as400_name: string | null

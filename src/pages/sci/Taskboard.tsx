@@ -373,6 +373,16 @@ const [isLoading, setIsLoading] = useState(true);
         
         if (!result.error) {
           savedCount++;
+          
+          // If it's a collection process, create a return record
+          if (row.tipo === 'cobrancas' && row.tarefa && user?.id) {
+            try {
+              const { createCobrancaRetorno } = await import('@/services/cobrancasRetornoService');
+              await createCobrancaRetorno(user.id, date, row.tarefa);
+            } catch (returnErr) {
+              console.error('Error creating collection return:', returnErr);
+            }
+          }
         } else if (result.error.message && result.error.message.includes("já existe")) {
           duplicateCount++;
         }
