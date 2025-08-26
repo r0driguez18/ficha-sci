@@ -29,7 +29,7 @@ export const TimeCheckboxField: React.FC<TimeCheckboxFieldProps> = ({
           checked={checked}
           onCheckedChange={onCheckedChange}
         />
-        <Label htmlFor={id} className="cursor-pointer">
+        <Label htmlFor={id} className="cursor-pointer ml-2">
           {label}
         </Label>
       </div>

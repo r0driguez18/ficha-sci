@@ -103,7 +103,6 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
                     <SelectItem value="salario">Salário</SelectItem>
                     <SelectItem value="cobrancas">Cobranças</SelectItem>
                     <SelectItem value="compensacao">Compensação</SelectItem>
-                    <SelectItem value="outros">Outros</SelectItem>
                   </SelectContent>
                 </Select>
               </TableCell>
