@@ -22,14 +22,14 @@ export const TimeCheckboxField: React.FC<TimeCheckboxFieldProps> = ({
   label
 }) => {
   return (
-    <div className="flex items-center justify-between gap-3">
-      <div className="flex items-center space-x-3 flex-1">
+    <div className="flex items-center gap-3">
+      <div className="flex items-center space-x-2">
         <Checkbox 
           id={id} 
           checked={checked}
           onCheckedChange={onCheckedChange}
         />
-        <Label htmlFor={id} className="cursor-pointer ml-2">
+        <Label htmlFor={id} className="cursor-pointer">
           {label}
         </Label>
       </div>
@@ -37,7 +37,7 @@ export const TimeCheckboxField: React.FC<TimeCheckboxFieldProps> = ({
         type="time"
         value={timeValue || ""}
         onChange={(e) => onTimeChange(e.target.value)}
-        className="w-28 shrink-0"
+        className="w-28"
       />
     </div>
   );
