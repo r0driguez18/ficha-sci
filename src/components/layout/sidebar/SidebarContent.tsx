@@ -34,6 +34,7 @@ export const SidebarContent = ({ collapsed }: SidebarContentProps) => {
     { label: 'CRC - Tratamento', path: '/crc/tratamento', keywords: ['crc', 'tratamento', 'ficheiros'] },
     { label: 'DIS - Dados', path: '/dis/dados', keywords: ['dis', 'dados', 'database'] },
     { label: 'Processamentos - Estatísticas', path: '/easyvista/estatisticas', keywords: ['processamentos', 'estatísticas', 'charts'] },
+    { label: 'Processamentos - Dashboards', path: '/easyvista/dashboards', keywords: ['processamentos', 'dashboards', 'visao', 'geral'] },
     { label: 'Configurações', path: '/settings', keywords: ['settings', 'configurações', 'config'] },
     { label: 'Documentação', path: '/docs', keywords: ['docs', 'documentação', 'help', 'ajuda'] },
   ];
@@ -97,7 +98,8 @@ export const SidebarContent = ({ collapsed }: SidebarContentProps) => {
               to="/easyvista"
               collapsed={collapsed}
               subItems={[
-                { label: "Estatísticas", to: "/easyvista/estatisticas" }
+                { label: "Estatísticas", to: "/easyvista/estatisticas" },
+                { label: "Dashboards", to: "/easyvista/dashboards" }
               ]}
             />
           </div>
