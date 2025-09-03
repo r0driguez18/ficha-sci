@@ -20,6 +20,7 @@ import Procedimentos from "./pages/sci/Procedimentos";
 import CrcTratamento from "./pages/crc/Tratamento";
 import DisDados from "./pages/dis/Dados";
 import EasyVistaEstatisticas from "./pages/easyvista/Estatisticas";
+import EasyVistaDashboards from "./pages/easyvista/Dashboards";
 import Settings from "./pages/Settings";
 import Documentation from "./pages/Documentation";
 import CalendarPage from './pages/sci/Calendar';
@@ -54,11 +55,11 @@ const App = () => (
               <Route path="/sci" element={<Navigate to="/sci/procedimentos" replace />} />
               <Route path="/sci/procedimentos" element={<PrivateRoute><DashboardLayout><Procedimentos /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/taskboard" element={<PrivateRoute><DashboardLayout><Taskboard /></DashboardLayout></PrivateRoute>} />
-              <Route path="/sci/taskboard-nao-util" element={<PrivateRoute><DashboardLayout><TaskboardDiaNaoUtil /></DashboardLayout></PrivateRoute>} />
+              <Route path="/sci/taskboard-dia-nao-util" element={<PrivateRoute><DashboardLayout><TaskboardDiaNaoUtil /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/taskboard-final-mes-util" element={<PrivateRoute><DashboardLayout><TaskboardFinalMesUtil /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/taskboard-final-mes-nao-util" element={<PrivateRoute><DashboardLayout><TaskboardFinalMesNaoUtil /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/calendar" element={<PrivateRoute><DashboardLayout><CalendarPage /></DashboardLayout></PrivateRoute>} />
-              <Route path="/sci/historico" element={<PrivateRoute><DashboardLayout><HistoricoFichas /></DashboardLayout></PrivateRoute>} />
+              <Route path="/sci/historico-fichas" element={<PrivateRoute><DashboardLayout><HistoricoFichas /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/retornos-cobrancas" element={<PrivateRoute><DashboardLayout><RetornosCobrancas /></DashboardLayout></PrivateRoute>} />
               
               {/* CRC Routes */}
@@ -72,6 +73,7 @@ const App = () => (
               {/* Processamentos Routes */}
               <Route path="/easyvista" element={<Navigate to="/easyvista/estatisticas" replace />} />
               <Route path="/easyvista/estatisticas" element={<PrivateRoute><DashboardLayout><EasyVistaEstatisticas /></DashboardLayout></PrivateRoute>} />
+              <Route path="/easyvista/dashboards" element={<PrivateRoute><DashboardLayout><EasyVistaDashboards /></DashboardLayout></PrivateRoute>} />
               
               {/* System Routes */}
               <Route path="/settings" element={<PrivateRoute><DashboardLayout><Settings /></DashboardLayout></PrivateRoute>} />
