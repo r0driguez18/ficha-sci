@@ -396,24 +396,26 @@ const [isLoading, setIsLoading] = useState(true);
     }
   };
 
+  // Save taskboard data to Supabase (without signature validation)
   const handleSave = async () => {
-    // Verificar se está assinado primeiro
-    if (!signerName || !signatureDataUrl) {
-      toast.error("Não é possível guardar sem assinatura. Preencha o nome do responsável e assine a ficha.");
-      return;
-    }
-
     try {
-      // Salvar ficha completa (turnos, tarefas, etc.)
-      const { saveTaskboardData } = await import('@/services/taskboardService');
-      await saveTaskboardData({
-        user_id: user?.id || 'anonymous',
-        form_type: 'dia-util',
+      setIsLoading(true);
+
+      const user = await supabase.auth.getUser();
+      if (!user.data.user) {
+        toast.error("Utilizador não autenticado");
+        return;
+      }
+
+      const taskboardData = {
+        user_id: user.data.user.id,
+        form_type: getFormType(),
         date,
-        turn_data: { turno1: turnData.turno1, turno2: turnData.turno2, turno3: turnData.turno3 },
-        tasks: { turno1: tasks.turno1, turno2: tasks.turno2, turno3: tasks.turno3 },
-        table_rows: tableRows
-      });
+        turn_data: turnData,
+        tasks,
+        table_rows: tableRows,
+        active_tab: activeTab
+      };
 
       // Salvar processamentos da tabela
       const { savedCount, duplicateCount } = await saveTableRowsToSupabase();

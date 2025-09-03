@@ -125,3 +125,10 @@ export type TurnDataType = {
   turno2: { operator: string; entrada: string; saida: string; observations: string };
   turno3: { operator: string; entrada: string; saida: string; observations: string };
 };
+
+export enum FormType {
+  TASKBOARD = "dia-util",
+  TASKBOARD_DIA_NAO_UTIL = "dia-nao-util",
+  TASKBOARD_FINAL_MES_UTIL = "final-mes-util",
+  TASKBOARD_FINAL_MES_NAO_UTIL = "final-mes-nao-util"
+}

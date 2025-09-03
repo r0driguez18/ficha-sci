@@ -86,6 +86,51 @@ export type Database = {
         }
         Relationships: []
       }
+      exported_taskboards: {
+        Row: {
+          created_at: string
+          date: string
+          exported_at: string
+          file_name: string
+          form_type: string
+          id: string
+          pdf_signature: Json
+          table_rows: Json
+          tasks: Json
+          turn_data: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          exported_at?: string
+          file_name: string
+          form_type: string
+          id?: string
+          pdf_signature: Json
+          table_rows: Json
+          tasks: Json
+          turn_data: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          exported_at?: string
+          file_name?: string
+          form_type?: string
+          id?: string
+          pdf_signature?: Json
+          table_rows?: Json
+          tasks?: Json
+          turn_data?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       file_processes: {
         Row: {
           as400_name: string | null
