@@ -21,6 +21,8 @@ import { useTaskboardSync } from '@/services/taskboardService';
 import type { TurnKey, TasksType, TurnDataType } from '@/types/taskboard';
 import type { TaskTableRow } from '@/types/taskTableRow';
 import { Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { saveExportedTaskboard } from '@/services/exportedTaskboardService';
 
 const operatorsList = [
   { value: "nalves", label: "Nelson Alves" },
@@ -173,6 +175,11 @@ const [isLoading, setIsLoading] = useState(true);
       limpaGbtrlogFimMes: false
     }
   });
+
+  // Helper function to determine form type
+  const getFormType = (): string => {
+    return 'dia-util'; // For now, always return dia-util. Can be enhanced later.
+  };
 
   const { syncData, loadData, resetData } = useTaskboardSync(
     'dia-util',
@@ -578,7 +585,7 @@ const [isLoading, setIsLoading] = useState(true);
     toast.success('Formulário reiniciado com sucesso!');
   };
 
-  const exportToPDF = () => {
+  const exportToPDF = async () => {
     // Verificar se está assinado primeiro
     if (!signerName || !signatureDataUrl) {
       toast.error("Não é possível exportar PDF sem assinatura. Preencha o nome do responsável e assine a ficha.");
@@ -586,6 +593,15 @@ const [isLoading, setIsLoading] = useState(true);
     }
 
     try {
+      setIsLoading(true);
+      
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Utilizador não autenticado");
+        return;
+      }
+
       const doc = generateTaskboardPDF(
         date,
         turnData,
@@ -593,13 +609,40 @@ const [isLoading, setIsLoading] = useState(true);
         tableRows,
         false,
         isEndOfMonth,
-        { imageDataUrl: signatureDataUrl, signerName, signedAt: new Date().toLocaleString('pt-PT') }
+        { imageDataUrl: signatureDataUrl, signerName, signedAt: new Date().toISOString() }
       );
-      doc.save(`taskboard_${date.replace(/-/g, '')}.pdf`);
-      toast.success('PDF gerado com sucesso!');
+      
+      const fileName = `Taskboard_${getFormType()}_${date}_${signerName.replace(/\s+/g, '_')}.pdf`;
+      doc.save(fileName);
+      
+      // Save to exported taskboards history
+      const signatureData = {
+        signerName,
+        signedAt: new Date().toISOString(),
+        imageDataUrl: signatureDataUrl
+      };
+      
+      const { error: saveError } = await saveExportedTaskboard(
+        user.id,
+        getFormType(),
+        date,
+        turnData,
+        tasks,
+        tableRows,
+        signatureData
+      );
+      
+      if (saveError) {
+        console.error('Erro ao salvar no histórico:', saveError);
+        toast.error('PDF gerado mas houve erro ao salvar no histórico');
+      } else {
+        toast.success(`PDF gerado e salvo no histórico: ${fileName}`);
+      }
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
       toast.error('Erro ao gerar PDF. Tente novamente.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
