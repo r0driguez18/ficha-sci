@@ -23,6 +23,7 @@ import type { TaskTableRow } from '@/types/taskTableRow';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { saveExportedTaskboard } from '@/services/exportedTaskboardService';
+import { createCobrancaRetorno } from '@/services/cobrancasRetornoService';
 
 const operatorsList = [
   { value: "nalves", label: "Nelson Alves" },
@@ -382,10 +383,9 @@ const [isLoading, setIsLoading] = useState(true);
           savedCount++;
           
           // If it's a collection process, create a return record
-          if (row.tipo === 'cobrancas' && row.tarefa && user?.id) {
+          if (row.tipo === 'cobrancas' && row.nomeAs && user?.id) {
             try {
-              const { createCobrancaRetorno } = await import('@/services/cobrancasRetornoService');
-              await createCobrancaRetorno(user.id, date, row.tarefa);
+              await createCobrancaRetorno(user.id, date, row.nomeAs);
             } catch (returnErr) {
               console.error('Error creating collection return:', returnErr);
             }
