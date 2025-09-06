@@ -10,9 +10,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { loadAllTaskboardsByType, FormType } from '@/services/taskboardService';
+import { FormType } from '@/services/taskboardService';
 import { generateTaskboardPDF } from '@/utils/pdfGenerator';
 import { supabase } from '@/integrations/supabase/client';
+import { getExportedTaskboards, ExportedTaskboard } from '@/services/exportedTaskboardService';
+import { TaskboardPreview } from '@/components/taskboard/TaskboardPreview';
 import { 
   FileDown, 
   Eye, 
@@ -25,18 +27,7 @@ import {
   CheckCircle
 } from 'lucide-react';
 
-interface TaskboardRecord {
-  id: string;
-  form_type: FormType;
-  date: string;
-  turn_data: any;
-  tasks: any;
-  table_rows: any;
-  active_tab?: string;
-  created_at: string;
-  updated_at: string;
-  user_id: string;
-}
+type TaskboardRecord = ExportedTaskboard;
 
 interface SignatureData {
   imageDataUrl: string | null;
@@ -59,12 +50,12 @@ const formTypeColors: Record<FormType, string> = {
 };
 
 export default function HistoricoFichas() {
-  const [records, setRecords] = useState<TaskboardRecord[]>([]);
-  const [filteredRecords, setFilteredRecords] = useState<TaskboardRecord[]>([]);
+  const [records, setRecords] = useState<ExportedTaskboard[]>([]);
+  const [filteredRecords, setFilteredRecords] = useState<ExportedTaskboard[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [formTypeFilter, setFormTypeFilter] = useState<string>('all');
-  const [selectedRecord, setSelectedRecord] = useState<TaskboardRecord | null>(null);
+  const [selectedRecord, setSelectedRecord] = useState<ExportedTaskboard | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -89,22 +80,20 @@ export default function HistoricoFichas() {
         return;
       }
 
-      const allRecords: TaskboardRecord[] = [];
-      const formTypes: FormType[] = ['dia-util', 'dia-nao-util', 'final-mes-util', 'final-mes-nao-util'];
-
-      for (const formType of formTypes) {
-        const { data, error } = await loadAllTaskboardsByType(user.id, formType);
-        if (error) {
-          console.error(`Erro ao carregar fichas ${formType}:`, error);
-          continue;
-        }
-        allRecords.push(...data.filter(item => item.id) as TaskboardRecord[]);
+      // Load exported taskboards only
+      const { data: allRecords, error } = await getExportedTaskboards(user.id);
+      
+      if (error) {
+        console.error('Erro ao carregar histórico:', error);
+        toast({
+          title: "Erro",
+          description: "Erro ao carregar histórico de fichas",
+          variant: "destructive"
+        });
+        return;
       }
 
-      // Ordenar por data de criação (mais recente primeiro)
-      allRecords.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-      
-      setRecords(allRecords);
+      setRecords(allRecords || []);
     } catch (error) {
       console.error('Erro ao carregar histórico:', error);
       toast({
@@ -134,14 +123,8 @@ export default function HistoricoFichas() {
     setFilteredRecords(filtered);
   };
 
-  const downloadPDF = async (record: TaskboardRecord) => {
+  const downloadPDF = async (record: ExportedTaskboard) => {
     try {
-      const signature: SignatureData = {
-        imageDataUrl: record.turn_data?.signature?.imageDataUrl || null,
-        signerName: record.turn_data?.signature?.signerName,
-        signedAt: record.turn_data?.signature?.signedAt
-      };
-
       const pdf = generateTaskboardPDF(
         record.date,
         record.turn_data,
@@ -149,15 +132,14 @@ export default function HistoricoFichas() {
         record.table_rows,
         record.form_type === 'dia-nao-util' || record.form_type === 'final-mes-nao-util',
         record.form_type === 'final-mes-util' || record.form_type === 'final-mes-nao-util',
-        signature
+        record.pdf_signature
       );
 
-      const fileName = `Ficha_${formTypeLabels[record.form_type]}_${record.date}.pdf`;
-      pdf.save(fileName);
+      pdf.save(record.file_name);
 
       toast({
         title: "PDF Gerado",
-        description: `Ficheiro ${fileName} foi descarregado com sucesso`
+        description: `Ficheiro ${record.file_name} foi descarregado com sucesso`
       });
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
@@ -169,9 +151,8 @@ export default function HistoricoFichas() {
     }
   };
 
-  const getSignatureStatus = (record: TaskboardRecord) => {
-    const hasSignature = record.turn_data?.signature?.imageDataUrl && record.turn_data?.signature?.signerName;
-    return hasSignature;
+  const getSignatureStatus = (record: ExportedTaskboard) => {
+    return record.pdf_signature?.imageDataUrl && record.pdf_signature?.signerName;
   };
 
   const formatDate = (dateString: string) => {
@@ -300,10 +281,10 @@ export default function HistoricoFichas() {
                       )}
                     </TableCell>
                     <TableCell>
-                      {record.turn_data?.signature?.signerName ? (
+                      {record.pdf_signature?.signerName ? (
                         <div className="flex items-center gap-2">
                           <User className="h-4 w-4" />
-                          {record.turn_data.signature.signerName}
+                          {record.pdf_signature.signerName}
                         </div>
                       ) : (
                         <span className="text-muted-foreground">-</span>
@@ -331,63 +312,7 @@ export default function HistoricoFichas() {
                               </DialogDescription>
                             </DialogHeader>
                             {selectedRecord && (
-                              <div className="space-y-4">
-                                <div className="grid gap-4 md:grid-cols-2">
-                                  <div>
-                                    <h4 className="font-semibold mb-2">Informações Gerais</h4>
-                                    <div className="space-y-1 text-sm">
-                                      <p><strong>Tipo:</strong> {formTypeLabels[selectedRecord.form_type]}</p>
-                                      <p><strong>Data:</strong> {selectedRecord.date}</p>
-                                      <p><strong>Criado:</strong> {formatDate(selectedRecord.created_at)}</p>
-                                      <p><strong>Atualizado:</strong> {formatDate(selectedRecord.updated_at)}</p>
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <h4 className="font-semibold mb-2">Assinatura</h4>
-                                    <div className="space-y-1 text-sm">
-                                      {selectedRecord.turn_data?.signature?.signerName ? (
-                                        <>
-                                          <p><strong>Responsável:</strong> {selectedRecord.turn_data.signature.signerName}</p>
-                                          {selectedRecord.turn_data.signature.signedAt && (
-                                            <p><strong>Assinado em:</strong> {formatDate(selectedRecord.turn_data.signature.signedAt)}</p>
-                                          )}
-                                          <p className="text-green-600">✓ Ficha assinada</p>
-                                        </>
-                                      ) : (
-                                        <p className="text-orange-600">⚠ Ficha não assinada</p>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-                                
-                                {selectedRecord.table_rows && selectedRecord.table_rows.length > 0 && (
-                                  <div>
-                                    <h4 className="font-semibold mb-2">Procedimentos Executados</h4>
-                                    <div className="border rounded-lg overflow-hidden">
-                                      <Table>
-                                        <TableHeader>
-                                          <TableRow>
-                                            <TableHead>Tarefa</TableHead>
-                                            <TableHead>Nome AS400</TableHead>
-                                            <TableHead>Nº Operação</TableHead>
-                                            <TableHead>Executado por</TableHead>
-                                          </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                          {selectedRecord.table_rows.map((row: any, index: number) => (
-                                            <TableRow key={index}>
-                                              <TableCell>{row.task}</TableCell>
-                                              <TableCell>{row.as400Name || '-'}</TableCell>
-                                              <TableCell>{row.operationNumber || '-'}</TableCell>
-                                              <TableCell>{row.executedBy || '-'}</TableCell>
-                                            </TableRow>
-                                          ))}
-                                        </TableBody>
-                                      </Table>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
+                              <TaskboardPreview taskboard={selectedRecord} />
                             )}
                           </DialogContent>
                         </Dialog>
