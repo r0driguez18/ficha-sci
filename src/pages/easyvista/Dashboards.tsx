@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart, LineChart, PieChart, AreaChart, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Bar, Line, Pie, Area, Cell } from 'recharts';
 import ProcessesBarChart from '@/components/charts/ProcessesBarChart';
 import ProcessesTable from '@/components/charts/ProcessesTable';
-import { getFileProcesses, getSalaryProcesses, getProcessesStatsByMonth, cleanupDuplicateProcesses } from '@/services/fileProcessService';
+import { getFileProcesses, getSalaryProcesses, getCobrancasProcesses, getCompensacaoProcesses, getProcessesStatsByMonth, cleanupDuplicateProcesses } from '@/services/fileProcessService';
 import { Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,8 @@ const EasyVistaDashboards = () => {
   const [loading, setLoading] = useState(true);
   const [recentProcesses, setRecentProcesses] = useState<any[]>([]);
   const [salaryProcesses, setSalaryProcesses] = useState<any[]>([]);
+  const [cobrancasProcesses, setCobrancasProcesses] = useState<any[]>([]);
+  const [compensacaoProcesses, setCompensacaoProcesses] = useState<any[]>([]);
   const [cleaningData, setCleaningData] = useState(false);
   
   const loadData = useCallback(async () => {
@@ -35,6 +37,14 @@ const EasyVistaDashboards = () => {
       const salaries = await getSalaryProcesses();
       console.log("Processos de salário carregados (Dashboard):", salaries);
       setSalaryProcesses(salaries.slice(0, 10));
+      
+      const cobrancas = await getCobrancasProcesses();
+      console.log("Processos de cobranças carregados (Dashboard):", cobrancas);
+      setCobrancasProcesses(cobrancas.slice(0, 10));
+      
+      const compensacao = await getCompensacaoProcesses();
+      console.log("Processos de compensação carregados (Dashboard):", compensacao);
+      setCompensacaoProcesses(compensacao.slice(0, 10));
       
       if (stats.length === 0 && processes.length === 0) {
         toast.info("Nenhum dado de processamento disponível. Adicione alguns processos para visualizá-los aqui.");
@@ -331,15 +341,20 @@ const EasyVistaDashboards = () => {
                 />
               </div>
               
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <ProcessesTable 
-                  processes={recentProcesses} 
-                  title="Processamentos Recentes" 
+                  processes={salaryProcesses} 
+                  title="Processamentos de Salário" 
                 />
                 
                 <ProcessesTable 
-                  processes={salaryProcesses} 
-                  title="Processamentos de Salários (SA)" 
+                  processes={cobrancasProcesses} 
+                  title="Processamentos de Cobranças" 
+                />
+                
+                <ProcessesTable 
+                  processes={compensacaoProcesses} 
+                  title="Processamentos de Compensação" 
                 />
               </div>
             </div>

@@ -9,14 +9,10 @@ import { useTheme } from '@/hooks/use-theme';
 interface ProcessesChartProps {
   data: Array<{
     month: string;
-    salary: number;
-    ga_processes: number;
-    im_processes: number;
-    ena_processes: number;
-    inp_processes: number;
-    bn_processes: number;
-    fcvt_processes: number;
-    other: number;
+    salario: number;
+    cobrancas: number;
+    compensacao: number;
+    outros: number;
   }>;
   title?: string;
 }
@@ -27,35 +23,19 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
   
   // Updated color configuration - Always light mode
   const chartConfig = React.useMemo(() => ({
-    salary: {
+    salario: {
       color: "#FF8042",
-      label: "Salários"
+      label: "Salário"
     },
-    ga_processes: {
+    cobrancas: {
       color: "#0088FE",
-      label: "GA"
+      label: "Cobranças"
     },
-    im_processes: {
+    compensacao: {
       color: "#00C49F",
-      label: "IM"
+      label: "Compensação"
     },
-    ena_processes: {
-      color: "#FFBB28",
-      label: "ENA"
-    },
-    inp_processes: {
-      color: "#FF6B6B",
-      label: "INP"
-    },
-    bn_processes: {
-      color: "#4CAF50",
-      label: "BN"
-    },
-    fcvt_processes: {
-      color: "#9C27B0",
-      label: "FCVT"
-    },
-    other: {
+    outros: {
       color: "#607D8B",
       label: "Outros"
     }
@@ -188,51 +168,27 @@ const ProcessesBarChart: React.FC<ProcessesChartProps> = ({ data, title = "Proce
                   iconType="circle"
                 />
                 <Bar 
-                  dataKey="salary" 
-                  fill={chartConfig.salary.color} 
-                  name={chartConfig.salary.label}
+                  dataKey="salario" 
+                  fill={chartConfig.salario.color} 
+                  name={chartConfig.salario.label}
                   radius={[4, 4, 0, 0]}
                 />
                 <Bar 
-                  dataKey="ga_processes" 
-                  fill={chartConfig.ga_processes.color} 
-                  name={chartConfig.ga_processes.label}
+                  dataKey="cobrancas" 
+                  fill={chartConfig.cobrancas.color} 
+                  name={chartConfig.cobrancas.label}
                   radius={[4, 4, 0, 0]}
                 />
                 <Bar 
-                  dataKey="im_processes" 
-                  fill={chartConfig.im_processes.color} 
-                  name={chartConfig.im_processes.label}
+                  dataKey="compensacao" 
+                  fill={chartConfig.compensacao.color} 
+                  name={chartConfig.compensacao.label}
                   radius={[4, 4, 0, 0]}
                 />
                 <Bar 
-                  dataKey="ena_processes" 
-                  fill={chartConfig.ena_processes.color}
-                  name={chartConfig.ena_processes.label} 
-                  radius={[4, 4, 0, 0]}
-                />
-                <Bar 
-                  dataKey="inp_processes" 
-                  fill={chartConfig.inp_processes.color}
-                  name={chartConfig.inp_processes.label} 
-                  radius={[4, 4, 0, 0]}
-                />
-                <Bar 
-                  dataKey="bn_processes" 
-                  fill={chartConfig.bn_processes.color}
-                  name={chartConfig.bn_processes.label} 
-                  radius={[4, 4, 0, 0]}
-                />
-                <Bar 
-                  dataKey="fcvt_processes" 
-                  fill={chartConfig.fcvt_processes.color}
-                  name={chartConfig.fcvt_processes.label} 
-                  radius={[4, 4, 0, 0]}
-                />
-                <Bar 
-                  dataKey="other" 
-                  fill={chartConfig.other.color}
-                  name={chartConfig.other.label} 
+                  dataKey="outros" 
+                  fill={chartConfig.outros.color}
+                  name={chartConfig.outros.label} 
                   radius={[4, 4, 0, 0]}
                 />
               </BarChart>

@@ -142,6 +142,7 @@ export type Database = {
           operation_number: string | null
           task: string
           time_registered: string
+          tipo: string | null
         }
         Insert: {
           as400_name?: string | null
@@ -153,6 +154,7 @@ export type Database = {
           operation_number?: string | null
           task: string
           time_registered: string
+          tipo?: string | null
         }
         Update: {
           as400_name?: string | null
@@ -164,6 +166,7 @@ export type Database = {
           operation_number?: string | null
           task?: string
           time_registered?: string
+          tipo?: string | null
         }
         Relationships: []
       }
