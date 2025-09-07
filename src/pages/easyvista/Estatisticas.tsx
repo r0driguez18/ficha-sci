@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { getFileProcesses, getSalaryProcesses, getDebitCreditProcesses, getProcessesStatsByMonth } from '@/services/fileProcessService';
+import { getFileProcesses, getSalaryProcesses, getCobrancasProcesses, getCompensacaoProcesses, getProcessesStatsByMonth } from '@/services/fileProcessService';
 import { Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -15,8 +15,8 @@ const EasyVistaEstatisticas = () => {
   const [loading, setLoading] = useState(true);
   const [allProcesses, setAllProcesses] = useState<any[]>([]);
   const [salaryProcesses, setSalaryProcesses] = useState<any[]>([]);
-  const [debitCreditProcesses, setDebitCreditProcesses] = useState<any[]>([]);
-  const [otherProcesses, setOtherProcesses] = useState<any[]>([]);
+  const [cobrancasProcesses, setCobrancasProcesses] = useState<any[]>([]);
+  const [compensacaoProcesses, setCompensacaoProcesses] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const { isDarkMode } = useTheme();
 
@@ -42,15 +42,15 @@ const EasyVistaEstatisticas = () => {
       console.log("Processos de salário carregados (página Estatisticas):", salaries);
       setSalaryProcesses(salaries);
 
-      // Carregar processos de débito e crédito
-      const debitCredits = await getDebitCreditProcesses();
-      console.log("Processos de débito e crédito carregados:", debitCredits);
-      setDebitCreditProcesses(debitCredits);
+      // Carregar processos de cobranças
+      const cobrancas = await getCobrancasProcesses();
+      console.log("Processos de cobranças carregados:", cobrancas);
+      setCobrancasProcesses(cobrancas);
       
-      // Filtrar Outros Processamentos (apenas tarefa, sem AS400)
-      const others = processes.filter(p => !p.as400_name && p.task);
-      console.log("Outros processamentos carregados:", others);
-      setOtherProcesses(others);
+      // Carregar processos de compensação
+      const compensacao = await getCompensacaoProcesses();
+      console.log("Processos de compensação carregados:", compensacao);
+      setCompensacaoProcesses(compensacao);
       
       if (processes.length === 0) {
         toast.info("Nenhum dado de processamento disponível. Adicione alguns processos para visualizá-los aqui.");
@@ -141,7 +141,7 @@ const EasyVistaEstatisticas = () => {
                     <CardTitle className="text-lg">Cobranças</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-3xl font-bold">{allProcesses.filter(p => p.tipo === 'cobrancas').length}</p>
+                    <p className="text-3xl font-bold">{cobrancasProcesses.length}</p>
                   </CardContent>
                 </Card>
                 
@@ -150,7 +150,7 @@ const EasyVistaEstatisticas = () => {
                     <CardTitle className="text-lg">Compensação</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-3xl font-bold">{allProcesses.filter(p => p.tipo === 'compensacao').length}</p>
+                    <p className="text-3xl font-bold">{compensacaoProcesses.length}</p>
                   </CardContent>
                 </Card>
               </div>
@@ -181,14 +181,14 @@ const EasyVistaEstatisticas = () => {
 
             <TabsContent value="cobrancas">
               <ProcessesTable 
-                processes={allProcesses.filter(p => p.tipo === 'cobrancas')} 
+                processes={cobrancasProcesses} 
                 title="Cobranças" 
               />
             </TabsContent>
 
             <TabsContent value="compensacao">
               <ProcessesTable 
-                processes={allProcesses.filter(p => p.tipo === 'compensacao')} 
+                processes={compensacaoProcesses} 
                 title="Compensação" 
               />
             </TabsContent>

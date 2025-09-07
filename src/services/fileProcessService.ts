@@ -18,6 +18,7 @@ export interface FileProcess {
   operation_number: string | null;
   executed_by: string;
   is_salary: boolean;
+  tipo: string | null;
   created_at?: string;
 }
 
@@ -140,13 +141,13 @@ export const getFileProcesses = async () => {
   }
 };
 
-// Get salary processes (starting with "SA")
+// Get salary processes
 export const getSalaryProcesses = async () => {
   try {
     const { data, error } = await supabase
       .from('file_processes')
       .select('*')
-      .ilike('as400_name', 'SA%')
+      .eq('tipo', 'salario')
       .order('date_registered', { ascending: false })
       .order('time_registered', { ascending: false });
     
@@ -162,37 +163,46 @@ export const getSalaryProcesses = async () => {
   }
 };
 
-// Get company processes (starting with GA, IM, ENA, INP, BN, FCVT)
-export const getDebitCreditProcesses = async () => {
+// Get collections processes
+export const getCobrancasProcesses = async () => {
   try {
-    const companyPrefixes = ['GA%', 'IM%', 'ENA%', 'INP%', 'BN%', 'FCVT%'];
-    
-    // Build the filter for company prefixes
-    let query = supabase
+    const { data, error } = await supabase
       .from('file_processes')
-      .select('*');
-    
-    // Add the OR conditions for each prefix
-    for (let i = 0; i < companyPrefixes.length; i++) {
-      if (i === 0) {
-        query = query.ilike('as400_name', companyPrefixes[i]);
-      } else {
-        query = query.or(`as400_name.ilike.${companyPrefixes[i]}`);
-      }
-    }
-    
-    const { data, error } = await query
+      .select('*')
+      .eq('tipo', 'cobrancas')
       .order('date_registered', { ascending: false })
       .order('time_registered', { ascending: false });
     
     if (error) {
-      console.error('Erro ao buscar processos de empresas:', error);
+      console.error('Erro ao buscar processos de cobranças:', error);
       return [];
     }
     
     return data || [];
   } catch (error) {
-    console.error('Erro ao buscar processos de empresas:', error);
+    console.error('Erro ao buscar processos de cobranças:', error);
+    return [];
+  }
+};
+
+// Get compensation processes
+export const getCompensacaoProcesses = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('file_processes')
+      .select('*')
+      .eq('tipo', 'compensacao')
+      .order('date_registered', { ascending: false })
+      .order('time_registered', { ascending: false });
+    
+    if (error) {
+      console.error('Erro ao buscar processos de compensação:', error);
+      return [];
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error('Erro ao buscar processos de compensação:', error);
     return [];
   }
 };
@@ -214,14 +224,10 @@ export const getProcessesStatsByMonth = async () => {
     // Process data to group by month
     const monthlyStats: Record<string, { 
       month: string; 
-      salary: number; 
-      ga_processes: number;
-      im_processes: number;
-      ena_processes: number;
-      inp_processes: number;
-      bn_processes: number;
-      fcvt_processes: number;
-      other: number;
+      salario: number; 
+      cobrancas: number;
+      compensacao: number;
+      outros: number;
     }> = {};
     
     // Helper function to format date properly
@@ -237,47 +243,32 @@ export const getProcessesStatsByMonth = async () => {
       if (!monthlyStats[monthKey]) {
         monthlyStats[monthKey] = {
           month: monthKey,
-          salary: 0,
-          ga_processes: 0,
-          im_processes: 0,
-          ena_processes: 0,
-          inp_processes: 0,
-          bn_processes: 0,
-          fcvt_processes: 0,
-          other: 0
+          salario: 0,
+          cobrancas: 0,
+          compensacao: 0,
+          outros: 0
         };
       }
       
-      // Check for AS400 name
-      if (process.as400_name) {
-        // Check for Salary processes (SA)
-        if (process.as400_name.toUpperCase().startsWith('SA')) {
-          monthlyStats[monthKey].salary += 1;
-        } 
-        // Check for various company processes by prefix
-        else {
-          const prefix = process.as400_name.toUpperCase();
-          
-          if (prefix.startsWith('GA')) {
-            monthlyStats[monthKey].ga_processes += 1;
-          } else if (prefix.startsWith('IM')) {
-            monthlyStats[monthKey].im_processes += 1;
-          } else if (prefix.startsWith('ENA')) {
-            monthlyStats[monthKey].ena_processes += 1;
-          } else if (prefix.startsWith('INP')) {
-            monthlyStats[monthKey].inp_processes += 1;
-          } else if (prefix.startsWith('BN')) {
-            monthlyStats[monthKey].bn_processes += 1;
-          } else if (prefix.startsWith('FCVT')) {
-            monthlyStats[monthKey].fcvt_processes += 1;
-          } else {
-            // Any other AS400 process that doesn't match our known prefixes
-            monthlyStats[monthKey].other += 1;
-          }
+      // Categorize based on tipo field
+      if (process.tipo) {
+        switch (process.tipo) {
+          case 'salario':
+            monthlyStats[monthKey].salario += 1;
+            break;
+          case 'cobrancas':
+            monthlyStats[monthKey].cobrancas += 1;
+            break;
+          case 'compensacao':
+            monthlyStats[monthKey].compensacao += 1;
+            break;
+          default:
+            monthlyStats[monthKey].outros += 1;
+            break;
         }
       } else {
-        // Process with task but no AS400 name gets categorized as Other
-        monthlyStats[monthKey].other += 1;
+        // Process without tipo gets categorized as Others
+        monthlyStats[monthKey].outros += 1;
       }
     });
     

@@ -12,28 +12,19 @@ interface ProcessesTableProps {
 
 const ProcessesTable: React.FC<ProcessesTableProps> = ({ processes, title = "Últimos Processamentos" }) => {
   const getProcessType = (process: FileProcess) => {
-    if (process.as400_name) {
-      // Check for Salary processes (starting with SA)
-      if (process.as400_name.toUpperCase().startsWith("SA")) {
-        return { label: 'Salários', classes: 'bg-orange-100 text-orange-800' };
+    if (process.tipo) {
+      switch (process.tipo) {
+        case 'salario':
+          return { label: 'Salário', classes: 'bg-orange-100 text-orange-800' };
+        case 'cobrancas':
+          return { label: 'Cobranças', classes: 'bg-blue-100 text-blue-800' };
+        case 'compensacao':
+          return { label: 'Compensação', classes: 'bg-green-100 text-green-800' };
+        default:
+          return { label: 'Outros', classes: 'bg-gray-100 text-gray-800' };
       }
-      
-      // Check for Company processes (GA, IM, ENA, INP, BN, FCVT)
-      const companyPrefixes = ['GA', 'IM', 'ENA', 'INP', 'BN', 'FCVT'];
-      const prefix = process.as400_name.substring(0, 2).toUpperCase();
-      const longPrefix = process.as400_name.substring(0, 3).toUpperCase();
-      const longLongPrefix = process.as400_name.substring(0, 4).toUpperCase();
-      
-      if (companyPrefixes.includes(prefix) || companyPrefixes.includes(longPrefix) || companyPrefixes.includes(longLongPrefix)) {
-        return { label: 'Processamentos de Empresas', classes: 'bg-blue-100 text-blue-800' };
-      }
-      
-      // Default for other AS400 processes
-      return { label: 'Processamentos de Empresas', classes: 'bg-blue-100 text-blue-800' };
-    } else if (process.task) {
-      return { label: 'Outros Processamentos', classes: 'bg-green-100 text-green-800' };
     }
-    return { label: 'Desconhecido', classes: 'bg-gray-100 text-gray-800' };
+    return { label: 'Sem Categoria', classes: 'bg-gray-100 text-gray-800' };
   };
 
   return (
