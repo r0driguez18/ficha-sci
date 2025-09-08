@@ -11,20 +11,20 @@ interface ProcessesTableProps {
 }
 
 const ProcessesTable: React.FC<ProcessesTableProps> = ({ processes, title = "Últimos Processamentos" }) => {
-  const getProcessType = (process: FileProcess) => {
+const getProcessType = (process: FileProcess) => {
     if (process.tipo) {
       switch (process.tipo) {
         case 'salario':
-          return { label: 'Salário', classes: 'bg-orange-100 text-orange-800' };
+          return { label: 'Salário', classes: 'bg-warning/10 text-warning-foreground border-warning/20' };
         case 'cobrancas':
-          return { label: 'Cobranças', classes: 'bg-blue-100 text-blue-800' };
+          return { label: 'Cobranças', classes: 'bg-info/10 text-info-foreground border-info/20' };
         case 'compensacao':
-          return { label: 'Compensação', classes: 'bg-green-100 text-green-800' };
+          return { label: 'Compensação', classes: 'bg-success/10 text-success-foreground border-success/20' };
         default:
-          return { label: 'Outros', classes: 'bg-gray-100 text-gray-800' };
+          return { label: 'Outros', classes: 'bg-muted text-muted-foreground border-border' };
       }
     }
-    return { label: 'Sem Categoria', classes: 'bg-gray-100 text-gray-800' };
+    return { label: 'Sem Categoria', classes: 'bg-muted text-muted-foreground border-border' };
   };
 
   return (
@@ -62,7 +62,7 @@ const ProcessesTable: React.FC<ProcessesTableProps> = ({ processes, title = "Úl
                       <TableCell>{process.executed_by}</TableCell>
                       <TableCell>
                         <span 
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${processType.classes}`}
+                          className={`px-2 py-1 rounded-full text-xs font-medium border ${processType.classes}`}
                         >
                           {processType.label}
                         </span>
