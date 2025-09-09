@@ -16,7 +16,7 @@ export const generateTaskboardPDF = (
   isDiaNaoUtil: boolean = false,
   isEndOfMonth: boolean = false,
   signature?: { imageDataUrl: string | null; signerName?: string; signedAt?: string }
-) => {
+): string => {
   const doc = new jsPDF();
   let y = 20;
   
@@ -132,5 +132,7 @@ export const generateTaskboardPDF = (
     doc.setTextColor(0);
   }
   
-  return doc;
+  const fileName = `ficha-procedimentos-${date}.pdf`;
+  doc.save(fileName);
+  return fileName;
 };

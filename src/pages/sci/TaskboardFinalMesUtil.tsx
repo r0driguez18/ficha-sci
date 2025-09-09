@@ -494,8 +494,8 @@ const TaskboardFinalMesUtil = () => {
     }
 
     try {
-      const doc = generateTaskboardPDF(
-        date, 
+      const fileName = generateTaskboardPDF(
+        date,
         turnData, 
         tasks, 
         tableRows, 
@@ -503,8 +503,7 @@ const TaskboardFinalMesUtil = () => {
         true,
         { imageDataUrl: signatureDataUrl, signerName, signedAt: new Date().toLocaleString('pt-PT') }
       ); // Set isEndOfMonth to true
-      doc.save(`taskboard_final_mes_util_${date.replace(/-/g, '')}.pdf`);
-      toast.success('PDF gerado com sucesso!');
+      toast.success(`PDF gerado com sucesso: ${fileName}`);
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
       toast.error('Erro ao gerar PDF. Tente novamente.');

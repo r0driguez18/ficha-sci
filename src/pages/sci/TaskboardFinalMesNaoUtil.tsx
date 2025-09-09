@@ -519,7 +519,7 @@ const TaskboardFinalMesNaoUtil = () => {
       };
 
       // Pass isDiaNaoUtil=true AND isEndOfMonth=true to indicate this is a non-working end-of-month day PDF
-      const doc = generateTaskboardPDF(
+      const fileName = generateTaskboardPDF(
         date,
         completeTurnData,
         completeTasksData,
@@ -528,8 +528,7 @@ const TaskboardFinalMesNaoUtil = () => {
         true,
         { imageDataUrl: signatureDataUrl, signerName, signedAt: new Date().toLocaleString('pt-PT') }
       );
-      doc.save(`taskboard_final_mes_nao_util_${date.replace(/-/g, '')}.pdf`);
-      toast.success('PDF gerado com sucesso!');
+      toast.success(`PDF gerado com sucesso: ${fileName}`);
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
       toast.error('Erro ao gerar PDF. Tente novamente.');

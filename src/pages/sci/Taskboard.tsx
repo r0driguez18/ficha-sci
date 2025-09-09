@@ -180,12 +180,17 @@ const Taskboard = () => {
 
     try {
       const fileName = await generateTaskboardPDF(
+        date,
         turnData,
         tasks,
         tableRows,
-        date,
-        signerName,
-        signatureDataUrl
+        false,
+        isEndOfMonth,
+        {
+          imageDataUrl: signatureDataUrl,
+          signerName,
+          signedAt: new Date().toISOString()
+        }
       );
 
       if (user?.id) {
@@ -243,6 +248,7 @@ const Taskboard = () => {
 
         <TableRowsSection
           tableRows={tableRows}
+          operatorsList={[]}
           onInputChange={handleInputChange}
           onAddRow={addTableRow}
           onRemoveRow={removeTableRow}
@@ -257,11 +263,9 @@ const Taskboard = () => {
 
         <FormActions
           onSave={handleSave}
-          onExport={exportToPDF}
+          onExportPDF={exportToPDF}
           onReset={resetForm}
-          isLoading={isLoading}
-          hasValidData={validTableRowsCount > 0}
-          hasSignature={!!(signerName && signatureDataUrl)}
+          isValidated={validTableRowsCount > 0 && !!(signerName && signatureDataUrl)}
         />
       </div>
     </ErrorBoundary>
