@@ -290,7 +290,7 @@ export const useTaskboardSync = (
       const localActiveTab = localStorage.getItem(`${localStoragePrefix}-activeTab`);
       
       if (localDate && localTurnData && localTasks && localTableRows) {
-        // Data exists in localStorage, sync it to Supabase
+        // Data exists in localStorage, return it without auto-saving
         const taskboardData: TaskboardData = {
           user_id: user.id,
           form_type: formType,
@@ -301,7 +301,8 @@ export const useTaskboardSync = (
           active_tab: localActiveTab || undefined
         };
         
-        await saveTaskboardData(taskboardData);
+        // Note: Not auto-saving here to prevent loops
+        // The sync mechanism will handle saving when user makes changes
         return taskboardData;
       }
       
