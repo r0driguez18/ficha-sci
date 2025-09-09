@@ -76,37 +76,55 @@ export const TaskboardTabs = memo<TaskboardTabsProps>(({
       <Suspense fallback={<TabLoadingFallback />}>
         <TabsContent value="turno1" className="space-y-6 animate-fade-in">
           <TurnInfoSection
-            turno="turno1"
-            turnData={turnData.turno1}
+            turnKey="turno1"
+            operator={turnData.turno1.operator}
+            entrada={turnData.turno1.entrada}
+            saida={turnData.turno1.saida}
+            title="Turno 1"
+            operatorsList={[]}
             onTurnDataChange={onTurnDataChange}
           />
           <Turno1TasksComponent
             tasks={tasks.turno1}
+            observations={turnData.turno1.observations}
             onTaskChange={(task, checked) => onTaskChange('turno1', task, checked)}
+            onObservationsChange={(value) => onTurnDataChange('turno1', 'observations', value)}
           />
         </TabsContent>
 
         <TabsContent value="turno2" className="space-y-6 animate-fade-in">
           <TurnInfoSection
-            turno="turno2"
-            turnData={turnData.turno2}
+            turnKey="turno2"
+            operator={turnData.turno2.operator}
+            entrada={turnData.turno2.entrada}
+            saida={turnData.turno2.saida}
+            title="Turno 2"
+            operatorsList={[]}
             onTurnDataChange={onTurnDataChange}
           />
           <Turno2TasksComponent
             tasks={tasks.turno2}
+            observations={turnData.turno2.observations}
             onTaskChange={(task, checked) => onTaskChange('turno2', task, checked)}
+            onObservationsChange={(value) => onTurnDataChange('turno2', 'observations', value)}
           />
         </TabsContent>
 
         <TabsContent value="turno3" className="space-y-6 animate-fade-in">
           <TurnInfoSection
-            turno="turno3"
-            turnData={turnData.turno3}
+            turnKey="turno3"
+            operator={turnData.turno3.operator}
+            entrada={turnData.turno3.entrada}
+            saida={turnData.turno3.saida}
+            title="Turno 3"
+            operatorsList={[]}
             onTurnDataChange={onTurnDataChange}
           />
           <Turno3TasksComponent
             tasks={tasks.turno3}
+            observations={turnData.turno3.observations}
             onTaskChange={(task, checked) => onTaskChange('turno3', task, checked)}
+            onObservationsChange={(value) => onTurnDataChange('turno3', 'observations', value)}
           />
         </TabsContent>
       </Suspense>
