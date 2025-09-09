@@ -144,26 +144,22 @@ const Taskboard = () => {
       const { savedCount, duplicateCount } = await saveTableRowsToSupabase();
       
       toast.dismiss('saving');
-      toast.success("Ficha guardada com sucesso!");
       
       if (savedCount > 0) {
-        toast.success(`${savedCount} processamentos salvos com sucesso!`);
+        toast.success(`Ficha guardada! ${savedCount} processamentos salvos com sucesso.`, {
+          action: {
+            label: "Ver Gráficos",
+            onClick: () => navigate("/easyvista/dashboards")
+          }
+        });
         
         if (duplicateCount > 0) {
           toast.info(`${duplicateCount} processamentos foram ignorados por já existirem no sistema.`);
         }
-        
-        toast.message(
-          "Dados salvos com sucesso!",
-          {
-            action: {
-              label: "Ver Gráficos",
-              onClick: () => navigate("/easyvista/dashboards")
-            }
-          }
-        );
       } else if (duplicateCount > 0) {
         toast.info(`Todos os ${duplicateCount} processamentos já existem no sistema.`);
+      } else {
+        toast.success("Ficha guardada com sucesso!");
       }
     } catch (error) {
       toast.dismiss('saving');
