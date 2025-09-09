@@ -308,32 +308,55 @@ export const useTaskboard = () => {
     }
   }, [date]);
 
-  // Auto-sync data (only when user makes changes, not on initial load)
-  const [isInitialized, setIsInitialized] = useState(false);
-  
-  useEffect(() => {
-    if (!isInitialized) {
-      setIsInitialized(true);
-      return;
-    }
+  // Manual sync - only when explicitly called
+  const syncToSupabase = useCallback(async () => {
+    if (!user || isLoading) return;
     
-    if (!isLoading) {
-      const timeoutId = setTimeout(() => {
-        syncData();
-      }, 500); // Debounce to avoid excessive calls
-      
-      return () => clearTimeout(timeoutId);
-    }
-  }, [date, turnData, tasks, tableRows, activeTab, isLoading, isInitialized]);
+    const timeoutId = setTimeout(async () => {
+      try {
+        await syncData();
+      } catch (error) {
+        console.error('Error syncing data:', error);
+      }
+    }, 1000); // Debounce to avoid excessive calls
+    
+    return () => clearTimeout(timeoutId);
+  }, [user, isLoading, syncData]);
+
+  // Only sync when user explicitly makes changes
+  const handleTaskChangeWithSync = useCallback((turno: TurnKey, task: string, checked: boolean | string) => {
+    handleTaskChange(turno, task, checked);
+    syncToSupabase();
+  }, [handleTaskChange, syncToSupabase]);
+
+  const handleTurnDataChangeWithSync = useCallback((turno: TurnKey, field: string, value: string) => {
+    handleTurnDataChange(turno, field, value);
+    syncToSupabase();
+  }, [handleTurnDataChange, syncToSupabase]);
+
+  const handleInputChangeWithSync = useCallback((id: number, field: keyof TaskTableRow, value: string) => {
+    handleInputChange(id, field, value);
+    syncToSupabase();
+  }, [handleInputChange, syncToSupabase]);
+
+  const setDateWithSync = useCallback((newDate: string) => {
+    setDate(newDate);
+    syncToSupabase();
+  }, [syncToSupabase]);
+
+  const setActiveTabWithSync = useCallback((tab: string) => {
+    setActiveTab(tab);
+    syncToSupabase();
+  }, [syncToSupabase]);
 
   return {
     // State
     date,
-    setDate,
+    setDate: setDateWithSync,
     isEndOfMonth,
     tableRows,
     activeTab,
-    setActiveTab,
+    setActiveTab: setActiveTabWithSync,
     isLoading,
     signerName,
     setSignerName,
@@ -346,16 +369,16 @@ export const useTaskboard = () => {
     completedTasksCount,
     validTableRowsCount,
     
-    // Methods
+    // Methods with sync
     getFormType,
     loadTaskboardData,
-    handleTaskChange,
-    handleTurnDataChange,
+    handleTaskChange: handleTaskChangeWithSync,
+    handleTurnDataChange: handleTurnDataChangeWithSync,
     addTableRow,
     removeTableRow,
-    handleInputChange,
+    handleInputChange: handleInputChangeWithSync,
     resetForm,
-    syncData,
+    syncData: syncToSupabase,
     loadData,
     resetData
   };
