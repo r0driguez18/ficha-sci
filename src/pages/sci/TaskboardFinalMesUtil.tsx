@@ -174,14 +174,21 @@ const TaskboardFinalMesUtil = () => {
     if (savedActiveTab) setActiveTab(savedActiveTab as TurnKey);
   }, []);
 
-  // Save data to localStorage whenever it changes
+  // Save data to localStorage whenever it changes (skip initial render)
+  const [isInitialized, setIsInitialized] = useState(false);
+  
   useEffect(() => {
+    if (!isInitialized) {
+      setIsInitialized(true);
+      return;
+    }
+    
     localStorage.setItem('taskboard-final-mes-util-date', date);
     localStorage.setItem('taskboard-final-mes-util-turnData', JSON.stringify(turnData));
     localStorage.setItem('taskboard-final-mes-util-tasks', JSON.stringify(tasks));
     localStorage.setItem('taskboard-final-mes-util-tableRows', JSON.stringify(tableRows));
     localStorage.setItem('taskboard-final-mes-util-activeTab', activeTab);
-  }, [date, turnData, tasks, tableRows, activeTab]);
+  }, [date, turnData, tasks, tableRows, activeTab, isInitialized]);
 
   const handleTaskChange = <T extends keyof TasksType>(
     turnKey: T,
