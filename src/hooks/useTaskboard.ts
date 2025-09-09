@@ -308,12 +308,23 @@ export const useTaskboard = () => {
     }
   }, [date]);
 
-  // Auto-sync data
+  // Auto-sync data (only when user makes changes, not on initial load)
+  const [isInitialized, setIsInitialized] = useState(false);
+  
   useEffect(() => {
-    if (!isLoading) {
-      syncData();
+    if (!isInitialized) {
+      setIsInitialized(true);
+      return;
     }
-  }, [date, turnData, tasks, tableRows, activeTab, isLoading, syncData]);
+    
+    if (!isLoading) {
+      const timeoutId = setTimeout(() => {
+        syncData();
+      }, 500); // Debounce to avoid excessive calls
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [date, turnData, tasks, tableRows, activeTab, isLoading, isInitialized]);
 
   return {
     // State
