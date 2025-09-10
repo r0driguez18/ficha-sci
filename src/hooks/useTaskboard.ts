@@ -337,31 +337,31 @@ export const useTaskboard = () => {
     };
   }, []);
 
-  // Only sync when user explicitly makes changes
+  // Only sync when user explicitly makes changes - NO automatic sync
   const handleTaskChangeWithSync = useCallback((turno: TurnKey, task: string, checked: boolean | string) => {
     handleTaskChange(turno, task, checked);
-    syncToSupabase();
-  }, [handleTaskChange, syncToSupabase]);
+    // Remove automatic sync to prevent infinite loops
+  }, [handleTaskChange]);
 
   const handleTurnDataChangeWithSync = useCallback((turno: TurnKey, field: string, value: string) => {
     handleTurnDataChange(turno, field, value);
-    syncToSupabase();
-  }, [handleTurnDataChange, syncToSupabase]);
+    // Remove automatic sync to prevent infinite loops
+  }, [handleTurnDataChange]);
 
   const handleInputChangeWithSync = useCallback((id: number, field: keyof TaskTableRow, value: string) => {
     handleInputChange(id, field, value);
-    syncToSupabase();
-  }, [handleInputChange, syncToSupabase]);
+    // Remove automatic sync to prevent infinite loops
+  }, [handleInputChange]);
 
   const setDateWithSync = useCallback((newDate: string) => {
     setDate(newDate);
-    syncToSupabase();
-  }, [syncToSupabase]);
+    // Remove automatic sync to prevent infinite loops
+  }, []);
 
   const setActiveTabWithSync = useCallback((tab: string) => {
     setActiveTab(tab);
-    syncToSupabase();
-  }, [syncToSupabase]);
+    // Remove automatic sync to prevent infinite loops
+  }, []);
 
   return {
     // State
@@ -383,7 +383,7 @@ export const useTaskboard = () => {
     completedTasksCount,
     validTableRowsCount,
     
-    // Methods with sync
+    // Methods - no automatic sync
     getFormType,
     loadTaskboardData,
     handleTaskChange: handleTaskChangeWithSync,
@@ -392,7 +392,7 @@ export const useTaskboard = () => {
     removeTableRow,
     handleInputChange: handleInputChangeWithSync,
     resetForm,
-    syncData: syncToSupabase,
+    syncData: syncToSupabase, // Only manual sync
     loadData,
     resetData
   };
