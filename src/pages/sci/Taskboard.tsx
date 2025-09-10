@@ -141,6 +141,9 @@ const Taskboard = () => {
 
       toast.loading("Guardando dados...", { id: 'saving' });
 
+      // Sync data before saving to ensure everything is up to date
+      await syncData();
+
       const { savedCount, duplicateCount } = await saveTableRowsToSupabase();
       
       toast.dismiss('saving');
