@@ -166,12 +166,25 @@ const [isLoading, setIsLoading] = useState(true);
     fetchData();
   }, [user]);
 
-  // Save data to localStorage and Supabase whenever it changes
-  useEffect(() => {
-    if (!isLoading) {
-      syncData();
+  // Manual sync with debounce - only when user makes changes
+  const syncToSupabase = async () => {
+    if (!user || isLoading) return;
+    
+    try {
+      await syncData();
+    } catch (error) {
+      console.error('Error syncing data:', error);
     }
-  }, [date, turnData, tasks, tableRows, isLoading]);
+  };
+
+  // Debounced sync function
+  const debouncedSync = () => {
+    const timeoutId = setTimeout(() => {
+      syncToSupabase();
+    }, 1000);
+    
+    return () => clearTimeout(timeoutId);
+  };
 
   // Add effect to check if the date is the last day of month
   useEffect(() => {
@@ -192,6 +205,7 @@ const [isLoading, setIsLoading] = useState(true);
       ...tasks,
       [task]: checked
     });
+    debouncedSync();
   };
 
   const handleTurnDataChange = (field: string, value: string) => {
@@ -199,6 +213,7 @@ const [isLoading, setIsLoading] = useState(true);
       ...turnData,
       [field]: value
     });
+    debouncedSync();
   };
 
   const addTableRow = () => {
@@ -228,6 +243,7 @@ const [isLoading, setIsLoading] = useState(true);
           row.id === id ? { ...row, [field]: numericValue } : row
         )
       );
+      debouncedSync();
       return;
     }
     
@@ -236,6 +252,7 @@ const [isLoading, setIsLoading] = useState(true);
         row.id === id ? { ...row, [field]: value } : row
       )
     );
+    debouncedSync();
   };
 
   const saveTableRowsToSupabase = async () => {
@@ -539,7 +556,10 @@ const [isLoading, setIsLoading] = useState(true);
               id="date"
               type="date"
               value={date}
-              onChange={(e) => setDate(e.target.value)}
+              onChange={(e) => {
+                setDate(e.target.value);
+                debouncedSync();
+              }}
               className="max-w-xs"
             />
           </div>
