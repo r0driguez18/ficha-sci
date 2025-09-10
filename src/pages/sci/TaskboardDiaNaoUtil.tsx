@@ -167,7 +167,7 @@ const [isLoading, setIsLoading] = useState(true);
   }, [user]);
 
   // Manual sync with debounce - only when user makes changes
-  const syncToSupabase = async () => {
+  const syncToSupabase = React.useCallback(async () => {
     if (!user || isLoading) return;
     
     try {
@@ -175,16 +175,30 @@ const [isLoading, setIsLoading] = useState(true);
     } catch (error) {
       console.error('Error syncing data:', error);
     }
-  };
+  }, [user, isLoading, syncData]);
 
-  // Debounced sync function
-  const debouncedSync = () => {
-    const timeoutId = setTimeout(() => {
+  // Proper debounced sync function with timeout management
+  const syncTimeoutRef = React.useRef<NodeJS.Timeout>();
+  const debouncedSync = React.useCallback(() => {
+    // Clear existing timeout
+    if (syncTimeoutRef.current) {
+      clearTimeout(syncTimeoutRef.current);
+    }
+    
+    // Set new timeout
+    syncTimeoutRef.current = setTimeout(() => {
       syncToSupabase();
     }, 1000);
-    
-    return () => clearTimeout(timeoutId);
-  };
+  }, [syncToSupabase]);
+
+  // Cleanup timeout on unmount
+  React.useEffect(() => {
+    return () => {
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Add effect to check if the date is the last day of month
   useEffect(() => {
@@ -214,6 +228,11 @@ const [isLoading, setIsLoading] = useState(true);
       [field]: value
     });
     debouncedSync();
+  };
+
+  // Wrapper for TurnInfoSection that matches its expected signature
+  const handleTurnDataChangeWithTurno = (turno: string, field: string, value: string) => {
+    handleTurnDataChange(field, value);
   };
 
   const addTableRow = () => {
@@ -572,7 +591,7 @@ const [isLoading, setIsLoading] = useState(true);
               saida={turnData.saida}
               title="Operador"
               operatorsList={operatorsList}
-              onTurnDataChange={handleTurnDataChange}
+              onTurnDataChange={handleTurnDataChangeWithTurno}
             />
             
             <div className="mt-6">
