@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useTaskboardSync } from '@/services/taskboardService';
 import type { TurnKey, TasksType, TurnDataType } from '@/types/taskboard';
@@ -308,20 +308,34 @@ export const useTaskboard = () => {
     }
   }, [date]);
 
-  // Manual sync - only when explicitly called
+  // Manual sync with proper debouncing
+  const syncTimeoutRef = useRef<NodeJS.Timeout>();
   const syncToSupabase = useCallback(async () => {
     if (!user || isLoading) return;
     
-    const timeoutId = setTimeout(async () => {
+    // Clear existing timeout
+    if (syncTimeoutRef.current) {
+      clearTimeout(syncTimeoutRef.current);
+    }
+    
+    // Set new timeout
+    syncTimeoutRef.current = setTimeout(async () => {
       try {
         await syncData();
       } catch (error) {
         console.error('Error syncing data:', error);
       }
-    }, 1000); // Debounce to avoid excessive calls
-    
-    return () => clearTimeout(timeoutId);
+    }, 1000);
   }, [user, isLoading, syncData]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Only sync when user explicitly makes changes
   const handleTaskChangeWithSync = useCallback((turno: TurnKey, task: string, checked: boolean | string) => {
