@@ -212,14 +212,21 @@ export const useTaskboardSync = (
 ) => {
   const { user } = useAuth();
   
-  // Save data to Supabase only (remove localStorage fallback to avoid conflicts)
+  // Save data to both localStorage and Supabase
   const syncData = async () => {
     if (!user) {
-      console.log('User not authenticated, skipping sync');
+      console.log('User not authenticated, storing in localStorage only');
       return;
     }
     
     try {
+      // Local storage keys
+      const localStoragePrefix = formType === 'dia-util' ? 'taskboard' : 
+                                formType === 'dia-nao-util' ? 'taskboard-nao-util' : 
+                                formType === 'final-mes-util' ? 'taskboard-final-mes-util' : 
+                                'taskboard-final-mes-nao-util';
+                                
+      // Save to Supabase
       const taskboardData: TaskboardData = {
         user_id: user.id,
         form_type: formType,
@@ -231,12 +238,20 @@ export const useTaskboardSync = (
       };
       
       await saveTaskboardData(taskboardData);
-      console.log('Data synced to Supabase successfully');
+      
+      // Also update localStorage as a fallback
+      localStorage.setItem(`${localStoragePrefix}-date`, date);
+      localStorage.setItem(`${localStoragePrefix}-turnData`, JSON.stringify(turnData));
+      localStorage.setItem(`${localStoragePrefix}-tasks`, JSON.stringify(tasks));
+      localStorage.setItem(`${localStoragePrefix}-tableRows`, JSON.stringify(tableRows));
+      if (activeTab) {
+        localStorage.setItem(`${localStoragePrefix}-activeTab`, activeTab);
+      }
     } catch (error) {
       console.error('Error synchronizing data:', error);
       toast({
         title: "Erro ao sincronizar dados",
-        description: "Os dados não puderam ser sincronizados com a nuvem.",
+        description: "Os dados foram salvos localmente, mas não puderam ser sincronizados com a nuvem.",
         variant: "destructive"
       });
     }
@@ -275,7 +290,7 @@ export const useTaskboardSync = (
       const localActiveTab = localStorage.getItem(`${localStoragePrefix}-activeTab`);
       
       if (localDate && localTurnData && localTasks && localTableRows) {
-        // Data exists in localStorage, return it without auto-saving
+        // Data exists in localStorage, sync it to Supabase
         const taskboardData: TaskboardData = {
           user_id: user.id,
           form_type: formType,
@@ -286,8 +301,7 @@ export const useTaskboardSync = (
           active_tab: localActiveTab || undefined
         };
         
-        // Note: Not auto-saving here to prevent loops
-        // The sync mechanism will handle saving when user makes changes
+        await saveTaskboardData(taskboardData);
         return taskboardData;
       }
       

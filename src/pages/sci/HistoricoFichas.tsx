@@ -125,7 +125,7 @@ export default function HistoricoFichas() {
 
   const downloadPDF = async (record: ExportedTaskboard) => {
     try {
-      const fileName = generateTaskboardPDF(
+      const pdf = generateTaskboardPDF(
         record.date,
         record.turn_data,
         record.tasks,
@@ -135,9 +135,11 @@ export default function HistoricoFichas() {
         record.pdf_signature
       );
 
+      pdf.save(record.file_name);
+
       toast({
         title: "PDF Gerado",
-        description: `Ficheiro ${fileName} foi descarregado com sucesso`
+        description: `Ficheiro ${record.file_name} foi descarregado com sucesso`
       });
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);

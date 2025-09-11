@@ -322,21 +322,26 @@ const TaskboardFinalMesNaoUtil = () => {
       // Salvar processamentos da tabela
       const { savedCount, duplicateCount } = await saveTableRowsToSupabase();
       
+      toast.success("Ficha guardada com sucesso!");
+      
       if (savedCount > 0) {
-        toast.success(`Ficha guardada! ${savedCount} processamentos salvos com sucesso.`, {
-          action: {
-            label: "Ver Gráficos",
-            onClick: () => navigate("/easyvista/dashboards")
-          }
-        });
+        toast.success(`${savedCount} processamentos salvos com sucesso!`);
         
         if (duplicateCount > 0) {
           toast.info(`${duplicateCount} processamentos foram ignorados por já existirem no sistema.`);
         }
+        
+        toast.message(
+          "Dados salvos com sucesso!",
+          {
+            action: {
+              label: "Ver Gráficos",
+              onClick: () => navigate("/easyvista/dashboards")
+            }
+          }
+        );
       } else if (duplicateCount > 0) {
         toast.info(`Todos os ${duplicateCount} processamentos já existem no sistema.`);
-      } else {
-        toast.success("Ficha guardada com sucesso!");
       }
     } catch (error) {
       console.error('Erro ao guardar ficha:', error);
@@ -514,7 +519,7 @@ const TaskboardFinalMesNaoUtil = () => {
       };
 
       // Pass isDiaNaoUtil=true AND isEndOfMonth=true to indicate this is a non-working end-of-month day PDF
-      const fileName = generateTaskboardPDF(
+      const doc = generateTaskboardPDF(
         date,
         completeTurnData,
         completeTasksData,
@@ -523,7 +528,8 @@ const TaskboardFinalMesNaoUtil = () => {
         true,
         { imageDataUrl: signatureDataUrl, signerName, signedAt: new Date().toLocaleString('pt-PT') }
       );
-      toast.success(`PDF gerado com sucesso: ${fileName}`);
+      doc.save(`taskboard_final_mes_nao_util_${date.replace(/-/g, '')}.pdf`);
+      toast.success('PDF gerado com sucesso!');
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
       toast.error('Erro ao gerar PDF. Tente novamente.');
