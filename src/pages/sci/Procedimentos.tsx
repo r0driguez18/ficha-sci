@@ -14,7 +14,7 @@ const Procedimentos = () => {
   };
   
   const goToTaskboardDiaNaoUtil = () => {
-    navigate('/sci/taskboard-dia-nao-util');
+    navigate('/sci/taskboard-nao-util');
   };
   
   const goToTaskboardFinalMesUtil = () => {

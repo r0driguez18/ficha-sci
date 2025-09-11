@@ -1,30 +1,69 @@
 
-import React, { useState, Suspense } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart, LineChart, PieChart, AreaChart, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Bar, Line, Pie, Area, Cell } from 'recharts';
 import ProcessesBarChart from '@/components/charts/ProcessesBarChart';
-import PaginatedProcessesTable from '@/components/charts/PaginatedProcessesTable';
-import { cleanupDuplicateProcesses } from '@/services/fileProcessService';
+import ProcessesTable from '@/components/charts/ProcessesTable';
+import { getFileProcesses, getSalaryProcesses, getCobrancasProcesses, getCompensacaoProcesses, getProcessesStatsByMonth, cleanupDuplicateProcesses } from '@/services/fileProcessService';
 import { Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { useProcesses } from '@/hooks/useProcesses';
-import { ErrorBoundary } from '@/components/ui/error-boundary';
-import { ChartSkeleton, TableSkeleton } from '@/components/ui/loading-skeleton';
 
 const EasyVistaDashboards = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('summary');
+  const [processesData, setProcessesData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [recentProcesses, setRecentProcesses] = useState<any[]>([]);
+  const [salaryProcesses, setSalaryProcesses] = useState<any[]>([]);
+  const [cobrancasProcesses, setCobrancasProcesses] = useState<any[]>([]);
+  const [compensacaoProcesses, setCompensacaoProcesses] = useState<any[]>([]);
   const [cleaningData, setCleaningData] = useState(false);
   
-  const { data, loading, error, refresh } = useProcesses();
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const stats = await getProcessesStatsByMonth();
+      console.log("Estatísticas carregadas (Dashboard):", stats);
+      setProcessesData(stats);
+      
+      const processes = await getFileProcesses();
+      console.log("Processos carregados (Dashboard):", processes);
+      setRecentProcesses(processes.slice(0, 10));
+      
+      const salaries = await getSalaryProcesses();
+      console.log("Processos de salário carregados (Dashboard):", salaries);
+      setSalaryProcesses(salaries.slice(0, 10));
+      
+      const cobrancas = await getCobrancasProcesses();
+      console.log("Processos de cobranças carregados (Dashboard):", cobrancas);
+      setCobrancasProcesses(cobrancas.slice(0, 10));
+      
+      const compensacao = await getCompensacaoProcesses();
+      console.log("Processos de compensação carregados (Dashboard):", compensacao);
+      setCompensacaoProcesses(compensacao.slice(0, 10));
+      
+      if (stats.length === 0 && processes.length === 0) {
+        toast.info("Nenhum dado de processamento disponível. Adicione alguns processos para visualizá-los aqui.");
+      }
+    } catch (error) {
+      console.error("Erro ao carregar dados:", error);
+      toast.error("Erro ao carregar dados. Por favor, tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+  
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
   
   const handleRefresh = () => {
     toast.info("Atualizando dados...");
-    refresh();
+    loadData();
   };
 
   // Handle navigation to statistics page with correct path
@@ -34,15 +73,13 @@ const EasyVistaDashboards = () => {
 
   const handleCleanupData = async () => {
     setCleaningData(true);
-    toast.loading("Iniciando limpeza dos dados duplicados...", { id: 'cleanup' });
+    toast.info("Iniciando limpeza dos dados duplicados...");
     
     try {
       const { removed } = await cleanupDuplicateProcesses();
-      toast.dismiss('cleanup');
       toast.success(`Limpeza concluída! ${removed} registros duplicados foram removidos.`);
-      refresh();
+      loadData(); // Recarregar dados após a limpeza
     } catch (error) {
-      toast.dismiss('cleanup');
       console.error("Erro ao limpar dados:", error);
       toast.error("Erro ao limpar dados duplicados. Por favor, tente novamente.");
     } finally {
@@ -88,32 +125,14 @@ const EasyVistaDashboards = () => {
   
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
   
-  if (error) {
-    return (
-      <div className="animate-fade-in space-y-6">
-        <PageHeader 
-          title="EasyVista - Dashboards" 
-          subtitle="Visualização de métricas e indicadores"
-        />
-        <Card>
-          <CardContent className="p-8 text-center">
-            <p className="text-destructive mb-4">{error}</p>
-            <Button onClick={refresh}>Tentar Novamente</Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
-    <ErrorBoundary>
-      <div className="animate-fade-in space-y-6">
-        <PageHeader 
-          title="EasyVista - Dashboards" 
-          subtitle="Visualização de métricas e indicadores"
-        />
+    <div className="animate-fade-in space-y-6">
+      <PageHeader 
+        title="EasyVista - Dashboards" 
+        subtitle="Visualização de métricas e indicadores"
+      />
 
-        <Tabs defaultValue="summary" value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs defaultValue="summary" value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-5 gap-2">
           <TabsTrigger value="summary">Resumo</TabsTrigger>
           <TabsTrigger value="incidents">Incidentes</TabsTrigger>
@@ -305,72 +324,44 @@ const EasyVistaDashboards = () => {
               >
                 Ver Estatísticas Completas
               </Button>
-              <Button
-                onClick={handleCleanupData}
-                variant="outline"
-                size="sm"
-                disabled={cleaningData}
-              >
-                {cleaningData ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-                Limpar Duplicados
-              </Button>
             </div>
           </div>
           
-          <Suspense fallback={
+          {loading ? (
+            <div className="flex justify-center items-center h-64">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-2">Carregando dados...</span>
+            </div>
+          ) : (
             <div className="space-y-8">
-              <ChartSkeleton height={80} />
+              <div className="w-full">
+                <ProcessesBarChart 
+                  data={processesData} 
+                  title="Processamentos por Mês" 
+                />
+              </div>
+              
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <TableSkeleton />
-                <TableSkeleton />
-                <TableSkeleton />
+                <ProcessesTable 
+                  processes={salaryProcesses} 
+                  title="Processamentos de Salário" 
+                />
+                
+                <ProcessesTable 
+                  processes={cobrancasProcesses} 
+                  title="Processamentos de Cobranças" 
+                />
+                
+                <ProcessesTable 
+                  processes={compensacaoProcesses} 
+                  title="Processamentos de Compensação" 
+                />
               </div>
             </div>
-          }>
-            {loading ? (
-              <div className="space-y-8">
-                <ChartSkeleton height={80} />
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  <TableSkeleton />
-                  <TableSkeleton />
-                  <TableSkeleton />
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-8">
-                <div className="w-full">
-                  <ProcessesBarChart 
-                    data={data.stats} 
-                    title="Processamentos por Mês" 
-                  />
-                </div>
-                
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  <PaginatedProcessesTable 
-                    processes={data.salary} 
-                    title="Processamentos de Salário"
-                    pageSize={5}
-                  />
-                  
-                  <PaginatedProcessesTable 
-                    processes={data.cobrancas} 
-                    title="Processamentos de Cobranças"
-                    pageSize={5}
-                  />
-                  
-                  <PaginatedProcessesTable 
-                    processes={data.compensacao} 
-                    title="Processamentos de Compensação"
-                    pageSize={5}
-                  />
-                </div>
-              </div>
-            )}
-          </Suspense>
+          )}
         </TabsContent>
-        </Tabs>
-      </div>
-    </ErrorBoundary>
+      </Tabs>
+    </div>
   );
 };
 

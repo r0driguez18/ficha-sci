@@ -166,39 +166,12 @@ const [isLoading, setIsLoading] = useState(true);
     fetchData();
   }, [user]);
 
-  // Manual sync with debounce - only when user makes changes
-  const syncToSupabase = React.useCallback(async () => {
-    if (!user || isLoading) return;
-    
-    try {
-      await syncData();
-    } catch (error) {
-      console.error('Error syncing data:', error);
+  // Save data to localStorage and Supabase whenever it changes
+  useEffect(() => {
+    if (!isLoading) {
+      syncData();
     }
-  }, [user, isLoading, syncData]);
-
-  // Proper debounced sync function with timeout management
-  const syncTimeoutRef = React.useRef<NodeJS.Timeout>();
-  const debouncedSync = React.useCallback(() => {
-    // Clear existing timeout
-    if (syncTimeoutRef.current) {
-      clearTimeout(syncTimeoutRef.current);
-    }
-    
-    // Set new timeout
-    syncTimeoutRef.current = setTimeout(() => {
-      syncToSupabase();
-    }, 1000);
-  }, [syncToSupabase]);
-
-  // Cleanup timeout on unmount
-  React.useEffect(() => {
-    return () => {
-      if (syncTimeoutRef.current) {
-        clearTimeout(syncTimeoutRef.current);
-      }
-    };
-  }, []);
+  }, [date, turnData, tasks, tableRows, isLoading]);
 
   // Add effect to check if the date is the last day of month
   useEffect(() => {
@@ -219,7 +192,6 @@ const [isLoading, setIsLoading] = useState(true);
       ...tasks,
       [task]: checked
     });
-    debouncedSync();
   };
 
   const handleTurnDataChange = (field: string, value: string) => {
@@ -227,12 +199,6 @@ const [isLoading, setIsLoading] = useState(true);
       ...turnData,
       [field]: value
     });
-    debouncedSync();
-  };
-
-  // Wrapper for TurnInfoSection that matches its expected signature
-  const handleTurnDataChangeWithTurno = (turno: string, field: string, value: string) => {
-    handleTurnDataChange(field, value);
   };
 
   const addTableRow = () => {
@@ -262,7 +228,6 @@ const [isLoading, setIsLoading] = useState(true);
           row.id === id ? { ...row, [field]: numericValue } : row
         )
       );
-      debouncedSync();
       return;
     }
     
@@ -271,7 +236,6 @@ const [isLoading, setIsLoading] = useState(true);
         row.id === id ? { ...row, [field]: value } : row
       )
     );
-    debouncedSync();
   };
 
   const saveTableRowsToSupabase = async () => {
@@ -356,21 +320,26 @@ const [isLoading, setIsLoading] = useState(true);
       // Salvar processamentos da tabela
       const { savedCount, duplicateCount } = await saveTableRowsToSupabase();
       
+      toast.success("Ficha guardada com sucesso!");
+      
       if (savedCount > 0) {
-        toast.success(`Ficha guardada! ${savedCount} processamentos salvos com sucesso.`, {
-          action: {
-            label: "Ver Gráficos",
-            onClick: () => navigate("/easyvista/dashboards")
-          }
-        });
+        toast.success(`${savedCount} processamentos salvos com sucesso!`);
         
         if (duplicateCount > 0) {
           toast.info(`${duplicateCount} processamentos foram ignorados por já existirem no sistema.`);
         }
+        
+        toast.message(
+          "Dados salvos com sucesso!",
+          {
+            action: {
+              label: "Ver Gráficos",
+              onClick: () => navigate("/easyvista/dashboards")
+            }
+          }
+        );
       } else if (duplicateCount > 0) {
         toast.info(`Todos os ${duplicateCount} processamentos já existem no sistema.`);
-      } else {
-        toast.success("Ficha guardada com sucesso!");
       }
     } catch (error) {
       console.error('Erro ao guardar ficha:', error);
@@ -535,7 +504,7 @@ const [isLoading, setIsLoading] = useState(true);
       };
 
       // Pass isDiaNaoUtil=true AND isEndOfMonth to indicate this is a non-working day PDF
-      const fileName = generateTaskboardPDF(
+      const doc = generateTaskboardPDF(
         date,
         completeTurnData,
         completeTasksData,
@@ -544,7 +513,8 @@ const [isLoading, setIsLoading] = useState(true);
         isEndOfMonth,
         { imageDataUrl: signatureDataUrl, signerName, signedAt: new Date().toLocaleString('pt-PT') }
       );
-      toast.success(`PDF gerado com sucesso: ${fileName}`);
+      doc.save(`taskboard_nao_util_${date.replace(/-/g, '')}.pdf`);
+      toast.success('PDF gerado com sucesso!');
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
       toast.error('Erro ao gerar PDF. Tente novamente.');
@@ -575,10 +545,7 @@ const [isLoading, setIsLoading] = useState(true);
               id="date"
               type="date"
               value={date}
-              onChange={(e) => {
-                setDate(e.target.value);
-                debouncedSync();
-              }}
+              onChange={(e) => setDate(e.target.value)}
               className="max-w-xs"
             />
           </div>
@@ -591,7 +558,7 @@ const [isLoading, setIsLoading] = useState(true);
               saida={turnData.saida}
               title="Operador"
               operatorsList={operatorsList}
-              onTurnDataChange={handleTurnDataChangeWithTurno}
+              onTurnDataChange={handleTurnDataChange}
             />
             
             <div className="mt-6">

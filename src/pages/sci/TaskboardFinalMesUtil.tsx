@@ -174,21 +174,14 @@ const TaskboardFinalMesUtil = () => {
     if (savedActiveTab) setActiveTab(savedActiveTab as TurnKey);
   }, []);
 
-  // Save data to localStorage whenever it changes (skip initial render)
-  const [isInitialized, setIsInitialized] = useState(false);
-  
+  // Save data to localStorage whenever it changes
   useEffect(() => {
-    if (!isInitialized) {
-      setIsInitialized(true);
-      return;
-    }
-    
     localStorage.setItem('taskboard-final-mes-util-date', date);
     localStorage.setItem('taskboard-final-mes-util-turnData', JSON.stringify(turnData));
     localStorage.setItem('taskboard-final-mes-util-tasks', JSON.stringify(tasks));
     localStorage.setItem('taskboard-final-mes-util-tableRows', JSON.stringify(tableRows));
     localStorage.setItem('taskboard-final-mes-util-activeTab', activeTab);
-  }, [date, turnData, tasks, tableRows, activeTab, isInitialized]);
+  }, [date, turnData, tasks, tableRows, activeTab]);
 
   const handleTaskChange = <T extends keyof TasksType>(
     turnKey: T,
@@ -333,21 +326,26 @@ const TaskboardFinalMesUtil = () => {
       // Salvar processamentos da tabela
       const { savedCount, duplicateCount } = await saveTableRowsToSupabase();
       
+      toast.success("Ficha guardada com sucesso!");
+      
       if (savedCount > 0) {
-        toast.success(`Ficha guardada! ${savedCount} processamentos salvos com sucesso.`, {
-          action: {
-            label: "Ver Gráficos",
-            onClick: () => navigate("/easyvista/dashboards")
-          }
-        });
+        toast.success(`${savedCount} processamentos salvos com sucesso!`);
         
         if (duplicateCount > 0) {
           toast.info(`${duplicateCount} processamentos foram ignorados por já existirem no sistema.`);
         }
+        
+        toast.message(
+          "Dados salvos com sucesso!",
+          {
+            action: {
+              label: "Ver Gráficos",
+              onClick: () => navigate("/easyvista/dashboards")
+            }
+          }
+        );
       } else if (duplicateCount > 0) {
         toast.info(`Todos os ${duplicateCount} processamentos já existem no sistema.`);
-      } else {
-        toast.success("Ficha guardada com sucesso!");
       }
     } catch (error) {
       console.error('Erro ao guardar ficha:', error);
@@ -496,8 +494,8 @@ const TaskboardFinalMesUtil = () => {
     }
 
     try {
-      const fileName = generateTaskboardPDF(
-        date,
+      const doc = generateTaskboardPDF(
+        date, 
         turnData, 
         tasks, 
         tableRows, 
@@ -505,7 +503,8 @@ const TaskboardFinalMesUtil = () => {
         true,
         { imageDataUrl: signatureDataUrl, signerName, signedAt: new Date().toLocaleString('pt-PT') }
       ); // Set isEndOfMonth to true
-      toast.success(`PDF gerado com sucesso: ${fileName}`);
+      doc.save(`taskboard_final_mes_util_${date.replace(/-/g, '')}.pdf`);
+      toast.success('PDF gerado com sucesso!');
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
       toast.error('Erro ao gerar PDF. Tente novamente.');
