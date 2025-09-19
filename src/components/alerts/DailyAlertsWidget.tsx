@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Clock, AlertTriangle, CheckCircle, Bell, Loader2 } from 'lucide-react';
+import { Clock, AlertTriangle, CheckCircle, Bell } from 'lucide-react';
 import { useAlerts } from '@/hooks/useAlerts';
 import { getCurrentTime, hasTimePassedAlert } from '@/utils/businessDays';
 
@@ -19,10 +19,7 @@ export function DailyAlertsWidget() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin mr-2" />
-            <span className="text-sm text-muted-foreground">Carregando alertas...</span>
-          </div>
+          <p className="text-sm text-muted-foreground">A carregar alertas...</p>
         </CardContent>
       </Card>
     );
