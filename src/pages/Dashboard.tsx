@@ -5,11 +5,8 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { ClipboardCheck, Link, Database, PieChart } from 'lucide-react';
 import { Link as RouterLink } from 'react-router-dom';
 import { DailyAlertsWidget } from '@/components/alerts/DailyAlertsWidget';
-import { useAuth } from '@/components/auth/AuthProvider';
 
 const Dashboard = () => {
-  const { user } = useAuth();
-  
   const modules = [
     {
       title: 'SCI',
@@ -41,17 +38,11 @@ const Dashboard = () => {
     }
   ];
 
-  // Get user display name
-  const getUserDisplayName = () => {
-    if (user?.user_metadata?.name) return user.user_metadata.name;
-    if (user?.email) return user.email.split('@')[0];
-    return 'Utilizador';
-  };
   return (
     <div className="animate-fade-in">
       <PageHeader 
-        title={`Bem-vindo, ${getUserDisplayName()}!`}
-        subtitle="Acesso rápido aos módulos do sistema"
+        title="Dashboard" 
+        subtitle="Bem-vindo ao seu Backoffice Admin"
       />
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
@@ -81,22 +72,7 @@ const Dashboard = () => {
         </div>
         
         <div className="xl:col-span-1">
-          {/* Load alerts asynchronously to not block dashboard rendering */}
-          <React.Suspense fallback={
-            <Card>
-              <CardHeader>
-                <CardTitle>Alertas do Dia</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin mr-2" />
-                  <span className="text-sm text-muted-foreground">Carregando alertas...</span>
-                </div>
-              </CardContent>
-            </Card>
-          }>
           <DailyAlertsWidget />
-          </React.Suspense>
         </div>
       </div>
     </div>
