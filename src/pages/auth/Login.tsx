@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -18,6 +19,7 @@ const Login = () => {
     setLoading(true);
     
     try {
+      console.log('Attempting login for:', email);
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -25,8 +27,12 @@ const Login = () => {
 
       if (error) throw error;
       
-      navigate('/sci/procedimentos');
+      console.log('Login successful, redirecting to dashboard');
+      // Redirect to main dashboard instead of specific module
+      navigate('/dashboard');
+      toast.success('Login realizado com sucesso!');
     } catch (error: any) {
+      console.error('Login error:', error);
       toast.error(error.message || 'Erro ao fazer login');
     } finally {
       setLoading(false);
@@ -75,6 +81,7 @@ const Login = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                disabled={loading}
               />
             </div>
             <div className="space-y-2">
@@ -84,6 +91,7 @@ const Login = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                disabled={loading}
               />
             </div>
             <div className="space-y-4">
@@ -92,7 +100,14 @@ const Login = () => {
                 className="w-full"
                 disabled={loading}
               >
-                {loading ? 'Entrando...' : 'Entrar'}
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Entrando...
+                  </>
+                ) : (
+                  'Entrar'
+                )}
               </Button>
               <Button 
                 type="button"

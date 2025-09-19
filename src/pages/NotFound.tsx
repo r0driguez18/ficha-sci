@@ -22,7 +22,7 @@ const NotFound = () => {
         <p className="text-xl text-muted-foreground mb-4">Página não encontrada</p>
         <p className="text-muted-foreground">A página que você está procurando não existe ou foi movida.</p>
         <div className="pt-4">
-          <Button onClick={() => navigate("/")} className="min-w-32">
+          <Button onClick={() => navigate("/dashboard")} className="min-w-32">
             Voltar ao Dashboard
           </Button>
         </div>

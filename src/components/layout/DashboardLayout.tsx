@@ -4,12 +4,16 @@ import { Sidebar } from './Sidebar';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/components/auth/AuthProvider';
+import { Loader2 } from 'lucide-react';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
+  const { user, loading } = useAuth();
+  
   // Initialize collapsed state from localStorage if available
   const [collapsed, setCollapsed] = useState(() => {
     const savedState = localStorage.getItem('sidebar-collapsed');
@@ -21,6 +25,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     localStorage.setItem('sidebar-collapsed', JSON.stringify(collapsed));
   }, [collapsed]);
 
+  // Show loading state if auth is still loading
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-sm text-muted-foreground">Carregando dashboard...</p>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen flex flex-col">
       <div className="flex flex-1 w-full overflow-hidden">

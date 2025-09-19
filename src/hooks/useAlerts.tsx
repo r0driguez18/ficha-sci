@@ -25,7 +25,11 @@ export function useAlerts() {
   const fetchAlerts = async () => {
     if (!user?.id) return;
 
-    setAlerts(prev => ({ ...prev, loading: true, error: null }));
+    // Don't show loading state for subsequent fetches to avoid UI flicker
+    const isInitialLoad = alerts.dailyAlerts.length === 0 && alerts.pendingReturns.length === 0;
+    if (isInitialLoad) {
+      setAlerts(prev => ({ ...prev, loading: true, error: null }));
+    }
 
     try {
       // Only fetch alerts on business days
@@ -41,17 +45,16 @@ export function useAlerts() {
         return;
       }
 
-      // Fetch daily alerts
-      const { data: dailyAlertsData, error: alertsError } = await getTodayAlerts();
-      if (alertsError) throw alertsError;
+      // Fetch all data in parallel for better performance
+      const [dailyAlertsResult, pendingReturnsResult, overdueReturnsResult] = await Promise.allSettled([
+        getTodayAlerts(),
+        getReturnsDueToday(user.id),
+        getOverdueReturns(user.id)
+      ]);
 
-      // Fetch pending returns
-      const { data: pendingReturnsData, error: pendingError } = await getReturnsDueToday(user.id);
-      if (pendingError) throw pendingError;
-
-      // Fetch overdue returns
-      const { data: overdueReturnsData, error: overdueError } = await getOverdueReturns(user.id);
-      if (overdueError) throw overdueError;
+      const dailyAlertsData = dailyAlertsResult.status === 'fulfilled' ? dailyAlertsResult.value.data : [];
+      const pendingReturnsData = pendingReturnsResult.status === 'fulfilled' ? pendingReturnsResult.value.data : [];
+      const overdueReturnsData = overdueReturnsResult.status === 'fulfilled' ? overdueReturnsResult.value.data : [];
 
       setAlerts({
         dailyAlerts: dailyAlertsData || [],
@@ -80,7 +83,10 @@ export function useAlerts() {
   };
 
   useEffect(() => {
+    // Add a small delay to prevent blocking the main dashboard render
+    const timeoutId = setTimeout(() => {
     fetchAlerts();
+    }, 100);
     
     // Refresh alerts every 30 seconds during business hours
     const interval = setInterval(() => {
@@ -93,7 +99,10 @@ export function useAlerts() {
       }
     }, 30000);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearTimeout(timeoutId);
+      clearInterval(interval);
+    };
   }, [user?.id]);
 
   return {
