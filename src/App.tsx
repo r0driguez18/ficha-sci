@@ -45,7 +45,7 @@ const App = () => (
         <TooltipProvider>
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<Navigate to="/sci/procedimentos" replace />} />
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/auth/login" element={<Login />} />
               
               {/* Protected Routes */}

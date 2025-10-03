@@ -25,7 +25,7 @@ const Login = () => {
 
       if (error) throw error;
       
-      navigate('/sci/procedimentos');
+      navigate('/dashboard');
     } catch (error: any) {
       toast.error(error.message || 'Erro ao fazer login');
     } finally {
