@@ -637,6 +637,13 @@ const [isLoading, setIsLoading] = useState(true);
         toast.error('PDF gerado mas houve erro ao salvar no histórico');
       } else {
         toast.success(`PDF gerado e salvo no histórico: ${fileName}`);
+        
+        // Atualizar a data para o dia seguinte após exportação bem-sucedida
+        const currentDate = new Date(date);
+        currentDate.setDate(currentDate.getDate() + 1);
+        const nextDate = currentDate.toISOString().split('T')[0];
+        setDate(nextDate);
+        toast.info(`Data atualizada para ${nextDate}`);
       }
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);

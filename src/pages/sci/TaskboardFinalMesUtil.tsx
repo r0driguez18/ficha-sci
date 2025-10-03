@@ -505,6 +505,13 @@ const TaskboardFinalMesUtil = () => {
       ); // Set isEndOfMonth to true
       doc.save(`taskboard_final_mes_util_${date.replace(/-/g, '')}.pdf`);
       toast.success('PDF gerado com sucesso!');
+      
+      // Atualizar a data para o dia seguinte após exportação bem-sucedida
+      const currentDate = new Date(date);
+      currentDate.setDate(currentDate.getDate() + 1);
+      const nextDate = currentDate.toISOString().split('T')[0];
+      setDate(nextDate);
+      toast.info(`Data atualizada para ${nextDate}`);
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
       toast.error('Erro ao gerar PDF. Tente novamente.');
