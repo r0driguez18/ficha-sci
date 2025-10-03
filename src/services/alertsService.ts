@@ -32,14 +32,22 @@ export async function getTodayAlerts(): Promise<{ data: DailyAlert[] | null; err
   const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
   const dayOfWeek = dayNames[today.getDay()];
   
+  // Fetch all active alerts and filter in JavaScript since JSONB array queries can be problematic
   const { data, error } = await supabase
     .from('daily_alerts')
     .select('*')
     .eq('is_active', true)
-    .contains('days_of_week', [dayOfWeek])
     .order('alert_time');
 
-  return { data: data as DailyAlert[], error };
+  if (error) return { data: null, error };
+
+  // Filter alerts that include today's day of week
+  const filteredData = data?.filter((alert: any) => {
+    const daysOfWeek = alert.days_of_week;
+    return Array.isArray(daysOfWeek) && daysOfWeek.includes(dayOfWeek);
+  }) || [];
+
+  return { data: filteredData as DailyAlert[], error: null };
 }
 
 /**
