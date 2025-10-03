@@ -29,7 +29,7 @@ export function DailyAlertsWidget() {
   const currentTime = getCurrentTime();
 
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center gap-2">
