@@ -16,7 +16,7 @@ const routeLabels: Record<string, string> = {
   '/sci': 'SCI',
   '/sci/procedimentos': 'Procedimentos',
   '/sci/taskboard': 'Taskboard',
-  '/sci/taskboard-nao-util': 'Taskboard Dia Não Útil',
+  '/sci/taskboard-dia-nao-util': 'Taskboard Dia Não Útil',
   '/sci/taskboard-final-mes-util': 'Taskboard Final Mês Útil',
   '/sci/taskboard-final-mes-nao-util': 'Taskboard Final Mês Não Útil',
   '/sci/calendar': 'Calendário',
