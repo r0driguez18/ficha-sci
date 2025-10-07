@@ -10,6 +10,7 @@ import {
   Database,
   FileText,
   LayoutDashboard,
+  Home,
   PieChart,
   Settings,
   Calendar,
@@ -59,8 +60,8 @@ export const SidebarContent = ({ collapsed }: SidebarContentProps) => {
         <nav className="space-y-6">
           <div>
             <SidebarItem
-              icon={LayoutDashboard}
-              label="Dashboard"
+              icon={Home}
+              label="Home"
               to="/dashboard"
               collapsed={collapsed}
             />

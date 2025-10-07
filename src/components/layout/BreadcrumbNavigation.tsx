@@ -11,8 +11,8 @@ import {
 import { Home } from 'lucide-react';
 
 const routeLabels: Record<string, string> = {
-  '/': 'Dashboard',
-  '/dashboard': 'Dashboard',
+  '/': 'Home',
+  '/dashboard': 'Home',
   '/sci': 'SCI',
   '/sci/procedimentos': 'Procedimentos',
   '/sci/taskboard': 'Taskboard',
