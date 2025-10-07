@@ -34,7 +34,6 @@ export const SidebarContent = ({ collapsed }: SidebarContentProps) => {
     { label: 'CRC - Tratamento', path: '/crc/tratamento', keywords: ['crc', 'tratamento', 'ficheiros'] },
     { label: 'DIS - Dados', path: '/dis/dados', keywords: ['dis', 'dados', 'database'] },
     { label: 'Processamentos - Estatísticas', path: '/easyvista/estatisticas', keywords: ['processamentos', 'estatísticas', 'charts'] },
-    { label: 'Processamentos - Dashboards', path: '/easyvista/dashboards', keywords: ['processamentos', 'dashboards', 'visao', 'geral'] },
     { label: 'Configurações', path: '/settings', keywords: ['settings', 'configurações', 'config'] },
     { label: 'Documentação', path: '/docs', keywords: ['docs', 'documentação', 'help', 'ajuda'] },
   ];
@@ -59,8 +58,17 @@ export const SidebarContent = ({ collapsed }: SidebarContentProps) => {
 
         <nav className="space-y-6">
           <div>
+            <SidebarItem
+              icon={LayoutDashboard}
+              label="Dashboard"
+              to="/dashboard"
+              collapsed={collapsed}
+            />
+          </div>
+          
+          <div>
             <div className={cn("mb-2", collapsed ? "px-2 sr-only" : "px-3 text-xs font-semibold text-white/40 uppercase")}>
-              Main
+              Módulos
             </div>
             <SidebarItem
               icon={ClipboardCheck}
@@ -69,7 +77,7 @@ export const SidebarContent = ({ collapsed }: SidebarContentProps) => {
               collapsed={collapsed}
               subItems={[
                 { label: "Ficha de Procedimentos", to: "/sci/procedimentos" },
-                { label: "Calendar", to: "/sci/calendar" },
+                { label: "Calendário", to: "/sci/calendar" },
                 { label: "Histórico de Fichas", to: "/sci/historico-fichas" },
                 { label: "Retornos Cobranças", to: "/sci/retornos-cobrancas" }
               ]}
@@ -98,25 +106,24 @@ export const SidebarContent = ({ collapsed }: SidebarContentProps) => {
               to="/easyvista"
               collapsed={collapsed}
               subItems={[
-                { label: "Estatísticas", to: "/easyvista/estatisticas" },
-                { label: "Dashboards", to: "/easyvista/dashboards" }
+                { label: "Estatísticas", to: "/easyvista/estatisticas" }
               ]}
             />
           </div>
           
           <div>
             <div className={cn("mb-2", collapsed ? "px-2 sr-only" : "px-3 text-xs font-semibold text-white/40 uppercase")}>
-              System
+              Sistema
             </div>
             <SidebarItem
               icon={Settings}
-              label="Settings"
+              label="Configurações"
               to="/settings"
               collapsed={collapsed}
             />
             <SidebarItem
               icon={FileText}
-              label="Documentation"
+              label="Documentação"
               to="/docs"
               collapsed={collapsed}
             />

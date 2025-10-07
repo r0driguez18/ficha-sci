@@ -27,7 +27,10 @@ const Login = () => {
       
       navigate('/dashboard');
     } catch (error: any) {
-      toast.error(error.message || 'Erro ao fazer login');
+      const errorMessage = error.message?.includes('Invalid login credentials')
+        ? 'Email ou senha incorretos'
+        : error.message || 'Erro ao fazer login';
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
