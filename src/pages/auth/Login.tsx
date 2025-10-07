@@ -6,16 +6,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const Login = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [formError, setFormError] = useState<string | null>(null);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setFormError(null);
     
     try {
       const { error } = await supabase.auth.signInWithPassword({
@@ -27,9 +30,10 @@ const Login = () => {
       
       navigate('/dashboard');
     } catch (error: any) {
-      const errorMessage = error.message?.includes('Invalid login credentials')
-        ? 'Email ou senha incorretos'
-        : error.message || 'Erro ao fazer login';
+      const raw = error?.message || '';
+      const isInvalid = raw.toLowerCase().includes('invalid') || raw.toLowerCase().includes('credenciais');
+      const errorMessage = isInvalid ? 'Email ou senha incorretos' : (raw || 'Erro ao fazer login');
+      setFormError(errorMessage);
       toast.error(errorMessage);
     } finally {
       setLoading(false);
@@ -70,6 +74,11 @@ const Login = () => {
           </p>
         </CardHeader>
         <CardContent>
+          {formError && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>{formError}</AlertDescription>
+            </Alert>
+          )}
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <Input
