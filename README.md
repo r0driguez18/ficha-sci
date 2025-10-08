@@ -11,15 +11,48 @@ Este é um sistema administrativo para controle interno que permite gerenciar:
 - Tratamento de ficheiros e registros
 - Gerador PS2 para ficheiros bancários
 
+## Stack Tecnológica
+
+### Frontend Core
+- **React** 18.3.1 - Biblioteca JavaScript para construção de interfaces
+- **TypeScript** 5.5.3 - Superset tipado do JavaScript
+- **Vite** 5.4.1 - Build tool e dev server ultrarrápido
+- **React Router DOM** 6.26.2 - Roteamento client-side
+
+### Styling & UI Components
+- **Tailwind CSS** 3.4.11 - Framework CSS utility-first
+- **shadcn/ui** - Componentes de UI baseados em Radix UI
+- **Radix UI** - Primitivos de UI acessíveis e não estilizados
+- **Lucide React** 0.462.0 - Biblioteca de ícones
+- **next-themes** 0.3.0 - Gestão de temas (dark/light mode)
+
+### Backend & Database
+- **Supabase** (Self-hosted via Docker) - Plataforma backend completa
+  - PostgreSQL - Base de dados relacional
+  - PostgREST - API REST automática
+  - GoTrue - Sistema de autenticação
+  - Storage - Armazenamento de ficheiros
+  - Edge Functions - Funções serverless
+- **@supabase/supabase-js** 2.49.4 - Cliente JavaScript para Supabase
+
+### State Management & Data Fetching
+- **TanStack Query (React Query)** 5.56.2 - Gestão de estado assíncrono e cache
+- **React Hook Form** 7.53.0 - Gestão de formulários
+- **Zod** 3.23.8 - Validação de schemas TypeScript-first
+
+### Data Visualization & Processing
+- **Recharts** 2.12.7 - Biblioteca de gráficos para React
+- **date-fns** 3.6.0 - Manipulação de datas
+- **xlsx** 0.18.5 - Leitura e escrita de ficheiros Excel
+- **jsPDF** 3.0.1 + **jspdf-autotable** 5.0.2 - Geração de PDFs
+
+### Utilities & UI Enhancement
+- **class-variance-authority** 0.7.1 - Gestão de variantes de componentes
+- **clsx** 2.1.1 + **tailwind-merge** 2.5.2 - Merge de classes Tailwind
+- **cmdk** 1.0.0 - Command menu
+- **sonner** 1.5.0 - Toast notifications elegantes
+
 ## Executando o Projeto
-
-O projeto foi construído utilizando as seguintes tecnologias:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
 
 Para iniciar o projeto localmente:
 
@@ -152,11 +185,34 @@ Para alterar a configuração da base de dados Supabase:
    - Confirme se todas as tabelas foram criadas corretamente
    - Verifique se as políticas de Row Level Security (RLS) estão ativas e configuradas adequadamente
 
-## Dependências Principais
+## Arquitetura do Sistema
 
-- React Router para navegação
-- Tailwind CSS para estilos
-- shadcn/ui para componentes de UI
-- Tanstack Query para gerenciamento de estado e requisições
-- Supabase para backend e autenticação
-- JsPDF para geração de documentos PDF
+```
+┌─────────────────────────────────────────────────────────────┐
+│                       Frontend (React)                       │
+│  ┌─────────────┐  ┌──────────────┐  ┌──────────────────┐   │
+│  │  React 18   │  │   Vite 5     │  │  TypeScript 5.5  │   │
+│  │  Router 6   │  │  Tailwind 3  │  │   shadcn/ui      │   │
+│  └─────────────┘  └──────────────┘  └──────────────────┘   │
+└─────────────────────────┬───────────────────────────────────┘
+                          │ Supabase Client (@supabase/supabase-js)
+                          │
+┌─────────────────────────▼───────────────────────────────────┐
+│              Supabase Self-hosted (Docker)                   │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐  │
+│  │  PostgreSQL  │  │   PostgREST  │  │  GoTrue (Auth)   │  │
+│  │  (Database)  │  │  (REST API)  │  │  (JWT Tokens)    │  │
+│  └──────────────┘  └──────────────┘  └──────────────────┘  │
+│  ┌──────────────┐  ┌──────────────┐                         │
+│  │   Storage    │  │ Edge Funcs   │                         │
+│  │  (Ficheiros) │  │ (Serverless) │                         │
+│  └──────────────┘  └──────────────┘                         │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Autenticação & Segurança
+
+- **Supabase Auth (GoTrue)** - Sistema de autenticação baseado em JWT
+- **Row Level Security (RLS)** - Políticas de segurança a nível de base de dados
+- **JWT Tokens** - Autenticação stateless e segura
+- **Context API** - Gestão de estado de autenticação no frontend
