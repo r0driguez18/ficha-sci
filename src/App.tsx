@@ -25,6 +25,7 @@ import Documentation from "./pages/Documentation";
 import CalendarPage from './pages/sci/Calendar';
 import HistoricoFichas from './pages/sci/HistoricoFichas';
 import RetornosCobrancas from './pages/sci/RetornosCobrancas';
+import WhatsAppSetup from './pages/WhatsAppSetup';
 
 // Initialize theme from localStorage - Always use light mode
 const initTheme = () => {
@@ -76,6 +77,7 @@ const App = () => (
               {/* System Routes */}
               <Route path="/settings" element={<PrivateRoute><DashboardLayout><Settings /></DashboardLayout></PrivateRoute>} />
               <Route path="/docs" element={<PrivateRoute><DashboardLayout><Documentation /></DashboardLayout></PrivateRoute>} />
+              <Route path="/whatsapp-setup" element={<PrivateRoute><DashboardLayout><WhatsAppSetup /></DashboardLayout></PrivateRoute>} />
               
               {/* 404 Route */}
               <Route path="*" element={<NotFound />} />

@@ -20,6 +20,7 @@ import { SignatureSection } from '@/components/taskboard/SignatureSection';
 import { useTaskboardSync } from '@/services/taskboardService';
 import type { TurnKey, TasksType, TurnDataType } from '@/types/taskboard';
 import type { TaskTableRow } from '@/types/taskTableRow';
+import { sendFechoInicioNotification, sendFechoTerminoNotification } from '@/services/whatsappService';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { saveExportedTaskboard } from '@/services/exportedTaskboardService';
@@ -276,6 +277,24 @@ const [isLoading, setIsLoading] = useState(true);
       setIsEndOfMonth(currentDate.getDate() === lastDayOfMonth);
     }
   }, [date]);
+
+  // Monitor inicioFecho and terminoFecho to send WhatsApp notifications
+  useEffect(() => {
+    const turno3Tasks = tasks.turno3;
+    const turno3Data = turnData.turno3;
+    
+    // Send notification when inicioFecho is checked
+    if (turno3Tasks.inicioFecho && !turno3Tasks.terminoFecho) {
+      const operatorName = turno3Data.operator || 'Operador';
+      sendFechoInicioNotification(operatorName);
+    }
+    
+    // Send notification when terminoFecho is checked
+    if (turno3Tasks.terminoFecho) {
+      const operatorName = turno3Data.operator || 'Operador';
+      sendFechoTerminoNotification(operatorName);
+    }
+  }, [tasks.turno3.inicioFecho, tasks.turno3.terminoFecho, turnData.turno3.operator]);
 
   const handleTaskChange = (turno: TurnKey, task: string, checked: boolean | string) => {
     setTasks({
