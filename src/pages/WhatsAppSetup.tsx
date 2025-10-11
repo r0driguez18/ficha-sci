@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Loader2, CheckCircle, XCircle, QrCode } from 'lucide-react';
+import QRCode from 'react-qr-code';
 
 export default function WhatsAppSetup() {
   const [groupId, setGroupId] = useState('');
@@ -137,13 +138,15 @@ export default function WhatsAppSetup() {
                 )}
               </Button>
 
-              {qrCode && (
+              {qrCode && qrCode !== 'QR_CODE_PLACEHOLDER' && (
                 <div className="mt-4 p-4 border rounded-lg bg-background">
-                  <p className="text-sm mb-2 text-center">Escaneie este QR Code com o WhatsApp:</p>
+                  <p className="text-sm mb-2 text-center font-semibold">Escaneie este QR Code com o WhatsApp:</p>
+                  <p className="text-xs mb-4 text-center text-muted-foreground">
+                    Abra o WhatsApp → Menu (⋮) → Dispositivos conectados → Conectar dispositivo
+                  </p>
                   <div className="flex justify-center">
-                    <div className="p-4 bg-white rounded">
-                      {/* QR Code will be rendered here */}
-                      <p className="text-xs text-muted-foreground">[QR Code aqui]</p>
+                    <div className="p-4 bg-white rounded-lg">
+                      <QRCode value={qrCode} size={256} />
                     </div>
                   </div>
                 </div>

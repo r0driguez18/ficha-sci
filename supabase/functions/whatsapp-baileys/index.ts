@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import makeWASocket, { DisconnectReason, useMultiFileAuthState } from "https://esm.sh/@whiskeysockets/baileys@6.7.8";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -21,16 +22,73 @@ serve(async (req) => {
     console.log('WhatsApp Baileys request:', { action, groupId, message });
 
     if (action === 'init') {
-      // Initialize WhatsApp connection and return QR code
-      // This will be implemented with Baileys connection logic
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          message: 'Connection initialized. Scan QR code to authenticate.',
-          qrCode: 'QR_CODE_PLACEHOLDER' // Will be replaced with actual QR
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      console.log('Initializing WhatsApp connection...');
+      
+      try {
+        // Create temp directory for auth state
+        const authDir = '/tmp/baileys_auth';
+        
+        const { state, saveCreds } = await useMultiFileAuthState(authDir);
+        
+        let qrCode = '';
+        
+        const sock = makeWASocket({
+          auth: state,
+          printQRInTerminal: false,
+        });
+
+        // Listen for QR code
+        sock.ev.on('connection.update', (update) => {
+          const { connection, lastDisconnect, qr } = update;
+          
+          if (qr) {
+            qrCode = qr;
+            console.log('QR Code generated:', qr);
+          }
+          
+          if (connection === 'close') {
+            const shouldReconnect = (lastDisconnect?.error as any)?.output?.statusCode !== DisconnectReason.loggedOut;
+            console.log('Connection closed. Should reconnect?', shouldReconnect);
+          } else if (connection === 'open') {
+            console.log('WhatsApp connected successfully!');
+          }
+        });
+
+        // Listen for credentials update
+        sock.ev.on('creds.update', saveCreds);
+
+        // Wait for QR code to be generated
+        await new Promise((resolve) => {
+          const checkQR = setInterval(() => {
+            if (qrCode) {
+              clearInterval(checkQR);
+              resolve(qrCode);
+            }
+          }, 100);
+          
+          // Timeout after 10 seconds
+          setTimeout(() => {
+            clearInterval(checkQR);
+            resolve(qrCode || 'TIMEOUT');
+          }, 10000);
+        });
+
+        if (!qrCode || qrCode === 'TIMEOUT') {
+          throw new Error('Failed to generate QR code');
+        }
+
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            message: 'QR Code generated. Scan with WhatsApp.',
+            qrCode: qrCode
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } catch (error: any) {
+        console.error('Error initializing Baileys:', error);
+        throw error;
+      }
     }
 
     if (action === 'send') {
