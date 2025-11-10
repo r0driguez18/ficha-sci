@@ -37,7 +37,7 @@ export const SidebarContent = ({ collapsed }: SidebarContentProps) => {
     { label: 'DIS - Dados', path: '/dis/dados', keywords: ['dis', 'dados', 'database'] },
     { label: 'Processamentos - Estatísticas', path: '/easyvista/estatisticas', keywords: ['processamentos', 'estatísticas', 'charts'] },
     { label: 'Configurações', path: '/settings', keywords: ['settings', 'configurações', 'config'] },
-    { label: 'WhatsApp Setup', path: '/whatsapp-setup', keywords: ['whatsapp', 'notificações', 'grupo'] },
+    { label: 'Telegram Setup', path: '/telegram-setup', keywords: ['telegram', 'notificações', 'grupo', 'bot'] },
     { label: 'Documentação', path: '/docs', keywords: ['docs', 'documentação', 'help', 'ajuda'] },
   ];
 
@@ -126,8 +126,8 @@ export const SidebarContent = ({ collapsed }: SidebarContentProps) => {
             />
             <SidebarItem
               icon={MessageCircle}
-              label="WhatsApp Setup"
-              to="/whatsapp-setup"
+              label="Telegram Setup"
+              to="/telegram-setup"
               collapsed={collapsed}
             />
             <SidebarItem
