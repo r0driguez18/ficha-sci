@@ -20,7 +20,7 @@ import { SignatureSection } from '@/components/taskboard/SignatureSection';
 import { useTaskboardSync } from '@/services/taskboardService';
 import type { TurnKey, TasksType, TurnDataType } from '@/types/taskboard';
 import type { TaskTableRow } from '@/types/taskTableRow';
-import { sendFechoInicioNotification, sendFechoTerminoNotification } from '@/services/whatsappService';
+import { sendFechoInicioNotification, sendFechoTerminoNotification } from '@/services/telegramService';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { saveExportedTaskboard } from '@/services/exportedTaskboardService';
@@ -278,7 +278,7 @@ const [isLoading, setIsLoading] = useState(true);
     }
   }, [date]);
 
-  // Monitor inicioFecho and terminoFecho to send WhatsApp notifications
+  // Monitor inicioFecho and terminoFecho to send Telegram notifications
   useEffect(() => {
     const turno3Tasks = tasks.turno3;
     const turno3Data = turnData.turno3;
