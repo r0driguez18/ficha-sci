@@ -75,20 +75,59 @@ export default function TelegramSetup() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Passo 2: Criar o Grupo e Adicionar o Bot</CardTitle>
+            <CardTitle>Passo 2: Criar o Grupo e Obter o Chat ID</CardTitle>
             <CardDescription>
-              Configure o grupo para receber notificações
+              Configure o grupo e obtenha o ID correto
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <ol className="list-decimal list-inside space-y-2 text-sm">
-              <li>Crie um novo grupo no Telegram ou use um existente</li>
-              <li>Adicione o bot ao grupo (procure pelo nome do bot)</li>
-              <li><strong>Importante:</strong> Envie pelo menos uma mensagem no grupo (qualquer texto)</li>
-              <li>Abra no navegador: <code className="bg-muted px-1 rounded text-xs break-all">{'https://api.telegram.org/bot<SEU_TOKEN>/getUpdates'}</code></li>
-              <li>Substitua <code className="bg-muted px-1 rounded">{'<SEU_TOKEN>'}</code> pelo token do bot</li>
-              <li>Procure por <code className="bg-muted px-1 rounded">{'"chat":{"id":-123456789'}</code> e copie o número (incluindo o sinal negativo)</li>
-            </ol>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <p className="text-sm font-semibold">Criar e configurar o grupo:</p>
+              <ol className="list-decimal list-inside space-y-2 text-sm ml-2">
+                <li>Crie um novo grupo no Telegram</li>
+                <li>Adicione o seu bot ao grupo (procure pelo @username do bot)</li>
+                <li><strong>Importante:</strong> Dê permissões de administrador ao bot</li>
+              </ol>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-sm font-semibold">Obter o Chat ID (escolha um método):</p>
+              
+              <div className="ml-2 space-y-3">
+                <div className="p-3 bg-primary/5 rounded-lg border border-primary/20">
+                  <p className="text-sm font-semibold text-primary mb-2">✅ Método Recomendado:</p>
+                  <ol className="list-decimal list-inside space-y-1 text-sm">
+                    <li>Adicione o bot <code className="bg-muted px-1 rounded">@RawDataBot</code> ao grupo</li>
+                    <li>O bot enviará uma mensagem com o Chat ID automaticamente</li>
+                    <li>Copie o número completo (exemplo: <code className="bg-muted px-1 rounded">-1001234567890</code>)</li>
+                    <li>Remova o @RawDataBot do grupo (opcional)</li>
+                  </ol>
+                </div>
+
+                <div className="p-3 bg-muted rounded-lg">
+                  <p className="text-sm font-semibold mb-2">Método Alternativo (API):</p>
+                  <ol className="list-decimal list-inside space-y-1 text-sm">
+                    <li>Envie uma mensagem no grupo</li>
+                    <li>Abra: <code className="bg-background px-1 rounded text-xs break-all">{'https://api.telegram.org/bot<TOKEN>/getUpdates'}</code></li>
+                    <li>Substitua <code className="bg-background px-1 rounded">{'<TOKEN>'}</code> pelo seu bot token</li>
+                    <li>Procure por <code className="bg-background px-1 rounded">&quot;chat&quot;:&#123;&quot;id&quot;:-123...</code></li>
+                    <li>Copie o número incluindo o sinal "-"</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="text-xs">
+                <strong>⚠️ IMPORTANTE:</strong> O Chat ID deve ser:
+                <ul className="list-disc list-inside mt-1 ml-2">
+                  <li>O ID do GRUPO (não do bot ou de um chat privado)</li>
+                  <li>Um número negativo (ex: -1001234567890 ou -3329581467)</li>
+                  <li>Copiado incluindo o sinal "-"</li>
+                </ul>
+              </AlertDescription>
+            </Alert>
           </CardContent>
         </Card>
 
