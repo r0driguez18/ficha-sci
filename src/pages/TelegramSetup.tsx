@@ -5,7 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2, Send, CheckCircle } from 'lucide-react';
+import { Loader2, Send, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function TelegramSetup() {
   const [isLoading, setIsLoading] = useState(false);
@@ -21,11 +22,22 @@ export default function TelegramSetup() {
 
       if (error) throw error;
 
-      toast.success('Mensagem de teste enviada com sucesso!');
-      console.log('Test message sent:', data);
+      if (data?.success) {
+        toast.success('✅ Mensagem de teste enviada com sucesso!');
+      } else {
+        throw new Error(data?.error || 'Erro desconhecido');
+      }
     } catch (error: any) {
       console.error('Error sending test message:', error);
-      toast.error('Erro ao enviar mensagem de teste: ' + error.message);
+      const errorMsg = error.message || String(error);
+      
+      if (errorMsg.includes('chat not found')) {
+        toast.error('❌ Chat não encontrado! Verifique se o bot foi adicionado ao grupo e se o Chat ID está correto.');
+      } else if (errorMsg.includes('Unauthorized')) {
+        toast.error('❌ Token inválido! Verifique se o Bot Token está correto.');
+      } else {
+        toast.error('❌ Erro: ' + errorMsg);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -36,22 +48,91 @@ export default function TelegramSetup() {
       <PageHeader title="Configuração do Telegram" />
       
       <div className="space-y-6 max-w-4xl mx-auto p-6">
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            <strong>Importante:</strong> Siga os passos abaixo para configurar o bot corretamente antes de enviar a mensagem de teste.
+          </AlertDescription>
+        </Alert>
+
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-500" />
-              Telegram Configurado
-            </CardTitle>
+            <CardTitle>Passo 1: Criar o Bot no Telegram</CardTitle>
             <CardDescription>
-              O bot do Telegram está configurado e pronto para enviar notificações.
+              Configure o bot através do BotFather
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <ol className="list-decimal list-inside space-y-2 text-sm">
+              <li>Abra o Telegram e procure por <code className="bg-muted px-1 rounded">@BotFather</code></li>
+              <li>Envie o comando <code className="bg-muted px-1 rounded">/newbot</code></li>
+              <li>Siga as instruções para criar um novo bot</li>
+              <li>Copie o <strong>Bot Token</strong> fornecido pelo BotFather</li>
+              <li className="text-muted-foreground text-xs">O token deve ter o formato: <code>123456789:ABCdefGHIjklMNOpqrsTUVwxyz</code></li>
+            </ol>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Passo 2: Criar o Grupo e Adicionar o Bot</CardTitle>
+            <CardDescription>
+              Configure o grupo para receber notificações
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <ol className="list-decimal list-inside space-y-2 text-sm">
+              <li>Crie um novo grupo no Telegram ou use um existente</li>
+              <li>Adicione o bot ao grupo (procure pelo nome do bot)</li>
+              <li><strong>Importante:</strong> Envie pelo menos uma mensagem no grupo (qualquer texto)</li>
+              <li>Abra no navegador: <code className="bg-muted px-1 rounded text-xs break-all">{'https://api.telegram.org/bot<SEU_TOKEN>/getUpdates'}</code></li>
+              <li>Substitua <code className="bg-muted px-1 rounded">{'<SEU_TOKEN>'}</code> pelo token do bot</li>
+              <li>Procure por <code className="bg-muted px-1 rounded">{'"chat":{"id":-123456789'}</code> e copie o número (incluindo o sinal negativo)</li>
+            </ol>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Passo 3: Configurar as Secrets no Supabase</CardTitle>
+            <CardDescription>
+              As secrets já foram configuradas anteriormente
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center gap-2 text-sm">
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
+              <span><strong>TELEGRAM_BOT_TOKEN:</strong> Configurado</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
+              <span><strong>TELEGRAM_CHAT_ID:</strong> Configurado</span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              Se precisar atualizar estes valores, use o botão de atualizar secrets nas configurações do Supabase.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Passo 4: Testar a Configuração</CardTitle>
+            <CardDescription>
+              Envie uma mensagem de teste para verificar se tudo está funcionando
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="text-sm text-muted-foreground space-y-2">
-              <p>✅ Bot Token configurado</p>
-              <p>✅ Chat ID do grupo configurado</p>
-              <p>✅ Bot adicionado ao grupo</p>
-            </div>
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="text-xs">
+                <strong>Erros comuns:</strong>
+                <ul className="list-disc list-inside mt-2 space-y-1">
+                  <li><strong>"chat not found":</strong> Bot não foi adicionado ao grupo ou Chat ID incorreto</li>
+                  <li><strong>"Unauthorized":</strong> Bot Token está incorreto</li>
+                  <li><strong>"bot was blocked":</strong> Bot foi removido ou bloqueado no grupo</li>
+                </ul>
+              </AlertDescription>
+            </Alert>
 
             <Button 
               onClick={sendTestMessage}
