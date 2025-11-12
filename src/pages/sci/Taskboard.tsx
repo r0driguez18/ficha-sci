@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -278,22 +278,30 @@ const [isLoading, setIsLoading] = useState(true);
     }
   }, [date]);
 
+  // Track previous values to only send notifications on check (not uncheck)
+  const prevInicioFecho = useRef(false);
+  const prevTerminoFecho = useRef(false);
+
   // Monitor inicioFecho and terminoFecho to send Telegram notifications
   useEffect(() => {
     const turno3Tasks = tasks.turno3;
     const turno3Data = turnData.turno3;
     
-    // Send notification when inicioFecho is checked
-    if (turno3Tasks.inicioFecho && !turno3Tasks.terminoFecho) {
-      const operatorName = turno3Data.operator || 'Operador';
+    // Get full operator name from the list
+    const operator = operatorsList.find(op => op.value === turno3Data.operator);
+    const operatorName = operator?.label || 'Operador';
+    
+    // Send notification when inicioFecho changes from false to true
+    if (turno3Tasks.inicioFecho && !prevInicioFecho.current) {
       sendFechoInicioNotification(operatorName);
     }
+    prevInicioFecho.current = turno3Tasks.inicioFecho;
     
-    // Send notification when terminoFecho is checked
-    if (turno3Tasks.terminoFecho) {
-      const operatorName = turno3Data.operator || 'Operador';
+    // Send notification when terminoFecho changes from false to true
+    if (turno3Tasks.terminoFecho && !prevTerminoFecho.current) {
       sendFechoTerminoNotification(operatorName);
     }
+    prevTerminoFecho.current = turno3Tasks.terminoFecho;
   }, [tasks.turno3.inicioFecho, tasks.turno3.terminoFecho, turnData.turno3.operator]);
 
   const handleTaskChange = (turno: TurnKey, task: string, checked: boolean | string) => {
