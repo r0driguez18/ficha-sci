@@ -1,5 +1,8 @@
--- Enable RLS on taskboard_data table
-ALTER TABLE public.taskboard_data ENABLE ROW LEVEL SECURITY;
+-- ============================================
+-- Migration: Taskboard RLS Policies
+-- Para usar: supabase migration new taskboard_rls_policies
+-- Depois copie este conteúdo para o arquivo gerado
+-- ============================================
 
 -- Create policies for taskboard_data
 CREATE POLICY "Users can view their own taskboard data" 
