@@ -1,7 +1,13 @@
 
 import { jsPDF } from 'jspdf';
 import { Turno2Tasks } from '@/types/taskboard';
-import { checkPageSpace, drawCheckbox, drawObservationsBox, ensureBoolean } from './pdfCommon';
+import { 
+  checkPageSpace, 
+  drawCheckbox, 
+  drawObservationsBox, 
+  ensureBoolean,
+  BCA_COLORS
+} from './pdfCommon';
 
 export const renderTurno2Tasks = (
   doc: jsPDF, 
@@ -25,15 +31,17 @@ export const renderTurno2Tasks = (
     y = checkPageSpace(doc, y, 8);
     drawCheckbox(doc, 15, y - 3, ensureBoolean(tasks[item.key as keyof typeof tasks]));
     doc.setFontSize(10);
-    doc.setFont("helvetica", "normal"); // Ensure consistent normal font weight
-    doc.text(item.text, 20, y);
+    doc.setFont("helvetica", "normal");
+    doc.text(item.text, 22, y);
     y += 6;
   });
   
-  // Ficheiros INPS
+  // Ficheiros INPS - with colored label
   y = checkPageSpace(doc, y, 10);
-  doc.setFont("helvetica", "normal"); // Changed from bold to normal
+  doc.setTextColor(...BCA_COLORS.blue);
+  doc.setFont("helvetica", "bold");
   doc.text("Ficheiros INPS:", 15, y);
+  doc.setTextColor(0, 0, 0);
   y += 6;
   doc.setFont("helvetica", "normal");
   
@@ -44,8 +52,8 @@ export const renderTurno2Tasks = (
   
   inpsItems.forEach(item => {
     y = checkPageSpace(doc, y, 8);
-    drawCheckbox(doc, 20, y - 3, ensureBoolean(tasks[item.key as keyof typeof tasks]));
-    doc.text(item.text, 25, y);
+    drawCheckbox(doc, 22, y - 3, ensureBoolean(tasks[item.key as keyof typeof tasks]));
+    doc.text(item.text, 29, y);
     y += 6;
   });
   
@@ -58,14 +66,16 @@ export const renderTurno2Tasks = (
   remainingTasks.forEach(item => {
     y = checkPageSpace(doc, y, 8);
     drawCheckbox(doc, 15, y - 3, ensureBoolean(tasks[item.key as keyof typeof tasks]));
-    doc.text(item.text, 20, y);
+    doc.text(item.text, 22, y);
     y += 6;
   });
   
-  // Enviar Ficheiro
+  // Enviar Ficheiro - with colored label
   y = checkPageSpace(doc, y, 10);
-  doc.setFont("helvetica", "normal"); // Changed from bold to normal
+  doc.setTextColor(...BCA_COLORS.blue);
+  doc.setFont("helvetica", "bold");
   doc.text("Enviar Ficheiro:", 15, y);
+  doc.setTextColor(0, 0, 0);
   y += 6;
   doc.setFont("helvetica", "normal");
   
@@ -76,8 +86,8 @@ export const renderTurno2Tasks = (
   
   ficheirosItems.forEach(item => {
     y = checkPageSpace(doc, y, 8);
-    drawCheckbox(doc, 20, y - 3, ensureBoolean(tasks[item.key as keyof typeof tasks]));
-    doc.text(item.text, 25, y);
+    drawCheckbox(doc, 22, y - 3, ensureBoolean(tasks[item.key as keyof typeof tasks]));
+    doc.text(item.text, 29, y);
     y += 6;
   });
   
@@ -92,7 +102,7 @@ export const renderTurno2Tasks = (
   finalTasks.forEach(item => {
     y = checkPageSpace(doc, y, 8);
     drawCheckbox(doc, 15, y - 3, ensureBoolean(tasks[item.key as keyof typeof tasks]));
-    doc.text(item.text, 20, y);
+    doc.text(item.text, 22, y);
     y += 6;
   });
   
