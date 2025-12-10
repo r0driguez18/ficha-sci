@@ -2,7 +2,7 @@
 import { jsPDF } from 'jspdf';
 import { TasksType, TurnDataType, TurnKey } from '@/types/taskboard';
 import { TaskTableRow } from '@/types/taskTableRow';
-import { centerText } from './pdf/pdfCommon';
+import { centerText, addBCALogo, BCA_COLORS, drawSeparator } from './pdf/pdfCommon';
 import { renderTurno1Tasks } from './pdf/pdfTurno1';
 import { renderTurno2Tasks } from './pdf/pdfTurno2';
 import { renderTurno3Tasks } from './pdf/pdfTurno3';
@@ -18,35 +18,68 @@ export const generateTaskboardPDF = (
   signature?: { imageDataUrl: string | null; signerName?: string; signedAt?: string }
 ) => {
   const doc = new jsPDF();
-  let y = 20;
+  let y = 15;
   
-  // Document header
+  // Add BCA Logo
+  addBCALogo(doc, 15, 8, 25);
+  
+  // Document header with BCA colors
+  doc.setTextColor(...BCA_COLORS.darkBlue);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
   centerText(doc, "CENTRO INFORMÁTICA", y);
   y += 10;
   
-  doc.setFontSize(16);
-  centerText(doc, isDiaNaoUtil ? "Ficha de Procedimentos - Dia Não Útil" : "Ficha de Procedimentos", y);
+  // Subtitle with underline
+  doc.setFontSize(14);
+  doc.setTextColor(...BCA_COLORS.blue);
+  const subtitle = isDiaNaoUtil ? "Ficha de Procedimentos - Dia Não Útil" : "Ficha de Procedimentos";
+  centerText(doc, subtitle, y);
+  
+  // Draw underline
+  const pageWidth = doc.internal.pageSize.width;
+  const subtitleWidth = doc.getTextWidth(subtitle);
+  const underlineX = (pageWidth - subtitleWidth) / 2;
+  doc.setDrawColor(...BCA_COLORS.blue);
+  doc.setLineWidth(0.5);
+  doc.line(underlineX, y + 2, underlineX + subtitleWidth, y + 2);
+  y += 12;
+  
+  // Reset text color
+  doc.setTextColor(0, 0, 0);
+  
+  // Date and info section with background
+  doc.setFillColor(...BCA_COLORS.lightGray);
+  doc.roundedRect(15, y - 4, pageWidth - 30, 10, 2, 2, 'F');
+  
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "normal");
+  doc.text("Processamentos Diários", 20, y + 2);
+  doc.setFont("helvetica", "bold");
+  doc.text(`Data: ${date}`, pageWidth - 55, y + 2);
+  doc.setFont("helvetica", "normal");
   y += 15;
   
-  doc.setFontSize(12);
-  doc.setFont("helvetica", "normal");
-  doc.text("Processamentos Diários", 15, y);
-  doc.text(`Data: ${date}`, doc.internal.pageSize.width - 50, y);
-  y += 10;
+  // Separator
+  y = drawSeparator(doc, y);
   
   // If it's a non-working day, only process Turn 3
   if (isDiaNaoUtil) {
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
-    doc.text("Operador:", 15, y);
-    doc.setFont("helvetica", "normal");
+    // Operator info with styled background
+    doc.setFillColor(...BCA_COLORS.lightBlue);
+    doc.roundedRect(15, y - 4, pageWidth - 30, 10, 2, 2, 'F');
     
-    doc.text(`${turnData.turno3.operator}`, 50, y);
-    doc.text(`Entrada: ${turnData.turno3.entrada}`, 120, y);
-    doc.text(`Saída: ${turnData.turno3.saida}`, 170, y);
-    y += 10;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(...BCA_COLORS.darkBlue);
+    doc.text("Operador:", 20, y + 2);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(0, 0, 0);
+    
+    doc.text(`${turnData.turno3.operator}`, 50, y + 2);
+    doc.text(`Entrada: ${turnData.turno3.entrada}`, 110, y + 2);
+    doc.text(`Saída: ${turnData.turno3.saida}`, 160, y + 2);
+    y += 15;
     
     // Process only Turn 3 tasks
     y = renderTurno3Tasks(doc, tasks.turno3, turnData.turno3.observations, y, true, isEndOfMonth);
@@ -61,18 +94,27 @@ export const generateTaskboardPDF = (
       
       // Add extra spacing between turns
       if (index > 0) {
-        y += 15;
+        y += 10;
+        y = drawSeparator(doc, y);
+        y += 5;
       }
       
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(12);
-      doc.text(`${turnName}:`, 15, y);
-      doc.setFont("helvetica", "normal");
+      // Turn header with colored background
+      doc.setFillColor(...BCA_COLORS.lightBlue);
+      doc.roundedRect(15, y - 4, pageWidth - 30, 10, 2, 2, 'F');
       
-      doc.text(`Operador: ${turn.operator}`, 50, y);
-      doc.text(`Entrada: ${turn.entrada}`, 120, y);
-      doc.text(`Saída: ${turn.saida}`, 170, y);
-      y += 10;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(...BCA_COLORS.darkBlue);
+      doc.text(`${turnName}:`, 20, y + 2);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(10);
+      
+      doc.text(`Operador: ${turn.operator}`, 55, y + 2);
+      doc.text(`Entrada: ${turn.entrada}`, 115, y + 2);
+      doc.text(`Saída: ${turn.saida}`, 160, y + 2);
+      y += 15;
       
       // Process tasks based on turn
       if (turnKey === 'turno1') {
@@ -91,35 +133,45 @@ export const generateTaskboardPDF = (
   // Signature page (simple and safe: new page)
   doc.addPage();
   y = 20;
+  
+  // Add logo to signature page
+  addBCALogo(doc, 15, 8, 25);
+  
+  doc.setTextColor(...BCA_COLORS.darkBlue);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
   doc.text("Validação e Assinatura", 15, y);
-  y += 8;
+  doc.setTextColor(0, 0, 0);
+  y += 10;
 
-  // Signature box
-  const pageWidth = doc.internal.pageSize.width;
-  const boxX = 15;
-  const boxY = y + 4;
-  const boxW = pageWidth - 30;
-  const boxH = 70;
-  doc.setDrawColor(150);
-  doc.rect(boxX, boxY, boxW, boxH);
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(12);
+  // Signer info
   const signerName = signature?.signerName || "";
   const signedAt = signature?.signedAt || "";
-  doc.text(`Assinado por: ${signerName || '-'}`, boxX, y);
-  doc.text(`Data/Hora: ${signedAt || '-'}`, boxX + 100, y);
+  
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Assinado por: ${signerName || '-'}`, 15, y);
+  doc.text(`Data/Hora: ${signedAt || '-'}`, 110, y);
+  y += 8;
+
+  // Signature box with styled border
+  const boxX = 15;
+  const boxY = y;
+  const boxW = pageWidth - 30;
+  const boxH = 70;
+  
+  doc.setDrawColor(...BCA_COLORS.blue);
+  doc.setLineWidth(0.5);
+  doc.setFillColor(...BCA_COLORS.lightGray);
+  doc.roundedRect(boxX, boxY, boxW, boxH, 3, 3, 'FD');
 
   // Render signature image if present
   if (signature?.imageDataUrl) {
     try {
-      // Fit image inside the box keeping margins
       const imgW = 120;
       const imgH = 40;
       const imgX = boxX + 10;
-      const imgY = boxY + 10;
+      const imgY = boxY + 15;
       // @ts-ignore - addImage accepts data URL
       doc.addImage(signature.imageDataUrl, 'PNG', imgX, imgY, imgW, imgH);
     } catch (e) {
@@ -127,9 +179,9 @@ export const generateTaskboardPDF = (
     }
   } else {
     doc.setFontSize(10);
-    doc.setTextColor(120);
+    doc.setTextColor(...BCA_COLORS.gray);
     doc.text("Assine no espaço acima.", boxX + 10, boxY + boxH / 2);
-    doc.setTextColor(0);
+    doc.setTextColor(0, 0, 0);
   }
   
   return doc;
