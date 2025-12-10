@@ -1,31 +1,32 @@
 
 import { jsPDF } from 'jspdf';
 import { Turno3Tasks } from '@/types/taskboard';
-import { checkPageSpace, drawCheckbox, drawObservationsBox, ensureBoolean } from './pdfCommon';
+import { 
+  checkPageSpace, 
+  drawCheckbox, 
+  drawObservationsBox, 
+  ensureBoolean, 
+  drawSectionHeader,
+  drawSubsectionTitle,
+  BCA_COLORS,
+  drawHighlightedTask
+} from './pdfCommon';
 
 export const renderTurno3Tasks = (
   doc: jsPDF, 
   tasks: Turno3Tasks,
   observations: string,
   startY: number,
-  isDiaNaoUtil: boolean = false, // Parameter to handle the non-utility day case
-  isEndOfMonth: boolean = false  // New parameter to handle end-of-month specific tasks
+  isDiaNaoUtil: boolean = false,
+  isEndOfMonth: boolean = false
 ): number => {
   let y = startY;
   
-  // Add Header for Turno 3
-  y = checkPageSpace(doc, y, 10);
-  doc.setFont("helvetica", "normal"); // Changed from bold to normal
-  
-  // If it's a "Dia Não Útil", change the header
-  if (isDiaNaoUtil) {
-    doc.text("Operações Dia Não Útil", 15, y);
-  } else {
-    doc.text("Operações Fecho Dia", 15, y);
-  }
-  
-  y += 8;
-  doc.setFont("helvetica", "normal");
+  // Section Header with colored background
+  y = checkPageSpace(doc, y, 15);
+  const sectionTitle = isDiaNaoUtil ? "Operações Dia Não Útil" : "Operações Fecho Dia";
+  y = drawSectionHeader(doc, sectionTitle, y);
+  y += 4;
   
   // List all turno3 tasks in the correct order
   const operacoesFechoTasks = [
@@ -47,18 +48,28 @@ export const renderTurno3Tasks = (
     y = checkPageSpace(doc, y, 8);
     drawCheckbox(doc, 15, y - 3, ensureBoolean(tasks[item.key as keyof typeof tasks]));
     doc.setFontSize(10);
-    doc.setFont("helvetica", "normal"); // Ensure consistent normal font weight
-    doc.text(item.text, 20, y);
+    doc.setFont("helvetica", "normal");
+    doc.text(item.text, 22, y);
     y += 6;
   });
 
-  // Handle "Interromper o Real-Time" with time inline
+  // Handle "Interromper o Real-Time" with time inline - HIGHLIGHTED as important
   y = checkPageSpace(doc, y, 8);
-  drawCheckbox(doc, 15, y - 3, ensureBoolean(tasks.fecharRealTime));
+  const realTimeChecked = ensureBoolean(tasks.fecharRealTime);
   const realTimeText = tasks.fecharRealTimeHora ? 
     `Interromper o Real-Time com a SISP - ${tasks.fecharRealTimeHora}` :
     "Interromper o Real-Time com a SISP";
-  doc.text(realTimeText, 20, y);
+  
+  // Highlight important task
+  if (realTimeChecked) {
+    doc.setFillColor(...BCA_COLORS.lightBlue);
+    const textWidth = doc.getTextWidth(realTimeText);
+    doc.rect(21, y - 4, textWidth + 4, 6, 'F');
+  }
+  drawCheckbox(doc, 15, y - 3, realTimeChecked);
+  doc.setFont("helvetica", realTimeChecked ? "bold" : "normal");
+  doc.text(realTimeText, 22, y);
+  doc.setFont("helvetica", "normal");
   y += 6;
   
   // Continue with remaining tasks in order
@@ -74,17 +85,28 @@ export const renderTurno3Tasks = (
   midTasks.forEach(item => {
     y = checkPageSpace(doc, y, 8);
     drawCheckbox(doc, 15, y - 3, ensureBoolean(tasks[item.key as keyof typeof tasks]));
-    doc.text(item.text, 20, y);
+    doc.text(item.text, 22, y);
     y += 6;
   });
   
-  // Handle "Início do Fecho" with time inline
-  y = checkPageSpace(doc, y, 8);
-  drawCheckbox(doc, 15, y - 3, ensureBoolean(tasks.inicioFecho));
+  // Handle "Início do Fecho" with time inline - IMPORTANT TASK with highlight
+  y = checkPageSpace(doc, y, 10);
+  const inicioFechoChecked = ensureBoolean(tasks.inicioFecho);
   const inicioFechoText = tasks.inicioFechoHora ? 
     `Início do Fecho - ${tasks.inicioFechoHora}` :
     "Início do Fecho";
-  doc.text(inicioFechoText, 20, y);
+  
+  // Highlight important task
+  doc.setFillColor(...BCA_COLORS.lightBlue);
+  const inicioWidth = doc.getTextWidth(inicioFechoText);
+  doc.rect(21, y - 4, inicioWidth + 4, 6, 'F');
+  
+  drawCheckbox(doc, 15, y - 3, inicioFechoChecked);
+  doc.setTextColor(...BCA_COLORS.darkBlue);
+  doc.setFont("helvetica", "bold");
+  doc.text(inicioFechoText, 22, y);
+  doc.setTextColor(0, 0, 0);
+  doc.setFont("helvetica", "normal");
   y += 6;
   
   // Continue with the rest of the tasks
@@ -100,16 +122,14 @@ export const renderTurno3Tasks = (
   finalOperacoesTasks.forEach(item => {
     y = checkPageSpace(doc, y, 8);
     drawCheckbox(doc, 15, y - 3, ensureBoolean(tasks[item.key as keyof typeof tasks]));
-    doc.text(item.text, 20, y);
+    doc.text(item.text, 22, y);
     y += 6;
   });
   
-  // Add header for "Depois do Fecho" section
+  // Add header for "Depois do Fecho" section with colored background
   y = checkPageSpace(doc, y, 15);
-  doc.setFont("helvetica", "normal"); // Changed from bold to normal
-  doc.text("Depois do Fecho", 15, y);
-  y += 8;
-  doc.setFont("helvetica", "normal");
+  y = drawSectionHeader(doc, "Depois do Fecho", y);
+  y += 4;
   
   const depoisFechoTasks = [
     {key: 'validarFicheiroCcln', text: "Validar ficheiro CCLN - 76853"},
@@ -119,7 +139,7 @@ export const renderTurno3Tasks = (
   depoisFechoTasks.forEach(item => {
     y = checkPageSpace(doc, y, 8);
     drawCheckbox(doc, 15, y - 3, ensureBoolean(tasks[item.key as keyof typeof tasks]));
-    doc.text(item.text, 20, y);
+    doc.text(item.text, 22, y);
     y += 6;
   });
   
@@ -129,15 +149,15 @@ export const renderTurno3Tasks = (
   const saldoText = tasks.saldoContaValor ? 
     `Validar saldo da conta 18/5488102 - ${tasks.saldoContaValor}` :
     "Validar saldo da conta 18/5488102";
-  doc.text(saldoText, 20, y);
+  doc.text(saldoText, 22, y);
   y += 6;
   
   // Add the saldoPositivo and saldoNegativo checkboxes
   y = checkPageSpace(doc, y, 8);
-  drawCheckbox(doc, 20, y - 3, ensureBoolean(tasks.saldoPositivo));
-  doc.text("Positivo", 25, y);
+  drawCheckbox(doc, 22, y - 3, ensureBoolean(tasks.saldoPositivo));
+  doc.text("Positivo", 28, y);
   drawCheckbox(doc, 60, y - 3, ensureBoolean(tasks.saldoNegativo));
-  doc.text("Negativo", 65, y);
+  doc.text("Negativo", 66, y);
   y += 6;
   
   // Handle "Abrir o Real-Time" with time inline
@@ -146,7 +166,7 @@ export const renderTurno3Tasks = (
   const abrirRealTimeText = tasks.abrirRealTimeHora ? 
     `Abrir o Real-Time - ${tasks.abrirRealTimeHora}` :
     "Abrir o Real-Time";
-  doc.text(abrirRealTimeText, 20, y);
+  doc.text(abrirRealTimeText, 22, y);
   y += 6;
   
   // Remaining tasks
@@ -171,31 +191,42 @@ export const renderTurno3Tasks = (
   remainingTasks.forEach(item => {
     y = checkPageSpace(doc, y, 8);
     drawCheckbox(doc, 15, y - 3, ensureBoolean(tasks[item.key as keyof typeof tasks]));
-    doc.text(item.text, 20, y);
+    doc.text(item.text, 22, y);
     y += 6;
   });
   
-  // Handle "Término do Fecho" with time inline
-  y = checkPageSpace(doc, y, 8);
-  drawCheckbox(doc, 15, y - 3, ensureBoolean(tasks.terminoFecho));
+  // Handle "Término do Fecho" with time inline - IMPORTANT TASK with highlight
+  y = checkPageSpace(doc, y, 10);
+  const terminoFechoChecked = ensureBoolean(tasks.terminoFecho);
   const terminoFechoText = tasks.terminoFechoHora ? 
     `Término do Fecho - ${tasks.terminoFechoHora}` :
     "Término do Fecho";
-  doc.text(terminoFechoText, 20, y);
+  
+  // Highlight important task
+  doc.setFillColor(...BCA_COLORS.lightBlue);
+  const terminoWidth = doc.getTextWidth(terminoFechoText);
+  doc.rect(21, y - 4, terminoWidth + 4, 6, 'F');
+  
+  drawCheckbox(doc, 15, y - 3, terminoFechoChecked);
+  doc.setTextColor(...BCA_COLORS.darkBlue);
+  doc.setFont("helvetica", "bold");
+  doc.text(terminoFechoText, 22, y);
+  doc.setTextColor(0, 0, 0);
+  doc.setFont("helvetica", "normal");
   y += 6;
   
-  // Add end-of-month task right after "Término do Fecho" - Make sure this is present and correctly rendered
+  // Add end-of-month task right after "Término do Fecho"
   if (isEndOfMonth) {
     y = checkPageSpace(doc, y, 8);
     drawCheckbox(doc, 15, y - 3, ensureBoolean(tasks.limpaGbtrlogFimMes));
-    doc.text("Chamar Opção 16 - Limpa o GBTRLOG após o Fecho do mês", 20, y);
+    doc.text("Chamar Opção 16 - Limpa o GBTRLOG após o Fecho do mês", 22, y);
     y += 6;
   }
   
   // Final task
   y = checkPageSpace(doc, y, 8);
   drawCheckbox(doc, 15, y - 3, ensureBoolean(tasks.transferirFicheirosDsi));
-  doc.text("Transferência ficheiros SSM Liquidity ExercicesDSI-CI/2023", 20, y);
+  doc.text("Transferência ficheiros SSM Liquidity ExercicesDSI-CI/2023", 22, y);
   y += 6;
   
   // Observations with rectangle
