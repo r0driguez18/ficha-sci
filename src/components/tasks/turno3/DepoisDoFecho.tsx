@@ -43,179 +43,187 @@ export const DepoisDoFecho: React.FC<DepoisDoFechoProps> = ({
   onTaskChange,
   isEndOfMonth = false
 }) => {
-  // Helper function to handle checkbox changes
   const handleCheckboxChange = (task: string, checked: boolean | "indeterminate") => {
     onTaskChange(task, checked === "indeterminate" ? false : Boolean(checked));
   };
 
   return (
-    <div className="space-y-2">
-      <h4 className="font-medium mt-6 mb-4">Depois do Fecho</h4>
+    <div className="space-y-1">
+      <div className="bg-green-100 border-l-4 border-green-600 px-4 py-2 rounded-r-lg mt-6 mb-4">
+        <h4 className="font-semibold text-green-800 text-base">Depois do Fecho</h4>
+      </div>
       
-      <CheckboxField 
-        id="validarFicheiroCcln" 
-        checked={tasks.validarFicheiroCcln}
-        onCheckedChange={(checked) => handleCheckboxChange('validarFicheiroCcln', checked)}
-        label="Validar ficheiro CCLN - 76853"
-      />
-      
-      <CheckboxField 
-        id="aplicarFicheirosCompensacao" 
-        checked={tasks.aplicarFicheirosCompensacao}
-        onCheckedChange={(checked) => handleCheckboxChange('aplicarFicheirosCompensacao', checked)}
-        label="Aplicar ficheiros compensação SISP (CCLN, EDST, EORI, ERMB)"
-      />
-      
-      <SaldoContaField
-        checked={tasks.validarSaldoConta}
-        saldoValue={tasks.saldoContaValor}
-        saldoNegativo={tasks.saldoNegativo}
-        saldoPositivo={tasks.saldoPositivo}
-        onCheckedChange={(checked) => handleCheckboxChange('validarSaldoConta', checked)}
-        onSaldoValueChange={(value) => onTaskChange('saldoContaValor', value)}
-        onSaldoNegativoChange={(checked) => handleCheckboxChange('saldoNegativo', checked)}
-        onSaldoPositivoChange={(checked) => handleCheckboxChange('saldoPositivo', checked)}
-      />
-      
-      <TimeCheckboxField
-        id="abrirRealTime"
-        checked={tasks.abrirRealTime}
-        timeValue={tasks.abrirRealTimeHora}
-        onCheckedChange={(checked) => handleCheckboxChange('abrirRealTime', checked)}
-        onTimeChange={(value) => onTaskChange('abrirRealTimeHora', value)}
-        label="Abrir o Real-Time"
-      />
-      
-      <CheckboxField 
-        id="verificarTransacoes" 
-        checked={tasks.verificarTransacoes}
-        onCheckedChange={(checked) => handleCheckboxChange('verificarTransacoes', checked)}
-        label="Verificar a entrada de transações 3100 4681"
-      />
-      
-      <CheckboxField 
-        id="aplicarFicheiroVisa" 
-        checked={tasks.aplicarFicheiroVisa}
-        onCheckedChange={(checked) => handleCheckboxChange('aplicarFicheiroVisa', checked)}
-        label="Aplicar ficheiro VISA DAF - com o user FECHO 4131"
-      />
-      
-      <CheckboxField 
-        id="cativarCartoes" 
-        checked={tasks.cativarCartoes}
-        onCheckedChange={(checked) => handleCheckboxChange('cativarCartoes', checked)}
-        label="Cativar cartões de crédito em incumprimento - com o user FECHO – 7675"
-      />
-      
-      <CheckboxField 
-        id="abrirBcaDireto" 
-        checked={tasks.abrirBcaDireto}
-        onCheckedChange={(checked) => handleCheckboxChange('abrirBcaDireto', checked)}
-        label="Abrir o BCADireto percurso 49162 – Validar transações"
-      />
-      
-      <CheckboxField 
-        id="abrirServidoresBanka" 
-        checked={tasks.abrirServidoresBanka}
-        onCheckedChange={(checked) => handleCheckboxChange('abrirServidoresBanka', checked)}
-        label="User Fecho, Abril servidores Banka remota IN1/IN3/IN4"
-      />
-      
-      <CheckboxField 
-        id="atualizarTelefonesOffline" 
-        checked={tasks.atualizarTelefonesOffline}
-        onCheckedChange={(checked) => handleCheckboxChange('atualizarTelefonesOffline', checked)}
-        label="Atualiza Telefones tratados no OFFLINE- percurso 768976"
-      />
-      
-      <CheckboxField 
-        id="verificarReplicacao" 
-        checked={tasks.verificarReplicacao}
-        onCheckedChange={(checked) => handleCheckboxChange('verificarReplicacao', checked)}
-        label="Verificar Replicação"
-      />
-      
-      <CheckboxField 
-        id="enviarFicheiroCsv" 
-        checked={tasks.enviarFicheiroCsv}
-        onCheckedChange={(checked) => handleCheckboxChange('enviarFicheiroCsv', checked)}
-        label="Enviar ficheiro CSV (Comunicação Saldo Véspera)"
-      />
-      
-      <CheckboxField 
-        id="transferirFicheirosLiquidity" 
-        checked={tasks.transferirFicheirosLiquidity}
-        onCheckedChange={(checked) => handleCheckboxChange('transferirFicheirosLiquidity', checked)}
-        label="Transferência ficheiros SSM Liquidity Exercices (Confirmação)"
-      />
-      
-      <CheckboxField 
-        id="percurso76921" 
-        checked={tasks.percurso76921}
-        onCheckedChange={(checked) => handleCheckboxChange('percurso76921', checked)}
-        label="Fazer o percurso 76921 – Limpeza Ficheiro BRLOGED (Dia 1 de cada Mês)"
-      />
-      
-      <CheckboxField 
-        id="percurso76922" 
-        checked={tasks.percurso76922}
-        onCheckedChange={(checked) => handleCheckboxChange('percurso76922', checked)}
-        label="Fazer o percurso 76922 - Reorganiza BRLOGED (Dia 2 de cada Mês)"
-      />
-      
-      <CheckboxField 
-        id="percurso76923" 
-        checked={tasks.percurso76923}
-        onCheckedChange={(checked) => handleCheckboxChange('percurso76923', checked)}
-        label="Fazer o percurso 76923 - Reorganiza GBMVCO (Dia 3 de cada Mês)"
-      />
-      
-      <CheckboxField 
-        id="abrirServidoresTesteProducao" 
-        checked={tasks.abrirServidoresTesteProducao}
-        onCheckedChange={(checked) => handleCheckboxChange('abrirServidoresTesteProducao', checked)}
-        label="Abrir Servidores Teste e Produção"
-      />
-      
-      <CheckboxField 
-        id="impressaoCheques" 
-        checked={tasks.impressaoCheques}
-        onCheckedChange={(checked) => handleCheckboxChange('impressaoCheques', checked)}
-        label="Impressão Cheques e respectivos Diários (verificação dos mesmos)"
-      />
-      
-      <CheckboxField 
-        id="arquivarCheques" 
-        checked={tasks.arquivarCheques}
-        onCheckedChange={(checked) => handleCheckboxChange('arquivarCheques', checked)}
-        label="Arquivar Cheques e respectivos Diários"
-      />
-      
-      <TimeCheckboxField
-        id="terminoFecho"
-        checked={tasks.terminoFecho}
-        timeValue={tasks.terminoFechoHora}
-        onCheckedChange={(checked) => handleCheckboxChange('terminoFecho', checked)}
-        onTimeChange={(value) => onTaskChange('terminoFechoHora', value)}
-        label="Término do Fecho"
-      />
-      
-      {/* Show only at the end of the month - Placed right after Término do Fecho */}
-      {isEndOfMonth && (
+      <div className="space-y-1 pl-2">
         <CheckboxField 
-          id="limpaGbtrlogFimMes" 
-          checked={tasks.limpaGbtrlogFimMes || false}
-          onCheckedChange={(checked) => handleCheckboxChange('limpaGbtrlogFimMes', checked)}
-          label="Chamar Opção 16 - Limpa o GBTRLOG após o Fecho do mês"
+          id="validarFicheiroCcln" 
+          checked={tasks.validarFicheiroCcln}
+          onCheckedChange={(checked) => handleCheckboxChange('validarFicheiroCcln', checked)}
+          label="Validar ficheiro CCLN - 76853"
         />
-      )}
-      
-      <CheckboxField 
-        id="transferirFicheirosDsi" 
-        checked={tasks.transferirFicheirosDsi}
-        onCheckedChange={(checked) => handleCheckboxChange('transferirFicheirosDsi', checked)}
-        label="Transferência ficheiros SSM Liquidity ExercicesDSI-CI/2023"
-      />
+        
+        <CheckboxField 
+          id="aplicarFicheirosCompensacao" 
+          checked={tasks.aplicarFicheirosCompensacao}
+          onCheckedChange={(checked) => handleCheckboxChange('aplicarFicheirosCompensacao', checked)}
+          label="Aplicar ficheiros compensação SISP (CCLN, EDST, EORI, ERMB)"
+        />
+        
+        <SaldoContaField
+          checked={tasks.validarSaldoConta}
+          saldoValue={tasks.saldoContaValor}
+          saldoNegativo={tasks.saldoNegativo}
+          saldoPositivo={tasks.saldoPositivo}
+          onCheckedChange={(checked) => handleCheckboxChange('validarSaldoConta', checked)}
+          onSaldoValueChange={(value) => onTaskChange('saldoContaValor', value)}
+          onSaldoNegativoChange={(checked) => handleCheckboxChange('saldoNegativo', checked)}
+          onSaldoPositivoChange={(checked) => handleCheckboxChange('saldoPositivo', checked)}
+        />
+        
+        <TimeCheckboxField
+          id="abrirRealTime"
+          checked={tasks.abrirRealTime}
+          timeValue={tasks.abrirRealTimeHora}
+          onCheckedChange={(checked) => handleCheckboxChange('abrirRealTime', checked)}
+          onTimeChange={(value) => onTaskChange('abrirRealTimeHora', value)}
+          label="Abrir o Real-Time"
+        />
+        
+        <CheckboxField 
+          id="verificarTransacoes" 
+          checked={tasks.verificarTransacoes}
+          onCheckedChange={(checked) => handleCheckboxChange('verificarTransacoes', checked)}
+          label="Verificar a entrada de transações 3100 4681"
+        />
+        
+        <CheckboxField 
+          id="aplicarFicheiroVisa" 
+          checked={tasks.aplicarFicheiroVisa}
+          onCheckedChange={(checked) => handleCheckboxChange('aplicarFicheiroVisa', checked)}
+          label="Aplicar ficheiro VISA DAF - com o user FECHO 4131"
+        />
+        
+        <CheckboxField 
+          id="cativarCartoes" 
+          checked={tasks.cativarCartoes}
+          onCheckedChange={(checked) => handleCheckboxChange('cativarCartoes', checked)}
+          label="Cativar cartões de crédito em incumprimento - com o user FECHO – 7675"
+        />
+        
+        <CheckboxField 
+          id="abrirBcaDireto" 
+          checked={tasks.abrirBcaDireto}
+          onCheckedChange={(checked) => handleCheckboxChange('abrirBcaDireto', checked)}
+          label="Abrir o BCADireto percurso 49162 – Validar transações"
+        />
+        
+        <CheckboxField 
+          id="abrirServidoresBanka" 
+          checked={tasks.abrirServidoresBanka}
+          onCheckedChange={(checked) => handleCheckboxChange('abrirServidoresBanka', checked)}
+          label="User Fecho, Abril servidores Banka remota IN1/IN3/IN4"
+        />
+        
+        <CheckboxField 
+          id="atualizarTelefonesOffline" 
+          checked={tasks.atualizarTelefonesOffline}
+          onCheckedChange={(checked) => handleCheckboxChange('atualizarTelefonesOffline', checked)}
+          label="Atualiza Telefones tratados no OFFLINE- percurso 768976"
+        />
+        
+        <CheckboxField 
+          id="verificarReplicacao" 
+          checked={tasks.verificarReplicacao}
+          onCheckedChange={(checked) => handleCheckboxChange('verificarReplicacao', checked)}
+          label="Verificar Replicação"
+        />
+        
+        <CheckboxField 
+          id="enviarFicheiroCsv" 
+          checked={tasks.enviarFicheiroCsv}
+          onCheckedChange={(checked) => handleCheckboxChange('enviarFicheiroCsv', checked)}
+          label="Enviar ficheiro CSV (Comunicação Saldo Véspera)"
+        />
+        
+        <CheckboxField 
+          id="transferirFicheirosLiquidity" 
+          checked={tasks.transferirFicheirosLiquidity}
+          onCheckedChange={(checked) => handleCheckboxChange('transferirFicheirosLiquidity', checked)}
+          label="Transferência ficheiros SSM Liquidity Exercices (Confirmação)"
+        />
+        
+        <CheckboxField 
+          id="percurso76921" 
+          checked={tasks.percurso76921}
+          onCheckedChange={(checked) => handleCheckboxChange('percurso76921', checked)}
+          label="Fazer o percurso 76921 – Limpeza Ficheiro BRLOGED (Dia 1 de cada Mês)"
+        />
+        
+        <CheckboxField 
+          id="percurso76922" 
+          checked={tasks.percurso76922}
+          onCheckedChange={(checked) => handleCheckboxChange('percurso76922', checked)}
+          label="Fazer o percurso 76922 - Reorganiza BRLOGED (Dia 2 de cada Mês)"
+        />
+        
+        <CheckboxField 
+          id="percurso76923" 
+          checked={tasks.percurso76923}
+          onCheckedChange={(checked) => handleCheckboxChange('percurso76923', checked)}
+          label="Fazer o percurso 76923 - Reorganiza GBMVCO (Dia 3 de cada Mês)"
+        />
+        
+        <CheckboxField 
+          id="abrirServidoresTesteProducao" 
+          checked={tasks.abrirServidoresTesteProducao}
+          onCheckedChange={(checked) => handleCheckboxChange('abrirServidoresTesteProducao', checked)}
+          label="Abrir Servidores Teste e Produção"
+        />
+        
+        <CheckboxField 
+          id="impressaoCheques" 
+          checked={tasks.impressaoCheques}
+          onCheckedChange={(checked) => handleCheckboxChange('impressaoCheques', checked)}
+          label="Impressão Cheques e respectivos Diários (verificação dos mesmos)"
+        />
+        
+        <CheckboxField 
+          id="arquivarCheques" 
+          checked={tasks.arquivarCheques}
+          onCheckedChange={(checked) => handleCheckboxChange('arquivarCheques', checked)}
+          label="Arquivar Cheques e respectivos Diários"
+        />
+        
+        {/* Important task - Término do Fecho */}
+        <div className="bg-green-50 border-l-4 border-green-600 rounded-r-lg my-2">
+          <TimeCheckboxField
+            id="terminoFecho"
+            checked={tasks.terminoFecho}
+            timeValue={tasks.terminoFechoHora}
+            onCheckedChange={(checked) => handleCheckboxChange('terminoFecho', checked)}
+            onTimeChange={(value) => onTaskChange('terminoFechoHora', value)}
+            label="Término do Fecho"
+          />
+        </div>
+        
+        {/* Show only at the end of the month */}
+        {isEndOfMonth && (
+          <div className="bg-amber-50 border-l-4 border-amber-500 rounded-r-lg my-2 px-2">
+            <CheckboxField 
+              id="limpaGbtrlogFimMes" 
+              checked={tasks.limpaGbtrlogFimMes || false}
+              onCheckedChange={(checked) => handleCheckboxChange('limpaGbtrlogFimMes', checked)}
+              label="Chamar Opção 16 - Limpa o GBTRLOG após o Fecho do mês"
+            />
+          </div>
+        )}
+        
+        <CheckboxField 
+          id="transferirFicheirosDsi" 
+          checked={tasks.transferirFicheirosDsi}
+          onCheckedChange={(checked) => handleCheckboxChange('transferirFicheirosDsi', checked)}
+          label="Transferência ficheiros SSM Liquidity ExercicesDSI-CI/2023"
+        />
+      </div>
     </div>
   );
 };

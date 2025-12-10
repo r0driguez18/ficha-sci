@@ -1,6 +1,13 @@
 import { jsPDF } from 'jspdf';
 import { Turno1Tasks } from '@/types/taskboard';
-import { checkPageSpace, drawCheckbox, drawObservationsBox, ensureBoolean } from './pdfCommon';
+import { 
+  checkPageSpace, 
+  drawCheckbox, 
+  drawObservationsBox, 
+  ensureBoolean,
+  drawSectionHeader,
+  BCA_COLORS
+} from './pdfCommon';
 
 export const renderTurno1Tasks = (
   doc: jsPDF, 
@@ -34,12 +41,16 @@ export const renderTurno1Tasks = (
     
     drawCheckbox(doc, 15, y - 3, ensureBoolean(tasks[item.key as keyof typeof tasks]));
     doc.setFontSize(10);
-    doc.setFont("helvetica", "normal"); // Ensure consistent normal font weight
+    doc.setFont("helvetica", "normal");
     
     // Handle the "Enviar:" special case
     if (item.key === 'enviar') {
-      doc.text(item.text, 20, y);
-      y += 6;  // Add extra line space after "Enviar:" label
+      doc.setTextColor(...BCA_COLORS.blue);
+      doc.setFont("helvetica", "bold");
+      doc.text(item.text, 22, y);
+      doc.setTextColor(0, 0, 0);
+      doc.setFont("helvetica", "normal");
+      y += 6;
       
       // Process sub-items in rows rather than inline for "Enviar"
       const enviarSubItems = [
@@ -55,23 +66,22 @@ export const renderTurno1Tasks = (
       for (let i = 0; i < enviarSubItems.length; i += 3) {
         y = checkPageSpace(doc, y, 8);
         
-        // First column items (up to 3 per row)
         for (let j = 0; j < 3; j++) {
           if (i + j < enviarSubItems.length) {
             const subItem = enviarSubItems[i + j];
             const itemKey = subItem.key as keyof typeof tasks;
-            const xOffset = 25 + (j * 40); // Space items horizontally
+            const xOffset = 25 + (j * 40);
             
             drawCheckbox(doc, xOffset, y - 3, ensureBoolean(tasks[itemKey]));
-            doc.text(subItem.text, xOffset + 5, y);
+            doc.text(subItem.text, xOffset + 6, y);
           }
         }
         
-        y += 6; // Move to next row after displaying up to 3 items
+        y += 6;
       }
     } else if (item.key === 'verificarRecepcaoSisp') {
       // Handle Verificar Recepção SISP with ASC, CSV, ECI checkboxes
-      doc.text(item.text, 20, y);
+      doc.text(item.text, 22, y);
       
       let xOffset = 115;
       const sispItems = [
@@ -83,18 +93,22 @@ export const renderTurno1Tasks = (
       sispItems.forEach(subItem => {
         const itemKey = subItem.key as keyof typeof tasks;
         drawCheckbox(doc, xOffset, y - 3, ensureBoolean(tasks[itemKey]));
-        doc.text(subItem.text, xOffset + 5, y);
-        xOffset += 20;
+        doc.text(subItem.text, xOffset + 6, y);
+        xOffset += 22;
       });
       
       y += 6;
     } else {
-      doc.text(item.text, 20, y);
+      doc.text(item.text, 22, y);
       y += 6;
     }
     
     // Add sub-items for backupsDiferidos
     if (item.key === 'backupsDiferidos') {
+      // Subsection with subtle styling
+      doc.setFillColor(...BCA_COLORS.lightGray);
+      doc.rect(20, y - 4, 170, 40, 'F');
+      
       const backupItems = [
         { key: 'bmjrn', text: "BMJRN (2 tapes/alterar 1 por mês/inicializar no inicio do mês)" },
         { key: 'grjrcv', text: "GRJRCV (1 tape)" },
@@ -107,7 +121,7 @@ export const renderTurno1Tasks = (
       backupItems.forEach(item => {
         y = checkPageSpace(doc, y, 8);
         drawCheckbox(doc, 25, y - 3, ensureBoolean(tasks[item.key as keyof typeof tasks]));
-        doc.text(item.text, 30, y);
+        doc.text(item.text, 32, y);
         y += 6;
       });
     }
@@ -115,9 +129,11 @@ export const renderTurno1Tasks = (
     // Add sub-items for enviarFicheiroCom
     if (item.key === 'enviarFicheiroCom') {
       y = checkPageSpace(doc, y, 8);
+      doc.setTextColor(...BCA_COLORS.blue);
       doc.text("Dias:", 25, y);
+      doc.setTextColor(0, 0, 0);
       
-      let xOffset = 40;
+      let xOffset = 42;
       const comDaysItems = [
         { key: 'dia01', text: '01' },
         { key: 'dia08', text: '08' },
@@ -127,8 +143,8 @@ export const renderTurno1Tasks = (
       
       comDaysItems.forEach(item => {
         drawCheckbox(doc, xOffset, y - 3, ensureBoolean(tasks[item.key as keyof typeof tasks]));
-        doc.text(item.text, xOffset + 5, y);
-        xOffset += 20;
+        doc.text(item.text, xOffset + 6, y);
+        xOffset += 22;
       });
       y += 6;
     }
