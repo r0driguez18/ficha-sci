@@ -290,9 +290,11 @@ const TaskboardFinalMesNaoUtil = () => {
         if (!result.error) {
           savedCount++;
           
-          if (row.tipo === 'cobrancas' && row.nomeAs && user?.id) {
+          if (row.tipo === 'cobrancas' && user?.id) {
+            const ficheiroNome = row.nomeAs?.trim() || row.tarefa?.trim() || 'Cobrança sem nome';
             try {
-              await createCobrancaRetorno(user.id, date, row.nomeAs);
+              console.log('Criando retorno para cobrança:', ficheiroNome);
+              await createCobrancaRetorno(user.id, date, ficheiroNome);
             } catch (returnErr) {
               console.error('Error creating collection return:', returnErr);
             }
