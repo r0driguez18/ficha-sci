@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { saveFileProcess } from '@/services/fileProcessService';
+import { createCobrancaRetorno } from '@/services/cobrancasRetornoService';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Turno3TasksComponent } from '@/components/tasks/Turno3Tasks';
 import { generateTaskboardPDF } from '@/utils/pdfGenerator';
@@ -280,11 +281,21 @@ const [isLoading, setIsLoading] = useState(true);
           task: row.tarefa,
           as400_name: row.tarefa.trim() !== '' && row.nomeAs.trim() === '' ? null : row.nomeAs,
           operation_number: row.operacao || null,
-          executed_by: row.executado
+          executed_by: row.executado,
+          tipo: row.tipo || null
         });
         
         if (!result.error) {
           savedCount++;
+          
+          // If it's a collection process, create a return record
+          if (row.tipo === 'cobrancas' && row.nomeAs && user?.id) {
+            try {
+              await createCobrancaRetorno(user.id, date, row.nomeAs);
+            } catch (returnErr) {
+              console.error('Error creating collection return:', returnErr);
+            }
+          }
         } else if (result.error.message && result.error.message.includes("já existe")) {
           duplicateCount++;
         }

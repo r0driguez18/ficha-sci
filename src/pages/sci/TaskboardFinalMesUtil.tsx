@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { saveFileProcess } from '@/services/fileProcessService';
+import { createCobrancaRetorno } from '@/services/cobrancasRetornoService';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Turno1TasksComponent } from '@/components/tasks/Turno1Tasks';
 import { Turno2TasksComponent } from '@/components/tasks/Turno2Tasks';
@@ -286,11 +287,20 @@ const TaskboardFinalMesUtil = () => {
           task: row.tarefa,
           as400_name: row.tarefa.trim() !== '' && row.nomeAs.trim() === '' ? null : row.nomeAs,
           operation_number: row.operacao || null,
-          executed_by: row.executado
+          executed_by: row.executado,
+          tipo: row.tipo || null
         });
         
         if (!result.error) {
           savedCount++;
+          
+          if (row.tipo === 'cobrancas' && row.nomeAs && user?.id) {
+            try {
+              await createCobrancaRetorno(user.id, date, row.nomeAs);
+            } catch (returnErr) {
+              console.error('Error creating collection return:', returnErr);
+            }
+          }
         } else if (result.error.message && result.error.message.includes("já existe")) {
           duplicateCount++;
         }
