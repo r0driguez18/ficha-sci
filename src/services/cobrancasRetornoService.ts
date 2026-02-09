@@ -34,7 +34,13 @@ export async function createCobrancaRetorno(
       retorno_enviado: false
     })
     .select()
-    .single();
+    .maybeSingle();
+
+  if (error) {
+    console.error('Erro ao criar retorno de cobrança:', error);
+  } else {
+    console.log('Retorno de cobrança criado com sucesso:', data);
+  }
 
   return { data, error };
 }
