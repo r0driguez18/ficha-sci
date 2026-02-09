@@ -403,7 +403,8 @@ const [isLoading, setIsLoading] = useState(true);
           task: row.tarefa,
           as400_name: row.tarefa.trim() !== '' && row.nomeAs.trim() === '' ? null : row.nomeAs,
           operation_number: row.operacao || null,
-          executed_by: row.executado
+          executed_by: row.executado,
+          tipo: row.tipo || null
         });
         
         if (!result.error) {
