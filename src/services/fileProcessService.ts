@@ -7,6 +7,7 @@ export interface FileProcessData {
   operation_number?: string | null;
   executed_by: string;
   is_salary?: boolean;
+  tipo?: string | null;
 }
 
 export interface FileProcess {
@@ -38,7 +39,9 @@ export const saveFileProcess = async (data: FileProcessData) => {
       // Set operation_number to null if not provided
       operation_number: data.operation_number && data.operation_number.trim() !== '' 
         ? data.operation_number 
-        : null
+        : null,
+      // Include tipo for categorization
+      tipo: data.tipo || null
     };
     
     console.log('Dados a inserir:', processData);
