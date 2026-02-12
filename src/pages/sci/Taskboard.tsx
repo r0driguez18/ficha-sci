@@ -433,8 +433,18 @@ const [isLoading, setIsLoading] = useState(true);
     }
   };
 
-  // Save taskboard data to Supabase (without signature validation)
+   // Save taskboard data to Supabase (without signature validation)
   const handleSave = async () => {
+    // Validate operator, entrada, saida for all turns
+    const turnLabels = { turno1: 'Turno 1', turno2: 'Turno 2', turno3: 'Turno 3' };
+    for (const key of ['turno1', 'turno2', 'turno3'] as TurnKey[]) {
+      const td = turnData[key];
+      if (!td.operator || !td.entrada || !td.saida) {
+        toast.error(`Preencha Operador, Entrada e Saída do ${turnLabels[key]} antes de guardar.`);
+        return;
+      }
+    }
+
     try {
       setIsLoading(true);
 

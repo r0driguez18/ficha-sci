@@ -51,11 +51,11 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
         <TableHeader>
           <TableRow>
             <TableHead className="w-20">Hora</TableHead>
-            <TableHead className="w-1/5">Tarefa</TableHead>
+            <TableHead className="w-1/4">Tarefa</TableHead>
             <TableHead className="w-1/5">Nome AS400</TableHead>
-            <TableHead className="w-24">Nº Operação</TableHead>
-            <TableHead className="w-1/5">Tipo de Processamento</TableHead>
-            <TableHead className="w-1/5">Executado Por</TableHead>
+            <TableHead className="w-32">Nº Operação</TableHead>
+            <TableHead className="w-28">Tipo</TableHead>
+            <TableHead className="w-28">Executado</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -89,6 +89,7 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
                   onChange={(e) => onInputChange(row.id, 'operacao', e.target.value)}
                   pattern="[0-9]*"
                   maxLength={9}
+                  className="min-w-[110px]"
                 />
               </TableCell>
               <TableCell>
