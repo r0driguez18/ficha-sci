@@ -317,6 +317,16 @@ const TaskboardFinalMesUtil = () => {
   };
 
   const handleSave = async () => {
+    // Validate operator, entrada, saida for all turns
+    const turnLabels = { turno1: 'Turno 1', turno2: 'Turno 2', turno3: 'Turno 3' };
+    for (const key of ['turno1', 'turno2', 'turno3'] as Array<keyof TurnDataType>) {
+      const td = turnData[key];
+      if (!td.operator || !td.entrada || !td.saida) {
+        toast.error(`Preencha Operador, Entrada e Saída do ${turnLabels[key]} antes de guardar.`);
+        return;
+      }
+    }
+
     // Verificar se está assinado primeiro
     if (!signerName || !signatureDataUrl) {
       toast.error("Não é possível guardar sem assinatura. Preencha o nome do responsável e assine a ficha.");

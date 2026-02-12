@@ -312,6 +312,12 @@ const [isLoading, setIsLoading] = useState(true);
   };
 
   const handleSave = async () => {
+    // Validate operator, entrada, saida
+    if (!turnData.operator || !turnData.entrada || !turnData.saida) {
+      toast.error("Preencha Operador, Entrada e Saída antes de guardar.");
+      return;
+    }
+
     // Verificar se está assinado primeiro
     if (!signerName || !signatureDataUrl) {
       toast.error("Não é possível guardar sem assinatura. Preencha o nome do responsável e assine a ficha.");
