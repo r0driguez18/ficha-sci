@@ -478,9 +478,27 @@ const [isLoading, setIsLoading] = useState(true);
       } else if (duplicateCount > 0) {
         toast.info(`Todos os ${duplicateCount} processamentos já existem no sistema.`);
       }
+      // Save to exported_taskboards for history
+      const signature = {
+        signerName: signerName || '',
+        signedAt: new Date().toISOString(),
+        imageDataUrl: signatureDataUrl
+      };
+      
+      await saveExportedTaskboard(
+        user.data.user.id,
+        getFormType(),
+        date,
+        turnData,
+        tasks,
+        tableRows,
+        signature
+      );
     } catch (error) {
       console.error('Erro ao guardar ficha:', error);
       toast.error('Erro ao guardar ficha. Tente novamente.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
