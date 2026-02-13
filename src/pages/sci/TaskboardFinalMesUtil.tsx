@@ -24,7 +24,7 @@ const operatorsList = [
   { value: "nalves", label: "Nelson Alves" },
   { value: "etavares", label: "Evandro Tavares" },
   { value: "edelgado", label: "Emanuel Delgado" },
-  { value: "sbarbosa", label: "Silvino Barbosa" },
+  { value: "ebrito", label: "Elvis Brito" },
   { value: "lspencer", label: "Louis Spencer" }
 ];
 
@@ -575,7 +575,7 @@ const TaskboardFinalMesUtil = () => {
                   saida={turnData.turno1.saida}
                   title="Operador Turno 1"
                   operatorsList={operatorsList}
-                  onTurnDataChange={(field, value) => handleTurnDataChange('turno1', field, value)}
+                  onTurnDataChange={(_turno, field, value) => handleTurnDataChange('turno1', field, value)}
                 />
                 
                 <div className="mt-6">
@@ -598,7 +598,7 @@ const TaskboardFinalMesUtil = () => {
                   saida={turnData.turno2.saida}
                   title="Operador Turno 2"
                   operatorsList={operatorsList}
-                  onTurnDataChange={(field, value) => handleTurnDataChange('turno2', field, value)}
+                  onTurnDataChange={(_turno, field, value) => handleTurnDataChange('turno2', field, value)}
                 />
                 
                 <div className="mt-6">
@@ -621,7 +621,7 @@ const TaskboardFinalMesUtil = () => {
                   saida={turnData.turno3.saida}
                   title="Operador Turno 3"
                   operatorsList={operatorsList}
-                  onTurnDataChange={(field, value) => handleTurnDataChange('turno3', field, value)}
+                  onTurnDataChange={(_turno, field, value) => handleTurnDataChange('turno3', field, value)}
                 />
                 
                 <div className="mt-6">
