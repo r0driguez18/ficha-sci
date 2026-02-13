@@ -22,7 +22,7 @@ const operatorsList = [
   { value: "nalves", label: "Nelson Alves" },
   { value: "etavares", label: "Evandro Tavares" },
   { value: "edelgado", label: "Emanuel Delgado" },
-  { value: "sbarbosa", label: "Silvino Barbosa" },
+  { value: "ebrito", label: "Elvis Brito" },
   { value: "lspencer", label: "Louis Spencer" }
 ];
 
@@ -584,7 +584,7 @@ const [isLoading, setIsLoading] = useState(true);
               saida={turnData.saida}
               title="Operador"
               operatorsList={operatorsList}
-              onTurnDataChange={handleTurnDataChange}
+              onTurnDataChange={(_turno, field, value) => handleTurnDataChange(field, value)}
             />
             
             <div className="mt-6">
