@@ -48,7 +48,8 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/auth/login" element={<Login />} />
-              
+              <Route path="/reset-password" element={<ResetPassword />} />
+
               {/* Protected Routes */}
               <Route path="/dashboard" element={<PrivateRoute><DashboardLayout><Dashboard /></DashboardLayout></PrivateRoute>} />
               
