@@ -2,7 +2,7 @@
 import { jsPDF } from 'jspdf';
 import { TasksType, TurnDataType, TurnKey } from '@/types/taskboard';
 import { TaskTableRow } from '@/types/taskTableRow';
-import { centerText, addBCALogo, BCA_COLORS, drawSeparator } from './pdf/pdfCommon';
+import { centerText, BCA_COLORS, drawSeparator } from './pdf/pdfCommon';
 import { renderTurno1Tasks } from './pdf/pdfTurno1';
 import { renderTurno2Tasks } from './pdf/pdfTurno2';
 import { renderTurno3Tasks } from './pdf/pdfTurno3';
