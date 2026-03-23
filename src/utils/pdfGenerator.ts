@@ -20,8 +20,7 @@ export const generateTaskboardPDF = (
   const doc = new jsPDF();
   let y = 15;
   
-  // Add BCA Logo
-  addBCALogo(doc, 15, 8, 25);
+  // Header
   
   // Document header with BCA colors
   doc.setTextColor(...BCA_COLORS.darkBlue);
@@ -134,9 +133,7 @@ export const generateTaskboardPDF = (
   doc.addPage();
   y = 20;
   
-  // Add logo to signature page
-  addBCALogo(doc, 15, 8, 25);
-  
+  // Signature page header
   doc.setTextColor(...BCA_COLORS.darkBlue);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
