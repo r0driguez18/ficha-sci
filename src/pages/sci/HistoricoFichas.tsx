@@ -346,6 +346,26 @@ export default function HistoricoFichas() {
           )}
         </CardContent>
       </Card>
+
+      {/* PDF Preview Dialog */}
+      <Dialog open={!!pdfPreviewUrl} onOpenChange={(open) => { if (!open) closePdfPreview(); }}>
+        <DialogContent className="max-w-5xl h-[85vh]">
+          <DialogHeader>
+            <DialogTitle>Preview do PDF</DialogTitle>
+            <DialogDescription>
+              Visualização da ficha de procedimentos em formato PDF
+            </DialogDescription>
+          </DialogHeader>
+          {pdfPreviewUrl && (
+            <iframe
+              src={pdfPreviewUrl}
+              className="w-full flex-1 rounded border"
+              style={{ height: 'calc(85vh - 100px)' }}
+              title="PDF Preview"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
