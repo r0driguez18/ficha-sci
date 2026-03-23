@@ -151,6 +151,36 @@ export default function HistoricoFichas() {
     }
   };
 
+  const handlePreviewPDF = (record: ExportedTaskboard) => {
+    try {
+      const pdf = generateTaskboardPDF(
+        record.date,
+        record.turn_data,
+        record.tasks,
+        record.table_rows,
+        record.form_type === 'dia-nao-util' || record.form_type === 'final-mes-nao-util',
+        record.form_type === 'final-mes-util' || record.form_type === 'final-mes-nao-util',
+        record.pdf_signature
+      );
+      const blob = pdf.output('blob');
+      const url = URL.createObjectURL(blob);
+      if (pdfPreviewUrl) URL.revokeObjectURL(pdfPreviewUrl);
+      setPdfPreviewUrl(url);
+    } catch (error) {
+      console.error('Erro ao gerar preview PDF:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao gerar preview do PDF",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const closePdfPreview = () => {
+    if (pdfPreviewUrl) URL.revokeObjectURL(pdfPreviewUrl);
+    setPdfPreviewUrl(null);
+  };
+
   const getSignatureStatus = (record: ExportedTaskboard) => {
     return record.pdf_signature?.imageDataUrl && record.pdf_signature?.signerName;
   };
