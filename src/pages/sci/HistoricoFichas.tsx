@@ -14,7 +14,7 @@ import { FormType } from '@/services/taskboardService';
 import { generateTaskboardPDF } from '@/utils/pdfGenerator';
 import { supabase } from '@/integrations/supabase/client';
 import { getExportedTaskboards, ExportedTaskboard } from '@/services/exportedTaskboardService';
-import { TaskboardPreview } from '@/components/taskboard/TaskboardPreview';
+
 import { 
   FileDown, 
   Eye, 
@@ -55,7 +55,7 @@ export default function HistoricoFichas() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [formTypeFilter, setFormTypeFilter] = useState<string>('all');
-  const [selectedRecord, setSelectedRecord] = useState<ExportedTaskboard | null>(null);
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -149,6 +149,36 @@ export default function HistoricoFichas() {
         variant: "destructive"
       });
     }
+  };
+
+  const handlePreviewPDF = (record: ExportedTaskboard) => {
+    try {
+      const pdf = generateTaskboardPDF(
+        record.date,
+        record.turn_data,
+        record.tasks,
+        record.table_rows,
+        record.form_type === 'dia-nao-util' || record.form_type === 'final-mes-nao-util',
+        record.form_type === 'final-mes-util' || record.form_type === 'final-mes-nao-util',
+        record.pdf_signature
+      );
+      const blob = pdf.output('blob');
+      const url = URL.createObjectURL(blob);
+      if (pdfPreviewUrl) URL.revokeObjectURL(pdfPreviewUrl);
+      setPdfPreviewUrl(url);
+    } catch (error) {
+      console.error('Erro ao gerar preview PDF:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao gerar preview do PDF",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const closePdfPreview = () => {
+    if (pdfPreviewUrl) URL.revokeObjectURL(pdfPreviewUrl);
+    setPdfPreviewUrl(null);
   };
 
   const getSignatureStatus = (record: ExportedTaskboard) => {
@@ -292,30 +322,13 @@ export default function HistoricoFichas() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => setSelectedRecord(record)}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                            <DialogHeader>
-                              <DialogTitle>
-                                {formTypeLabels[record.form_type]} - {record.date}
-                              </DialogTitle>
-                              <DialogDescription>
-                                Visualização da ficha de procedimentos
-                              </DialogDescription>
-                            </DialogHeader>
-                            {selectedRecord && (
-                              <TaskboardPreview taskboard={selectedRecord} />
-                            )}
-                          </DialogContent>
-                        </Dialog>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handlePreviewPDF(record)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
 
                         <Button 
                           variant="default" 
@@ -333,6 +346,26 @@ export default function HistoricoFichas() {
           )}
         </CardContent>
       </Card>
+
+      {/* PDF Preview Dialog */}
+      <Dialog open={!!pdfPreviewUrl} onOpenChange={(open) => { if (!open) closePdfPreview(); }}>
+        <DialogContent className="max-w-5xl h-[85vh]">
+          <DialogHeader>
+            <DialogTitle>Preview do PDF</DialogTitle>
+            <DialogDescription>
+              Visualização da ficha de procedimentos em formato PDF
+            </DialogDescription>
+          </DialogHeader>
+          {pdfPreviewUrl && (
+            <iframe
+              src={pdfPreviewUrl}
+              className="w-full flex-1 rounded border"
+              style={{ height: 'calc(85vh - 100px)' }}
+              title="PDF Preview"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
