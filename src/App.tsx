@@ -8,6 +8,7 @@ import { AuthProvider } from "./components/auth/AuthProvider";
 import { PrivateRoute } from "./components/auth/PrivateRoute";
 import { ThemeProvider } from "./hooks/use-theme";
 import Login from "./pages/auth/Login";
+import ResetPassword from "./pages/auth/ResetPassword";
 
 // Import pages
 import Dashboard from "./pages/Dashboard";
