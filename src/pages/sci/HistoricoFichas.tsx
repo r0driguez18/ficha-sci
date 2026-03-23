@@ -14,7 +14,7 @@ import { FormType } from '@/services/taskboardService';
 import { generateTaskboardPDF } from '@/utils/pdfGenerator';
 import { supabase } from '@/integrations/supabase/client';
 import { getExportedTaskboards, ExportedTaskboard } from '@/services/exportedTaskboardService';
-import { TaskboardPreview } from '@/components/taskboard/TaskboardPreview';
+
 import { 
   FileDown, 
   Eye, 
@@ -55,7 +55,7 @@ export default function HistoricoFichas() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [formTypeFilter, setFormTypeFilter] = useState<string>('all');
-  const [selectedRecord, setSelectedRecord] = useState<ExportedTaskboard | null>(null);
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -292,30 +292,13 @@ export default function HistoricoFichas() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => setSelectedRecord(record)}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                            <DialogHeader>
-                              <DialogTitle>
-                                {formTypeLabels[record.form_type]} - {record.date}
-                              </DialogTitle>
-                              <DialogDescription>
-                                Visualização da ficha de procedimentos
-                              </DialogDescription>
-                            </DialogHeader>
-                            {selectedRecord && (
-                              <TaskboardPreview taskboard={selectedRecord} />
-                            )}
-                          </DialogContent>
-                        </Dialog>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handlePreviewPDF(record)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
 
                         <Button 
                           variant="default" 
