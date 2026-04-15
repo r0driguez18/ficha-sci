@@ -10,7 +10,7 @@ interface SidebarHeaderProps {
 
 export const SidebarHeader = ({ collapsed, setCollapsed }: SidebarHeaderProps) => {
   return (
-    <div className="flex h-16 items-center justify-between px-4 py-6 border-b border-blue-800">
+    <div className="flex h-16 items-center justify-between px-4 py-6 border-b border-sidebar-border">
       {!collapsed && (
         <div className="flex-1 flex items-center">
           <img 
@@ -24,10 +24,11 @@ export const SidebarHeader = ({ collapsed, setCollapsed }: SidebarHeaderProps) =
       <Button
         variant="ghost"
         size="icon"
-        className="text-white hover:text-white hover:bg-white/10 ml-auto"
+        className="text-sidebar-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent ml-auto"
         onClick={() => setCollapsed(!collapsed)}
+        aria-label={collapsed ? 'Expandir menu' : 'Recolher menu'}
       >
-        {collapsed ? <ChevronRight className="h-5 w-5 text-white" /> : <ChevronLeft className="h-5 w-5" />}
+        {collapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
       </Button>
     </div>
   );
