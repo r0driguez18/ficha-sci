@@ -2,11 +2,7 @@
 import React from 'react';
 import { useAuth } from '../../auth/AuthProvider';
 
-interface SidebarFooterProps {
-  collapsed: boolean;
-}
-
-export const SidebarFooter = ({ collapsed }: SidebarFooterProps) => {
+export const SidebarFooter = () => {
   const { user } = useAuth();
   
   const userEmail = user?.email || 'No email';
@@ -15,23 +11,15 @@ export const SidebarFooter = ({ collapsed }: SidebarFooterProps) => {
   
   return (
     <div className="p-4 border-t border-sidebar-border">
-      {!collapsed ? (
-        <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-full bg-sidebar-primary/20 flex items-center justify-center text-sidebar-primary-foreground font-semibold text-sm shrink-0">
-            {userInitial}
-          </div>
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-sidebar-foreground truncate">{userName}</p>
-            <p className="text-xs text-sidebar-foreground/50 truncate">{userEmail}</p>
-          </div>
+      <div className="flex items-center gap-3">
+        <div className="h-9 w-9 rounded-full bg-sidebar-primary/20 flex items-center justify-center text-sidebar-primary-foreground font-semibold text-sm shrink-0">
+          {userInitial}
         </div>
-      ) : (
-        <div className="flex justify-center">
-          <div className="h-9 w-9 rounded-full bg-sidebar-primary/20 flex items-center justify-center text-sidebar-primary-foreground font-semibold text-sm">
-            {userInitial}
-          </div>
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-sidebar-foreground truncate">{userName}</p>
+          <p className="text-xs text-sidebar-foreground/50 truncate">{userEmail}</p>
         </div>
-      )}
+      </div>
     </div>
   );
 };
