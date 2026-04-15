@@ -13,10 +13,7 @@ import {
   Home,
   PieChart,
   Settings,
-  Calendar,
   Search,
-  History,
-  ArrowLeftRight,
   MessageCircle
 } from 'lucide-react';
 
@@ -43,17 +40,17 @@ export const SidebarContent = ({ collapsed }: SidebarContentProps) => {
 
   return (
     <>
-      <div className="flex-1 overflow-auto py-4 px-4">
+      <div className="flex-1 overflow-auto py-4 px-3">
         {/* Search Button */}
         {!collapsed && (
-          <div className="mb-4">
+          <div className="mb-5">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setIsSearchOpen(true)}
-              className="w-full justify-start text-white hover:bg-white/10 border border-white/20"
+              className="w-full justify-start text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent border border-sidebar-border rounded-lg h-9"
             >
-              <Search className="h-4 w-4 mr-2" />
+              <Search className="h-4 w-4 mr-2 shrink-0" />
               <span className="text-sm">Pesquisar...</span>
             </Button>
           </div>
@@ -70,7 +67,10 @@ export const SidebarContent = ({ collapsed }: SidebarContentProps) => {
           </div>
           
           <div>
-            <div className={cn("mb-2", collapsed ? "px-2 sr-only" : "px-3 text-xs font-semibold text-white/40 uppercase")}>
+            <div className={cn(
+              "mb-2",
+              collapsed ? "px-2 sr-only" : "px-3 text-[11px] font-semibold tracking-wider text-sidebar-foreground/30 uppercase"
+            )}>
               Módulos
             </div>
             <SidebarItem
@@ -115,7 +115,10 @@ export const SidebarContent = ({ collapsed }: SidebarContentProps) => {
           </div>
           
           <div>
-            <div className={cn("mb-2", collapsed ? "px-2 sr-only" : "px-3 text-xs font-semibold text-white/40 uppercase")}>
+            <div className={cn(
+              "mb-2",
+              collapsed ? "px-2 sr-only" : "px-3 text-[11px] font-semibold tracking-wider text-sidebar-foreground/30 uppercase"
+            )}>
               Sistema
             </div>
             <SidebarItem
