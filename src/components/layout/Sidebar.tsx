@@ -1,26 +1,19 @@
 
 import React from 'react';
-import { cn } from '@/lib/utils';
 import { SidebarHeader } from './sidebar/SidebarHeader';
 import { SidebarContent } from './sidebar/SidebarContent';
 import { SidebarFooter } from './sidebar/SidebarFooter';
 
-interface SidebarProps {
-  collapsed: boolean;
-  setCollapsed: (collapsed: boolean) => void;
-}
-
-export function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
+export function Sidebar() {
   return (
-    <div 
-      className={cn(
-        "fixed inset-y-0 left-0 z-10 flex flex-col bg-sidebar-background border-r border-sidebar-border transition-all duration-300 ease-in-out",
-        collapsed ? "w-20" : "w-64"
-      )}
+    <aside 
+      className="fixed inset-y-0 left-0 z-10 flex w-64 flex-col bg-sidebar-background border-r border-sidebar-border"
+      role="navigation"
+      aria-label="Menu principal"
     >
-      <SidebarHeader collapsed={collapsed} setCollapsed={setCollapsed} />
-      <SidebarContent collapsed={collapsed} />
-      <SidebarFooter collapsed={collapsed} />
-    </div>
+      <SidebarHeader />
+      <SidebarContent />
+      <SidebarFooter />
+    </aside>
   );
 }

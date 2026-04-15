@@ -17,11 +17,7 @@ import {
   MessageCircle
 } from 'lucide-react';
 
-interface SidebarContentProps {
-  collapsed: boolean;
-}
-
-export const SidebarContent = ({ collapsed }: SidebarContentProps) => {
+export const SidebarContent = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -40,44 +36,35 @@ export const SidebarContent = ({ collapsed }: SidebarContentProps) => {
 
   return (
     <>
-      <div className="flex-1 overflow-auto py-4 px-3">
-        {/* Search Button */}
-        {!collapsed && (
-          <div className="mb-5">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsSearchOpen(true)}
-              className="w-full justify-start text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent border border-sidebar-border rounded-lg h-9"
-            >
-              <Search className="h-4 w-4 mr-2 shrink-0" />
-              <span className="text-sm">Pesquisar...</span>
-            </Button>
-          </div>
-        )}
+      <div className="flex-1 overflow-y-auto py-4 px-3">
+        {/* Search */}
+        <div className="mb-5">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsSearchOpen(true)}
+            className="w-full justify-start text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent border border-sidebar-border rounded-lg h-9"
+          >
+            <Search className="h-4 w-4 mr-2 shrink-0" />
+            <span className="text-sm">Pesquisar...</span>
+          </Button>
+        </div>
 
-        <nav className="space-y-6">
+        <nav className="space-y-6" aria-label="Navegação principal">
+          {/* Home */}
           <div>
-            <SidebarItem
-              icon={Home}
-              label="Home"
-              to="/dashboard"
-              collapsed={collapsed}
-            />
+            <SidebarItem icon={Home} label="Home" to="/dashboard" />
           </div>
           
+          {/* Módulos */}
           <div>
-            <div className={cn(
-              "mb-2",
-              collapsed ? "px-2 sr-only" : "px-3 text-[11px] font-semibold tracking-wider text-sidebar-foreground/30 uppercase"
-            )}>
+            <p className="mb-2 px-3 text-[11px] font-semibold tracking-wider text-sidebar-foreground/30 uppercase select-none">
               Módulos
-            </div>
+            </p>
             <SidebarItem
               icon={ClipboardCheck}
               label="SCI"
               to="/sci"
-              collapsed={collapsed}
               subItems={[
                 { label: "Ficha de Procedimentos", to: "/sci/procedimentos" },
                 { label: "Calendário", to: "/sci/calendar" },
@@ -89,7 +76,6 @@ export const SidebarContent = ({ collapsed }: SidebarContentProps) => {
               icon={LayoutDashboard}
               label="CRC"
               to="/crc"
-              collapsed={collapsed}
               subItems={[
                 { label: "Tratamento de Ficheiros", to: "/crc/tratamento" }
               ]}
@@ -98,7 +84,6 @@ export const SidebarContent = ({ collapsed }: SidebarContentProps) => {
               icon={Database}
               label="DIS"
               to="/dis"
-              collapsed={collapsed}
               subItems={[
                 { label: "Dados", to: "/dis/dados" }
               ]}
@@ -107,38 +92,20 @@ export const SidebarContent = ({ collapsed }: SidebarContentProps) => {
               icon={PieChart}
               label="Processamentos"
               to="/easyvista"
-              collapsed={collapsed}
               subItems={[
                 { label: "Estatísticas", to: "/easyvista/estatisticas" }
               ]}
             />
           </div>
           
+          {/* Sistema */}
           <div>
-            <div className={cn(
-              "mb-2",
-              collapsed ? "px-2 sr-only" : "px-3 text-[11px] font-semibold tracking-wider text-sidebar-foreground/30 uppercase"
-            )}>
+            <p className="mb-2 px-3 text-[11px] font-semibold tracking-wider text-sidebar-foreground/30 uppercase select-none">
               Sistema
-            </div>
-            <SidebarItem
-              icon={Settings}
-              label="Configurações"
-              to="/settings"
-              collapsed={collapsed}
-            />
-            <SidebarItem
-              icon={MessageCircle}
-              label="Telegram Setup"
-              to="/telegram-setup"
-              collapsed={collapsed}
-            />
-            <SidebarItem
-              icon={FileText}
-              label="Documentação"
-              to="/docs"
-              collapsed={collapsed}
-            />
+            </p>
+            <SidebarItem icon={Settings} label="Configurações" to="/settings" />
+            <SidebarItem icon={MessageCircle} label="Telegram Setup" to="/telegram-setup" />
+            <SidebarItem icon={FileText} label="Documentação" to="/docs" />
           </div>
         </nav>
       </div>
