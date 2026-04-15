@@ -16,18 +16,18 @@ export const SidebarFooter = ({ collapsed }: SidebarFooterProps) => {
   return (
     <div className="p-4 border-t border-sidebar-border">
       {!collapsed ? (
-        <div className="flex items-center">
-          <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold">
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 rounded-full bg-sidebar-primary/20 flex items-center justify-center text-sidebar-primary-foreground font-semibold text-sm shrink-0">
             {userInitial}
           </div>
-          <div className="ml-3">
-            <p className="text-sm font-medium text-white">{userName}</p>
-            <p className="text-xs text-white/60">{userEmail}</p>
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-sidebar-foreground truncate">{userName}</p>
+            <p className="text-xs text-sidebar-foreground/50 truncate">{userEmail}</p>
           </div>
         </div>
       ) : (
         <div className="flex justify-center">
-          <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold">
+          <div className="h-9 w-9 rounded-full bg-sidebar-primary/20 flex items-center justify-center text-sidebar-primary-foreground font-semibold text-sm">
             {userInitial}
           </div>
         </div>

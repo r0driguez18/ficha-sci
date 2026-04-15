@@ -14,7 +14,7 @@ export function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
   return (
     <div 
       className={cn(
-        "fixed inset-y-0 left-0 z-10 flex flex-col bg-[#18467e] border-r border-blue-800 transition-all duration-300 ease-in-out",
+        "fixed inset-y-0 left-0 z-10 flex flex-col bg-sidebar-background border-r border-sidebar-border transition-all duration-300 ease-in-out",
         collapsed ? "w-20" : "w-64"
       )}
     >
