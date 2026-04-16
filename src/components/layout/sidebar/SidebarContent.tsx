@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { SidebarItem } from './SidebarItem';
 import { Button } from '@/components/ui/button';
 import { SearchSidebar } from '../SearchSidebar';
+import { SidebarGroup, SidebarGroupLabel, SidebarGroupContent, useSidebar } from '@/components/ui/sidebar';
 import { 
   ClipboardCheck,
   Database,
@@ -19,6 +20,8 @@ import {
 export const SidebarContent = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const navigate = useNavigate();
+  const { state } = useSidebar();
+  const collapsed = state === 'collapsed';
 
   const searchItems = [
     { label: 'SCI - Procedimentos', path: '/sci/procedimentos', keywords: ['sci', 'taskboard', 'procedimentos'] },
@@ -35,9 +38,9 @@ export const SidebarContent = () => {
 
   return (
     <>
-      <div className="flex-1 overflow-y-auto py-4 px-3">
-        {/* Search */}
-        <div className="mb-5">
+      {/* Search */}
+      {!collapsed && (
+        <div className="mb-4 px-1">
           <Button
             variant="ghost"
             size="sm"
@@ -48,66 +51,66 @@ export const SidebarContent = () => {
             <span className="text-sm">Pesquisar...</span>
           </Button>
         </div>
+      )}
 
-        <nav className="space-y-6" aria-label="Navegação principal">
-          {/* Home */}
-          <div>
-            <SidebarItem icon={Home} label="Home" to="/dashboard" />
-          </div>
-          
-          {/* Módulos */}
-          <div>
-            <p className="mb-2 px-3 text-[11px] font-semibold tracking-wider text-sidebar-foreground/50 uppercase select-none">
-              Módulos
-            </p>
-            <SidebarItem
-              icon={ClipboardCheck}
-              label="SCI"
-              to="/sci"
-              subItems={[
-                { label: "Ficha de Procedimentos", to: "/sci/procedimentos" },
-                { label: "Calendário", to: "/sci/calendar" },
-                { label: "Histórico de Fichas", to: "/sci/historico-fichas" },
-                { label: "Retornos Cobranças", to: "/sci/retornos-cobrancas" }
-              ]}
-            />
-            <SidebarItem
-              icon={LayoutDashboard}
-              label="CRC"
-              to="/crc"
-              subItems={[
-                { label: "Tratamento de Ficheiros", to: "/crc/tratamento" }
-              ]}
-            />
-            <SidebarItem
-              icon={Database}
-              label="DIS"
-              to="/dis"
-              subItems={[
-                { label: "Dados", to: "/dis/dados" }
-              ]}
-            />
-            <SidebarItem
-              icon={PieChart}
-              label="Processamentos"
-              to="/easyvista"
-              subItems={[
-                { label: "Estatísticas", to: "/easyvista/estatisticas" }
-              ]}
-            />
-          </div>
-          
-          {/* Sistema */}
-          <div>
-            <p className="mb-2 px-3 text-[11px] font-semibold tracking-wider text-sidebar-foreground/50 uppercase select-none">
-              Sistema
-            </p>
-            <SidebarItem icon={Settings} label="Configurações" to="/settings" />
-            <SidebarItem icon={MessageCircle} label="Telegram Setup" to="/telegram-setup" />
-            <SidebarItem icon={FileText} label="Documentação" to="/docs" />
-          </div>
-        </nav>
-      </div>
+      {/* Home */}
+      <SidebarGroup>
+        <SidebarGroupContent>
+          <SidebarItem icon={Home} label="Home" to="/dashboard" />
+        </SidebarGroupContent>
+      </SidebarGroup>
+
+      {/* Módulos */}
+      <SidebarGroup>
+        <SidebarGroupLabel className="text-sidebar-foreground/50">Módulos</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarItem
+            icon={ClipboardCheck}
+            label="SCI"
+            to="/sci"
+            subItems={[
+              { label: "Ficha de Procedimentos", to: "/sci/procedimentos" },
+              { label: "Calendário", to: "/sci/calendar" },
+              { label: "Histórico de Fichas", to: "/sci/historico-fichas" },
+              { label: "Retornos Cobranças", to: "/sci/retornos-cobrancas" }
+            ]}
+          />
+          <SidebarItem
+            icon={LayoutDashboard}
+            label="CRC"
+            to="/crc"
+            subItems={[
+              { label: "Tratamento de Ficheiros", to: "/crc/tratamento" }
+            ]}
+          />
+          <SidebarItem
+            icon={Database}
+            label="DIS"
+            to="/dis"
+            subItems={[
+              { label: "Dados", to: "/dis/dados" }
+            ]}
+          />
+          <SidebarItem
+            icon={PieChart}
+            label="Processamentos"
+            to="/easyvista"
+            subItems={[
+              { label: "Estatísticas", to: "/easyvista/estatisticas" }
+            ]}
+          />
+        </SidebarGroupContent>
+      </SidebarGroup>
+
+      {/* Sistema */}
+      <SidebarGroup>
+        <SidebarGroupLabel className="text-sidebar-foreground/50">Sistema</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarItem icon={Settings} label="Configurações" to="/settings" />
+          <SidebarItem icon={MessageCircle} label="Telegram Setup" to="/telegram-setup" />
+          <SidebarItem icon={FileText} label="Documentação" to="/docs" />
+        </SidebarGroupContent>
+      </SidebarGroup>
 
       <SearchSidebar
         isOpen={isSearchOpen}

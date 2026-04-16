@@ -12,7 +12,7 @@ interface FormActionsProps {
 
 export const FormActions: React.FC<FormActionsProps> = ({ onSave, onExportPDF, onReset, isValidated }) => {
   return (
-    <div className="flex justify-end space-x-4 mt-8">
+    <div className="flex justify-end gap-3 mt-8 pt-6 border-t">
       <Button
         variant="outline"
         onClick={onReset}
@@ -34,7 +34,7 @@ export const FormActions: React.FC<FormActionsProps> = ({ onSave, onExportPDF, o
       
       <Button
         onClick={onSave}
-        className="flex items-center gap-2"
+        className="flex items-center gap-2 px-6"
       >
         <Save className="h-4 w-4" />
         Guardar

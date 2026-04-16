@@ -721,30 +721,39 @@ const [isLoading, setIsLoading] = useState(true);
   }
 
   return (
-    <div className="container py-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Ficha de Procedimentos</CardTitle>
-          <CardDescription>Preencha as informações necessárias para cada turno</CardDescription>
-          {user && <p className="text-sm text-muted-foreground">Dados sincronizados na nuvem</p>}
+    <div className="container py-6 max-w-5xl">
+      <Card className="shadow-sm border">
+        <CardHeader className="pb-4 border-b bg-muted/30">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-xl font-bold text-foreground">Ficha de Procedimentos</CardTitle>
+              <CardDescription className="mt-1">Preencha as informações necessárias para cada turno</CardDescription>
+            </div>
+            {user && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse-subtle" />
+                Sincronizado
+              </span>
+            )}
+          </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <div className="mb-6">
-            <Label htmlFor="date">Data</Label>
+            <Label htmlFor="date" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Data</Label>
             <Input
               id="date"
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="max-w-xs"
+              className="max-w-xs mt-1.5"
             />
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="mb-4">
-              <TabsTrigger value="turno1">Turno 1</TabsTrigger>
-              <TabsTrigger value="turno2">Turno 2</TabsTrigger>
-              <TabsTrigger value="turno3">Turno 3</TabsTrigger>
+            <TabsList className="mb-6 h-11 p-1 bg-muted">
+              <TabsTrigger value="turno1" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-6 font-medium">Turno 1</TabsTrigger>
+              <TabsTrigger value="turno2" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-6 font-medium">Turno 2</TabsTrigger>
+              <TabsTrigger value="turno3" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-6 font-medium">Turno 3</TabsTrigger>
             </TabsList>
             
             <TabsContent value="turno1">
