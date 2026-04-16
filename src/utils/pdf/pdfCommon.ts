@@ -16,22 +16,7 @@ export const BCA_COLORS = {
 
 // Helper function to add BCA logo to the PDF header
 export const addBCALogo = (doc: jsPDF, x: number = 15, y: number = 10, width: number = 25): void => {
-  try {
-    // Try to add the logo image - this will work if the image is available
-    // We'll use a base64 encoded version or skip if not available
-    const logoPath = '/bca-icon.png';
-    // Since jsPDF can't directly load from path, we'll draw a placeholder text
-    doc.setFillColor(...BCA_COLORS.blue);
-    doc.roundedRect(x, y, width, 12, 2, 2, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "bold");
-    doc.text("BCA", x + width/2, y + 8, { align: 'center' });
-    // Reset text color
-    doc.setTextColor(0, 0, 0);
-  } catch (e) {
-    // If logo fails, just continue without it
-  }
+  // Removido conforme pedido do utilizador
 };
 
 // Helper function to draw section header with colored background

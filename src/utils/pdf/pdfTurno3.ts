@@ -28,208 +28,289 @@ export const renderTurno3Tasks = (
   y = drawSectionHeader(doc, sectionTitle, y);
   y += 4;
   
-  // List all turno3 tasks in the correct order
-  const operacoesFechoTasks = [
+  // --- PAGE 1 TASKS ---
+  const page1Tasks = [
+    {key: 'datacenter', text: "Verificar Alarmes e Sistemas/Climatização DATA CENTER"},
+    {key: 'sistemas', text: "Verificar Sistemas: BCACV1 / BCACV2 - Verificar Replicação"},
     {key: 'verificarDebitos', text: "Verificar Débitos/Créditos Aplicados no Turno Anterior"},
-    {key: 'tratarTapes', text: "Tratar e trocar Tapes BM, BMBCK – percurso 7622"},
-    {key: 'fecharServidores', text: "Fechar Servidores Teste e Produção"},
-    {key: 'fecharImpressoras', text: "Fechar Impressoras e balcões centrais abertos exceto 14 - DSI"},
-    {key: 'userFecho', text: "User Fecho Executar o percurso 7624 Save SYS1OB"},
-    {key: 'listaRequisicoesCheques', text: "Lista requisições de cheques do dia 7633. > do que 5, sem comprov. Estornar, 21911"},
-    {key: 'cancelarCartoesClientes', text: "User Fecho Cancela os cartões dos Clientes Bloqueados - percurso 76857"},
-    {key: 'prepararEnviarAsc', text: "Preparar e enviar ficheiro e ASC (alteração situação cartão) – percurso 4132"},
-    {key: 'adicionarRegistrosBanka', text: "User Fecho Adiciona registos na Banka Remota- percurso 768975"},
-    {key: 'fecharServidoresBanka', text: "User Fecho, fechar servidores Banka remota IN1/IN3/IN4"},
-    {key: 'alterarInternetBanking', text: "User Fecho Alterar Internet Banking para OFFLINE – percurso 49161"},
-    {key: 'prepararEnviarCsv', text: "Preparar e enviar ficheiro CSV (saldos)"}
+    {key: 'tratarTapes', text: "Tratar Tapes BM, BMBCK –7622 e Confirmar estado tapes no robot"},
+    {key: 'fecharServidores', text: "Fechar Servidores SWIFT, STPCV, OPDIF, TRMSG, CDGOV MWEXT e AML"},
+    {key: 'fecharImpressoras', text: "Fechar Impressoras e balcões centrais abertos exceto 14 DSI e 22 DMC"},
+    {key: 'requisicoesCheques', text: "Requisições cheques do dia 7633. Estornar se superior a 5, sem pedido balcão, 21911"},
+    {key: 'gerarFicheiroAsc', text: "Gerar e enviar ficheiro e ASC – percurso 4132 / Validar sequência portal SISP"},
+    {key: 'fecharBalcao22', text: "Fechar balcão 22 DMC (Pedir utilizadores para saírem do sistema) (23h00)"},
+    {key: 'userFecho7624', text: "User Fecho Executar o percurso 7624 Save SYS1OB (23h00)"},
+    {key: 'userFechoBankaRemota', text: "User Fecho Adiciona registos na Banka Remota- percurso 768975"},
+    {key: 'userFechoServidoresBanka', text: "User Fecho, fechar servidores Banka Remota IN1/IN3/IN4"},
+    {key: 'userFechoInternetBanking', text: "User Fecho Alterar Internet Banking para OFFLINE – percurso 49161"},
+    {key: 'fecharPfs', text: "Fechar Servidores PFS"},
+    {key: 'prepararCsv', text: "Preparar e enviar ficheiro CSV (saldos)"},
+    {key: 'interromperRealTime', text: "Interromper o Real-Time com a SISP"},
+    {key: 'percurso768989', text: "Percurso 768989 (Alterar fecho transferências de 2 para 1)"},
+    {key: 'prepararFicheiroEtr', text: "Preparar e enviar Ficheiro ETR - percurso 7538, consultar conta 18 5488103"},
+    {key: 'loggOffUtilizadores', text: "Fazer Logg-Off utilizadores AML PFS, MWEXT"},
+    {key: 'aplicarFicheiroErro', text: "Aplicar Ficheiro Erro ETR"},
+    {key: 'validarBalcao14', text: "Validar balcão 14 7185"},
+    {key: 'bloquearNearsoft', text: "Bloquear NEARSOFT e Remover Utilizadores ativos"},
+    {key: 'fecharBalcao14', text: "Fechar o balcão 14 - DSI e confirmar se todos os balcões encontram-se fechados"},
+    {key: 'percurso43', text: "Percurso 43 Verificar Data da Aplicação"},
+    {key: 'inicioFecho', text: "Início do Fecho"},
+    {key: 'enviarSmsArranque', text: "Enviar SMS de Notificação de Arranque do Fecho"},
+    {key: 'validarEnvioEmail', text: "Validar envio email (Notificação Inicio Fecho) a partir do ISeries"},
+    {key: 'controlarTrabalhos', text: "Controlar os trabalhos no QBATCH (opções 5, 10, F10, F5, F18)"},
+    {key: 'paragemAberturaServidores', text: "Paragem abertura Servidores Banka Remota CT2/IAR/INT/IV2"},
+    {key: 'ativarNearsoft', text: "Ativar NEARSOFT"}
   ];
-  
-  operacoesFechoTasks.forEach(item => {
-    y = checkPageSpace(doc, y, 8);
+
+  page1Tasks.forEach((item, index) => {
+    y = checkPageSpace(doc, y, 7);
     drawCheckbox(doc, 15, y - 3, ensureBoolean(tasks[item.key as keyof typeof tasks]));
     doc.setFontSize(10);
+    
+    // Bold specific tasks or portions of string based on the requirements
+    let cx = 22;
+    if (item.key === 'percurso768989') {
+      doc.setFont("helvetica", "normal");
+      doc.text(item.text, cx, y);
+      const textWidth = doc.getTextWidth(item.text);
+      doc.line(cx, y + 1, cx + textWidth, y + 1);
+    } else if (item.key === 'interromperRealTime') {
+      doc.setFont("helvetica", "normal");
+      doc.text("Interromper o Real-Time com a SISP           Fecho Real-Time: ", cx, y);
+      cx += doc.getTextWidth("Interromper o Real-Time com a SISP           Fecho Real-Time: ");
+      if (tasks.interromperRealTimeHora) {
+        doc.text(tasks.interromperRealTimeHora, cx, y);
+      } else {
+        doc.text("___:___", cx, y);
+      }
+    } else if (item.key === 'inicioFecho') {
+      doc.setFont("helvetica", "bold");
+      doc.text("Início do Fecho ", cx, y);
+      cx += doc.getTextWidth("Início do Fecho   ");
+      doc.setFont("helvetica", "normal");
+      if (tasks.inicioFechoHora) {
+        doc.text(tasks.inicioFechoHora, cx, y);
+      } else {
+        doc.text("____:____", cx, y);
+      }
+    } else if (item.key === 'enviarSmsArranque') {
+      doc.setFont("helvetica", "bold");
+      doc.text(item.text, cx, y);
+      const textWidth = doc.getTextWidth(item.text);
+      doc.line(cx, y + 1, cx + textWidth, y + 1); // Underlined
+      doc.setFont("helvetica", "normal");
+    } else if (item.key === 'ativarNearsoft') {
+      doc.setFont("helvetica", "bold");
+      doc.text(item.text, cx, y);
+      doc.setFont("helvetica", "normal");
+    } else if (item.key === 'fecharServidores') {
+      doc.setFont("helvetica", "normal");
+      doc.text("Fechar Servidores ", cx, y);
+      cx += doc.getTextWidth("Fechar Servidores ");
+      doc.setFont("helvetica", "bold");
+      doc.text("SWIFT, STPCV, OPDIF, TRMSG, CDGOV MWEXT e AML", cx, y);
+      doc.setFont("helvetica", "normal");
+    } else if (item.key === 'fecharPfs') {
+      doc.setFont("helvetica", "normal");
+      doc.text("Fechar Servidores ", cx, y);
+      cx += doc.getTextWidth("Fechar Servidores ");
+      doc.setFont("helvetica", "bold");
+      doc.text("PFS", cx, y);
+      doc.setFont("helvetica", "normal");
+    } else if (item.key === 'sistemas') {
+      doc.setFont("helvetica", "normal");
+      doc.text("Verificar Sistemas: ", cx, y);
+      cx += doc.getTextWidth("Verificar Sistemas: ");
+      doc.setFont("helvetica", "bold");
+      doc.text("BCACV1 / BCACV2 - Verificar Replicação", cx, y);
+      doc.setFont("helvetica", "normal");
+    } else if (item.key === 'datacenter') {
+      doc.setFont("helvetica", "normal");
+      doc.text("Verificar Alarmes e Sistemas/Climatização ", cx, y);
+      cx += doc.getTextWidth("Verificar Alarmes e Sistemas/Climatização ");
+      doc.setFont("helvetica", "bold");
+      doc.text("DATA CENTER", cx, y);
+      doc.setFont("helvetica", "normal");
+    } else {
+      doc.setFont("helvetica", "normal");
+      doc.text(item.text, cx, y);
+    }
+    
+    y += 6;
+  });
+
+  // Forçar Página 2! O array é enorme, se nao houver espaco.
+  doc.addPage();
+  y = 20;
+
+  // --- PAGE 2 TASKS ---
+  const page2Tasks = [
+    {key: 'saveBmbck', text: "Save BMBCK – Automático"},
+    {key: 'imprimirCheques', text: "Imprimir Cheques, Diários de Cheques e Arquivar OUTQ(HLDSPOOL)"},
+    {key: 'backupBm', text: "Backup BM – Automático"},
+    {key: 'aplicarFicheirosCompensacao', text: "Aplicar ficheiros compensação SISP com user SISP (CCLN, EDST, EORI, ERMB)"},
+    {key: 'tratarPendentesCartoes', text: "Tratar Pendentes CARTÕES (Conta contabilística 18 5488106)"},
+    {key: 'consultarSaldoConta', text: "Consultar saldo da conta 18/5488102:"}, // With Neg Pos inside
+    {key: 'abrirRealTime', text: "Abrir o Real-Time com a SISP"},
+    {key: 'verificarEntradaTransacoes', text: "Verificar a entrada de transações 3100 4681"},
+    {key: 'abrirBcaDireto', text: "Abrir o BCADireto percurso 49162 – Validar transações"},
+    {key: 'userFechoAbrirServidores', text: "User Fecho, Abrir servidores Banka remota IN1/IN3/IN4"},
+    {key: 'abrirServidoresPfs', text: "Abrir Servidores PFS, MWEXT e AML"},
+    {key: 'atualizaTelefones', text: "Atualiza Telefones tratados no OFFLINE- percurso 768976"},
+    {key: 'efetuarTesteCarregamento', text: "Efetuar Teste Carregamento e enviar evidência"},
+    {key: 'verificarReplicacao', text: "Verificar Replicação"},
+    {key: 'enviarFicheiroCsv', text: "Enviar ficheiro CSV (Comunicação Saldo Véspera)"},
+    {key: 'terminoFecho', text: "Término do Fecho"},
+    {key: 'enviarSmsFim', text: "Enviar SMS de Notificação de Fim do Fecho"}
+  ];
+
+  page2Tasks.forEach((item) => {
+    y = checkPageSpace(doc, y, 7);
+    drawCheckbox(doc, 15, y - 3, ensureBoolean(tasks[item.key as keyof typeof tasks]));
     doc.setFont("helvetica", "normal");
+
+    let cx = 22;
+    if (item.key === 'aplicarFicheirosCompensacao') {
+      doc.text("Aplicar ficheiros compensação SISP com user SISP (", cx, y);
+      cx += doc.getTextWidth("Aplicar ficheiros compensação SISP com user SISP (");
+      doc.setFont("helvetica", "bold");
+      doc.text("CCLN, EDST, EORI, ERMB", cx, y);
+      cx += doc.getTextWidth("CCLN, EDST, EORI, ERMB");
+      doc.setFont("helvetica", "normal");
+      doc.text(")", cx, y);
+    } else if (item.key === 'consultarSaldoConta') {
+      doc.text("Consultar saldo da conta ", cx, y);
+      cx += doc.getTextWidth("Consultar saldo da conta ");
+      doc.setFont("helvetica", "bold");
+      doc.text("18/5488102:   ", cx, y);
+      cx += doc.getTextWidth("18/5488102:   ");
+      doc.setFont("helvetica", "normal");
+      
+      if (tasks.saldoContaValor) {
+        doc.text(tasks.saldoContaValor.toString(), cx, y);
+        cx += doc.getTextWidth(tasks.saldoContaValor.toString()) + 5;
+      } else {
+        doc.text("0", cx, y);
+        cx += doc.getTextWidth("0") + 5;
+      }
+
+      doc.text("Negativo ", cx, y);
+      drawCheckbox(doc, cx + 15, y - 3, ensureBoolean(tasks.saldoNegativo));
+      
+      cx += 25;
+      doc.text("Positivo ", cx, y);
+      drawCheckbox(doc, cx + 14, y - 3, ensureBoolean(tasks.saldoPositivo));
+
+    } else if (item.key === 'abrirRealTime') {
+      doc.setFont("helvetica", "bold");
+      doc.text("Abrir o Real-Time ", cx, y);
+      cx += doc.getTextWidth("Abrir o Real-Time ");
+      doc.setFont("helvetica", "normal");
+      doc.text("com a SISP           ", cx, y);
+      cx += doc.getTextWidth("com a SISP           ");
+      
+      doc.setFont("helvetica", "bold");
+      doc.text("Abertura Real-Time: ", cx, y);
+      cx += doc.getTextWidth("Abertura Real-Time: ");
+      doc.setFont("helvetica", "normal");
+      if (tasks.abrirRealTimeHora) {
+        doc.text(tasks.abrirRealTimeHora, cx, y);
+      } else {
+        doc.text("___:___", cx, y);
+      }
+    } else if (item.key === 'verificarEntradaTransacoes') {
+      doc.text("Verificar a entrada de transações ", cx, y);
+      cx += doc.getTextWidth("Verificar a entrada de transações ");
+      doc.setFont("helvetica", "bold");
+      doc.text("3100 4681", cx, y);
+    } else if (item.key === 'abrirBcaDireto') {
+      doc.text("Abrir o ", cx, y);
+      cx += doc.getTextWidth("Abrir o ");
+      doc.setFont("helvetica", "bold");
+      doc.text("BCADireto", cx, y);
+      cx += doc.getTextWidth("BCADireto");
+      doc.setFont("helvetica", "normal");
+      doc.text(" percurso ", cx, y);
+      cx += doc.getTextWidth(" percurso ");
+      doc.setFont("helvetica", "bold");
+      doc.text("49162 – Validar transações", cx, y);
+    } else if (item.key === 'atualizaTelefones') {
+      doc.text("Atualiza Telefones tratados no OFFLINE- ", cx, y);
+      cx += doc.getTextWidth("Atualiza Telefones tratados no OFFLINE- ");
+      doc.setFont("helvetica", "bold");
+      doc.text("percurso 768976", cx, y);
+    } else if (item.key === 'enviarFicheiroCsv') {
+      doc.text("Enviar ficheiro ", cx, y);
+      cx += doc.getTextWidth("Enviar ficheiro ");
+      doc.setFont("helvetica", "bold");
+      doc.text("CSV (Comunicação Saldo Véspera)", cx, y);
+    } else if (item.key === 'terminoFecho') {
+      doc.setFont("helvetica", "bold");
+      doc.text("Término do Fecho  ", cx, y);
+      cx += doc.getTextWidth("Término do Fecho  ");
+      doc.setFont("helvetica", "normal");
+      if (tasks.terminoFechoHora) {
+        doc.text(tasks.terminoFechoHora, cx, y);
+      } else {
+        doc.text("____:____", cx, y);
+      }
+    } else if (item.key === 'enviarSmsFim') {
+      doc.setFont("helvetica", "bold");
+      doc.text(item.text, cx, y);
+      const textWidth = doc.getTextWidth(item.text);
+      doc.line(cx, y + 1, cx + textWidth, y + 1); // Underlined
+      doc.setFont("helvetica", "normal");
+    } else {
+      doc.text(item.text, cx, y);
+    }
+    y += 6;
+  });
+
+  // End of Month tasks block
+  y += 10;
+  const mensalTasks = [
+    {key: 'percurso76921', text: "Fazer o percurso 76921 – Limpeza Ficheiro BRLOGED (Dia 1 de cada Mês)"},
+    {key: 'percurso76922', text: "Fazer o percurso 76922 - Reorganiza BRLOGED (Dia 2 de cada Mês)"},
+    {key: 'percurso76923', text: "Fazer o percurso 76923 - Reorganiza GBMVCO (Dia 3 de cada Mês)"}
+  ];
+  
+  mensalTasks.forEach((item) => {
+    drawCheckbox(doc, 15, y - 3, ensureBoolean(tasks[item.key as keyof typeof tasks]));
     doc.text(item.text, 22, y);
     y += 6;
   });
 
-  // Handle "Interromper o Real-Time" with time inline - HIGHLIGHTED as important
-  y = checkPageSpace(doc, y, 8);
-  const realTimeChecked = ensureBoolean(tasks.fecharRealTime);
-  const realTimeText = tasks.fecharRealTimeHora ? 
-    `Interromper o Real-Time com a SISP - ${tasks.fecharRealTimeHora}` :
-    "Interromper o Real-Time com a SISP";
-  
-  // Highlight important task
-  if (realTimeChecked) {
-    doc.setFillColor(...BCA_COLORS.lightBlue);
-    const textWidth = doc.getTextWidth(realTimeText);
-    doc.rect(21, y - 4, textWidth + 4, 6, 'F');
-  }
-  drawCheckbox(doc, 15, y - 3, realTimeChecked);
-  doc.setFont("helvetica", realTimeChecked ? "bold" : "normal");
-  doc.text(realTimeText, 22, y);
-  doc.setFont("helvetica", "normal");
+  // Impressões
   y += 6;
-  
-  // Continue with remaining tasks in order
-  const midTasks = [
-    {key: 'prepararEnviarEtr', text: "Preparar e enviar Ficheiro ETR - percurso 7538, consultar conta 18 5488103"},
-    {key: 'fazerLoggOffAml', text: "Fazer Logg-Off do utilizador AML – Percurso 161 (utilizadores ativos)"},
-    {key: 'aplicarFicheiroErroEtr', text: "Aplicar Ficheiro Erro ETR"},
-    {key: 'validarBalcao14', text: "Validar balção 14 7185"},
-    {key: 'fecharBalcao14', text: "Fechar o balcão 14 - DSI e confirmar se todos os balcões encontram-se fechados"},
-    {key: 'arranqueManual', text: "Arranque Manual - Verificar Data da Aplicação – Percurso 431"}
-  ];
-  
-  midTasks.forEach(item => {
-    y = checkPageSpace(doc, y, 8);
-    drawCheckbox(doc, 15, y - 3, ensureBoolean(tasks[item.key as keyof typeof tasks]));
-    doc.text(item.text, 22, y);
-    y += 6;
-  });
-  
-  // Handle "Início do Fecho" with time inline - IMPORTANT TASK with highlight
-  y = checkPageSpace(doc, y, 10);
-  const inicioFechoChecked = ensureBoolean(tasks.inicioFecho);
-  const inicioFechoText = tasks.inicioFechoHora ? 
-    `Início do Fecho - ${tasks.inicioFechoHora}` :
-    "Início do Fecho";
-  
-  // Highlight important task
-  doc.setFillColor(...BCA_COLORS.lightBlue);
-  const inicioWidth = doc.getTextWidth(inicioFechoText);
-  doc.rect(21, y - 4, inicioWidth + 4, 6, 'F');
-  
-  drawCheckbox(doc, 15, y - 3, inicioFechoChecked);
-  doc.setTextColor(...BCA_COLORS.darkBlue);
   doc.setFont("helvetica", "bold");
-  doc.text(inicioFechoText, 22, y);
-  doc.setTextColor(0, 0, 0);
+  doc.text("Impressões", 15, y);
+  const impWidth = doc.getTextWidth("Impressões");
+  doc.line(15, y + 1, 15 + impWidth, y + 1);
   doc.setFont("helvetica", "normal");
-  y += 6;
-  
-  // Continue with the rest of the tasks
-  const finalOperacoesTasks = [
-    {key: 'validarEnvioEmail', text: "Validar envio email (Notificação Inicio Fecho) a partir do ISeries"},
-    {key: 'controlarTrabalhos', text: "Controlar os trabalhos no QBATCH (opções 5, 10, F10, F5, F18)"},
-    {key: 'saveBmbck', text: "Save BMBCK – Automático"},
-    {key: 'abrirServidoresInternet', text: "Abrir Servidores Internet Banking – Percurso 161–"},
-    {key: 'imprimirCheques', text: "Imprimir Cheques e Diários de Cheques (depois do Save BMBCK)"},
-    {key: 'backupBm', text: "Backup BM – Automático"}
-  ];
-  
-  finalOperacoesTasks.forEach(item => {
-    y = checkPageSpace(doc, y, 8);
-    drawCheckbox(doc, 15, y - 3, ensureBoolean(tasks[item.key as keyof typeof tasks]));
-    doc.text(item.text, 22, y);
-    y += 6;
-  });
-  
-  // Add header for "Depois do Fecho" section with colored background
-  y = checkPageSpace(doc, y, 15);
-  y = drawSectionHeader(doc, "Depois do Fecho", y);
-  y += 4;
-  
-  const depoisFechoTasks = [
-    {key: 'validarFicheiroCcln', text: "Validar ficheiro CCLN - 76853"},
-    {key: 'aplicarFicheirosCompensacao', text: "Aplicar ficheiros compensação SISP (CCLN, EDST, EORI, ERMB)"}
-  ];
-  
-  depoisFechoTasks.forEach(item => {
-    y = checkPageSpace(doc, y, 8);
-    drawCheckbox(doc, 15, y - 3, ensureBoolean(tasks[item.key as keyof typeof tasks]));
-    doc.text(item.text, 22, y);
-    y += 6;
-  });
-  
-  // Handle "Validar saldo da conta" with value and checkboxes
-  y = checkPageSpace(doc, y, 8);
-  drawCheckbox(doc, 15, y - 3, ensureBoolean(tasks.validarSaldoConta));
-  const saldoText = tasks.saldoContaValor ? 
-    `Validar saldo da conta 18/5488102 - ${tasks.saldoContaValor}` :
-    "Validar saldo da conta 18/5488102";
-  doc.text(saldoText, 22, y);
-  y += 6;
-  
-  // Add the saldoPositivo and saldoNegativo checkboxes
-  y = checkPageSpace(doc, y, 8);
-  drawCheckbox(doc, 22, y - 3, ensureBoolean(tasks.saldoPositivo));
-  doc.text("Positivo", 28, y);
-  drawCheckbox(doc, 60, y - 3, ensureBoolean(tasks.saldoNegativo));
-  doc.text("Negativo", 66, y);
-  y += 6;
-  
-  // Handle "Abrir o Real-Time" with time inline
-  y = checkPageSpace(doc, y, 8);
-  drawCheckbox(doc, 15, y - 3, ensureBoolean(tasks.abrirRealTime));
-  const abrirRealTimeText = tasks.abrirRealTimeHora ? 
-    `Abrir o Real-Time - ${tasks.abrirRealTimeHora}` :
-    "Abrir o Real-Time";
-  doc.text(abrirRealTimeText, 22, y);
-  y += 6;
-  
-  // Remaining tasks
-  const remainingTasks = [
-    {key: 'verificarTransacoes', text: "Verificar a entrada de transações 3100 4681"},
-    {key: 'aplicarFicheiroVisa', text: "Aplicar ficheiro VISA DAF - com o user FECHO 4131"},
-    {key: 'cativarCartoes', text: "Cativar cartões de crédito em incumprimento - com o user FECHO – 7675"},
-    {key: 'abrirBcaDireto', text: "Abrir o BCADireto percurso 49162 – Validar transações"},
-    {key: 'abrirServidoresBanka', text: "User Fecho, Abril servidores Banka remota IN1/IN3/IN4"},
-    {key: 'atualizarTelefonesOffline', text: "Atualiza Telefones tratados no OFFLINE- percurso 768976"},
-    {key: 'verificarReplicacao', text: "Verificar Replicação"},
-    {key: 'enviarFicheiroCsv', text: "Enviar ficheiro CSV (Comunicação Saldo Véspera)"},
-    {key: 'transferirFicheirosLiquidity', text: "Transferência ficheiros SSM Liquidity Exercices (Confirmação)"},
-    {key: 'percurso76921', text: "Fazer o percurso 76921 – Limpeza Ficheiro BRLOGED (Dia 1 de cada Mês)"},
-    {key: 'percurso76922', text: "Fazer o percurso 76922 - Reorganiza BRLOGED (Dia 2 de cada Mês)"},
-    {key: 'percurso76923', text: "Fazer o percurso 76923 - Reorganiza GBMVCO (Dia 3 de cada Mês)"},
-    {key: 'abrirServidoresTesteProducao', text: "Abrir Servidores Teste e Produção"},
+  y += 8;
+
+  doc.text("• Ter em atenção ao stock/substituição de Toner/Fita impressora PRT", 20, y);
+  const imp2Width = doc.getTextWidth("• Ter em atenção ao stock/substituição de Toner/Fita impressora PRT");
+  doc.line(20, y + 1, 20 + imp2Width, y + 1);
+  y += 8;
+
+  const impressaoTasks = [
     {key: 'impressaoCheques', text: "Impressão Cheques e respectivos Diários (verificação dos mesmos)"},
     {key: 'arquivarCheques', text: "Arquivar Cheques e respectivos Diários"}
   ];
-  
-  remainingTasks.forEach(item => {
-    y = checkPageSpace(doc, y, 8);
-    drawCheckbox(doc, 15, y - 3, ensureBoolean(tasks[item.key as keyof typeof tasks]));
-    doc.text(item.text, 22, y);
+
+  impressaoTasks.forEach((item) => {
+    drawCheckbox(doc, 25, y - 3, ensureBoolean(tasks[item.key as keyof typeof tasks]));
+    doc.text(item.text, 32, y);
     y += 6;
   });
-  
-  // Handle "Término do Fecho" with time inline - IMPORTANT TASK with highlight
-  y = checkPageSpace(doc, y, 10);
-  const terminoFechoChecked = ensureBoolean(tasks.terminoFecho);
-  const terminoFechoText = tasks.terminoFechoHora ? 
-    `Término do Fecho - ${tasks.terminoFechoHora}` :
-    "Término do Fecho";
-  
-  // Highlight important task
-  doc.setFillColor(...BCA_COLORS.lightBlue);
-  const terminoWidth = doc.getTextWidth(terminoFechoText);
-  doc.rect(21, y - 4, terminoWidth + 4, 6, 'F');
-  
-  drawCheckbox(doc, 15, y - 3, terminoFechoChecked);
-  doc.setTextColor(...BCA_COLORS.darkBlue);
+
+  y += 10;
   doc.setFont("helvetica", "bold");
-  doc.text(terminoFechoText, 22, y);
-  doc.setTextColor(0, 0, 0);
+  doc.text("Situações Pontuais", 15, y);
+  doc.line(15, y + 1, 15 + doc.getTextWidth("Situações Pontuais"), y + 1);
   doc.setFont("helvetica", "normal");
-  y += 6;
   
-  // Add end-of-month task right after "Término do Fecho"
-  if (isEndOfMonth) {
-    y = checkPageSpace(doc, y, 8);
-    drawCheckbox(doc, 15, y - 3, ensureBoolean(tasks.limpaGbtrlogFimMes));
-    doc.text("Chamar Opção 16 - Limpa o GBTRLOG após o Fecho do mês", 22, y);
-    y += 6;
-  }
-  
-  // Final task
-  y = checkPageSpace(doc, y, 8);
-  drawCheckbox(doc, 15, y - 3, ensureBoolean(tasks.transferirFicheirosDsi));
-  doc.text("Transferência ficheiros SSM Liquidity ExercicesDSI-CI/2023", 22, y);
-  y += 6;
-  
-  // Observations with rectangle
-  y = checkPageSpace(doc, y, 30);
+  y += 10;
   return drawObservationsBox(doc, y, observations);
 };
