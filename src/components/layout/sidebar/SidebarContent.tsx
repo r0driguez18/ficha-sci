@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { SidebarItem } from './SidebarItem';
 import { Button } from '@/components/ui/button';
@@ -43,7 +42,7 @@ export const SidebarContent = () => {
             variant="ghost"
             size="sm"
             onClick={() => setIsSearchOpen(true)}
-            className="w-full justify-start text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent border border-sidebar-border rounded-lg h-9"
+            className="w-full justify-start text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent border border-sidebar-foreground/20 rounded-lg h-9"
           >
             <Search className="h-4 w-4 mr-2 shrink-0" />
             <span className="text-sm">Pesquisar...</span>
@@ -58,7 +57,7 @@ export const SidebarContent = () => {
           
           {/* Módulos */}
           <div>
-            <p className="mb-2 px-3 text-[11px] font-semibold tracking-wider text-sidebar-foreground/30 uppercase select-none">
+            <p className="mb-2 px-3 text-[11px] font-semibold tracking-wider text-sidebar-foreground/50 uppercase select-none">
               Módulos
             </p>
             <SidebarItem
@@ -100,7 +99,7 @@ export const SidebarContent = () => {
           
           {/* Sistema */}
           <div>
-            <p className="mb-2 px-3 text-[11px] font-semibold tracking-wider text-sidebar-foreground/30 uppercase select-none">
+            <p className="mb-2 px-3 text-[11px] font-semibold tracking-wider text-sidebar-foreground/50 uppercase select-none">
               Sistema
             </p>
             <SidebarItem icon={Settings} label="Configurações" to="/settings" />
