@@ -70,61 +70,68 @@ export interface Turno2Tasks {
 }
 
 export interface Turno3Tasks {
+  datacenter: boolean;
+  sistemas: boolean;
   verificarDebitos: boolean;
   tratarTapes: boolean;
   fecharServidores: boolean;
   fecharImpressoras: boolean;
-  userFecho: boolean;
-  listaRequisicoesCheques: boolean;
-  cancelarCartoesClientes: boolean;
-  prepararEnviarAsc: boolean;
-  adicionarRegistrosBanka: boolean;
-  fecharServidoresBanka: boolean;
-  alterarInternetBanking: boolean;
-  prepararEnviarCsv: boolean;
-  fecharRealTime: boolean;
-  fecharRealTimeHora: string;
-  prepararEnviarEtr: boolean;
-  fazerLoggOffAml: boolean;
-  aplicarFicheiroErroEtr: boolean;
+  requisicoesCheques: boolean;
+  gerarFicheiroAsc: boolean;
+  fecharBalcao22: boolean;
+  userFecho7624: boolean;
+  userFechoBankaRemota: boolean;
+  userFechoServidoresBanka: boolean;
+  userFechoInternetBanking: boolean;
+  fecharPfs: boolean;
+  prepararCsv: boolean;
+  interromperRealTime: boolean;
+  interromperRealTimeHora: string;
+  percurso768989: boolean;
+  prepararFicheiroEtr: boolean;
+  loggOffUtilizadores: boolean;
+  aplicarFicheiroErro: boolean;
   validarBalcao14: boolean;
+  bloquearNearsoft: boolean;
   fecharBalcao14: boolean;
-  arranqueManual: boolean;
+  percurso43: boolean;
   inicioFecho: boolean;
   inicioFechoHora: string;
+  enviarSmsArranque: boolean;
   validarEnvioEmail: boolean;
   controlarTrabalhos: boolean;
+  paragemAberturaServidores: boolean;
+  ativarNearsoft: boolean;
+  
+  // Page 2
   saveBmbck: boolean;
-  abrirServidoresInternet: boolean;
   imprimirCheques: boolean;
   backupBm: boolean;
-  validarFicheiroCcln: boolean;
   aplicarFicheirosCompensacao: boolean;
-  validarSaldoConta: boolean;
-  saldoContaValor: string;
+  tratarPendentesCartoes: boolean;
+  consultarSaldoConta: boolean;
   saldoNegativo: boolean;
   saldoPositivo: boolean;
   abrirRealTime: boolean;
   abrirRealTimeHora: string;
-  verificarTransacoes: boolean;
-  aplicarFicheiroVisa: boolean;
-  cativarCartoes: boolean;
+  verificarEntradaTransacoes: boolean;
   abrirBcaDireto: boolean;
-  abrirServidoresBanka: boolean;
-  atualizarTelefonesOffline: boolean;
+  userFechoAbrirServidores: boolean;
+  abrirServidoresPfs: boolean;
+  atualizaTelefones: boolean;
+  efetuarTesteCarregamento: boolean;
   verificarReplicacao: boolean;
   enviarFicheiroCsv: boolean;
-  transferirFicheirosLiquidity: boolean;
+  terminoFecho: boolean;
+  terminoFechoHora: string;
+  enviarSmsFim: boolean;
+
   percurso76921: boolean;
   percurso76922: boolean;
   percurso76923: boolean;
-  abrirServidoresTesteProducao: boolean;
+
   impressaoCheques: boolean;
   arquivarCheques: boolean;
-  terminoFecho: boolean;
-  terminoFechoHora: string;
-  transferirFicheirosDsi: boolean;
-  limpaGbtrlogFimMes: boolean; // Added this property for end-of-month task
 }
 
 export type TurnKey = 'turno1' | 'turno2' | 'turno3';
