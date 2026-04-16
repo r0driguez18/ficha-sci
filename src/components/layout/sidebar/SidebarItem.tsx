@@ -3,8 +3,8 @@ import React, { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import { useSidebar } from '@/components/ui/sidebar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useSidebar } from '@/components/ui/sidebar';
 import {
   SidebarMenu,
   SidebarMenuItem,
@@ -23,7 +23,7 @@ interface SidebarItemProps {
 
 export const SidebarItem = ({ icon: Icon, label, to, subItems }: SidebarItemProps) => {
   const location = useLocation();
-  const { state } = useSidebar();
+  const { state, setOpen: setSidebarOpen } = useSidebar();
   const collapsed = state === 'collapsed';
   const isActive = location.pathname === to || location.pathname.startsWith(`${to}/`);
   const hasActiveChild = subItems?.some(
@@ -39,12 +39,15 @@ export const SidebarItem = ({ icon: Icon, label, to, subItems }: SidebarItemProp
             <Tooltip>
               <TooltipTrigger asChild>
                 <SidebarMenuButton
-                  onClick={() => setOpen(!open)}
+                  onClick={() => {
+                    if (setSidebarOpen) setSidebarOpen(true);
+                    setOpen(true);
+                  }}
                   isActive={!!hasActiveChild}
-                  className="w-full"
+                  className="w-full flex justify-center py-6"
                 >
-                  <Icon className="h-5 w-5 shrink-0" />
-                  <span>{label}</span>
+                  <Icon className="h-6 w-6 shrink-0" />
+                  <span className="sr-only">{label}</span>
                 </SidebarMenuButton>
               </TooltipTrigger>
               <TooltipContent side="right">{label}</TooltipContent>
@@ -53,10 +56,10 @@ export const SidebarItem = ({ icon: Icon, label, to, subItems }: SidebarItemProp
             <SidebarMenuButton
               onClick={() => setOpen(!open)}
               isActive={!!hasActiveChild}
-              className="w-full"
+              className="w-full py-5"
             >
               <Icon className="h-5 w-5 shrink-0" />
-              <span className="flex-1">{label}</span>
+              <span className="flex-1 text-base">{label}</span>
               {open
                 ? <ChevronDown className="h-4 w-4 shrink-0 opacity-60" />
                 : <ChevronRight className="h-4 w-4 shrink-0 opacity-60" />
@@ -90,10 +93,10 @@ export const SidebarItem = ({ icon: Icon, label, to, subItems }: SidebarItemProp
         <SidebarMenuItem>
           <Tooltip>
             <TooltipTrigger asChild>
-              <SidebarMenuButton asChild isActive={isActive}>
+              <SidebarMenuButton asChild isActive={isActive} className="w-full flex justify-center py-6">
                 <NavLink to={to}>
-                  <Icon className="h-5 w-5 shrink-0" />
-                  <span>{label}</span>
+                  <Icon className="h-6 w-6 shrink-0" />
+                  <span className="sr-only">{label}</span>
                 </NavLink>
               </SidebarMenuButton>
             </TooltipTrigger>
@@ -107,10 +110,10 @@ export const SidebarItem = ({ icon: Icon, label, to, subItems }: SidebarItemProp
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <SidebarMenuButton asChild isActive={isActive}>
+        <SidebarMenuButton asChild isActive={isActive} className="w-full py-5">
           <NavLink to={to}>
             <Icon className="h-5 w-5 shrink-0" />
-            <span>{label}</span>
+            <span className="text-base">{label}</span>
           </NavLink>
         </SidebarMenuButton>
       </SidebarMenuItem>
