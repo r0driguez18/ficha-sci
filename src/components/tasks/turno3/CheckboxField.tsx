@@ -2,6 +2,7 @@
 import React from 'react';
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { cn } from '@/lib/utils';
 
 interface CheckboxFieldProps {
   id: string;
@@ -20,28 +21,27 @@ export const CheckboxField: React.FC<CheckboxFieldProps> = ({
   className = "",
   variant = 'default'
 }) => {
-  const getVariantStyles = () => {
-    switch (variant) {
-      case 'important':
-        return 'bg-blue-50 border-l-4 border-l-blue-500 pl-3 py-2 rounded-r-md';
-      case 'highlight':
-        return 'bg-amber-50 border-l-4 border-l-amber-500 pl-3 py-2 rounded-r-md';
-      default:
-        return '';
-    }
-  };
-
   return (
-    <div className={`flex items-center space-x-2 py-1.5 transition-colors hover:bg-muted/50 rounded-md px-2 ${getVariantStyles()} ${className}`}>
+    <div className={cn(
+      "flex items-center gap-3 py-2 px-3 rounded-lg transition-colors",
+      "hover:bg-muted/60",
+      checked && "bg-primary/5",
+      variant === 'important' && "border-l-[3px] border-l-primary bg-primary/5",
+      variant === 'highlight' && "border-l-[3px] border-l-warning bg-warning/5",
+      className
+    )}>
       <Checkbox 
         id={id} 
         checked={checked}
         onCheckedChange={onCheckedChange}
-        className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+        className="h-[18px] w-[18px] rounded border-2 data-[state=checked]:bg-primary data-[state=checked]:border-primary transition-all"
       />
       <Label 
         htmlFor={id} 
-        className={`cursor-pointer ml-2 text-sm leading-relaxed ${checked ? 'text-muted-foreground line-through' : 'text-foreground'}`}
+        className={cn(
+          "cursor-pointer text-sm leading-relaxed select-none",
+          checked ? 'text-muted-foreground line-through' : 'text-foreground'
+        )}
       >
         {label}
       </Label>
