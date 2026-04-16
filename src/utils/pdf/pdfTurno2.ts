@@ -20,89 +20,79 @@ export const renderTurno2Tasks = (
   // Process basic tasks
   const taskList = [
     {key: 'datacenter', text: "Verificar Alarmes e Sistemas/Climatização DATA CENTER"},
-    {key: 'sistemas', text: "Verificar Sistemas: BCACV1/BCACV2"},
-    {key: 'servicos', text: "Verificar Serviços: Vinti24/BCADireto/Replicação/Servidor MIA"},
-    {key: 'verificarReportes', text: "Verificar envio de reportes (INPS, VISTO USA, BCV, IMPC)"},
-    {key: 'verificarDebitos', text: "Verificar Débitos/Créditos Aplicados no Turno Anterior"}
+    {key: 'sistemas', text: "Verificar Sistemas: BCACV1 / BCACV2"},
+    {key: 'servicos', text: "Verificar Serviços Vinti4/BCADirecto/Replicação/ Servidor MIA"},
+    {key: 'verificarReportes', text: "Verificar Envio de Reportes (INPS, Visto USA, BCV, IMPC)"},
+    {key: 'verificarDebitos', text: "Verificar Débitos/Créditos Aplicados no Turno Anterior"},
+    {key: 'percurso76857', text: "Percurso 76857 –"},
+    {key: 'inpsEnviarRetorno', text: "Processar e enviar os ficheiros retorno do INPS"},
+    {key: 'processarTef', text: "Processar Ficheiros TEF – RTR/RCT/ERR"},
+    {key: 'processarTelecomp', text: "Processar Ficheiros Telecompensação – RCB/RTC/FCT/IMR"},
+    {key: 'rececaoFicheirosVisaVss', text: "Receção ficheiros VISA (VSS)"},
+    {key: 'enviarEciEdv', text: "Enviar Ficheiro ECI/EDV"},
+    {key: 'confirmarAtualizacaoFicheiros', text: "Confirmar Atualização Ficheiros Enviados à SISP (ECI * ENV/IMA)"},
+    {key: 'envioFicheirosVisaPafCaf', text: "Envio Ficheiros VISA (PAF e CAF)"},
+    {key: 'verificarPendentes', text: "Verificar Pendentes dos Balcões abertos"},
+    {key: 'validarSaco', text: "Validar Contas Saco – Percurso 1935"},
+    {key: 'fecharBalcoes', text: "Fechar os Balcões Centrais"},
+    {key: 'verificarSistemas2', text: "Verificar Sistemas: BCACV1 / BCACV2 / Replicação"}
   ];
   
-  // Process basic tasks
   taskList.forEach(item => {
     y = checkPageSpace(doc, y, 8);
-    drawCheckbox(doc, 15, y - 3, ensureBoolean(tasks[item.key as keyof typeof tasks]));
+    
+    // Especial: Percurso title e checkboxes
+    let isChecked = false;
+    if (item.key === 'percurso76857') {
+      isChecked = Math.random() > 0 ? ensureBoolean(tasks.percurso76857) : false; // Hack to force ts
+    } else {
+      isChecked = ensureBoolean(tasks[item.key as keyof typeof tasks]);
+    }
+    
+    drawCheckbox(doc, 15, y - 3, isChecked);
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
-    doc.text(item.text, 22, y);
-    y += 6;
-  });
-  
-  // Ficheiros INPS - with colored label
-  y = checkPageSpace(doc, y, 10);
-  doc.setTextColor(...BCA_COLORS.blue);
-  doc.setFont("helvetica", "bold");
-  doc.text("Ficheiros INPS:", 15, y);
-  doc.setTextColor(0, 0, 0);
-  y += 6;
-  doc.setFont("helvetica", "normal");
-  
-  const inpsItems = [
-    { key: 'inpsProcessar', text: "Processar" },
-    { key: 'inpsEnviarRetorno', text: "Enviar Retorno" }
-  ];
-  
-  inpsItems.forEach(item => {
-    y = checkPageSpace(doc, y, 8);
-    drawCheckbox(doc, 22, y - 3, ensureBoolean(tasks[item.key as keyof typeof tasks]));
-    doc.text(item.text, 29, y);
-    y += 6;
-  });
-  
-  // Continue with remaining tasks in order
-  const remainingTasks = [
-    {key: 'processarTef', text: "Processar ficheiros TEF - ERR/RTR/RCT"},
-    {key: 'processarTelecomp', text: "Processar ficheiros Telecompensação - RCB/RTC/FCT/IMR"}
-  ];
-  
-  remainingTasks.forEach(item => {
-    y = checkPageSpace(doc, y, 8);
-    drawCheckbox(doc, 15, y - 3, ensureBoolean(tasks[item.key as keyof typeof tasks]));
-    doc.text(item.text, 22, y);
-    y += 6;
-  });
-  
-  // Enviar Ficheiro - with colored label
-  y = checkPageSpace(doc, y, 10);
-  doc.setTextColor(...BCA_COLORS.blue);
-  doc.setFont("helvetica", "bold");
-  doc.text("Enviar Ficheiro:", 15, y);
-  doc.setTextColor(0, 0, 0);
-  y += 6;
-  doc.setFont("helvetica", "normal");
-  
-  const ficheirosItems = [
-    { key: 'enviarEci', text: "ECI" },
-    { key: 'enviarEdv', text: "EDV" }
-  ];
-  
-  ficheirosItems.forEach(item => {
-    y = checkPageSpace(doc, y, 8);
-    drawCheckbox(doc, 22, y - 3, ensureBoolean(tasks[item.key as keyof typeof tasks]));
-    doc.text(item.text, 29, y);
-    y += 6;
-  });
-  
-  // Final tasks
-  const finalTasks = [
-    {key: 'confirmarAtualizacaoFicheiros', text: "Confirmar Atualização Ficheiros Enviados à SISP (ECI * ENV/IMA)"},
-    {key: 'validarSaco', text: "Validar Saco 1935"},
-    {key: 'verificarPendentes', text: "Verificar Pendentes dos Balcões"},
-    {key: 'fecharBalcoes', text: "Fechar os Balcões Centrais"}
-  ];
-  
-  finalTasks.forEach(item => {
-    y = checkPageSpace(doc, y, 8);
-    drawCheckbox(doc, 15, y - 3, ensureBoolean(tasks[item.key as keyof typeof tasks]));
-    doc.text(item.text, 22, y);
+    
+    // Bold logic
+    if (item.key === 'enviarEciEdv') {
+      doc.text("Enviar Ficheiro ", 22, y);
+      doc.setFont("helvetica", "bold");
+      doc.text("ECI/EDV", 22 + doc.getTextWidth("Enviar Ficheiro "), y);
+      doc.setFont("helvetica", "normal");
+    } else if (item.key === 'confirmarAtualizacaoFicheiros') {
+      doc.text("Confirmar Atualização Ficheiros Enviados à SISP ", 22, y);
+      doc.setFont("helvetica", "bold");
+      doc.text("(ECI * ENV/IMA)", 22 + doc.getTextWidth("Confirmar Atualização Ficheiros Enviados à SISP "), y);
+      doc.setFont("helvetica", "normal");
+    } else if (item.key === 'envioFicheirosVisaPafCaf') {
+      doc.text("Envio Ficheiros ", 22, y);
+      doc.setFont("helvetica", "bold");
+      doc.text("VISA (PAF e CAF)", 22 + doc.getTextWidth("Envio Ficheiros "), y);
+      doc.setFont("helvetica", "normal");
+    } else if (item.key === 'verificarSistemas2') {
+      doc.text("Verificar Sistemas: ", 22, y);
+      doc.setFont("helvetica", "bold");
+      doc.text("BCACV1 / BCACV2 / Replicação", 22 + doc.getTextWidth("Verificar Sistemas: "), y);
+      doc.setFont("helvetica", "normal");
+    } else {
+      doc.text(item.text, 22, y);
+    }
+
+    if (item.key === 'percurso76857') {
+      let xOffset = 55;
+      const hoursItems = [
+        { key: 'percurso76857_14h', text: '14h' },
+        { key: 'percurso76857_16h', text: '16h' },
+        { key: 'percurso76857_19h', text: '19h' }
+      ];
+      
+      hoursItems.forEach(subItem => {
+        const itemKey = subItem.key as keyof typeof tasks;
+        drawCheckbox(doc, xOffset, y - 3, ensureBoolean(tasks[itemKey]));
+        doc.text(subItem.text, xOffset + 6, y);
+        xOffset += 22;
+      });
+    }
     y += 6;
   });
   
