@@ -7,7 +7,7 @@
 
 @layer base {
   :root {
-    --background: 210 33% 99%;
+    --background: 210 33% 98%;
     --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
@@ -16,19 +16,22 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    --primary: 210 100% 50%;
+    /* Azul BCA (Corporate Primary) */
+    --primary: 216 100% 28%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
+    /* Fundo ligeiramente azulado claro para áreas secundárias */
+    --secondary: 210 30% 96%;
+    --secondary-foreground: 216 100% 28%;
 
-    --muted: 210 40% 96%;
+    --muted: 210 30% 96%;
     --muted-foreground: 215 16% 47%;
 
-    --accent: 210 40% 96%;
-    --accent-foreground: 222 47% 11%;
+    --accent: 210 30% 96%;
+    --accent-foreground: 216 100% 28%;
 
-    --destructive: 0 84% 60%;
+    /* Vermelho BCA (Destrutivo e Destaques críticos) */
+    --destructive: 354 85% 50%;
     --destructive-foreground: 210 40% 98%;
 
     --success: 142 76% 36%;
@@ -42,18 +45,19 @@
 
     --border: 214 32% 91%;
     --input: 214 32% 91%;
-    --ring: 222 84% 4%;
+    --ring: 216 100% 28%;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 223 47% 11%;
+    /* Sidebar com fundo azul BCA escurecido */
+    --sidebar-background: 216 100% 18%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 211 100% 50%;
+    --sidebar-primary: 354 85% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217 33% 18%;
+    --sidebar-accent: 216 100% 14%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 216 34% 17%;
-    --sidebar-ring: 224 76% 48%;
+    --sidebar-border: 216 100% 14%;
+    --sidebar-ring: 354 85% 50%;
   }
 
   /*
@@ -167,7 +171,7 @@
 
 /* Glass morphism utility class */
 .glass-morphism {
-  @apply bg-white/75 backdrop-blur-md border border-white/20;
+  @apply bg-white/80 backdrop-blur-lg border border-border/40 shadow-sm;
 }
 
 /* Table styles */
@@ -189,7 +193,7 @@
 
 /* Card hover effect */
 .hover-card-effect {
-  @apply transition-all duration-300 hover:translate-y-[-5px] hover:shadow-lg;
+  @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-primary/20 bg-card;
 }
 
 /*

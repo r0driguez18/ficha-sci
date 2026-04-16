@@ -13,21 +13,22 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
+      <div className="min-h-screen flex w-full bg-slate-50/50">
         <Sidebar />
-        <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-12 flex items-center border-b bg-background sticky top-0 z-10 px-4">
-            <SidebarTrigger className="h-8 w-8" />
+        <div className="flex-1 flex flex-col min-w-0 bg-background/50">
+          <header className="h-16 flex items-center border-b border-border/40 bg-white/80 backdrop-blur-md sticky top-0 z-30 px-6 shadow-sm transition-all duration-300">
+            <SidebarTrigger className="h-9 w-9 hover:bg-primary/10 hover:text-primary transition-colors" />
           </header>
-          <main className="flex-1 overflow-auto bg-background">
-            <div className="container py-6 animate-fade-in">
+          <main className="flex-1 overflow-auto relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-transparent to-primary/5 -z-10" />
+            <div className="container py-8 px-4 sm:px-6 lg:px-8 animate-fade-in max-w-7xl mx-auto">
               {children}
             </div>
           </main>
         </div>
       </div>
       <Toaster />
-      <Sonner />
+      <Sonner position="top-right" richColors />
     </SidebarProvider>
   );
 }
