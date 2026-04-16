@@ -17,7 +17,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <Sidebar />
         <div className="flex-1 flex flex-col min-w-0 bg-background/50">
           <header className="h-16 flex items-center border-b border-border/40 bg-white/80 backdrop-blur-md sticky top-0 z-30 px-6 shadow-sm transition-all duration-300">
-            <SidebarTrigger className="h-9 w-9 hover:bg-primary/10 hover:text-primary transition-colors" />
           </header>
           <main className="flex-1 overflow-auto relative">
             <div className="absolute inset-0 bg-gradient-to-br from-transparent to-primary/5 -z-10" />
