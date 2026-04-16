@@ -4,8 +4,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import { saveFileProcess } from '@/services/fileProcessService';
 import { createCobrancaRetorno } from '@/services/cobrancasRetornoService';
+import { saveExportedTaskboard } from '@/services/exportedTaskboardService';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Turno3TasksComponent } from '@/components/tasks/Turno3Tasks';
 import { generateTaskboardPDF } from '@/utils/pdfGenerator';
@@ -448,7 +448,7 @@ const [isLoading, setIsLoading] = useState(true);
     toast.success('Formulário reiniciado com sucesso!');
   };
 
-  const exportToPDF = () => {
+  const exportToPDF = async () => {
     // Verificar se está assinado primeiro
     if (!signerName || !signatureDataUrl) {
       toast.error("Não é possível exportar PDF sem assinatura. Preencha o nome do responsável e assine a ficha.");
@@ -552,6 +552,25 @@ const [isLoading, setIsLoading] = useState(true);
       );
       doc.save(`taskboard_nao_util_${date.replace(/-/g, '')}.pdf`);
       toast.success('PDF gerado com sucesso!');
+
+      // Save to exported_taskboards for history
+      const signature = {
+        signerName: signerName || '',
+        signedAt: new Date().toISOString(),
+        imageDataUrl: signatureDataUrl
+      };
+      
+      if (user) {
+        await saveExportedTaskboard(
+          user.id,
+          'dia_nao_util',
+          date,
+          completeTurnData,
+          completeTasksData,
+          tableRows,
+          signature
+        );
+      }
       
       // Atualizar a data para o dia seguinte após exportação bem-sucedida
       const currentDate = new Date(date);
