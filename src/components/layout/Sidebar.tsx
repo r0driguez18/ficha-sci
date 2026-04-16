@@ -3,17 +3,25 @@ import React from 'react';
 import { SidebarHeader } from './sidebar/SidebarHeader';
 import { SidebarContent } from './sidebar/SidebarContent';
 import { SidebarFooter } from './sidebar/SidebarFooter';
+import {
+  Sidebar as ShadcnSidebar,
+  SidebarContent as ShadcnSidebarContent,
+  SidebarFooter as ShadcnSidebarFooter,
+  SidebarHeader as ShadcnSidebarHeader,
+} from '@/components/ui/sidebar';
 
 export function Sidebar() {
   return (
-    <aside 
-      className="fixed inset-y-0 left-0 z-10 flex w-64 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground shadow-sm"
-      role="navigation"
-      aria-label="Menu principal"
-    >
-      <SidebarHeader />
-      <SidebarContent />
-      <SidebarFooter />
-    </aside>
+    <ShadcnSidebar collapsible="icon">
+      <ShadcnSidebarHeader className="border-b border-sidebar-border p-0">
+        <SidebarHeader />
+      </ShadcnSidebarHeader>
+      <ShadcnSidebarContent className="py-4 px-2">
+        <SidebarContent />
+      </ShadcnSidebarContent>
+      <ShadcnSidebarFooter className="border-t border-sidebar-border p-0">
+        <SidebarFooter />
+      </ShadcnSidebarFooter>
+    </ShadcnSidebar>
   );
 }
