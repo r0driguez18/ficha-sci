@@ -7,12 +7,12 @@ import { addBCALogo, BCA_COLORS } from './pdfCommon';
 export const renderTaskTable = (doc: jsPDF, tableRows: TaskTableRow[]): void => {
   // Filter out any empty rows
   const validRows = tableRows.filter(row => 
-    row.hora.trim() !== '' || 
-    row.tarefa.trim() !== '' || 
-    row.nomeAs.trim() !== '' || 
-    row.operacao.trim() !== '' || 
-    row.executado.trim() !== '' ||
-    row.tipo.trim() !== ''
+    (row.hora || '').trim() !== '' || 
+    (row.tarefa || '').trim() !== '' || 
+    (row.nomeAs || '').trim() !== '' || 
+    (row.operacao || '').trim() !== '' || 
+    (row.executado || '').trim() !== '' ||
+    (row.tipo || '').trim() !== ''
   );
   
   // Always add a table page, even if there are no rows
