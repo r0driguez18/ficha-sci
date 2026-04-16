@@ -12,6 +12,11 @@ export interface Turno1Tasks {
   vistoUsa: boolean;
   ben: boolean;
   bcta: boolean;
+  percurso76857: boolean;
+  percurso76857_7h30: boolean;
+  percurso76857_10h: boolean;
+  percurso76857_12h: boolean;
+  validacaoDigitalizacaoFichaDiaria: boolean;
   verificarDebitos: boolean;
   enviarReportes: boolean;
   verificarRecepcaoSisp: boolean;
@@ -22,6 +27,7 @@ export interface Turno1Tasks {
   processarTef: boolean;
   processarTelecomp: boolean;
   enviarSegundoEtr: boolean;
+  envioFicheirosVisa12h30: boolean;
   enviarFicheiroCom: boolean;
   dia01: boolean;
   dia08: boolean;
@@ -34,6 +40,9 @@ export interface Turno1Tasks {
   mvdia1: boolean;
   mvdia2: boolean;
   brjrn: boolean;
+  restoreBmBcaCv2: boolean;
+  duptapBmSemBcaCv2: boolean;
+  diferidosBmmes: boolean;
 }
 
 export interface Turno2Tasks {
@@ -42,16 +51,22 @@ export interface Turno2Tasks {
   servicos: boolean;
   verificarReportes: boolean;
   verificarDebitos: boolean;
+  percurso76857: boolean;
+  percurso76857_14h: boolean;
+  percurso76857_16h: boolean;
+  percurso76857_19h: boolean;
   inpsProcessar: boolean;
   inpsEnviarRetorno: boolean;
   processarTef: boolean;
   processarTelecomp: boolean;
-  enviarEci: boolean;
-  enviarEdv: boolean;
+  rececaoFicheirosVisaVss: boolean;
+  enviarEciEdv: boolean;
   confirmarAtualizacaoFicheiros: boolean;
+  envioFicheirosVisaPafCaf: boolean;
   validarSaco: boolean;
   verificarPendentes: boolean;
   fecharBalcoes: boolean;
+  verificarSistemas2: boolean;
 }
 
 export interface Turno3Tasks {
