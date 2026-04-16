@@ -9,11 +9,9 @@ export const SidebarHeader = () => {
   return (
     <div className="flex h-16 items-center justify-center px-4">
       {collapsed ? (
-        <img 
-          src="/lovable-uploads/e9c60d16-29f0-415b-8024-2888c0e9f536.png" 
-          alt="BCA Logo" 
-          className="h-8 w-8 object-contain"
-        />
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground font-black text-xl shadow-md border border-white/10">
+          B
+        </div>
       ) : (
         <img 
           src="/lovable-uploads/e9c60d16-29f0-415b-8024-2888c0e9f536.png" 

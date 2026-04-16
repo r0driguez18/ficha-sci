@@ -34,7 +34,6 @@ export const CheckboxField: React.FC<CheckboxFieldProps> = ({
         id={id} 
         checked={checked}
         onCheckedChange={onCheckedChange}
-        className="h-[18px] w-[18px] rounded border-2 data-[state=checked]:bg-primary data-[state=checked]:border-primary transition-all"
       />
       <Label 
         htmlFor={id} 
