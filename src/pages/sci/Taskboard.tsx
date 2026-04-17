@@ -434,11 +434,31 @@ const [isLoading, setIsLoading] = useState(true);
     } catch (error) {
       console.error('Erro ao salvar dados no Supabase:', error);
       return { savedCount: 0, duplicateCount: 0 };
-    }
-  };
-
-   // Save taskboard data to Supabase (without signature validation)
+// Save taskboard data to Supabase (without signature validation)
   const handleSave = async () => {
+    // Verificar se está validado
+    if (!signerName || signerName.trim() === '') {
+      toast.error("A ficha não pode ser guardada sem ser validada (Selecione o seu nome na secção 'Validado por').");
+      return;
+    }
+
+    // Validação Estrutural: Número de Operação deve ter 9 dígitos numéricos
+    const invalidFormatOps = tableRows.filter(r => r.operacao && r.operacao.trim() !== '' && !/^\d{9}$/.test(r.operacao.trim()));
+    if (invalidFormatOps.length > 0) {
+      toast.error("O(s) número(s) de operação deve(m) conter exatamente 9 dígitos. Verifique a tabela.");
+      return;
+    }
+
+    // Validação de Duplicação de Operações no Sistema
+    const opsToCheck = tableRows.map(r => r.operacao?.trim()).filter(Boolean);
+    if (opsToCheck.length > 0) {
+      const duplicates = await checkDuplicateOperations(getFormType(), date, opsToCheck);
+      if (duplicates.length > 0) {
+        toast.error(`A(s) seguinte(s) operação(ões) já se encontram no arquivo e não podem ser duplicadas: ${duplicates.join(', ')}`);
+        return;
+      }
+    }
+    
     // Validate operator, entrada, saida for all turns
     const turnLabels = { turno1: 'Turno 1', turno2: 'Turno 2', turno3: 'Turno 3' };
     for (const key of ['turno1', 'turno2', 'turno3'] as TurnKey[]) {
