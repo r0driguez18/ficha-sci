@@ -18,7 +18,7 @@ interface SidebarItemProps {
   icon: React.ElementType;
   label: string;
   to: string;
-  subItems?: { label: string; to: string }[];
+  subItems?: { label: string; to: string; badge?: number }[];
 }
 
 export const SidebarItem = ({ icon: Icon, label, to, subItems }: SidebarItemProps) => {
@@ -73,8 +73,13 @@ export const SidebarItem = ({ icon: Icon, label, to, subItems }: SidebarItemProp
                 return (
                   <SidebarMenuSubItem key={subItem.to}>
                     <SidebarMenuSubButton asChild isActive={subActive}>
-                      <NavLink to={subItem.to}>
-                        {subItem.label}
+                      <NavLink to={subItem.to} className="flex justify-between items-center w-full">
+                        <span>{subItem.label}</span>
+                        {!!subItem.badge && subItem.badge > 0 && (
+                          <span className="bg-red-600 text-white text-[10px] leading-tight font-bold px-1.5 py-0.5 rounded-sm">
+                            {subItem.badge}
+                          </span>
+                        )}
                       </NavLink>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
