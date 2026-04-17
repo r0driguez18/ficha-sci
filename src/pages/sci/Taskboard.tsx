@@ -434,7 +434,9 @@ const [isLoading, setIsLoading] = useState(true);
     } catch (error) {
       console.error('Erro ao salvar dados no Supabase:', error);
       return { savedCount: 0, duplicateCount: 0 };
-// Save taskboard data to Supabase (without signature validation)
+    }
+  };
+
   const handleSave = async () => {
     // Verificar se está validado
     if (!signerName || signerName.trim() === '') {
