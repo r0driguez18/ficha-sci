@@ -25,7 +25,6 @@ export const SidebarContent = () => {
 
   const searchItems = [
     { label: 'SCI - Procedimentos', path: '/sci/procedimentos', keywords: ['sci', 'taskboard', 'procedimentos'] },
-    { label: 'SCI - Calendário', path: '/sci/calendar', keywords: ['sci', 'calendar', 'calendário'] },
     { label: 'SCI - Histórico', path: '/sci/historico-fichas', keywords: ['sci', 'histórico', 'fichas', 'guardadas'] },
     { label: 'SCI - Retornos de Cobranças', path: '/sci/retornos-cobrancas', keywords: ['sci', 'retornos', 'cobranças', 'ficheiros'] },
     { label: 'CRC - Tratamento', path: '/crc/tratamento', keywords: ['crc', 'tratamento', 'ficheiros'] },
@@ -70,7 +69,6 @@ export const SidebarContent = () => {
             to="/sci"
             subItems={[
               { label: "Ficha de Procedimentos", to: "/sci/procedimentos" },
-              { label: "Calendário", to: "/sci/calendar" },
               { label: "Histórico de Fichas", to: "/sci/historico-fichas" },
               { label: "Retornos Cobranças", to: "/sci/retornos-cobrancas" }
             ]}
