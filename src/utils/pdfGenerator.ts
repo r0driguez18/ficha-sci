@@ -137,10 +137,10 @@ export const generateTaskboardPDF = (
   doc.setTextColor(...BCA_COLORS.darkBlue);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
-  centerText(doc, "Validação e Assinatura", y);
+  centerText(doc, "Validação Eletrónica", y);
   
   // Draw subtle line under title
-  const titleWidth = doc.getTextWidth("Validação e Assinatura");
+  const titleWidth = doc.getTextWidth("Validação Eletrónica");
   const titleX = (pageWidth - titleWidth) / 2;
   doc.setDrawColor(...BCA_COLORS.lightGray);
   doc.setLineWidth(0.5);
@@ -149,55 +149,27 @@ export const generateTaskboardPDF = (
   y += 25;
 
   // Signer info
-  const signerName = signature?.signerName || "";
-  const signedAt = signature?.signedAt || "";
+  const signerName = signature?.signerName || "Não especificado";
+  const signedAt = signature?.signedAt || "-";
   
-  const boxX = 30; // Centered narrower box looks better
-  const boxW = pageWidth - 60;
-  const boxH = 50;
-  const boxY = y;
-
-  // Signature box with styled dashed border
-  doc.setDrawColor(...BCA_COLORS.blue);
-  doc.setLineWidth(0.5);
-  doc.setLineDashPattern([2, 2], 0); // Dotted line effect
-  doc.setFillColor(249, 250, 251); // Extremely light gray background
-  doc.roundedRect(boxX, boxY, boxW, boxH, 4, 4, 'FD');
-  doc.setLineDashPattern([], 0); // Reset dash
-
-  // Render signature image if present
-  if (signature?.imageDataUrl) {
-    try {
-      // Scale signature nicely inside the box
-      const imgW = 100;
-      const imgH = 35;
-      const imgX = boxX + (boxW - imgW) / 2;
-      const imgY = boxY + (boxH - imgH) / 2 - 5;
-      // @ts-ignore - addImage accepts data URL
-      doc.addImage(signature.imageDataUrl, 'PNG', imgX, imgY, imgW, imgH);
-    } catch (e) {
-      /* ignore image errors */
-    }
-  } else {
-    doc.setFontSize(11);
-    doc.setTextColor(150, 150, 150);
-    centerText(doc, "Assinado digitalmente", boxY + boxH / 2);
-  }
-
-  // Footer meta details under the box
-  y = boxY + boxH + 15;
-  doc.setFontSize(11);
+  // Simple validation text instead of a box
+  doc.setFontSize(12);
   doc.setTextColor(50, 50, 50);
   
-  doc.setFont("helvetica", "bold");
-  doc.text("Responsável:", boxX, y);
   doc.setFont("helvetica", "normal");
-  doc.text(signerName || '-', boxX + 30, y);
-
+  centerText(doc, `Este documento foi validado eletronicamente por:`, y);
+  y += 10;
+  
   doc.setFont("helvetica", "bold");
-  doc.text("Data/Hora:", boxX + boxW - 75, y);
+  doc.setFontSize(14);
+  doc.setTextColor(...BCA_COLORS.darkBlue);
+  centerText(doc, signerName, y);
+  
+  y += 15;
   doc.setFont("helvetica", "normal");
-  doc.text(signedAt || '-', boxX + boxW - 50, y);
+  doc.setFontSize(11);
+  doc.setTextColor(100, 100, 100);
+  centerText(doc, `Data e Hora da validação: ${signedAt}`, y);
   
   return doc;
 };

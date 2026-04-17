@@ -692,7 +692,9 @@ const [isLoading, setIsLoading] = useState(true);
         { imageDataUrl: signatureDataUrl, signerName, signedAt: new Date().toISOString() }
       );
       
-      const fileName = `Taskboard_${getFormType()}_${date}_${signerName.replace(/\s+/g, '_')}.pdf`;
+      const [yyyy, mm, dd] = date.split('-');
+      const yy = yyyy.slice(2);
+      const fileName = `FD ${dd}${mm}${yy}.pdf`;
       doc.save(fileName);
       
       // Save to exported taskboards history
