@@ -24,7 +24,7 @@ export const SignatureSection: React.FC<SignatureSectionProps> = ({
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-2">
+        <div className="flex flex-col space-y-2">
           <Label htmlFor="signerName">Validado por</Label>
           <Select value={signerName} onValueChange={onSignerNameChange}>
             <SelectTrigger>
@@ -43,7 +43,11 @@ export const SignatureSection: React.FC<SignatureSectionProps> = ({
       <div className="mt-4 space-y-2">
         <Label>Assinatura</Label>
         <SignaturePad value={signatureDataUrl} onChange={onSignatureChange} height={100} />
-        <p className="text-xs text-muted-foreground">Desenhe a sua assinatura no quadro acima.</p>
+        {signatureDataUrl ? (
+          <p className="text-xs text-green-600 font-medium">Assinatura capturada.</p>
+        ) : (
+          <p className="text-xs text-muted-foreground">Desenhe a sua assinatura no quadro acima.</p>
+        )}
       </div>
     </section>
   );

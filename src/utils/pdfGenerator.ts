@@ -131,55 +131,73 @@ export const generateTaskboardPDF = (
 
   // Signature page (simple and safe: new page)
   doc.addPage();
-  y = 20;
+  y = 30; // More breathing room at the top
   
   // Signature page header
   doc.setTextColor(...BCA_COLORS.darkBlue);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(14);
-  doc.text("Validação e Assinatura", 15, y);
+  doc.setFontSize(16);
+  centerText(doc, "Validação e Assinatura", y);
+  
+  // Draw subtle line under title
+  const titleWidth = doc.getTextWidth("Validação e Assinatura");
+  const titleX = (pageWidth - titleWidth) / 2;
+  doc.setDrawColor(...BCA_COLORS.lightGray);
+  doc.setLineWidth(0.5);
+  doc.line(titleX - 10, y + 4, titleX + titleWidth + 10, y + 4);
   doc.setTextColor(0, 0, 0);
-  y += 10;
+  y += 25;
 
   // Signer info
   const signerName = signature?.signerName || "";
   const signedAt = signature?.signedAt || "";
   
-  doc.setFontSize(11);
-  doc.setFont("helvetica", "normal");
-  doc.text(`Assinado por: ${signerName || '-'}`, 15, y);
-  doc.text(`Data/Hora: ${signedAt || '-'}`, 110, y);
-  y += 8;
-
-  // Signature box with styled border
-  const boxX = 15;
+  const boxX = 30; // Centered narrower box looks better
+  const boxW = pageWidth - 60;
+  const boxH = 50;
   const boxY = y;
-  const boxW = pageWidth - 30;
-  const boxH = 70;
-  
+
+  // Signature box with styled dashed border
   doc.setDrawColor(...BCA_COLORS.blue);
   doc.setLineWidth(0.5);
-  doc.setFillColor(...BCA_COLORS.lightGray);
-  doc.roundedRect(boxX, boxY, boxW, boxH, 3, 3, 'FD');
+  doc.setLineDashPattern([2, 2], 0); // Dotted line effect
+  doc.setFillColor(249, 250, 251); // Extremely light gray background
+  doc.roundedRect(boxX, boxY, boxW, boxH, 4, 4, 'FD');
+  doc.setLineDashPattern([], 0); // Reset dash
 
   // Render signature image if present
   if (signature?.imageDataUrl) {
     try {
-      const imgW = 120;
-      const imgH = 40;
-      const imgX = boxX + 10;
-      const imgY = boxY + 15;
+      // Scale signature nicely inside the box
+      const imgW = 100;
+      const imgH = 35;
+      const imgX = boxX + (boxW - imgW) / 2;
+      const imgY = boxY + (boxH - imgH) / 2 - 5;
       // @ts-ignore - addImage accepts data URL
       doc.addImage(signature.imageDataUrl, 'PNG', imgX, imgY, imgW, imgH);
     } catch (e) {
       /* ignore image errors */
     }
   } else {
-    doc.setFontSize(10);
-    doc.setTextColor(...BCA_COLORS.gray);
-    doc.text("Assine no espaço acima.", boxX + 10, boxY + boxH / 2);
-    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(11);
+    doc.setTextColor(150, 150, 150);
+    centerText(doc, "Assinado digitalmente", boxY + boxH / 2);
   }
+
+  // Footer meta details under the box
+  y = boxY + boxH + 15;
+  doc.setFontSize(11);
+  doc.setTextColor(50, 50, 50);
+  
+  doc.setFont("helvetica", "bold");
+  doc.text("Responsável:", boxX, y);
+  doc.setFont("helvetica", "normal");
+  doc.text(signerName || '-', boxX + 30, y);
+
+  doc.setFont("helvetica", "bold");
+  doc.text("Data/Hora:", boxX + boxW - 75, y);
+  doc.setFont("helvetica", "normal");
+  doc.text(signedAt || '-', boxX + boxW - 50, y);
   
   return doc;
 };
