@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SidebarItem } from './SidebarItem';
 import { Button } from '@/components/ui/button';
@@ -16,12 +16,47 @@ import {
   Search,
   MessageCircle
 } from 'lucide-react';
+import { useAuth } from '@/components/auth/AuthProvider';
+import { getReturnsDueToday, getOverdueReturns } from '@/services/cobrancasRetornoService';
 
 export const SidebarContent = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const navigate = useNavigate();
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
+  const { user } = useAuth();
+  const [retornosBadge, setRetornosBadge] = useState<number>(0);
+
+  useEffect(() => {
+    if (!user) return;
+    
+    let isMounted = true;
+    
+    const fetchCounts = async () => {
+      try {
+        const [dueToday, overdue] = await Promise.all([
+          getReturnsDueToday(user.id),
+          getOverdueReturns(user.id)
+        ]);
+        
+        if (isMounted) {
+          const count = (dueToday.data?.length || 0) + (overdue.data?.length || 0);
+          setRetornosBadge(count);
+        }
+      } catch (error) {
+        console.error('Failed to load pending returns count:', error);
+      }
+    };
+
+    fetchCounts();
+    // Refresh every 5 minutes in background
+    const interval = setInterval(fetchCounts, 5 * 60 * 1000);
+    
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [user]);
 
   const searchItems = [
     { label: 'SCI - Procedimentos', path: '/sci/procedimentos', keywords: ['sci', 'taskboard', 'procedimentos'] },
@@ -70,7 +105,7 @@ export const SidebarContent = () => {
             subItems={[
               { label: "Ficha de Procedimentos", to: "/sci/procedimentos" },
               { label: "Histórico de Fichas", to: "/sci/historico-fichas" },
-              { label: "Retornos Cobranças", to: "/sci/retornos-cobrancas" }
+              { label: "Retornos Cobranças", to: "/sci/retornos-cobrancas", badge: retornosBadge }
             ]}
           />
           <SidebarItem
