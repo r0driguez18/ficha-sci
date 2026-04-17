@@ -123,3 +123,41 @@ export async function deleteExportedTaskboard(id: string): Promise<{ error: any 
 
   return { error };
 }
+
+/**
+ * Check if given operation numbers already exist in previous boards
+ * Ignores operations in the currently edited form (same date and form type).
+ */
+export async function checkDuplicateOperations(
+  formType: string,
+  date: string,
+  newOperations: string[]
+): Promise<string[]> {
+  if (!newOperations || newOperations.length === 0) return [];
+  
+  // Since operations should be globally unique, we don't filter by user
+  const { data, error } = await supabase
+    .from('exported_taskboards')
+    .select('form_type, date, table_rows');
+    
+  if (error || !data) {
+    console.error('Error fetching exported taskboards to check duplicates', error);
+    return [];
+  }
+  
+  const existingOps = new Set<string>();
+  data.forEach((board: any) => {
+    // skip the form we are currently editing (so they can edit the same form multiple times today)
+    if (board.form_type === formType && board.date === date) return;
+    
+    if (Array.isArray(board.table_rows)) {
+      board.table_rows.forEach((row: any) => {
+        if (row.operacao && typeof row.operacao === 'string' && row.operacao.trim()) {
+          existingOps.add(row.operacao.trim());
+        }
+      });
+    }
+  });
+  
+  return newOperations.filter(op => existingOps.has(op.trim()));
+}

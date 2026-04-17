@@ -58,6 +58,9 @@ export default function RetornosCobrancas() {
       // Refresh the list
       await fetchReturns();
       
+      // Update global sidebar badge silently
+      window.dispatchEvent(new Event('update-returns-badge'));
+      
       // Reset form
       setSelectedReturn(null);
       setObservacoes('');
@@ -220,10 +223,20 @@ export default function RetornosCobrancas() {
                           {retorno.ficheiro_nome}
                         </TableCell>
                         <TableCell>
-                          {new Date(retorno.data_aplicacao).toLocaleDateString('pt-PT')}
+                          {retorno.data_aplicacao ? (
+                            (() => {
+                              const [y, m, d] = retorno.data_aplicacao.split('T')[0].split('-');
+                              return `${d}/${m}/${y}`;
+                            })()
+                          ) : '-'}
                         </TableCell>
                         <TableCell>
-                          {new Date(retorno.data_retorno_esperada).toLocaleDateString('pt-PT')}
+                          {retorno.data_retorno_esperada ? (
+                            (() => {
+                              const [y, m, d] = retorno.data_retorno_esperada.split('T')[0].split('-');
+                              return `${d}/${m}/${y}`;
+                            })()
+                          ) : '-'}
                         </TableCell>
                         <TableCell>
                           {getStatusBadge(getReturnStatus(retorno))}
@@ -317,13 +330,28 @@ export default function RetornosCobrancas() {
                           {retorno.ficheiro_nome}
                         </TableCell>
                         <TableCell>
-                          {new Date(retorno.data_aplicacao).toLocaleDateString('pt-PT')}
+                          {retorno.data_aplicacao ? (
+                            (() => {
+                              const [y, m, d] = retorno.data_aplicacao.split('T')[0].split('-');
+                              return `${d}/${m}/${y}`;
+                            })()
+                          ) : '-'}
                         </TableCell>
                         <TableCell>
-                          {new Date(retorno.data_retorno_esperada).toLocaleDateString('pt-PT')}
+                          {retorno.data_retorno_esperada ? (
+                            (() => {
+                              const [y, m, d] = retorno.data_retorno_esperada.split('T')[0].split('-');
+                              return `${d}/${m}/${y}`;
+                            })()
+                          ) : '-'}
                         </TableCell>
                         <TableCell>
-                          {retorno.data_retorno_enviado && new Date(retorno.data_retorno_enviado).toLocaleDateString('pt-PT')}
+                          {retorno.data_retorno_enviado ? (
+                            (() => {
+                              const [y, m, d] = retorno.data_retorno_enviado.split('T')[0].split('-');
+                              return `${d}/${m}/${y}`;
+                            })()
+                          ) : '-'}
                         </TableCell>
                         <TableCell>
                           {retorno.observacoes || '-'}

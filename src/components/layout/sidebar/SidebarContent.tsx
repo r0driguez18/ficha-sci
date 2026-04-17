@@ -17,7 +17,7 @@ import {
   MessageCircle
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProvider';
-import { getReturnsDueToday, getOverdueReturns } from '@/services/cobrancasRetornoService';
+import { getPendingReturns } from '@/services/cobrancasRetornoService';
 
 export const SidebarContent = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -34,14 +34,10 @@ export const SidebarContent = () => {
     
     const fetchCounts = async () => {
       try {
-        const [dueToday, overdue] = await Promise.all([
-          getReturnsDueToday(user.id),
-          getOverdueReturns(user.id)
-        ]);
+        const { data } = await getPendingReturns(user.id);
         
         if (isMounted) {
-          const count = (dueToday.data?.length || 0) + (overdue.data?.length || 0);
-          setRetornosBadge(count);
+          setRetornosBadge(data?.length || 0);
         }
       } catch (error) {
         console.error('Failed to load pending returns count:', error);
@@ -52,9 +48,13 @@ export const SidebarContent = () => {
     // Refresh every 5 minutes in background
     const interval = setInterval(fetchCounts, 5 * 60 * 1000);
     
+    // Listen for manual updates triggered by other components
+    window.addEventListener('update-returns-badge', fetchCounts);
+    
     return () => {
       isMounted = false;
       clearInterval(interval);
+      window.removeEventListener('update-returns-badge', fetchCounts);
     };
   }, [user]);
 
