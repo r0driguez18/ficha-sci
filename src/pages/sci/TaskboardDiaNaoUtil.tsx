@@ -17,6 +17,7 @@ import { useTaskboardSync } from '@/services/taskboardService';
 import type { TurnKey, TasksType, TurnDataType, Turno3Tasks } from '@/types/taskboard';
 import type { TaskTableRow } from '@/types/taskTableRow';
 import { Loader2 } from 'lucide-react';
+import { sendFechoInicioNotification, sendFechoTerminoNotification } from '@/services/telegramService';
 
 const operatorsList = [
   { value: "nalves", label: "Nelson Alves" },
@@ -192,6 +193,17 @@ const [isLoading, setIsLoading] = useState(true);
   }, [date]);
 
   const handleTaskChange = (task: keyof Turno3Tasks, checked: boolean | string) => {
+    if (checked === true && tasks[task] !== true) {
+      const operator = operatorsList.find(op => op.value === turnData.operator);
+      const operatorName = operator?.label || 'Operador';
+      
+      if (task === 'inicioFecho') {
+        sendFechoInicioNotification(operatorName);
+      } else if (task === 'terminoFecho') {
+        sendFechoTerminoNotification(operatorName);
+      }
+    }
+
     setTasks({
       ...tasks,
       [task]: checked
@@ -550,8 +562,9 @@ const [isLoading, setIsLoading] = useState(true);
         isEndOfMonth,
         { imageDataUrl: signatureDataUrl, signerName, signedAt: new Date().toLocaleString('pt-PT') }
       );
-      doc.save(`taskboard_nao_util_${date.replace(/-/g, '')}.pdf`);
-      toast.success('PDF gerado com sucesso!');
+      const fileName = `taskboard_nao_util_${date.replace(/-/g, '')}.pdf`;
+      doc.save(fileName);
+      toast.success(`PDF gerado e salvo no histórico: ${fileName}`);
 
       // Save to exported_taskboards for history
       const signature = {
@@ -563,7 +576,7 @@ const [isLoading, setIsLoading] = useState(true);
       if (user) {
         await saveExportedTaskboard(
           user.id,
-          'dia_nao_util',
+          'dia-nao-util',
           date,
           completeTurnData,
           completeTasksData,
