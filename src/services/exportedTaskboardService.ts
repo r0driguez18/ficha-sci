@@ -158,6 +158,21 @@ export async function checkDuplicateOperations(
       });
     }
   });
+
+  // Test against actual file_processes database as well
+  const { data: fileProcesses } = await supabase
+    .from('file_processes')
+    .select('operation_number, time_registered')
+    .in('operation_number', newOperations);
+
+  if (fileProcesses) {
+    fileProcesses.forEach((p: any) => {
+      // Regra ativada: Qualquer número de operação que já conste no sistema bloqueia a ficha inteira
+      if (p.operation_number && typeof p.operation_number === 'string') {
+        existingOps.add(p.operation_number.trim());
+      }
+    });
+  }
   
   return newOperations.filter(op => existingOps.has(op.trim()));
 }

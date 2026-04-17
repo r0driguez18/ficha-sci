@@ -445,7 +445,7 @@ const [isLoading, setIsLoading] = useState(true);
     }
 
     // Validação Estrutural: Número de Operação deve ter 9 dígitos numéricos
-    const invalidFormatOps = tableRows.filter(r => r.operacao && r.operacao.trim() !== '' && !/^\d{9}$/.test(r.operacao.trim()));
+    const invalidFormatOps = tableRows.filter(r => r.operacao && r.operacao.trim() !== '' && String(r.operacao).trim().length !== 9);
     if (invalidFormatOps.length > 0) {
       toast.error("O(s) número(s) de operação deve(m) conter exatamente 9 dígitos. Verifique a tabela.");
       return;
@@ -695,7 +695,7 @@ const [isLoading, setIsLoading] = useState(true);
     }
 
     // Validação Estrutural: Número de Operação deve ter 9 dígitos numéricos
-    const invalidFormatOps = tableRows.filter(r => r.operacao && r.operacao.trim() !== '' && !/^\\d{9}$/.test(r.operacao.trim()));
+    const invalidFormatOps = tableRows.filter(r => r.operacao && r.operacao.trim() !== '' && String(r.operacao).trim().length !== 9);
     if (invalidFormatOps.length > 0) {
       toast.error("O(s) número(s) de operação deve(m) conter exatamente 9 dígitos. Verifique a tabela.");
       return;
