@@ -562,9 +562,10 @@ const [isLoading, setIsLoading] = useState(true);
         isEndOfMonth,
         { imageDataUrl: signatureDataUrl, signerName, signedAt: new Date().toLocaleString('pt-PT') }
       );
-      const fileName = `taskboard_nao_util_${date.replace(/-/g, '')}.pdf`;
+      const [yyyy, mm, dd] = date.split('-');
+      const yy = yyyy.slice(2);
+      const fileName = `FD ${dd}${mm}${yy}.pdf`;
       doc.save(fileName);
-      toast.success(`PDF gerado e salvo no histórico: ${fileName}`);
 
       // Save to exported_taskboards for history
       const signature = {
@@ -574,7 +575,7 @@ const [isLoading, setIsLoading] = useState(true);
       };
       
       if (user) {
-        await saveExportedTaskboard(
+        const { error: saveError } = await saveExportedTaskboard(
           user.id,
           'dia-nao-util',
           date,
@@ -583,14 +584,20 @@ const [isLoading, setIsLoading] = useState(true);
           tableRows,
           signature
         );
+
+        if (saveError) {
+          console.error('Erro ao salvar no histórico:', saveError);
+          toast.error('PDF gerado mas houve erro ao salvar no histórico');
+        } else {
+          toast.success(`PDF gerado e salvo no histórico: ${fileName}`);
+          
+          const currentDate = new Date(date);
+          currentDate.setDate(currentDate.getDate() + 1);
+          const nextDate = currentDate.toISOString().split('T')[0];
+          setDate(nextDate);
+          toast.info(`Data atualizada para ${nextDate}`);
+        }
       }
-      
-      // Atualizar a data para o dia seguinte após exportação bem-sucedida
-      const currentDate = new Date(date);
-      currentDate.setDate(currentDate.getDate() + 1);
-      const nextDate = currentDate.toISOString().split('T')[0];
-      setDate(nextDate);
-      toast.info(`Data atualizada para ${nextDate}`);
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
       toast.error('Erro ao gerar PDF. Tente novamente.');

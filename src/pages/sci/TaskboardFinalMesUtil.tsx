@@ -573,9 +573,10 @@ const TaskboardFinalMesUtil = () => {
         true,
         { imageDataUrl: signatureDataUrl, signerName, signedAt: new Date().toLocaleString('pt-PT') }
       ); // Set isEndOfMonth to true
-      const fileName = `taskboard_final_mes_util_${date.replace(/-/g, '')}.pdf`;
+      const [yyyy, mm, dd] = date.split('-');
+      const yy = yyyy.slice(2);
+      const fileName = `FD ${dd}${mm}${yy}.pdf`;
       doc.save(fileName);
-      toast.success(`PDF gerado e salvo no histórico: ${fileName}`);
 
       // Save to exported_taskboards for history
       const signature = {
@@ -585,7 +586,7 @@ const TaskboardFinalMesUtil = () => {
       };
       
       if (user) {
-        await saveExportedTaskboard(
+        const { error: saveError } = await saveExportedTaskboard(
           user.id,
           'final-mes-util',
           date,
@@ -594,14 +595,21 @@ const TaskboardFinalMesUtil = () => {
           tableRows,
           signature
         );
+
+        if (saveError) {
+          console.error('Erro ao salvar no histórico:', saveError);
+          toast.error('PDF gerado mas houve erro ao salvar no histórico');
+        } else {
+          toast.success(`PDF gerado e salvo no histórico: ${fileName}`);
+          
+          // Atualizar a data para o dia seguinte após exportação bem-sucedida
+          const currentDate = new Date(date);
+          currentDate.setDate(currentDate.getDate() + 1);
+          const nextDate = currentDate.toISOString().split('T')[0];
+          setDate(nextDate);
+          toast.info(`Data atualizada para ${nextDate}`);
+        }
       }
-      
-      // Atualizar a data para o dia seguinte após exportação bem-sucedida
-      const currentDate = new Date(date);
-      currentDate.setDate(currentDate.getDate() + 1);
-      const nextDate = currentDate.toISOString().split('T')[0];
-      setDate(nextDate);
-      toast.info(`Data atualizada para ${nextDate}`);
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
       toast.error('Erro ao gerar PDF. Tente novamente.');
