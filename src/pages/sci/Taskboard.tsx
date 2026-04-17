@@ -296,33 +296,19 @@ const [isLoading, setIsLoading] = useState(true);
     }
   }, [date]);
 
-  // Track previous values to only send notifications on check (not uncheck)
-  const prevInicioFecho = useRef(false);
-  const prevTerminoFecho = useRef(false);
-
-  // Monitor inicioFecho and terminoFecho to send Telegram notifications
-  useEffect(() => {
-    const turno3Tasks = tasks.turno3;
-    const turno3Data = turnData.turno3;
-    
-    // Get full operator name from the list
-    const operator = operatorsList.find(op => op.value === turno3Data.operator);
-    const operatorName = operator?.label || 'Operador';
-    
-    // Send notification when inicioFecho changes from false to true
-    if (turno3Tasks.inicioFecho && !prevInicioFecho.current) {
-      sendFechoInicioNotification(operatorName);
-    }
-    prevInicioFecho.current = turno3Tasks.inicioFecho;
-    
-    // Send notification when terminoFecho changes from false to true
-    if (turno3Tasks.terminoFecho && !prevTerminoFecho.current) {
-      sendFechoTerminoNotification(operatorName);
-    }
-    prevTerminoFecho.current = turno3Tasks.terminoFecho;
-  }, [tasks.turno3.inicioFecho, tasks.turno3.terminoFecho, turnData.turno3.operator]);
-
   const handleTaskChange = (turno: TurnKey, task: string, checked: boolean | string) => {
+    // Send Telegram Notification ONLY if user is intentionally clicking the checkbox (not on page load)
+    if (turno === 'turno3' && checked === true && tasks[turno][task as keyof typeof tasks[typeof turno]] !== true) {
+      const operator = operatorsList.find(op => op.value === turnData.turno3.operator);
+      const operatorName = operator?.label || 'Operador';
+      
+      if (task === 'inicioFecho') {
+        sendFechoInicioNotification(operatorName);
+      } else if (task === 'terminoFecho') {
+        sendFechoTerminoNotification(operatorName);
+      }
+    }
+
     setTasks({
       ...tasks,
       [turno]: {
