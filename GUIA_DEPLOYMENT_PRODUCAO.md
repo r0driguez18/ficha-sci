@@ -139,8 +139,6 @@ supabase/functions/
 As Edge Functions precisam de secrets configurados. Crie o ficheiro `.env.local` (NÃO comitar):
 
 ```env
-TELEGRAM_BOT_TOKEN=<seu_bot_token>
-TELEGRAM_CHAT_ID=<seu_chat_id>
 SUPABASE_URL=http://192.168.X.X:8000
 SUPABASE_ANON_KEY=<anon_key_producao>
 SUPABASE_SERVICE_ROLE_KEY=<service_role_key_producao>
@@ -278,8 +276,6 @@ server {
 | `JWT_SECRET` | Docker `.env` | Ficheiro `.env` do Docker |
 | `ANON_KEY` | Docker `.env` + Frontend | Docker `.env` + `client.ts` |
 | `SERVICE_ROLE_KEY` | Docker `.env` + Edge Functions | Docker `.env` + `.env.local` |
-| `TELEGRAM_BOT_TOKEN` | Edge Functions | `.env.local` (CLI) |
-| `TELEGRAM_CHAT_ID` | Edge Functions | `.env.local` (CLI) |
 
 > 🔒 **NUNCA** comitar ficheiros `.env` ou `.env.local` no Git. Estão no `.gitignore`.
 
