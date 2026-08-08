@@ -131,7 +131,6 @@ As Edge Functions estão em `supabase/functions/`:
 
 ```
 supabase/functions/
-└── telegram-notify/
     └── index.ts
 ```
 
@@ -140,8 +139,6 @@ supabase/functions/
 As Edge Functions precisam de secrets configurados. Crie o ficheiro `.env.local` (NÃO comitar):
 
 ```env
-TELEGRAM_BOT_TOKEN=<seu_bot_token>
-TELEGRAM_CHAT_ID=<seu_chat_id>
 SUPABASE_URL=http://192.168.X.X:8000
 SUPABASE_ANON_KEY=<anon_key_producao>
 SUPABASE_SERVICE_ROLE_KEY=<service_role_key_producao>
@@ -154,7 +151,6 @@ SUPABASE_SERVICE_ROLE_KEY=<service_role_key_producao>
 supabase functions serve --env-file .env.local
 
 # Deploy para o Supabase self-hosted
-supabase functions deploy telegram-notify --env-file .env.local
 ```
 
 > ⚠️ Edge Functions **não podem** ser criadas/editadas pelo Studio GUI. Devem ser geridas exclusivamente via CLI.
@@ -164,7 +160,6 @@ supabase functions deploy telegram-notify --env-file .env.local
 Certifique-se que `supabase/config.toml` tem a configuração correta:
 
 ```toml
-[functions.telegram-notify]
 verify_jwt = false
 ```
 
@@ -281,8 +276,6 @@ server {
 | `JWT_SECRET` | Docker `.env` | Ficheiro `.env` do Docker |
 | `ANON_KEY` | Docker `.env` + Frontend | Docker `.env` + `client.ts` |
 | `SERVICE_ROLE_KEY` | Docker `.env` + Edge Functions | Docker `.env` + `.env.local` |
-| `TELEGRAM_BOT_TOKEN` | Edge Functions | `.env.local` (CLI) |
-| `TELEGRAM_CHAT_ID` | Edge Functions | `.env.local` (CLI) |
 
 > 🔒 **NUNCA** comitar ficheiros `.env` ou `.env.local` no Git. Estão no `.gitignore`.
 
@@ -379,7 +372,6 @@ Invoke-WebRequest http://192.168.X.X:8000/auth/v1/settings -Headers @{"apikey"="
 - Verificar Firewall do Windows
 
 ### Edge Functions não respondem
-- Verificar logs: `supabase functions logs telegram-notify`
 - Confirmar que secrets estão configurados
 - Verificar `config.toml`
 

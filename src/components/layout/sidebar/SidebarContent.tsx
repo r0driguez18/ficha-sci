@@ -13,8 +13,7 @@ import {
   Home,
   PieChart,
   Settings,
-  Search,
-  MessageCircle
+  Search
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { getPendingReturns } from '@/services/cobrancasRetornoService';
@@ -66,7 +65,6 @@ export const SidebarContent = () => {
     { label: 'DIS - Dados', path: '/dis/dados', keywords: ['dis', 'dados', 'database'] },
     { label: 'Processamentos - Estatísticas', path: '/easyvista/estatisticas', keywords: ['processamentos', 'estatísticas', 'charts'] },
     { label: 'Configurações', path: '/settings', keywords: ['settings', 'configurações', 'config'] },
-    { label: 'Telegram Setup', path: '/telegram-setup', keywords: ['telegram', 'notificações', 'grupo', 'bot'] },
     { label: 'Documentação', path: '/docs', keywords: ['docs', 'documentação', 'help', 'ajuda'] },
   ];
 
@@ -140,7 +138,6 @@ export const SidebarContent = () => {
         <SidebarGroupLabel className="text-sidebar-foreground/50">Sistema</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarItem icon={Settings} label="Configurações" to="/settings" />
-          <SidebarItem icon={MessageCircle} label="Telegram Setup" to="/telegram-setup" />
           <SidebarItem icon={FileText} label="Documentação" to="/docs" />
         </SidebarGroupContent>
       </SidebarGroup>
