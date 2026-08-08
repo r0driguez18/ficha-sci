@@ -17,7 +17,6 @@ import { TurnInfoSection } from '@/components/taskboard/TurnInfoSection';
 import { TableRowsSection } from '@/components/taskboard/TableRowsSection';
 import { FormActions } from '@/components/taskboard/FormActions';
 import { SignatureSection } from '@/components/taskboard/SignatureSection';
-import { sendFechoInicioNotification, sendFechoTerminoNotification } from '@/services/telegramService';
 import type { TurnKey, TasksType, TurnDataType, Turno1Tasks, Turno2Tasks, Turno3Tasks } from '@/types/taskboard';
 import type { TaskTableRow } from '@/types/taskTableRow';
 
@@ -208,17 +207,6 @@ const TaskboardFinalMesUtil = () => {
     task: keyof TasksType[T],
     checked: boolean | string
   ) => {
-    if (turnKey === 'turno3' && checked === true && tasks[turnKey][task as keyof typeof tasks[typeof turnKey]] !== true) {
-      const operator = operatorsList.find(op => op.value === turnData.turno3.operator);
-      const operatorName = operator?.label || 'Operador';
-      
-      if (task as string === 'inicioFecho') {
-        sendFechoInicioNotification(operatorName);
-      } else if (task as string === 'terminoFecho') {
-        sendFechoTerminoNotification(operatorName);
-      }
-    }
-
     setTasks({
       ...tasks,
       [turnKey]: {
