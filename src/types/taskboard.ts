@@ -79,7 +79,7 @@ export interface Turno3Tasks {
   requisicoesCheques: boolean;
   gerarFicheiroAsc: boolean;
   fecharBalcao22: boolean;
-  userFecho: boolean;
+  userFecho?: boolean;
   userFecho7624: boolean;
   userFechoBankaRemota: boolean;
   userFechoServidoresBanka: boolean;
@@ -111,7 +111,8 @@ export interface Turno3Tasks {
   aplicarFicheirosCompensacao: boolean;
   tratarPendentesCartoes: boolean;
   consultarSaldoConta: boolean;
-  saldoContaValor: string;
+  saldoContaValor?: string;
+  listaRequisicoesCheques?: boolean;
   saldoNegativo: boolean;
   saldoPositivo: boolean;
   abrirRealTime: boolean;
