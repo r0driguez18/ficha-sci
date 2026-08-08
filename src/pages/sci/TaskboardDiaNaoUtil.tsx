@@ -195,7 +195,10 @@ const [isLoading, setIsLoading] = useState(true);
   }, [date]);
 
   const handleTaskChange = (task: keyof Turno3Tasks, checked: boolean | string) => {
-    setTasks({ ...INITIAL_TURNO3_TASKS });
+    setTasks({
+      ...tasks,
+      [task]: checked
+    });
   };
 
   const handleTurnDataChange = (field: string, value: string) => {
@@ -400,63 +403,7 @@ const [isLoading, setIsLoading] = useState(true);
       observations: ''
     });
     
-    setTasks({
-      verificarDebitos: false,
-      tratarTapes: false,
-      fecharServidores: false,
-      fecharImpressoras: false,
-      userFecho: false,
-      listaRequisicoesCheques: false,
-      cancelarCartoesClientes: false,
-      prepararEnviarAsc: false,
-      adicionarRegistrosBanka: false,
-      fecharServidoresBanka: false,
-      alterarInternetBanking: false,
-      prepararEnviarCsv: false,
-      fecharRealTime: false,
-      fecharRealTimeHora: '',
-      prepararEnviarEtr: false,
-      fazerLoggOffAml: false,
-      aplicarFicheiroErroEtr: false,
-      validarBalcao14: false,
-      fecharBalcao14: false,
-      arranqueManual: false,
-      inicioFecho: false,
-      inicioFechoHora: '',
-      validarEnvioEmail: false,
-      controlarTrabalhos: false,
-      saveBmbck: false,
-      abrirServidoresInternet: false,
-      imprimirCheques: false,
-      backupBm: false,
-      validarFicheiroCcln: false,
-      aplicarFicheirosCompensacao: false,
-      validarSaldoConta: false,
-      saldoContaValor: '',
-      saldoNegativo: false,
-      saldoPositivo: false,
-      abrirRealTime: false,
-      abrirRealTimeHora: '',
-      verificarTransacoes: false,
-      aplicarFicheiroVisa: false,
-      cativarCartoes: false,
-      abrirBcaDireto: false,
-      abrirServidoresBanka: false,
-      atualizarTelefonesOffline: false,
-      verificarReplicacao: false,
-      enviarFicheiroCsv: false,
-      transferirFicheirosLiquidity: false,
-      percurso76921: false,
-      percurso76922: false,
-      percurso76923: false,
-      abrirServidoresTesteProducao: false,
-      impressaoCheques: false,
-      arquivarCheques: false,
-      terminoFecho: false,
-      terminoFechoHora: '',
-      transferirFicheirosDsi: false,
-      limpaGbtrlogFimMes: false
-    });
+    setTasks({ ...INITIAL_TURNO3_TASKS });
     
     setTableRows([{ id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '', tipo: '' }]);
     
