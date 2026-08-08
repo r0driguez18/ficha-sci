@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { createCobrancaRetorno } from '@/services/cobrancasRetornoService';
+import { saveFileProcess } from '@/services/fileProcessService';
 import { saveExportedTaskboard, checkDuplicateOperations } from '@/services/exportedTaskboardService';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Turno3TasksComponent } from '@/components/tasks/Turno3Tasks';
@@ -378,7 +379,7 @@ const TaskboardFinalMesNaoUtil = () => {
           {
             action: {
               label: "Ver Gráficos",
-              onClick: () => navigate("/easyvista/dashboards")
+              onClick: () => navigate("/easyvista/estatisticas")
             }
           }
         );
