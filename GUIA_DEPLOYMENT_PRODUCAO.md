@@ -131,7 +131,6 @@ As Edge Functions estão em `supabase/functions/`:
 
 ```
 supabase/functions/
-└── telegram-notify/
     └── index.ts
 ```
 
@@ -154,7 +153,6 @@ SUPABASE_SERVICE_ROLE_KEY=<service_role_key_producao>
 supabase functions serve --env-file .env.local
 
 # Deploy para o Supabase self-hosted
-supabase functions deploy telegram-notify --env-file .env.local
 ```
 
 > ⚠️ Edge Functions **não podem** ser criadas/editadas pelo Studio GUI. Devem ser geridas exclusivamente via CLI.
@@ -164,7 +162,6 @@ supabase functions deploy telegram-notify --env-file .env.local
 Certifique-se que `supabase/config.toml` tem a configuração correta:
 
 ```toml
-[functions.telegram-notify]
 verify_jwt = false
 ```
 
@@ -379,7 +376,6 @@ Invoke-WebRequest http://192.168.X.X:8000/auth/v1/settings -Headers @{"apikey"="
 - Verificar Firewall do Windows
 
 ### Edge Functions não respondem
-- Verificar logs: `supabase functions logs telegram-notify`
 - Confirmar que secrets estão configurados
 - Verificar `config.toml`
 
