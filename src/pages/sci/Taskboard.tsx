@@ -6,8 +6,6 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { saveFileProcess } from '@/services/fileProcessService';
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Turno1TasksComponent } from '@/components/tasks/Turno1Tasks';
 import { Turno2TasksComponent } from '@/components/tasks/Turno2Tasks';
@@ -32,15 +30,6 @@ const operatorsList = [
   { value: "ebrito", label: "Elvis Brito" },
   { value: "lspencer", label: "Louis Spencer" }
 ];
-
-const processFormSchema = z.object({
-  operacao: z.string().regex(/^\d{9}$/, {
-    message: "O número de operação deve conter exatamente 9 dígitos"
-  }),
-  executado: z.string({
-    required_error: "Por favor selecione um operador"
-  })
-});
 
 const Taskboard = () => {
   const navigate = useNavigate();
