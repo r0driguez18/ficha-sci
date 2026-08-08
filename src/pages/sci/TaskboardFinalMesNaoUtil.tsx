@@ -13,7 +13,6 @@ import { TurnInfoSection } from '@/components/taskboard/TurnInfoSection';
 import { TableRowsSection } from '@/components/taskboard/TableRowsSection';
 import { FormActions } from '@/components/taskboard/FormActions';
 import { SignatureSection } from '@/components/taskboard/SignatureSection';
-import { sendFechoInicioNotification, sendFechoTerminoNotification } from '@/services/telegramService';
 import type { TurnKey, TasksType, TurnDataType, Turno3Tasks } from '@/types/taskboard';
 import type { TaskTableRow } from '@/types/taskTableRow';
 import { Loader2 } from 'lucide-react';
@@ -194,17 +193,6 @@ const TaskboardFinalMesNaoUtil = () => {
   }, [date, turnData, tasks, tableRows, isLoading, user]);
 
   const handleTaskChange = (task: keyof Turno3Tasks, checked: boolean | string) => {
-    if (checked === true && tasks[task] !== true) {
-      const operator = operatorsList.find(op => op.value === turnData.operator);
-      const operatorName = operator?.label || 'Operador';
-      
-      if (task === 'inicioFecho') {
-        sendFechoInicioNotification(operatorName);
-      } else if (task === 'terminoFecho') {
-        sendFechoTerminoNotification(operatorName);
-      }
-    }
-
     setTasks({
       ...tasks,
       [task]: checked

@@ -20,7 +20,6 @@ import { SignatureSection } from '@/components/taskboard/SignatureSection';
 import { useTaskboardSync } from '@/services/taskboardService';
 import type { TurnKey, TasksType, TurnDataType } from '@/types/taskboard';
 import type { TaskTableRow } from '@/types/taskTableRow';
-import { sendFechoInicioNotification, sendFechoTerminoNotification } from '@/services/telegramService';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { saveExportedTaskboard, checkDuplicateOperations } from '@/services/exportedTaskboardService';

@@ -17,7 +17,6 @@ import { useTaskboardSync } from '@/services/taskboardService';
 import type { TurnKey, TasksType, TurnDataType, Turno3Tasks } from '@/types/taskboard';
 import type { TaskTableRow } from '@/types/taskTableRow';
 import { Loader2 } from 'lucide-react';
-import { sendFechoInicioNotification, sendFechoTerminoNotification } from '@/services/telegramService';
 
 const operatorsList = [
   { value: "nalves", label: "Nelson Alves" },
@@ -193,17 +192,6 @@ const [isLoading, setIsLoading] = useState(true);
   }, [date]);
 
   const handleTaskChange = (task: keyof Turno3Tasks, checked: boolean | string) => {
-    if (checked === true && tasks[task] !== true) {
-      const operator = operatorsList.find(op => op.value === turnData.operator);
-      const operatorName = operator?.label || 'Operador';
-      
-      if (task === 'inicioFecho') {
-        sendFechoInicioNotification(operatorName);
-      } else if (task === 'terminoFecho') {
-        sendFechoTerminoNotification(operatorName);
-      }
-    }
-
     setTasks({
       ...tasks,
       [task]: checked
