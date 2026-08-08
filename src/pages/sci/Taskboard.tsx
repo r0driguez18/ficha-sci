@@ -496,7 +496,7 @@ const [isLoading, setIsLoading] = useState(true);
           {
             action: {
               label: "Ver Gráficos",
-              onClick: () => navigate("/easyvista/dashboards")
+              onClick: () => navigate("/easyvista/estatisticas")
             }
           }
         );

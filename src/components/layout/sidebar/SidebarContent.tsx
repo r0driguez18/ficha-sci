@@ -13,8 +13,7 @@ import {
   Home,
   PieChart,
   Settings,
-  Search,
-  MessageCircle
+  Search
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { getPendingReturns } from '@/services/cobrancasRetornoService';
