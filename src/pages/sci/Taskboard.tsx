@@ -6,8 +6,6 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { saveFileProcess } from '@/services/fileProcessService';
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Turno1TasksComponent } from '@/components/tasks/Turno1Tasks';
 import { Turno2TasksComponent } from '@/components/tasks/Turno2Tasks';
@@ -20,7 +18,6 @@ import { SignatureSection } from '@/components/taskboard/SignatureSection';
 import { useTaskboardSync } from '@/services/taskboardService';
 import type { TurnKey, TasksType, TurnDataType } from '@/types/taskboard';
 import type { TaskTableRow } from '@/types/taskTableRow';
-import { sendFechoInicioNotification, sendFechoTerminoNotification } from '@/services/telegramService';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { saveExportedTaskboard, checkDuplicateOperations } from '@/services/exportedTaskboardService';
@@ -33,15 +30,6 @@ const operatorsList = [
   { value: "ebrito", label: "Elvis Brito" },
   { value: "lspencer", label: "Louis Spencer" }
 ];
-
-const processFormSchema = z.object({
-  operacao: z.string().regex(/^\d{9}$/, {
-    message: "O número de operação deve conter exatamente 9 dígitos"
-  }),
-  executado: z.string({
-    required_error: "Por favor selecione um operador"
-  })
-});
 
 const Taskboard = () => {
   const navigate = useNavigate();
@@ -297,17 +285,7 @@ const [isLoading, setIsLoading] = useState(true);
   }, [date]);
 
   const handleTaskChange = (turno: TurnKey, task: string, checked: boolean | string) => {
-    // Send Telegram Notification ONLY if user is intentionally clicking the checkbox (not on page load)
-    if (turno === 'turno3' && checked === true && tasks[turno][task as keyof typeof tasks[typeof turno]] !== true) {
-      const operator = operatorsList.find(op => op.value === turnData.turno3.operator);
-      const operatorName = operator?.label || 'Operador';
-      
-      if (task === 'inicioFecho') {
-        sendFechoInicioNotification(operatorName);
-      } else if (task === 'terminoFecho') {
-        sendFechoTerminoNotification(operatorName);
-      }
-    }
+
 
     setTasks({
       ...tasks,
@@ -507,7 +485,7 @@ const [isLoading, setIsLoading] = useState(true);
           {
             action: {
               label: "Ver Gráficos",
-              onClick: () => navigate("/easyvista/dashboards")
+              onClick: () => navigate("/easyvista/estatisticas")
             }
           }
         );

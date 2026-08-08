@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { createCobrancaRetorno } from '@/services/cobrancasRetornoService';
+import { saveFileProcess } from '@/services/fileProcessService';
 import { saveExportedTaskboard, checkDuplicateOperations } from '@/services/exportedTaskboardService';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Turno3TasksComponent } from '@/components/tasks/Turno3Tasks';
@@ -13,7 +14,6 @@ import { TurnInfoSection } from '@/components/taskboard/TurnInfoSection';
 import { TableRowsSection } from '@/components/taskboard/TableRowsSection';
 import { FormActions } from '@/components/taskboard/FormActions';
 import { SignatureSection } from '@/components/taskboard/SignatureSection';
-import { sendFechoInicioNotification, sendFechoTerminoNotification } from '@/services/telegramService';
 import type { TurnKey, TasksType, TurnDataType, Turno3Tasks } from '@/types/taskboard';
 import type { TaskTableRow } from '@/types/taskTableRow';
 import { Loader2 } from 'lucide-react';
@@ -26,34 +26,7 @@ const operatorsList = [
   { value: "lspencer", label: "Louis Spencer" }
 ];
 
-const TaskboardFinalMesNaoUtil = () => {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [tableRows, setTableRows] = useState<TaskTableRow[]>([
-    { id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '', tipo: '' }
-  ]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Assinatura digital
-  const [signerName, setSignerName] = useState("");
-  const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
-
-  // For non-working days, we only have one turn (Turn 3)
-  const [turnData, setTurnData] = useState<{
-    operator: string;
-    entrada: string;
-    saida: string;
-    observations: string;
-  }>({
-    operator: '',
-    entrada: '',
-    saida: '',
-    observations: ''
-  });
-
-  const [tasks, setTasks] = useState<Turno3Tasks>({
+const INITIAL_TURNO3_TASKS: Turno3Tasks = {
     datacenter: false,
     sistemas: false,
     verificarDebitos: false,
@@ -112,7 +85,36 @@ const TaskboardFinalMesNaoUtil = () => {
     percurso76923: false,
     impressaoCheques: false,
     arquivarCheques: false
+};
+
+const TaskboardFinalMesNaoUtil = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [tableRows, setTableRows] = useState<TaskTableRow[]>([
+    { id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '', tipo: '' }
+  ]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Assinatura digital
+  const [signerName, setSignerName] = useState("");
+  const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
+
+  // For non-working days, we only have one turn (Turn 3)
+  const [turnData, setTurnData] = useState<{
+    operator: string;
+    entrada: string;
+    saida: string;
+    observations: string;
+  }>({
+    operator: '',
+    entrada: '',
+    saida: '',
+    observations: ''
   });
+
+  const [tasks, setTasks] = useState<Turno3Tasks>({ ...INITIAL_TURNO3_TASKS });
 
   // Load data from Supabase or localStorage on component mount
   useEffect(() => {
@@ -194,17 +196,6 @@ const TaskboardFinalMesNaoUtil = () => {
   }, [date, turnData, tasks, tableRows, isLoading, user]);
 
   const handleTaskChange = (task: keyof Turno3Tasks, checked: boolean | string) => {
-    if (checked === true && tasks[task] !== true) {
-      const operator = operatorsList.find(op => op.value === turnData.operator);
-      const operatorName = operator?.label || 'Operador';
-      
-      if (task === 'inicioFecho') {
-        sendFechoInicioNotification(operatorName);
-      } else if (task === 'terminoFecho') {
-        sendFechoTerminoNotification(operatorName);
-      }
-    }
-
     setTasks({
       ...tasks,
       [task]: checked
@@ -390,7 +381,7 @@ const TaskboardFinalMesNaoUtil = () => {
           {
             action: {
               label: "Ver Gráficos",
-              onClick: () => navigate("/easyvista/dashboards")
+              onClick: () => navigate("/easyvista/estatisticas")
             }
           }
         );
@@ -412,63 +403,7 @@ const TaskboardFinalMesNaoUtil = () => {
       observations: ''
     });
     
-    setTasks({
-      verificarDebitos: false,
-      tratarTapes: false,
-      fecharServidores: false,
-      fecharImpressoras: false,
-      userFecho: false,
-      listaRequisicoesCheques: false,
-      cancelarCartoesClientes: false,
-      prepararEnviarAsc: false,
-      adicionarRegistrosBanka: false,
-      fecharServidoresBanka: false,
-      alterarInternetBanking: false,
-      prepararEnviarCsv: false,
-      fecharRealTime: false,
-      fecharRealTimeHora: '',
-      prepararEnviarEtr: false,
-      fazerLoggOffAml: false,
-      aplicarFicheiroErroEtr: false,
-      validarBalcao14: false,
-      fecharBalcao14: false,
-      arranqueManual: false,
-      inicioFecho: false,
-      inicioFechoHora: '',
-      validarEnvioEmail: false,
-      controlarTrabalhos: false,
-      saveBmbck: false,
-      abrirServidoresInternet: false,
-      imprimirCheques: false,
-      backupBm: false,
-      validarFicheiroCcln: false,
-      aplicarFicheirosCompensacao: false,
-      validarSaldoConta: false,
-      saldoContaValor: '',
-      saldoNegativo: false,
-      saldoPositivo: false,
-      abrirRealTime: false,
-      abrirRealTimeHora: '',
-      verificarTransacoes: false,
-      aplicarFicheiroVisa: false,
-      cativarCartoes: false,
-      abrirBcaDireto: false,
-      abrirServidoresBanka: false,
-      atualizarTelefonesOffline: false,
-      verificarReplicacao: false,
-      enviarFicheiroCsv: false,
-      transferirFicheirosLiquidity: false,
-      percurso76921: false,
-      percurso76922: false,
-      percurso76923: false,
-      abrirServidoresTesteProducao: false,
-      impressaoCheques: false,
-      arquivarCheques: false,
-      terminoFecho: false,
-      terminoFechoHora: '',
-      transferirFicheirosDsi: false,
-      limpaGbtrlogFimMes: false // Ensure this is included in the reset state
-    });
+    setTasks({ ...INITIAL_TURNO3_TASKS });
     
     setTableRows([{ id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '', tipo: '' }]);
     
