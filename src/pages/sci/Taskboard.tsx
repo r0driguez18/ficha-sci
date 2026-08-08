@@ -297,17 +297,7 @@ const [isLoading, setIsLoading] = useState(true);
   }, [date]);
 
   const handleTaskChange = (turno: TurnKey, task: string, checked: boolean | string) => {
-    // Send Telegram Notification ONLY if user is intentionally clicking the checkbox (not on page load)
-    if (turno === 'turno3' && checked === true && tasks[turno][task as keyof typeof tasks[typeof turno]] !== true) {
-      const operator = operatorsList.find(op => op.value === turnData.turno3.operator);
-      const operatorName = operator?.label || 'Operador';
-      
-      if (task === 'inicioFecho') {
-        sendFechoInicioNotification(operatorName);
-      } else if (task === 'terminoFecho') {
-        sendFechoTerminoNotification(operatorName);
-      }
-    }
+
 
     setTasks({
       ...tasks,
