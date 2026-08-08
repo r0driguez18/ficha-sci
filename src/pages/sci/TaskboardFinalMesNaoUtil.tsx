@@ -26,34 +26,7 @@ const operatorsList = [
   { value: "lspencer", label: "Louis Spencer" }
 ];
 
-const TaskboardFinalMesNaoUtil = () => {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [tableRows, setTableRows] = useState<TaskTableRow[]>([
-    { id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '', tipo: '' }
-  ]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Assinatura digital
-  const [signerName, setSignerName] = useState("");
-  const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
-
-  // For non-working days, we only have one turn (Turn 3)
-  const [turnData, setTurnData] = useState<{
-    operator: string;
-    entrada: string;
-    saida: string;
-    observations: string;
-  }>({
-    operator: '',
-    entrada: '',
-    saida: '',
-    observations: ''
-  });
-
-  const [tasks, setTasks] = useState<Turno3Tasks>({
+const INITIAL_TURNO3_TASKS: Turno3Tasks = {
     datacenter: false,
     sistemas: false,
     verificarDebitos: false,
@@ -112,7 +85,36 @@ const TaskboardFinalMesNaoUtil = () => {
     percurso76923: false,
     impressaoCheques: false,
     arquivarCheques: false
+};
+
+const TaskboardFinalMesNaoUtil = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [tableRows, setTableRows] = useState<TaskTableRow[]>([
+    { id: 1, hora: '', tarefa: '', nomeAs: '', operacao: '', executado: '', tipo: '' }
+  ]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Assinatura digital
+  const [signerName, setSignerName] = useState("");
+  const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
+
+  // For non-working days, we only have one turn (Turn 3)
+  const [turnData, setTurnData] = useState<{
+    operator: string;
+    entrada: string;
+    saida: string;
+    observations: string;
+  }>({
+    operator: '',
+    entrada: '',
+    saida: '',
+    observations: ''
   });
+
+  const [tasks, setTasks] = useState<Turno3Tasks>({ ...INITIAL_TURNO3_TASKS });
 
   // Load data from Supabase or localStorage on component mount
   useEffect(() => {
@@ -194,10 +196,7 @@ const TaskboardFinalMesNaoUtil = () => {
   }, [date, turnData, tasks, tableRows, isLoading, user]);
 
   const handleTaskChange = (task: keyof Turno3Tasks, checked: boolean | string) => {
-    setTasks({
-      ...tasks,
-      [task]: checked
-    });
+    setTasks({ ...INITIAL_TURNO3_TASKS });
   };
 
   const handleTurnDataChange = (field: string, value: string) => {
