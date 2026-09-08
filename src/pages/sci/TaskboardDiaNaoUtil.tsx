@@ -14,6 +14,7 @@ import { TurnInfoSection } from '@/components/taskboard/TurnInfoSection';
 import { TableRowsSection } from '@/components/taskboard/TableRowsSection';
 import { FormActions } from '@/components/taskboard/FormActions';
 import { SignatureSection } from '@/components/taskboard/SignatureSection';
+import { SyncStatusBadge } from '@/components/taskboard/SyncStatusBadge';
 import { useTaskboardSync } from '@/services/taskboardService';
 import type { TurnKey, TasksType, TurnDataType, Turno3Tasks } from '@/types/taskboard';
 import type { TaskTableRow } from '@/types/taskTableRow';
@@ -112,7 +113,7 @@ const [isLoading, setIsLoading] = useState(true);
 
   const [tasks, setTasks] = useState<Turno3Tasks>({ ...INITIAL_TURNO3_TASKS });
 
-  const { syncData, loadData, resetData } = useTaskboardSync(
+  const { syncData, loadData, resetData, status: syncStatus, lastSavedAt } = useTaskboardSync(
     'dia-nao-util',
     date,
     { turno3: turnData },
@@ -585,9 +586,13 @@ const [isLoading, setIsLoading] = useState(true);
     <div className="container py-6">
       <Card>
         <CardHeader>
-          <CardTitle>Ficha de Procedimentos - Dia Não Útil</CardTitle>
-          <CardDescription>Preencha as informações necessárias para o dia não útil</CardDescription>
-          {user && <p className="text-sm text-muted-foreground">Dados sincronizados na nuvem</p>}
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <CardTitle>Ficha de Procedimentos - Dia Não Útil</CardTitle>
+              <CardDescription>Preencha as informações necessárias para o dia não útil</CardDescription>
+            </div>
+            {user && <SyncStatusBadge status={syncStatus} lastSavedAt={lastSavedAt} />}
+          </div>
         </CardHeader>
         <CardContent>
           <div className="mb-6">
