@@ -60,55 +60,104 @@
     --sidebar-ring: 354 85% 50%;
   }
 
-  /*
+  /* Escuro — conforto de leitura em turno noturno (RNF-03.5). */
   .dark {
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
+    --background: 222 47% 9%;
+    --foreground: 210 40% 96%;
 
-    --card: 222 47% 11%;
-    --card-foreground: 210 40% 98%;
+    --card: 222 40% 13%;
+    --card-foreground: 210 40% 96%;
 
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 222 40% 13%;
+    --popover-foreground: 210 40% 96%;
 
-    --primary: 210 100% 50%;
+    --primary: 210 100% 62%;
     --primary-foreground: 222 47% 11%;
 
     --secondary: 217 33% 18%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary-foreground: 210 40% 96%;
 
-    --muted: 217 33% 18%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 70%;
 
-    --accent: 217 33% 18%;
+    --accent: 217 33% 20%;
     --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 63% 31%;
+    --destructive: 0 72% 58%;
     --destructive-foreground: 210 40% 98%;
 
-    --success: 142 71% 45%;
-    --success-foreground: 355 20% 99%;
+    --success: 142 66% 47%;
+    --success-foreground: 144 60% 8%;
 
-    --warning: 38 92% 50%;
-    --warning-foreground: 48 96% 12%;
+    --warning: 38 92% 55%;
+    --warning-foreground: 48 96% 10%;
 
-    --info: 204 94% 94%;
-    --info-foreground: 210 92% 45%;
+    --info: 210 92% 24%;
+    --info-foreground: 204 94% 88%;
 
-    --border: 217 33% 18%;
-    --input: 217 33% 18%;
-    --ring: 213 27% 84%;
-    
-    --sidebar-background: 223 47% 11%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 210 100% 50%;
+    --border: 217 24% 24%;
+    --input: 217 24% 24%;
+    --ring: 210 100% 66%;
+
+    --sidebar-background: 222 47% 12%;
+    --sidebar-foreground: 210 40% 96%;
+    --sidebar-primary: 354 85% 58%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 217 33% 18%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 216 34% 17%;
-    --sidebar-ring: 224 76% 48%;
+    --sidebar-accent-foreground: 210 40% 96%;
+    --sidebar-border: 217 24% 22%;
+    --sidebar-ring: 354 85% 58%;
   }
-  */
+
+  /* Alto contraste — legibilidade máxima. Aplica-se por cima de .dark, por
+     isso tem de vir depois no ficheiro para vencer no cascade. */
+  .hc {
+    --background: 0 0% 4%;
+    --foreground: 0 0% 100%;
+
+    --card: 0 0% 9%;
+    --card-foreground: 0 0% 100%;
+
+    --popover: 0 0% 9%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 210 100% 70%;
+    --primary-foreground: 0 0% 0%;
+
+    --secondary: 0 0% 18%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 85%;
+
+    --accent: 0 0% 22%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 100% 70%;
+    --destructive-foreground: 0 0% 0%;
+
+    --success: 142 76% 60%;
+    --success-foreground: 0 0% 0%;
+
+    --warning: 45 100% 62%;
+    --warning-foreground: 0 0% 0%;
+
+    --info: 210 100% 20%;
+    --info-foreground: 0 0% 100%;
+
+    --border: 0 0% 58%;
+    --input: 0 0% 58%;
+    --ring: 48 100% 60%;
+
+    --sidebar-background: 0 0% 6%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 210 100% 70%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 0 0% 18%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 50%;
+    --sidebar-ring: 48 100% 60%;
+  }
 }
 
 @layer base {
@@ -171,7 +220,7 @@
 
 /* Glass morphism utility class */
 .glass-morphism {
-  @apply bg-white/80 backdrop-blur-lg border border-border/40 shadow-sm;
+  @apply bg-background/80 backdrop-blur-lg border border-border/40 shadow-sm;
 }
 
 /* Table styles */
@@ -196,18 +245,21 @@
   @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-primary/20 bg-card;
 }
 
-/*
-Dark mode specific styles - DISABLED
+/* Gráficos (Recharts) em modo escuro / alto contraste */
 .dark .recharts-cartesian-grid-horizontal line,
 .dark .recharts-cartesian-grid-vertical line {
-  stroke: rgba(255, 255, 255, 0.1);
+  stroke: hsl(var(--border));
 }
 
 .dark .recharts-tooltip-wrapper .recharts-default-tooltip {
-  background-color: rgba(30, 30, 30, 0.9) !important;
-  border-color: rgba(80, 80, 80, 0.5) !important;
+  background-color: hsl(var(--popover)) !important;
+  border-color: hsl(var(--border)) !important;
+  color: hsl(var(--popover-foreground));
 }
-*/
+
+.dark .recharts-text {
+  fill: hsl(var(--muted-foreground));
+}
 
 /* Custom Animated Checkbox 19 */
 .checkbox-wrapper-19 {

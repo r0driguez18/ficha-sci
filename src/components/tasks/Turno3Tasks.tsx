@@ -22,7 +22,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
   isEndOfMonth = false
 }) => {
   return (
-    <div className="space-y-4 text-black pb-10">
+    <div className="space-y-4 text-foreground pb-10">
       <h3 className="font-bold text-lg mb-2 text-primary uppercase">OPERAÇÕES FECHO DIA</h3>
 
       <div className="flex items-start space-x-2">
@@ -108,7 +108,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
           </Label>
           <span className="text-sm font-medium">Fecho Real-Time:</span>
           <Input 
-            className="w-20 h-7 mx-2 shadow-inner border-gray-300 [&::-webkit-datetime-edit-ampm-field]:hidden [&::-webkit-calendar-picker-indicator]:hidden" 
+            className="w-20 h-7 mx-2 shadow-inner border-input [&::-webkit-datetime-edit-ampm-field]:hidden [&::-webkit-calendar-picker-indicator]:hidden" 
             type="time" 
             value={tasks.interromperRealTimeHora || ''}
             onChange={(e) => onTaskChange('interromperRealTimeHora', e.target.value)} 
@@ -163,7 +163,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
             Início do Fecho
           </Label>
           <Input 
-            className="w-20 h-7 mx-2 shadow-inner border-gray-300 [&::-webkit-datetime-edit-ampm-field]:hidden [&::-webkit-calendar-picker-indicator]:hidden" 
+            className="w-20 h-7 mx-2 shadow-inner border-input [&::-webkit-datetime-edit-ampm-field]:hidden [&::-webkit-calendar-picker-indicator]:hidden" 
             type="time" 
             value={tasks.inicioFechoHora || ''}
             onChange={(e) => onTaskChange('inicioFechoHora', e.target.value)} 
@@ -230,7 +230,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
             Consultar saldo da conta <span className="font-bold">18/5488102:</span>
           </Label>
           <Input 
-            className="w-32 h-7 shadow-inner border-gray-300" 
+            className="w-32 h-7 shadow-inner border-input" 
             type="number" 
             placeholder="0"
             value={tasks.saldoContaValor || ''}
@@ -255,7 +255,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
           </Label>
           <span className="font-bold ml-6 mr-1 text-sm">Abertura Real-Time:</span>
           <Input 
-            className="w-20 h-7 mx-2 shadow-inner border-gray-300 [&::-webkit-datetime-edit-ampm-field]:hidden [&::-webkit-calendar-picker-indicator]:hidden" 
+            className="w-20 h-7 mx-2 shadow-inner border-input [&::-webkit-datetime-edit-ampm-field]:hidden [&::-webkit-calendar-picker-indicator]:hidden" 
             type="time" 
             value={tasks.abrirRealTimeHora || ''}
             onChange={(e) => onTaskChange('abrirRealTimeHora', e.target.value)} 
@@ -310,7 +310,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
             Término do Fecho
           </Label>
           <Input 
-            className="w-20 h-7 mx-2 shadow-inner border-gray-300 [&::-webkit-datetime-edit-ampm-field]:hidden [&::-webkit-calendar-picker-indicator]:hidden" 
+            className="w-20 h-7 mx-2 shadow-inner border-input [&::-webkit-datetime-edit-ampm-field]:hidden [&::-webkit-calendar-picker-indicator]:hidden" 
             type="time" 
             value={tasks.terminoFechoHora || ''}
             onChange={(e) => onTaskChange('terminoFechoHora', e.target.value)} 
@@ -324,7 +324,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
       </div>
 
       {/* BLOCO MENSAL */}
-      <div className="mt-8 pt-6 border-t border-gray-200">
+      <div className="mt-8 pt-6 border-t border-border">
         <div className="flex items-start space-x-2">
           <Checkbox id="percurso76921" checked={tasks.percurso76921} onCheckedChange={(c) => onTaskChange('percurso76921', !!c)} />
           <Label htmlFor="percurso76921" className="cursor-pointer">Fazer o percurso 76921 – Limpeza Ficheiro BRLOGED (Dia 1 de cada Mês)</Label>
@@ -340,7 +340,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
       </div>
 
       {/* IMPRESSÕES */}
-      <div className="mt-8 pt-6 border-t border-gray-200 pl-2">
+      <div className="mt-8 pt-6 border-t border-border pl-2">
         <h3 className="font-bold text-lg mb-4 underline">Impressões</h3>
         <p className="font-medium text-sm ml-4 mb-4 underline decoration-1 underline-offset-4">• Ter em atenção ao stock/substituição de Toner/Fita impressora PRT</p>
         

@@ -217,7 +217,7 @@ const CalendarPage = () => {
 
   return (
     <div className="container mx-auto p-4 space-y-4">
-      <Card className="border-blue-100 overflow-hidden">
+      <Card className="border-border overflow-hidden">
         <div className="bg-primary text-primary-foreground p-4 flex justify-between items-center">
           <div className="text-2xl font-semibold">
             {format(currentDate, 'MMMM yyyy', { locale: pt })}
@@ -299,13 +299,13 @@ const CalendarPage = () => {
           </div>
         </div>
         
-        <div className="p-4 bg-white">
+        <div className="p-4 bg-card">
           {/* Calendar Header - Weekdays */}
-          <div className="grid grid-cols-7 gap-px mb-1 bg-gray-100 text-center font-medium">
+          <div className="grid grid-cols-7 gap-px mb-1 bg-border text-center font-medium">
             {WEEKDAYS.map((day, index) => (
               <div 
                 key={index} 
-                className="py-2 bg-white border-b border-gray-200"
+                className="py-2 bg-card border-b border-border"
               >
                 {day}
               </div>
@@ -313,7 +313,7 @@ const CalendarPage = () => {
           </div>
           
           {/* Calendar Grid */}
-          <div className="grid grid-cols-7 gap-px bg-gray-200 border border-gray-200">
+          <div className="grid grid-cols-7 gap-px bg-border border border-border">
             {getCalendarDays().map((week, weekIndex) => (
               <React.Fragment key={weekIndex}>
                 {week.map((day, dayIndex) => {
@@ -323,15 +323,15 @@ const CalendarPage = () => {
                   return (
                     <div
                       key={dayIndex}
-                      className={`min-h-[120px] bg-white p-1 transition-colors ${
+                      className={`min-h-[120px] bg-card p-1 transition-colors ${
                         !isCurrentMonth 
-                          ? 'text-gray-400 bg-gray-50' 
+                          ? 'text-muted-foreground bg-muted/40' 
                           : isToday(day)
-                            ? 'bg-blue-50'
+                            ? 'bg-primary/10'
                             : ''
                       } ${
                         isSameDay(day, selectedDate) 
-                          ? 'ring-2 ring-inset ring-blue-500' 
+                          ? 'ring-2 ring-inset ring-primary' 
                           : ''
                       }`}
                       onClick={() => setSelectedDate(day)}
@@ -357,7 +357,7 @@ const CalendarPage = () => {
                             />
                             <div className="flex-1 overflow-hidden">
                               {event.time && (
-                                <div className="text-xs text-gray-600 flex items-center">
+                                <div className="text-xs text-muted-foreground flex items-center">
                                   <ClockIcon className="h-2.5 w-2.5 mr-0.5" />
                                   {event.time}
                                 </div>
@@ -426,7 +426,7 @@ const CalendarPage = () => {
                             <div className="space-y-2">
                               <div className="grid grid-cols-7 gap-1">
                                 {['S', 'T', 'Q', 'Q', 'S', 'S', 'D'].map((day, i) => (
-                                  <div key={i} className="text-center text-xs font-medium text-gray-500">
+                                  <div key={i} className="text-center text-xs font-medium text-muted-foreground">
                                     {day}
                                   </div>
                                 ))}
@@ -441,7 +441,7 @@ const CalendarPage = () => {
                                       variant="ghost"
                                       size="icon"
                                       className={`h-8 w-8 p-0 ${
-                                        isSameDay(day, newEvent.date) ? 'bg-primary text-white' : ''
+                                        isSameDay(day, newEvent.date) ? 'bg-primary text-primary-foreground' : ''
                                       }`}
                                       onClick={() => {
                                         const newDate = new Date(newEvent.date);
