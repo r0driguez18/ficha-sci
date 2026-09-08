@@ -23,13 +23,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { saveExportedTaskboard, checkDuplicateOperations } from '@/services/exportedTaskboardService';
 import { createCobrancaRetorno } from '@/services/cobrancasRetornoService';
 
-const operatorsList = [
-  { value: "nalves", label: "Nelson Alves" },
-  { value: "etavares", label: "Evandro Tavares" },
-  { value: "edelgado", label: "Emanuel Delgado" },
-  { value: "ebrito", label: "Elvis Brito" },
-  { value: "lspencer", label: "Louis Spencer" }
-];
+import { OPERATORS as operatorsList } from '@/lib/operators';
 
 const Taskboard = () => {
   const navigate = useNavigate();

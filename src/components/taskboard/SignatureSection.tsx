@@ -2,6 +2,7 @@ import React from "react";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CheckCircle2 } from "lucide-react";
+import { SIGNATORY_OPTIONS } from "@/lib/operators";
 
 interface SignatureSectionProps {
   signerName: string;
@@ -40,10 +41,9 @@ export const SignatureSection: React.FC<SignatureSectionProps> = ({
               <SelectValue placeholder="Selecione o responsável" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Nelson Alves">Nelson Alves</SelectItem>
-              <SelectItem value="Evandro Tavares">Evandro Tavares</SelectItem>
-              <SelectItem value="Emanuel Delgado">Emanuel Delgado</SelectItem>
-              <SelectItem value="Louis Spencer">Louis Spencer</SelectItem>
+              {SIGNATORY_OPTIONS.map((name) => (
+                <SelectItem key={name} value={name}>{name}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

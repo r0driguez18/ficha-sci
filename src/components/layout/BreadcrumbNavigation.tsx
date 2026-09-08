@@ -19,13 +19,17 @@ const routeLabels: Record<string, string> = {
   '/sci/taskboard-dia-nao-util': 'Taskboard Dia Não Útil',
   '/sci/taskboard-final-mes-util': 'Taskboard Final Mês Útil',
   '/sci/taskboard-final-mes-nao-util': 'Taskboard Final Mês Não Útil',
-  '/sci/calendar': 'Calendário',
+  '/sci/calendario': 'Calendário',
+  '/sci/historico-fichas': 'Histórico de Fichas',
+  '/sci/retornos-cobrancas': 'Retornos de Cobranças',
   '/crc': 'CRC',
   '/crc/tratamento': 'Tratamento',
   '/dis': 'DIS',
   '/dis/dados': 'Dados',
+  '/easyvista': 'Processamentos',
+  '/easyvista/estatisticas': 'Estatísticas',
   '/settings': 'Configurações',
-  '/documentation': 'Documentação',
+  '/docs': 'Documentação',
 };
 
 export function BreadcrumbNavigation() {
@@ -50,6 +54,12 @@ export function BreadcrumbNavigation() {
   pathnames.forEach((segment, index) => {
     currentPath += `/${segment}`;
     const isLast = index === pathnames.length - 1;
+
+    // O crumb "Home" já cobre o dashboard — não repetir.
+    if (currentPath === '/dashboard' || currentPath === '/') {
+      return;
+    }
+
     const label = routeLabels[currentPath] || segment.charAt(0).toUpperCase() + segment.slice(1);
 
     breadcrumbs.push({
