@@ -27,15 +27,6 @@ import HistoricoFichas from './pages/sci/HistoricoFichas';
 import RetornosCobrancas from './pages/sci/RetornosCobrancas';
 import CalendarPage from './pages/sci/Calendar';
 
-// Initialize theme from localStorage - Always use light mode
-const initTheme = () => {
-  // Force light mode always
-  document.documentElement.classList.remove('dark');
-  localStorage.setItem('theme', 'light');
-};
-// Execute theme initialization
-initTheme();
-
 const queryClient = new QueryClient();
 
 const App = () => (
