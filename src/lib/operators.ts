@@ -1,10 +1,11 @@
 /**
- * Fonte única dos operadores do Centro Informática.
+ * Lista de operadores do Centro Informática.
  *
- * Até existir a tabela `operators` na base de dados (ver F9 na Revisão de Produto),
- * esta lista é o único sítio onde os operadores são definidos. Todos os ecrãs que
- * precisam de escolher um operador (tabela de processamentos, informação de turno,
- * validação/assinatura da ficha) importam daqui.
+ * A fonte a usar em runtime é a tabela `operators` na base de dados, através do
+ * hook `useOperators()` (ver F9). Esta constante fica como **recurso de recurso**:
+ * é o que o hook devolve enquanto a base de dados não responde ou está offline,
+ * para que os dropdowns nunca fiquem vazios. Manter alinhada com o seed da
+ * migração `..._operators.sql`.
  */
 
 export interface Operator {
