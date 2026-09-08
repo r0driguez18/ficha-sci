@@ -14,10 +14,7 @@ import ResetPassword from "./pages/auth/ResetPassword";
 // Import pages
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
-import Taskboard from "./pages/sci/Taskboard";
-import TaskboardDiaNaoUtil from "./pages/sci/TaskboardDiaNaoUtil";
-import TaskboardFinalMesUtil from "./pages/sci/TaskboardFinalMesUtil";
-import TaskboardFinalMesNaoUtil from "./pages/sci/TaskboardFinalMesNaoUtil";
+import FichaProcedimentos from "./pages/sci/FichaProcedimentos";
 import Procedimentos from "./pages/sci/Procedimentos";
 import CrcTratamento from "./pages/crc/Tratamento";
 import DisDados from "./pages/dis/Dados";
@@ -48,10 +45,10 @@ const App = () => (
               {/* SCI Routes */}
               <Route path="/sci" element={<Navigate to="/sci/procedimentos" replace />} />
               <Route path="/sci/procedimentos" element={<PrivateRoute><DashboardLayout><Procedimentos /></DashboardLayout></PrivateRoute>} />
-              <Route path="/sci/taskboard" element={<PrivateRoute><DashboardLayout><Taskboard /></DashboardLayout></PrivateRoute>} />
-              <Route path="/sci/taskboard-dia-nao-util" element={<PrivateRoute><DashboardLayout><TaskboardDiaNaoUtil /></DashboardLayout></PrivateRoute>} />
-              <Route path="/sci/taskboard-final-mes-util" element={<PrivateRoute><DashboardLayout><TaskboardFinalMesUtil /></DashboardLayout></PrivateRoute>} />
-              <Route path="/sci/taskboard-final-mes-nao-util" element={<PrivateRoute><DashboardLayout><TaskboardFinalMesNaoUtil /></DashboardLayout></PrivateRoute>} />
+              <Route path="/sci/taskboard" element={<PrivateRoute><DashboardLayout><FichaProcedimentos formType="dia-util" /></DashboardLayout></PrivateRoute>} />
+              <Route path="/sci/taskboard-dia-nao-util" element={<PrivateRoute><DashboardLayout><FichaProcedimentos formType="dia-nao-util" /></DashboardLayout></PrivateRoute>} />
+              <Route path="/sci/taskboard-final-mes-util" element={<PrivateRoute><DashboardLayout><FichaProcedimentos formType="final-mes-util" /></DashboardLayout></PrivateRoute>} />
+              <Route path="/sci/taskboard-final-mes-nao-util" element={<PrivateRoute><DashboardLayout><FichaProcedimentos formType="final-mes-nao-util" /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/historico-fichas" element={<PrivateRoute><DashboardLayout><HistoricoFichas /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/retornos-cobrancas" element={<PrivateRoute><DashboardLayout><RetornosCobrancas /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/calendario" element={<PrivateRoute><DashboardLayout><CalendarPage /></DashboardLayout></PrivateRoute>} />
