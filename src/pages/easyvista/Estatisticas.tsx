@@ -1,65 +1,57 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { getFileProcesses, getSalaryProcesses, getCobrancasProcesses, getCompensacaoProcesses, getProcessesStatsByMonth } from '@/services/fileProcessService';
-import { Loader2, RefreshCw } from 'lucide-react';
-import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Loader2, RefreshCw, FileSpreadsheet, FileText } from 'lucide-react';
+import { toast } from 'sonner';
+import { getFileProcesses, type FileProcess } from '@/services/fileProcessService';
+import { buildMonthlyStats, defaultRange } from '@/lib/processStats';
 import ProcessesTable from '@/components/charts/ProcessesTable';
+import ProcessesBarChart from '@/components/charts/ProcessesBarChart';
+
+type TabKey = 'all' | 'salary' | 'cobrancas' | 'compensacao';
+
+const TAB_TITLES: Record<TabKey, string> = {
+  all: 'Todos os Processamentos',
+  salary: 'Processamentos de Salário',
+  cobrancas: 'Cobranças',
+  compensacao: 'Compensação',
+};
 
 const EasyVistaEstatisticas = () => {
-  const [activeTab, setActiveTab] = useState('all');
+  const [allProcesses, setAllProcesses] = useState<FileProcess[]>([]);
   const [loading, setLoading] = useState(true);
-  const [allProcesses, setAllProcesses] = useState<any[]>([]);
-  const [salaryProcesses, setSalaryProcesses] = useState<any[]>([]);
-  const [cobrancasProcesses, setCobrancasProcesses] = useState<any[]>([]);
-  const [compensacaoProcesses, setCompensacaoProcesses] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [range, setRange] = useState(() => defaultRange());
+  const [activeTab, setActiveTab] = useState<TabKey>('all');
 
-  // Use this for URL hash navigation
   useEffect(() => {
-    // Check if there's a hash in the URL and set the active tab accordingly
     const hash = window.location.hash.replace('#', '');
-    if (hash && ['all', 'salary', 'cobrancas', 'compensacao'].includes(hash)) {
-      setActiveTab(hash);
+    if (['all', 'salary', 'cobrancas', 'compensacao'].includes(hash)) {
+      setActiveTab(hash as TabKey);
     }
   }, []);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      // Carregar todos os processos
       const processes = await getFileProcesses();
-      setAllProcesses(processes);
-
-      // Carregar processos de salário
-      const salaries = await getSalaryProcesses();
-      setSalaryProcesses(salaries);
-
-      // Carregar processos de cobranças
-      const cobrancas = await getCobrancasProcesses();
-      setCobrancasProcesses(cobrancas);
-
-      // Carregar processos de compensação
-      const compensacao = await getCompensacaoProcesses();
-      setCompensacaoProcesses(compensacao);
-      
+      setAllProcesses(processes as FileProcess[]);
       if (processes.length === 0) {
-        toast.info("Nenhum dado de processamento disponível. Adicione alguns processos para visualizá-los aqui.");
+        toast.info('Nenhum dado de processamento disponível. Registe processamentos na ficha para os ver aqui.');
       }
     } catch (error) {
-      console.error("Erro ao carregar dados:", error);
-      toast.error("Erro ao carregar dados. Por favor, tente novamente.");
+      console.error('Erro ao carregar dados:', error);
+      toast.error('Erro ao carregar dados. Por favor, tente novamente.');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   };
 
-  // Carregar dados inicialmente. A atualização passa a ser manual, pelo botão "Atualizar" —
-  // o polling de 30 s refazia quatro leituras completas das tabelas em cada ciclo.
   useEffect(() => {
     loadData();
   }, []);
@@ -69,26 +61,65 @@ const EasyVistaEstatisticas = () => {
     loadData();
   };
 
-  // Handle tab change
   const handleTabChange = (value: string) => {
-    setActiveTab(value);
-    window.location.hash = value; // Update the URL hash
+    setActiveTab(value as TabKey);
+    window.location.hash = value;
   };
+
+  // As bibliotecas de exportação (xlsx / jspdf-autotable) só carregam ao exportar.
+  const handleExport = async (kind: 'xlsx' | 'pdf') => {
+    try {
+      const mod = await import('@/lib/exportProcesses');
+      if (kind === 'xlsx') mod.exportProcessesXlsx(currentList, currentTitle);
+      else mod.exportProcessesPdf(currentList, currentTitle);
+    } catch (error) {
+      console.error('Erro ao exportar:', error);
+      toast.error('Não foi possível gerar o ficheiro.');
+    }
+  };
+
+  const salaryProcesses = useMemo(() => allProcesses.filter((p) => p.tipo === 'salario'), [allProcesses]);
+  const cobrancasProcesses = useMemo(() => allProcesses.filter((p) => p.tipo === 'cobrancas'), [allProcesses]);
+  const compensacaoProcesses = useMemo(() => allProcesses.filter((p) => p.tipo === 'compensacao'), [allProcesses]);
+
+  const monthly = useMemo(
+    () => buildMonthlyStats(allProcesses, range.from, range.to),
+    [allProcesses, range.from, range.to],
+  );
+
+  // Totais do período (soma dos meses no intervalo).
+  const periodTotals = useMemo(
+    () =>
+      monthly.reduce(
+        (acc, m) => ({
+          total: acc.total + m.total,
+          salario: acc.salario + m.salario,
+          cobrancas: acc.cobrancas + m.cobrancas,
+          compensacao: acc.compensacao + m.compensacao,
+        }),
+        { total: 0, salario: 0, cobrancas: 0, compensacao: 0 },
+      ),
+    [monthly],
+  );
+
+  const tabData: Record<TabKey, FileProcess[]> = {
+    all: allProcesses,
+    salary: salaryProcesses,
+    cobrancas: cobrancasProcesses,
+    compensacao: compensacaoProcesses,
+  };
+  const currentList = tabData[activeTab];
+  const currentTitle = TAB_TITLES[activeTab];
 
   return (
     <div className="animate-fade-in space-y-6">
-      <div className="flex justify-between items-center">
-        <PageHeader 
-          title="Processamentos - Estatísticas" 
-          subtitle="Visualização detalhada dos dados de processamento"
+      <div className="flex flex-wrap justify-between items-start gap-3">
+        <PageHeader
+          title="Processamentos - Estatísticas"
+          subtitle="Evolução mensal e detalhe dos processamentos de ficheiros"
           id="estatisticas-page"
         />
-        <Button 
-          variant="outline" 
-          onClick={handleRefresh} 
-          disabled={loading || refreshing}
-          className="gap-2"
-        >
+        <Button variant="outline" onClick={handleRefresh} disabled={loading || refreshing} className="gap-2">
           <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
           Atualizar
         </Button>
@@ -97,89 +128,104 @@ const EasyVistaEstatisticas = () => {
       {loading ? (
         <div className="flex justify-center items-center h-80">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <span className="ml-2">Carregando dados...</span>
+          <span className="ml-2">A carregar dados...</span>
         </div>
       ) : (
         <div className="space-y-6">
+          {/* Filtro de intervalo + exportação */}
           <Card>
-            <CardHeader>
-              <CardTitle>Estatísticas de Processamentos</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card className="bg-muted/50">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">Total de Processamentos</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-3xl font-bold">{allProcesses.length}</p>
-                  </CardContent>
-                </Card>
-                
-                <Card className="bg-muted/50">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">Salário</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-3xl font-bold">{salaryProcesses.length}</p>
-                  </CardContent>
-                </Card>
-                
-                <Card className="bg-muted/50">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">Cobranças</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-3xl font-bold">{cobrancasProcesses.length}</p>
-                  </CardContent>
-                </Card>
-                
-                <Card className="bg-muted/50">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">Compensação</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-3xl font-bold">{compensacaoProcesses.length}</p>
-                  </CardContent>
-                </Card>
+            <CardContent className="flex flex-wrap items-end gap-4 pt-6">
+              <div className="space-y-1.5">
+                <Label htmlFor="range-from">De</Label>
+                <Input
+                  id="range-from"
+                  type="date"
+                  value={range.from}
+                  max={range.to}
+                  onChange={(e) => setRange((r) => ({ ...r, from: e.target.value }))}
+                  className="w-[10rem]"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="range-to">Até</Label>
+                <Input
+                  id="range-to"
+                  type="date"
+                  value={range.to}
+                  min={range.from}
+                  onChange={(e) => setRange((r) => ({ ...r, to: e.target.value }))}
+                  className="w-[10rem]"
+                />
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setRange(defaultRange())}>
+                Últimos 6 meses
+              </Button>
+
+              <div className="ml-auto flex items-end gap-2">
+                <Button
+                  variant="outline"
+                  className="gap-2"
+                  onClick={() => handleExport('xlsx')}
+                  disabled={currentList.length === 0}
+                >
+                  <FileSpreadsheet className="h-4 w-4" />
+                  XLSX
+                </Button>
+                <Button
+                  variant="outline"
+                  className="gap-2"
+                  onClick={() => handleExport('pdf')}
+                  disabled={currentList.length === 0}
+                >
+                  <FileText className="h-4 w-4" />
+                  PDF
+                </Button>
               </div>
             </CardContent>
           </Card>
-          
-          <Tabs defaultValue="all" value={activeTab} onValueChange={handleTabChange} className="space-y-4">
-            <TabsList className="grid grid-cols-1 md:grid-cols-4 gap-2">
+
+          {/* Cartões de contagem (no período) */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { label: 'Total no período', value: periodTotals.total },
+              { label: 'Salário', value: periodTotals.salario },
+              { label: 'Cobranças', value: periodTotals.cobrancas },
+              { label: 'Compensação', value: periodTotals.compensacao },
+            ].map((c) => (
+              <Card key={c.label} className="bg-muted/50">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">{c.label}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold tabular-nums">{c.value}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Gráfico de evolução mensal */}
+          <ProcessesBarChart data={monthly} title="Processamentos por mês" />
+
+          {/* Detalhe (lista completa, por tipo) */}
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
+            <TabsList className="grid grid-cols-2 md:grid-cols-4 gap-2">
               <TabsTrigger value="all">Todos</TabsTrigger>
               <TabsTrigger value="salary">Salário</TabsTrigger>
               <TabsTrigger value="cobrancas">Cobranças</TabsTrigger>
               <TabsTrigger value="compensacao">Compensação</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="all">
-              <ProcessesTable 
-                processes={allProcesses} 
-                title="Todos os Processamentos" 
-              />
+              <ProcessesTable processes={allProcesses} title="Todos os Processamentos" />
             </TabsContent>
-            
             <TabsContent value="salary">
-              <ProcessesTable 
-                processes={salaryProcesses} 
-                title="Processamentos de Salário" 
-              />
+              <ProcessesTable processes={salaryProcesses} title="Processamentos de Salário" />
             </TabsContent>
-
             <TabsContent value="cobrancas">
-              <ProcessesTable 
-                processes={cobrancasProcesses} 
-                title="Cobranças" 
-              />
+              <ProcessesTable processes={cobrancasProcesses} title="Cobranças" />
             </TabsContent>
-
             <TabsContent value="compensacao">
-              <ProcessesTable 
-                processes={compensacaoProcesses} 
-                title="Compensação" 
-              />
+              <ProcessesTable processes={compensacaoProcesses} title="Compensação" />
             </TabsContent>
           </Tabs>
         </div>
