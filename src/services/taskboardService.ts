@@ -1,4 +1,5 @@
 
+import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { TurnDataType, TasksType } from '@/types/taskboard';
@@ -7,6 +8,9 @@ import { toast } from '@/components/ui/use-toast';
 import { Json } from '@/integrations/supabase/types';
 
 export type FormType = 'dia-util' | 'dia-nao-util' | 'final-mes-util' | 'final-mes-nao-util';
+
+/** Estado da gravação automática do rascunho da ficha (RF-03.3). */
+export type SyncStatus = 'idle' | 'saving' | 'saved' | 'error';
 
 export interface TaskboardData {
   id?: string;
@@ -26,8 +30,6 @@ export interface TaskboardData {
  */
 export const saveTaskboardData = async (data: TaskboardData): Promise<{ data: any; error: any }> => {
   try {
-    console.log('Saving taskboard data to Supabase:', data);
-    
     // Check if there's already an entry for this user, form type and date
     const { data: existingData, error: fetchError } = await supabase
       .from('taskboard_data')
@@ -69,8 +71,7 @@ export const saveTaskboardData = async (data: TaskboardData): Promise<{ data: an
         console.error('Error updating taskboard data:', updateError);
         return { data: null, error: updateError };
       }
-      
-      console.log('Taskboard data updated successfully');
+
       return { data: updatedData, error: null };
     } else {
       // Insert new record
@@ -82,8 +83,7 @@ export const saveTaskboardData = async (data: TaskboardData): Promise<{ data: an
         console.error('Error inserting taskboard data:', insertError);
         return { data: null, error: insertError };
       }
-      
-      console.log('Taskboard data inserted successfully');
+
       return { data: insertedData, error: null };
     }
   } catch (error) {
@@ -101,8 +101,6 @@ export const loadTaskboardData = async (
   date: string
 ): Promise<{ data: TaskboardData | null; error: any }> => {
   try {
-    console.log(`Loading taskboard data for ${formType}, date: ${date}`);
-    
     const { data, error } = await supabase
       .from('taskboard_data')
       .select('*')
@@ -110,13 +108,12 @@ export const loadTaskboardData = async (
       .eq('form_type', formType)
       .eq('date', date)
       .maybeSingle();
-    
+
     if (error) {
       console.error('Error fetching taskboard data:', error);
       return { data: null, error };
     }
-    
-    console.log('Taskboard data loaded:', data);
+
     if (data) {
       // Explicitly cast the JSON data to the expected types
       const typedData: TaskboardData = {
@@ -211,22 +208,31 @@ export const useTaskboardSync = (
   activeTab?: string
 ) => {
   const { user } = useAuth();
-  
-  // Save data to both localStorage and Supabase
+  const [status, setStatus] = useState<SyncStatus>('idle');
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+
+  const localStoragePrefix =
+    formType === 'dia-util' ? 'taskboard' :
+    formType === 'dia-nao-util' ? 'taskboard-nao-util' :
+    formType === 'final-mes-util' ? 'taskboard-final-mes-util' :
+    'taskboard-final-mes-nao-util';
+
+  // Grava o rascunho no localStorage (resistência a fecho do browser) e no
+  // servidor, e reporta o estado da gravação para o indicador visível (RF-03.3).
   const syncData = async () => {
-    if (!user) {
-      console.log('User not authenticated, storing in localStorage only');
-      return;
+    if (!user) return;
+
+    // O localStorage é a rede de segurança — grava sempre, mesmo que o servidor falhe.
+    localStorage.setItem(`${localStoragePrefix}-date`, date);
+    localStorage.setItem(`${localStoragePrefix}-turnData`, JSON.stringify(turnData));
+    localStorage.setItem(`${localStoragePrefix}-tasks`, JSON.stringify(tasks));
+    localStorage.setItem(`${localStoragePrefix}-tableRows`, JSON.stringify(tableRows));
+    if (activeTab) {
+      localStorage.setItem(`${localStoragePrefix}-activeTab`, activeTab);
     }
-    
+
+    setStatus('saving');
     try {
-      // Local storage keys
-      const localStoragePrefix = formType === 'dia-util' ? 'taskboard' : 
-                                formType === 'dia-nao-util' ? 'taskboard-nao-util' : 
-                                formType === 'final-mes-util' ? 'taskboard-final-mes-util' : 
-                                'taskboard-final-mes-nao-util';
-                                
-      // Save to Supabase
       const taskboardData: TaskboardData = {
         user_id: user.id,
         form_type: formType,
@@ -236,53 +242,35 @@ export const useTaskboardSync = (
         table_rows: tableRows,
         active_tab: activeTab
       };
-      
-      await saveTaskboardData(taskboardData);
-      
-      // Also update localStorage as a fallback
-      localStorage.setItem(`${localStoragePrefix}-date`, date);
-      localStorage.setItem(`${localStoragePrefix}-turnData`, JSON.stringify(turnData));
-      localStorage.setItem(`${localStoragePrefix}-tasks`, JSON.stringify(tasks));
-      localStorage.setItem(`${localStoragePrefix}-tableRows`, JSON.stringify(tableRows));
-      if (activeTab) {
-        localStorage.setItem(`${localStoragePrefix}-activeTab`, activeTab);
-      }
+
+      const { error } = await saveTaskboardData(taskboardData);
+      if (error) throw error;
+
+      setStatus('saved');
+      setLastSavedAt(new Date());
     } catch (error) {
       console.error('Error synchronizing data:', error);
-      toast({
-        title: "Erro ao sincronizar dados",
-        description: "Os dados foram salvos localmente, mas não puderam ser sincronizados com a nuvem.",
-        variant: "destructive"
-      });
+      setStatus('error');
     }
   };
   
   // Load data from Supabase first, then fall back to localStorage if needed
   const loadData = async () => {
-    if (!user) {
-      console.log('User not authenticated, using localStorage only');
-      return null;
-    }
-    
+    if (!user) return null;
+
     try {
       // Try to load from Supabase first
       const { data, error } = await loadTaskboardData(user.id, formType, date);
-      
+
       if (error) {
         throw error;
       }
-      
+
       if (data) {
-        console.log('Data loaded from Supabase:', data);
         return data;
       }
-      
+
       // If no data in Supabase, check localStorage
-      const localStoragePrefix = formType === 'dia-util' ? 'taskboard' : 
-                                formType === 'dia-nao-util' ? 'taskboard-nao-util' : 
-                                formType === 'final-mes-util' ? 'taskboard-final-mes-util' : 
-                                'taskboard-final-mes-nao-util';
-                                
       const localDate = localStorage.getItem(`${localStoragePrefix}-date`);
       const localTurnData = localStorage.getItem(`${localStoragePrefix}-turnData`);
       const localTasks = localStorage.getItem(`${localStoragePrefix}-tasks`);
@@ -319,26 +307,21 @@ export const useTaskboardSync = (
   
   // Reset both localStorage and Supabase data
   const resetData = async () => {
-    if (!user) {
-      console.log('User not authenticated, clearing localStorage only');
-      return;
-    }
-    
+    if (!user) return;
+
     try {
       // Clear data from Supabase
       await deleteTaskboardData(user.id, formType, date);
-      
+
       // Clear data from localStorage
-      const localStoragePrefix = formType === 'dia-util' ? 'taskboard' : 
-                                formType === 'dia-nao-util' ? 'taskboard-nao-util' : 
-                                formType === 'final-mes-util' ? 'taskboard-final-mes-util' : 
-                                'taskboard-final-mes-nao-util';
-                                
       localStorage.removeItem(`${localStoragePrefix}-date`);
       localStorage.removeItem(`${localStoragePrefix}-turnData`);
       localStorage.removeItem(`${localStoragePrefix}-tasks`);
       localStorage.removeItem(`${localStoragePrefix}-tableRows`);
       localStorage.removeItem(`${localStoragePrefix}-activeTab`);
+
+      setStatus('idle');
+      setLastSavedAt(null);
     } catch (error) {
       console.error('Error resetting data:', error);
       toast({
@@ -348,7 +331,7 @@ export const useTaskboardSync = (
       });
     }
   };
-  
-  return { syncData, loadData, resetData };
+
+  return { syncData, loadData, resetData, status, lastSavedAt };
 };
 

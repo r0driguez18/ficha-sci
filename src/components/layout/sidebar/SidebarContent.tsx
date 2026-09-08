@@ -33,8 +33,8 @@ export const SidebarContent = () => {
     
     const fetchCounts = async () => {
       try {
-        const { data } = await getPendingReturns(user.id);
-        
+        const { data } = await getPendingReturns();
+
         if (isMounted) {
           setRetornosBadge(data?.length || 0);
         }
