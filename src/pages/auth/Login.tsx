@@ -38,25 +38,6 @@ const Login = () => {
     }
   };
 
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    
-    try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { emailRedirectTo: window.location.origin }
-      });
-      if (error) throw error;
-      toast.success('Cadastro realizado! Verifique seu email.');
-    } catch (error: any) {
-      toast.error(error.message || 'Erro ao criar conta');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
@@ -220,32 +201,14 @@ const Login = () => {
               {loading ? (
                 <span className="flex items-center gap-2">
                   <span className="h-4 w-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                  Entrando...
+                  A entrar...
                 </span>
               ) : 'Entrar'}
             </Button>
 
-            {/* Divider */}
-            <div className="relative py-1">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-border" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">ou</span>
-              </div>
-            </div>
-
-            {/* Sign up */}
-            <p className="text-center text-sm text-muted-foreground">
-              Não tem conta?{' '}
-              <button
-                type="button"
-                onClick={handleSignUp}
-                disabled={loading}
-                className="font-semibold text-primary hover:text-primary/80 hover:underline transition-colors"
-              >
-                Criar conta
-              </button>
+            <p className="text-center text-xs text-muted-foreground pt-1">
+              As contas são criadas pelo administrador do sistema. Contacte o Centro Informática se
+              não conseguir aceder.
             </p>
           </form>
         </CardContent>

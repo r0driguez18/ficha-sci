@@ -21,13 +21,7 @@ import { SignatureSection } from '@/components/taskboard/SignatureSection';
 import type { TurnKey, TasksType, TurnDataType, Turno1Tasks, Turno2Tasks, Turno3Tasks } from '@/types/taskboard';
 import type { TaskTableRow } from '@/types/taskTableRow';
 
-const operatorsList = [
-  { value: "nalves", label: "Nelson Alves" },
-  { value: "etavares", label: "Evandro Tavares" },
-  { value: "edelgado", label: "Emanuel Delgado" },
-  { value: "ebrito", label: "Elvis Brito" },
-  { value: "lspencer", label: "Louis Spencer" }
-];
+import { OPERATORS as operatorsList } from '@/lib/operators';
 
 const TaskboardFinalMesUtil = () => {
   const navigate = useNavigate();
