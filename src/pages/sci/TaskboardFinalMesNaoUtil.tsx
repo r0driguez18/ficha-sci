@@ -20,7 +20,7 @@ import type { TurnKey, TasksType, TurnDataType, Turno3Tasks } from '@/types/task
 import type { TaskTableRow } from '@/types/taskTableRow';
 import { Loader2 } from 'lucide-react';
 
-import { OPERATORS as operatorsList } from '@/lib/operators';
+import { useOperators, useCurrentOperator } from '@/hooks/useOperators';
 
 const INITIAL_TURNO3_TASKS: Turno3Tasks = {
     datacenter: false,
@@ -86,6 +86,8 @@ const INITIAL_TURNO3_TASKS: Turno3Tasks = {
 const TaskboardFinalMesNaoUtil = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { operators: operatorsList } = useOperators();
+  const currentOperator = useCurrentOperator();
   
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [tableRows, setTableRows] = useState<TaskTableRow[]>([
@@ -212,11 +214,23 @@ const TaskboardFinalMesNaoUtil = () => {
       tarefa: '',
       nomeAs: '',
       operacao: '',
-      executado: '',
+      executado: currentOperator?.value ?? '',
       tipo: ''
     };
     setTableRows([...tableRows, newRow]);
   };
+
+  // Pré-preenche "Executado por" na primeira linha (ainda intacta) com o
+  // operador que está a registar, assim que a associação conta→operador carrega.
+  useEffect(() => {
+    if (!currentOperator) return;
+    setTableRows((rows) => {
+      if (rows.length !== 1) return rows;
+      const r = rows[0];
+      if (r.executado || r.hora || r.tarefa || r.nomeAs || r.operacao || r.tipo) return rows;
+      return [{ ...r, executado: currentOperator.value }];
+    });
+  }, [currentOperator]);
 
   const removeTableRow = () => {
     if (tableRows.length > 1) {

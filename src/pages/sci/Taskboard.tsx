@@ -25,13 +25,14 @@ import { saveExportedTaskboard, checkDuplicateOperations } from '@/services/expo
 import { createCobrancaRetorno } from '@/services/cobrancasRetornoService';
 import { computeFichaHash } from '@/lib/signatureHash';
 import type { FichaSignature } from '@/types/signature';
-
-import { OPERATORS as operatorsList } from '@/lib/operators';
+import { useOperators, useCurrentOperator } from '@/hooks/useOperators';
 
 const Taskboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  
+  const { operators: operatorsList } = useOperators();
+  const currentOperator = useCurrentOperator();
+
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [isEndOfMonth, setIsEndOfMonth] = useState<boolean>(false);
   const [tableRows, setTableRows] = useState<TaskTableRow[]>([
@@ -310,11 +311,23 @@ const [isLoading, setIsLoading] = useState(true);
       tarefa: '',
       nomeAs: '',
       operacao: '',
-      executado: '',
+      executado: currentOperator?.value ?? '',
       tipo: ''
     };
     setTableRows([...tableRows, newRow]);
   };
+
+  // Pré-preenche "Executado por" na primeira linha (ainda intacta) com o
+  // operador que está a registar, assim que a associação conta→operador carrega.
+  useEffect(() => {
+    if (!currentOperator) return;
+    setTableRows((rows) => {
+      if (rows.length !== 1) return rows;
+      const r = rows[0];
+      if (r.executado || r.hora || r.tarefa || r.nomeAs || r.operacao || r.tipo) return rows;
+      return [{ ...r, executado: currentOperator.value }];
+    });
+  }, [currentOperator]);
 
   const removeTableRow = () => {
     if (tableRows.length > 1) {
