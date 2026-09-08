@@ -15,6 +15,7 @@ import { generateTaskboardPDF } from '@/utils/pdfGenerator';
 import { supabase } from '@/integrations/supabase/client';
 import { getExportedTaskboards, ExportedTaskboard } from '@/services/exportedTaskboardService';
 import { SIGNATORY_OPTIONS } from '@/lib/operators';
+import { isSigned } from '@/types/signature';
 
 import { 
   FileDown, 
@@ -189,7 +190,7 @@ export default function HistoricoFichas() {
   };
 
   const getSignatureStatus = (record: ExportedTaskboard) => {
-    return record.pdf_signature?.imageDataUrl && record.pdf_signature?.signerName;
+    return isSigned(record.pdf_signature);
   };
 
   const formatDate = (dateString: string) => {
