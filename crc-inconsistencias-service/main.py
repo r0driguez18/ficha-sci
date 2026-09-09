@@ -6,9 +6,10 @@ Faz o que o script de terminal fazia, mas exposto por HTTP para a página
 cookies e corre o ciclo de confirmação paginado, publicando o progresso.
 
 Fluxo:
-    POST /runs                  -> abre o Chrome, fica em "aguarda_login"
+    POST /runs                  -> abre só o Chrome, fica em "aguarda_login"
     (o operador faz login no CRC, escolhe o código e abre a pesquisa)
-    POST /runs/{id}/login-feito -> sincroniza cookies e arranca a 1ª passagem
+    POST /runs/{id}/login-feito -> recebe os params (com o código), sincroniza
+                                   cookies e arranca a 1ª passagem
     GET  /runs/{id}             -> progresso (polling)
     POST /runs/{id}/parar       -> cancela a passagem (Chrome fica aberto)
     POST /runs/{id}/repetir     -> nova passagem (novo código, se quiser)
@@ -378,13 +379,14 @@ def _arrancar_worker(params: RunParams) -> None:
 
 
 @app.post("/runs/{run_id}/login-feito")
-def login_feito(run_id: str) -> dict[str, Any]:
+def login_feito(run_id: str, params: RunParams) -> dict[str, Any]:
+    """O operador já fez login e escolheu o código no CRC. Os `params` (com o
+    código de inconsistência) são enviados só agora — depois do login."""
     with _lock:
         if _run is None or _run["id"] != run_id:
             raise HTTPException(404, "Execução não encontrada.")
         if _run["estado"] != "aguarda_login":
             raise HTTPException(409, f"Estado inválido: {_run['estado']}")
-        params = RunParams(**_run["parametros"])
     _arrancar_worker(params)
     return _snapshot()
 
