@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -13,6 +13,7 @@ import { createCobrancaRetorno } from '@/services/cobrancasRetornoService';
 import { saveExportedTaskboard, checkDuplicateOperations } from '@/services/exportedTaskboardService';
 import { generateTaskboardPDF } from '@/utils/pdfGenerator';
 import { computeFichaHash } from '@/lib/signatureHash';
+import { fichaFileName } from '@/lib/fichaFileName';
 import { supabase } from '@/integrations/supabase/client';
 import { TASKBOARD_CONFIGS } from '@/lib/taskboardConfig';
 import {
@@ -63,7 +64,6 @@ export function useTaskboard(formType: FormType) {
   const currentOperator = useCurrentOperator();
 
   const [date, setDate] = useState(todayIso());
-  const [isEndOfMonth, setIsEndOfMonth] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<TurnKey>(config.turns[0]);
   const [tableRows, setTableRows] = useState<TaskTableRow[]>([emptyTableRow(1)]);
   const [turnData, setTurnData] = useState<TurnDataType>(emptyTurnData());
@@ -78,8 +78,19 @@ export function useTaskboard(formType: FormType) {
   const singleTurn = config.turns.length === 1;
   const activeTabForSync = singleTurn ? undefined : activeTab;
 
-  /** A folha de tapes aparece nos dias não úteis e sempre no último dia do mês. */
-  const showTapeVerification = config.formType === 'dia-nao-util' || isEndOfMonth;
+  /**
+   * A folha de verificação de tapes aparece ao domingo e sempre no último dia
+   * do mês (mesmo em dia útil). Aos sábados / outros dias não úteis não aparece.
+   */
+  const { isEndOfMonth, showTapeVerification } = useMemo(() => {
+    if (!date) return { isEndOfMonth: false, showTapeVerification: false };
+    const [y, m, d] = date.split('-').map(Number);
+    if (!y || !m || !d) return { isEndOfMonth: false, showTapeVerification: false };
+    const lastDay = new Date(y, m, 0).getDate();
+    const eom = d === lastDay;
+    const isSunday = new Date(y, m - 1, d).getDay() === 0;
+    return { isEndOfMonth: eom, showTapeVerification: isSunday || eom };
+  }, [date]);
 
   // A forma guardada preserva o que cada variante sempre gravou: dias não úteis
   // guardam apenas { turno3: ... }. A folha de tapes vai junto quando visível.
@@ -162,14 +173,6 @@ export function useTaskboard(formType: FormType) {
     if (!isLoading) syncData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [date, turnData, tasks, tableRows, verificacaoTapes, activeTab, isLoading]);
-
-  // ---------- Último dia do mês (controla a folha de verificação de tapes) ----------
-  useEffect(() => {
-    if (!date) return;
-    const [y, m, d] = date.split('-').map(Number);
-    const lastDay = new Date(y, m, 0).getDate();
-    setIsEndOfMonth(d === lastDay);
-  }, [date]);
 
   // ---------- Pré-preencher "Executado por" na 1.ª linha intacta ----------
   useEffect(() => {
@@ -405,8 +408,7 @@ export function useTaskboard(formType: FormType) {
         signature,
         tapesForExport,
       );
-      const [yyyy, mm, dd] = date.split('-');
-      const fileName = `FD ${dd}${mm}${yyyy.slice(2)}.pdf`;
+      const fileName = fichaFileName(date);
       doc.save(fileName);
 
       const turnDataToPersist = tapesForExport
