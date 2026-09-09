@@ -296,7 +296,7 @@ export default function HistoricoFichas() {
                 <TableRow>
                   <TableHead>Tipo de Ficha</TableHead>
                   <TableHead>Data da Ficha</TableHead>
-                  <TableHead>Criado em</TableHead>
+                  <TableHead>Exportado em</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Responsável</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
@@ -319,7 +319,7 @@ export default function HistoricoFichas() {
                     <TableCell>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Clock className="h-4 w-4" />
-                        {formatDate(record.created_at)}
+                        {formatDate(record.exported_at || record.created_at)}
                       </div>
                     </TableCell>
                     <TableCell>
