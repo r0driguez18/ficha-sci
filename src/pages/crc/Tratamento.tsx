@@ -52,6 +52,7 @@ const fmtDateTime = (iso?: string | null) => {
 
 export default function CrcTratamento() {
   const [serviceOnline, setServiceOnline] = useState<boolean | null>(null);
+  const [showServiceHelp, setShowServiceHelp] = useState(false);
   const [params, setParams] = useState<CrcRunParams>(DEFAULTS);
   const [run, setRun] = useState<CrcRunState | null>(null);
   const [dbId, setDbId] = useState<string | null>(null);
@@ -197,17 +198,6 @@ export default function CrcTratamento() {
       />
 
       <div className="grid grid-cols-1 gap-6 max-w-3xl mx-auto">
-        {serviceOnline === false && (
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Serviço local não encontrado</AlertTitle>
-            <AlertDescription>
-              Arranque o <code>crc-inconsistencias</code> na máquina de tratamento do CRC (ver{' '}
-              <code>crc-inconsistencias-service/README.md</code>) e mantenha a janela aberta.
-            </AlertDescription>
-          </Alert>
-        )}
-
         <Card className="shadow-md">
           <CardHeader className="bg-primary/5">
             <div className="flex items-center justify-between">
@@ -220,6 +210,40 @@ export default function CrcTratamento() {
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-6 space-y-5">
+            {/* Estado do serviço local */}
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+              <span
+                className={`inline-block h-2 w-2 rounded-full ${
+                  serviceOnline
+                    ? 'bg-green-500'
+                    : serviceOnline === false
+                      ? 'bg-muted-foreground/40'
+                      : 'bg-amber-400'
+                }`}
+              />
+              <span className="text-muted-foreground">
+                Serviço local{' '}
+                {serviceOnline === null ? 'a verificar…' : serviceOnline ? 'ligado' : 'desligado'}
+              </span>
+              {serviceOnline === false && (
+                <button
+                  type="button"
+                  onClick={() => setShowServiceHelp((v) => !v)}
+                  className="text-primary hover:underline"
+                >
+                  como arrancar?
+                </button>
+              )}
+            </div>
+            {showServiceHelp && serviceOnline === false && (
+              <p className="text-xs text-muted-foreground rounded-md bg-muted/50 p-3 -mt-2">
+                Na máquina onde se faz o tratamento do CRC, arranque o{' '}
+                <code>crc-inconsistencias</code> (ver{' '}
+                <code>crc-inconsistencias-service/README.md</code>) e mantenha a janela aberta.
+                Esta página liga-se sozinha assim que o serviço estiver a correr.
+              </p>
+            )}
+
             {/* Parâmetros */}
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
