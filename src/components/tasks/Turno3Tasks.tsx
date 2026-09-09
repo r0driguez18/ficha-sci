@@ -5,6 +5,11 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Turno3Tasks } from '@/types/taskboard';
+import { CollapsibleSection } from '@/components/tasks/CollapsibleSection';
+import { countTaskProgress } from '@/lib/taskboardProgress';
+
+const BLOCO_MENSAL_KEYS = ['percurso76921', 'percurso76922', 'percurso76923'] as const;
+const IMPRESSOES_KEYS = ['impressaoCheques', 'arquivarCheques'] as const;
 
 interface Turno3TasksProps {
   tasks: Turno3Tasks;
@@ -327,7 +332,11 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
       </div>
 
       {/* BLOCO MENSAL */}
-      <div className="mt-8 pt-6 border-t border-border">
+      <CollapsibleSection
+        title="Bloco Mensal"
+        done={countTaskProgress(tasks, BLOCO_MENSAL_KEYS).done}
+        total={BLOCO_MENSAL_KEYS.length}
+      >
         <div className="flex items-start space-x-2">
           <Checkbox id="percurso76921" checked={tasks.percurso76921} onCheckedChange={(c) => onTaskChange('percurso76921', !!c)} />
           <Label htmlFor="percurso76921" className="cursor-pointer">Fazer o percurso 76921 – Limpeza Ficheiro BRLOGED (Dia 1 de cada Mês)</Label>
@@ -340,23 +349,26 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
           <Checkbox id="percurso76923" checked={tasks.percurso76923} onCheckedChange={(c) => onTaskChange('percurso76923', !!c)} />
           <Label htmlFor="percurso76923" className="cursor-pointer">Fazer o percurso 76923 - Reorganiza GBMVCO (Dia 3 de cada Mês)</Label>
         </div>
-      </div>
+      </CollapsibleSection>
 
       {/* IMPRESSÕES */}
-      <div className="mt-8 pt-6 border-t border-border pl-2">
-        <h3 className="font-bold text-lg mb-4 underline">Impressões</h3>
+      <CollapsibleSection
+        title="Impressões"
+        done={countTaskProgress(tasks, IMPRESSOES_KEYS).done}
+        total={IMPRESSOES_KEYS.length}
+      >
         <p className="font-medium text-sm ml-4 mb-4 underline decoration-1 underline-offset-4">• Ter em atenção ao stock/substituição de Toner/Fita impressora PRT</p>
-        
+
         <div className="flex items-start space-x-2 ml-10">
           <Checkbox id="impressaoCheques" checked={tasks.impressaoCheques} onCheckedChange={(c) => onTaskChange('impressaoCheques', !!c)} />
           <Label htmlFor="impressaoCheques" className="cursor-pointer">Impressão Cheques e respectivos Diários (verificação dos mesmos)</Label>
         </div>
-        
+
         <div className="flex items-start space-x-2 ml-10 mt-3">
           <Checkbox id="arquivarCheques" checked={tasks.arquivarCheques} onCheckedChange={(c) => onTaskChange('arquivarCheques', !!c)} />
           <Label htmlFor="arquivarCheques" className="cursor-pointer">Arquivar Cheques e respectivos Diários</Label>
         </div>
-      </div>
+      </CollapsibleSection>
 
       {/* OBSERVAÇÕES */}
       <div className="pt-8 mt-6">
