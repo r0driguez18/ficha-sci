@@ -37,7 +37,7 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
 
       <div className="flex items-start space-x-2">
         <Checkbox id="verificarReportes2" checked={tasks.verificarReportes} onCheckedChange={(c) => onTaskChange('verificarReportes', !!c)} />
-        <Label htmlFor="verificarReportes2" className="cursor-pointer text-foreground">Verificar Envio Enviar Reportes (INPS, Visto USA, BCV, IMPC)</Label>
+        <Label htmlFor="verificarReportes2" className="cursor-pointer text-foreground">Verificar Envio de Reportes (INPS, Visto USA, BCV, IMPC)</Label>
       </div>
 
       <div className="flex items-start space-x-2">
