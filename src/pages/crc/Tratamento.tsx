@@ -67,24 +67,21 @@ export default function CrcTratamento() {
     setHistory(data ?? []);
   }, []);
 
-  // Estado do serviço local
-  useEffect(() => {
-    let alive = true;
-    const check = async () => {
-      const h = await crcHealth();
-      if (alive) setServiceOnline(!!h);
-    };
-    check();
-    const id = window.setInterval(check, 10000);
-    return () => {
-      alive = false;
-      window.clearInterval(id);
-    };
+  /**
+   * Verifica (sem arrancar nada) se o serviço local está a responder. É só
+   * um GET a http://localhost:8765/health — não abre o Chrome nem toca no
+   * CRC. Corre uma vez ao abrir a página e antes de "Iniciar".
+   */
+  const verificarServico = useCallback(async () => {
+    const h = await crcHealth();
+    setServiceOnline(!!h);
+    return !!h;
   }, []);
 
   useEffect(() => {
+    verificarServico();
     loadHistory();
-  }, [loadHistory]);
+  }, [verificarServico, loadHistory]);
 
   const finalizarRegisto = useCallback(
     async (state: CrcRunState) => {
@@ -136,6 +133,11 @@ export default function CrcTratamento() {
   const iniciar = async () => {
     setBusy(true);
     try {
+      if (!(await verificarServico())) {
+        setShowServiceHelp(true);
+        toast.error('O serviço local do CRC não está a responder.');
+        return;
+      }
       const state = await crcStartRun(params);
       setRun(state);
       const { data } = await criarCrcTratamento(params as unknown as Record<string, unknown>);
@@ -225,6 +227,13 @@ export default function CrcTratamento() {
                 Serviço local{' '}
                 {serviceOnline === null ? 'a verificar…' : serviceOnline ? 'ligado' : 'desligado'}
               </span>
+              <button
+                type="button"
+                onClick={() => verificarServico()}
+                className="text-primary hover:underline"
+              >
+                verificar
+              </button>
               {serviceOnline === false && (
                 <button
                   type="button"
@@ -240,7 +249,8 @@ export default function CrcTratamento() {
                 Na máquina onde se faz o tratamento do CRC, arranque o{' '}
                 <code>crc-inconsistencias</code> (ver{' '}
                 <code>crc-inconsistencias-service/README.md</code>) e mantenha a janela aberta.
-                Esta página liga-se sozinha assim que o serviço estiver a correr.
+                Depois clique em <strong>verificar</strong>. É apenas uma verificação — não
+                arranca o processamento (isso é só com o botão <strong>Iniciar</strong>).
               </p>
             )}
 
