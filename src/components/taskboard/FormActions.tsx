@@ -2,16 +2,24 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-import { Save, FileDown, RotateCcw } from 'lucide-react';
+import { Save, FileDown, RotateCcw, Loader2 } from 'lucide-react';
 
 interface FormActionsProps {
   onSave: () => void;
   onExportPDF: () => void;
   onReset: () => void;
   isValidated: boolean;
+  /** Operação em curso (guardar / exportar) — bloqueia os botões. */
+  busy?: boolean;
 }
 
-export const FormActions: React.FC<FormActionsProps> = ({ onSave, onExportPDF, onReset, isValidated }) => {
+export const FormActions: React.FC<FormActionsProps> = ({
+  onSave,
+  onExportPDF,
+  onReset,
+  isValidated,
+  busy = false,
+}) => {
   const [confirmReset, setConfirmReset] = useState(false);
 
   return (
@@ -19,7 +27,7 @@ export const FormActions: React.FC<FormActionsProps> = ({ onSave, onExportPDF, o
       <Button
         variant="outline"
         onClick={() => setConfirmReset(true)}
-        disabled={!isValidated}
+        disabled={!isValidated || busy}
         className="flex items-center gap-2"
       >
         <RotateCcw className="h-4 w-4" />
@@ -29,17 +37,19 @@ export const FormActions: React.FC<FormActionsProps> = ({ onSave, onExportPDF, o
       <Button
         variant="outline"
         onClick={onExportPDF}
+        disabled={busy}
         className="flex items-center gap-2"
       >
-        <FileDown className="h-4 w-4" />
+        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
         Exportar PDF
       </Button>
 
       <Button
         onClick={onSave}
+        disabled={busy}
         className="flex items-center gap-2 px-6"
       >
-        <Save className="h-4 w-4" />
+        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
         Guardar
       </Button>
 

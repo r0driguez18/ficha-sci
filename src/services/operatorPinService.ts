@@ -5,11 +5,12 @@ import { supabase } from '@/integrations/supabase/client';
  * (funções SECURITY DEFINER + pgcrypto); estes wrappers só chamam os RPC.
  */
 
-export async function operatorHasPin(): Promise<boolean> {
+/** `true` / `false` = tem ou não PIN; `null` = não foi possível verificar (erro). */
+export async function operatorHasPin(): Promise<boolean | null> {
   const { data, error } = await supabase.rpc('operator_has_pin');
   if (error) {
     console.error('Erro ao verificar PIN do operador:', error);
-    return false;
+    return null;
   }
   return data === true;
 }

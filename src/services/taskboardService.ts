@@ -13,6 +13,14 @@ export type FormType = 'dia-util' | 'dia-nao-util' | 'final-mes-util' | 'final-m
 /** Estado da gravação automática do rascunho da ficha (RF-03.3). */
 export type SyncStatus = 'idle' | 'saving' | 'saved' | 'error';
 
+/** Prefixo das chaves de localStorage do rascunho, por tipo de ficha. */
+export function taskboardLocalPrefix(formType: FormType): string {
+  return formType === 'dia-util' ? 'taskboard'
+    : formType === 'dia-nao-util' ? 'taskboard-nao-util'
+    : formType === 'final-mes-util' ? 'taskboard-final-mes-util'
+    : 'taskboard-final-mes-nao-util';
+}
+
 export interface TaskboardData {
   id?: string;
   user_id: string;
@@ -219,11 +227,7 @@ export const useTaskboardSync = (
   }, [status, lastSavedAt, report]);
   useEffect(() => () => clear(), [clear]);
 
-  const localStoragePrefix =
-    formType === 'dia-util' ? 'taskboard' :
-    formType === 'dia-nao-util' ? 'taskboard-nao-util' :
-    formType === 'final-mes-util' ? 'taskboard-final-mes-util' :
-    'taskboard-final-mes-nao-util';
+  const localStoragePrefix = taskboardLocalPrefix(formType);
 
   // Grava o rascunho no localStorage (resistência a fecho do browser) e no
   // servidor, e reporta o estado da gravação para o indicador visível (RF-03.3).
