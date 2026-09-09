@@ -25,8 +25,6 @@ export interface FileProcess {
 
 export const saveFileProcess = async (data: FileProcessData) => {
   try {
-    console.log('Tentando salvar processo:', data);
-    
     // Prepare data based on what's available
     const processData = {
       time_registered: data.time_registered,
@@ -43,9 +41,7 @@ export const saveFileProcess = async (data: FileProcessData) => {
       // Include tipo for categorization
       tipo: data.tipo || null
     };
-    
-    console.log('Dados a inserir:', processData);
-    
+
     // Only check for duplicate operation number if one is provided
     if (processData.operation_number) {
       const { data: existingProcesses, error: checkError } = await supabase
@@ -73,8 +69,7 @@ export const saveFileProcess = async (data: FileProcessData) => {
       console.error('Erro ao salvar processo:', error);
       return { error };
     }
-    
-    console.log('Processo salvo com sucesso:', newProcess);
+
     return { data: newProcess };
   } catch (error) {
     console.error('Erro ao salvar processo:', error);

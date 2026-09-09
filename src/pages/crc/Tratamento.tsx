@@ -156,8 +156,8 @@ const CrcTratamento = () => {
 
       <div className="grid grid-cols-1 gap-6 max-w-3xl mx-auto">
         <Card className="shadow-md">
-          <CardHeader className="bg-[#18467e]/5">
-            <CardTitle className="text-[#18467e]">Remover Referências de COM</CardTitle>
+          <CardHeader className="bg-primary/5">
+            <CardTitle className="text-primary">Remover Referências de COM</CardTitle>
           </CardHeader>
           <CardContent className="pt-6">
             <div className="space-y-6">
@@ -189,9 +189,9 @@ const CrcTratamento = () => {
                 )}
               </div>
               
-              <Button 
-                onClick={removerReferencias} 
-                className="w-full bg-[#004279] hover:bg-[#002b49] text-white"
+              <Button
+                onClick={removerReferencias}
+                className="w-full"
               >
                 <Upload className="mr-2 h-4 w-4" />
                 Remover Referências

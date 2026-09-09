@@ -18,13 +18,7 @@ import type { TurnKey, TasksType, TurnDataType, Turno3Tasks } from '@/types/task
 import type { TaskTableRow } from '@/types/taskTableRow';
 import { Loader2 } from 'lucide-react';
 
-const operatorsList = [
-  { value: "nalves", label: "Nelson Alves" },
-  { value: "etavares", label: "Evandro Tavares" },
-  { value: "edelgado", label: "Emanuel Delgado" },
-  { value: "ebrito", label: "Elvis Brito" },
-  { value: "lspencer", label: "Louis Spencer" }
-];
+import { OPERATORS as operatorsList } from '@/lib/operators';
 
 const INITIAL_TURNO3_TASKS: Turno3Tasks = {
     datacenter: false,

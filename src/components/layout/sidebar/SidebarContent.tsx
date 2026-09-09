@@ -61,6 +61,7 @@ export const SidebarContent = () => {
     { label: 'SCI - Procedimentos', path: '/sci/procedimentos', keywords: ['sci', 'taskboard', 'procedimentos'] },
     { label: 'SCI - Histórico', path: '/sci/historico-fichas', keywords: ['sci', 'histórico', 'fichas', 'guardadas'] },
     { label: 'SCI - Retornos de Cobranças', path: '/sci/retornos-cobrancas', keywords: ['sci', 'retornos', 'cobranças', 'ficheiros'] },
+    { label: 'SCI - Calendário', path: '/sci/calendario', keywords: ['sci', 'calendário', 'eventos', 'notas', 'agenda'] },
     { label: 'CRC - Tratamento', path: '/crc/tratamento', keywords: ['crc', 'tratamento', 'ficheiros'] },
     { label: 'DIS - Dados', path: '/dis/dados', keywords: ['dis', 'dados', 'database'] },
     { label: 'Processamentos - Estatísticas', path: '/easyvista/estatisticas', keywords: ['processamentos', 'estatísticas', 'charts'] },
@@ -103,7 +104,8 @@ export const SidebarContent = () => {
             subItems={[
               { label: "Ficha de Procedimentos", to: "/sci/procedimentos" },
               { label: "Histórico de Fichas", to: "/sci/historico-fichas" },
-              { label: "Retornos Cobranças", to: "/sci/retornos-cobrancas", badge: retornosBadge }
+              { label: "Retornos Cobranças", to: "/sci/retornos-cobrancas", badge: retornosBadge },
+              { label: "Calendário", to: "/sci/calendario" }
             ]}
           />
           <SidebarItem

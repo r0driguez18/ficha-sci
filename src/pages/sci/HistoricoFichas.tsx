@@ -322,18 +322,22 @@ export default function HistoricoFichas() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           size="sm"
                           onClick={() => handlePreviewPDF(record)}
+                          aria-label={`Pré-visualizar PDF da ficha de ${record.date}`}
+                          title="Pré-visualizar PDF"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
 
-                        <Button 
-                          variant="default" 
+                        <Button
+                          variant="default"
                           size="sm"
                           onClick={() => downloadPDF(record)}
+                          aria-label={`Descarregar PDF da ficha de ${record.date}`}
+                          title="Descarregar PDF"
                         >
                           <FileDown className="h-4 w-4" />
                         </Button>
