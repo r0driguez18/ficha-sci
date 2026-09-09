@@ -33,6 +33,7 @@ export interface CrcRunState {
   paginaAtual: number;
   processados: number;
   falhas: number;
+  paginasSaltadas?: number;
   passagens?: number;
   erro: string | null;
   ficheiroLog?: string | null;
@@ -83,9 +84,13 @@ export async function crcStartRun(params: CrcRunParams): Promise<CrcRunState> {
   );
 }
 
-export async function crcLoginDone(runId: string): Promise<CrcRunState> {
+export async function crcLoginDone(runId: string, params: CrcRunParams): Promise<CrcRunState> {
   return parse<CrcRunState>(
-    await fetch(`${CRC_SERVICE_URL}/runs/${runId}/login-feito`, { method: 'POST' }),
+    await fetch(`${CRC_SERVICE_URL}/runs/${runId}/login-feito`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
+    }),
   );
 }
 
