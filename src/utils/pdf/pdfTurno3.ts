@@ -13,12 +13,11 @@ import {
 } from './pdfCommon';
 
 export const renderTurno3Tasks = (
-  doc: jsPDF, 
+  doc: jsPDF,
   tasks: Turno3Tasks,
   observations: string,
   startY: number,
-  isDiaNaoUtil: boolean = false,
-  isEndOfMonth: boolean = false
+  isDiaNaoUtil: boolean = false
 ): number => {
   let y = startY;
   
@@ -148,6 +147,7 @@ export const renderTurno3Tasks = (
     {key: 'saveBmbck', text: "Save BMBCK – Automático"},
     {key: 'imprimirCheques', text: "Imprimir Cheques, Diários de Cheques e Arquivar OUTQ(HLDSPOOL)"},
     {key: 'backupBm', text: "Backup BM – Automático"},
+    {key: 'transferenciasInterbancarias', text: "Transferências Interbancárias Imediatas - 76924"},
     {key: 'aplicarFicheirosCompensacao', text: "Aplicar ficheiros compensação SISP com user SISP (CCLN, EDST, EORI, ERMB)"},
     {key: 'tratarPendentesCartoes', text: "Tratar Pendentes CARTÕES (Conta contabilística 18 5488106)"},
     {key: 'consultarSaldoConta', text: "Consultar saldo da conta 18/5488102:"}, // With Neg Pos inside
