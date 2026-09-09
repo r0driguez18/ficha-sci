@@ -37,7 +37,7 @@ export const Turno1TasksComponent: React.FC<Turno1TasksProps> = ({
       
       <div className="flex items-start space-x-2">
         <Checkbox id="abrirServidores" checked={tasks.abrirServidores} onCheckedChange={(c) => onTaskChange('abrirServidores', !!c)} />
-        <Label htmlFor="abrirServidores" className="cursor-pointer text-foreground">Abrir Servidores (PFS, SWIFT, OPDIF, TRMSG, CDGOV)</Label>
+        <Label htmlFor="abrirServidores" className="cursor-pointer text-foreground">Abrir Servidores (OPDIF, SWIFT, CDPFS, CDGOV, TRMSG, AML)</Label>
       </div>
       
       <div className="flex items-start space-x-2">
@@ -89,15 +89,16 @@ export const Turno1TasksComponent: React.FC<Turno1TasksProps> = ({
           <Label htmlFor="ben" className="cursor-pointer text-foreground">BEN</Label>
           <Checkbox id="ben" checked={tasks.ben} onCheckedChange={(c) => onTaskChange('ben', !!c)} />
         </div>
-        <div className="flex items-center space-x-1">
-          <Label htmlFor="bcta" className="cursor-pointer text-foreground">BCTA</Label>
-          <Checkbox id="bcta" checked={tasks.bcta} onCheckedChange={(c) => onTaskChange('bcta', !!c)} />
-        </div>
       </div>
 
       <div className="flex items-start space-x-2">
         <Checkbox id="enviarReportes" checked={tasks.enviarReportes} onCheckedChange={(c) => onTaskChange('enviarReportes', !!c)} />
         <Label htmlFor="enviarReportes" className="cursor-pointer text-foreground">Enviar Reportes (INPS, Visto USA, BCV, IMPC)</Label>
+      </div>
+
+      <div className="flex items-start space-x-2">
+        <Checkbox id="validarRececaoEnvioVisa" checked={tasks.validarRececaoEnvioVisa} onCheckedChange={(c) => onTaskChange('validarRececaoEnvioVisa', !!c)} />
+        <Label htmlFor="validarRececaoEnvioVisa" className="cursor-pointer text-foreground">Validar receção/envio ficheiros VISA (BCTA/CPRR/BCCB/VSS)</Label>
       </div>
 
       <div className="flex items-center space-x-2">
@@ -137,11 +138,6 @@ export const Turno1TasksComponent: React.FC<Turno1TasksProps> = ({
       <div className="flex items-start space-x-2">
         <Checkbox id="processarTelecomp" checked={tasks.processarTelecomp} onCheckedChange={(c) => onTaskChange('processarTelecomp', !!c)} />
         <Label htmlFor="processarTelecomp" className="cursor-pointer text-foreground">Processar Ficheiros Telecompensação – RCB/RTC/FCT/IMR</Label>
-      </div>
-      
-      <div className="flex items-start space-x-2">
-        <Checkbox id="envioVisa" checked={tasks.envioFicheirosVisa12h30} onCheckedChange={(c) => onTaskChange('envioFicheirosVisa12h30', !!c)} />
-        <Label htmlFor="envioVisa" className="cursor-pointer text-foreground font-semibold">Envio Ficheiros VISA (12h30)</Label>
       </div>
       
       <div className="flex items-start space-x-2">
@@ -232,8 +228,8 @@ export const Turno1TasksComponent: React.FC<Turno1TasksProps> = ({
       </div>
 
       <div className="mt-6">
-        <Label htmlFor="observations1" className="text-foreground">Observações</Label>
-        <Textarea 
+        <Label htmlFor="observations1" className="text-foreground">Outras Intervenções/Observações/Comunicações/Ocorrências</Label>
+        <Textarea
           id="observations1" 
           value={observations}
           onChange={(e) => onObservationsChange(e.target.value)}

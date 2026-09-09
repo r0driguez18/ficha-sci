@@ -27,6 +27,8 @@ export interface FichaHashInput {
   turnData: unknown;
   tasks: unknown;
   tableRows: unknown;
+  /** Folha de verificação de tapes (só nos dias não úteis / fim de mês). */
+  verificacaoTapes?: unknown;
 }
 
 export async function computeFichaHash(input: FichaHashInput): Promise<string> {
@@ -36,6 +38,8 @@ export async function computeFichaHash(input: FichaHashInput): Promise<string> {
     turn_data: input.turnData,
     tasks: input.tasks,
     table_rows: input.tableRows,
+    // Omitido quando não aplicável, para não alterar o hash das fichas sem folha de tapes.
+    ...(input.verificacaoTapes ? { verificacao_tapes: input.verificacaoTapes } : {}),
   });
   const bytes = new TextEncoder().encode(canonical);
   const digest = await crypto.subtle.digest('SHA-256', bytes);

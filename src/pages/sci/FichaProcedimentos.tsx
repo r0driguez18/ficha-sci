@@ -7,6 +7,7 @@ import { Loader2 } from 'lucide-react';
 import { Turno1TasksComponent } from '@/components/tasks/Turno1Tasks';
 import { Turno2TasksComponent } from '@/components/tasks/Turno2Tasks';
 import { Turno3TasksComponent } from '@/components/tasks/Turno3Tasks';
+import { VerificacaoTapesSection } from '@/components/tasks/VerificacaoTapesSection';
 import { TurnInfoSection } from '@/components/taskboard/TurnInfoSection';
 import { TableRowsSection } from '@/components/taskboard/TableRowsSection';
 import { FormActions } from '@/components/taskboard/FormActions';
@@ -76,7 +77,6 @@ export default function FichaProcedimentos({ formType }: FichaProcedimentosProps
               onTaskChange={(task, value) => tb.handleTaskChange('turno3', task as string, value)}
               observations={td.observations}
               onObservationsChange={(value) => tb.handleTurnDataChange('turno3', 'observations', value)}
-              isEndOfMonth={tb.isEndOfMonth}
             />
           )}
         </div>
@@ -143,6 +143,19 @@ export default function FichaProcedimentos({ formType }: FichaProcedimentosProps
             onRemoveRow={tb.removeTableRow}
             onInputChange={tb.handleInputChange}
           />
+
+          {tb.showTapeVerification && (
+            <VerificacaoTapesSection
+              data={tb.date}
+              operador={
+                operatorsList.find((o) => o.value === tb.turnData.turno3.operator)?.label ??
+                tb.turnData.turno3.operator ??
+                ''
+              }
+              tapes={tb.verificacaoTapes}
+              onChange={tb.handleTapesChange}
+            />
+          )}
 
           <SignatureSection
             signerName={tb.signerName}
