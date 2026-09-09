@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Loader2, ChevronsDown, CheckCircle2 } from 'lucide-react';
+import { countTaskProgress } from '@/lib/taskboardProgress';
 import { Turno1TasksComponent } from '@/components/tasks/Turno1Tasks';
 import { Turno2TasksComponent } from '@/components/tasks/Turno2Tasks';
 import { Turno3TasksComponent } from '@/components/tasks/Turno3Tasks';
@@ -28,6 +30,21 @@ export default function FichaProcedimentos({ formType }: FichaProcedimentosProps
   const { config, operatorsList } = tb;
   const multiTurn = config.turns.length > 1;
 
+  const turnRefs = useRef<Partial<Record<TurnKey, HTMLDivElement | null>>>({});
+
+  /** Leva o operador à primeira tarefa por marcar do turno. */
+  const jumpToNextUnchecked = useCallback((turnKey: TurnKey) => {
+    const container = turnRefs.current[turnKey];
+    if (!container) return;
+    const boxes = Array.from(
+      container.querySelectorAll<HTMLElement>('[role="checkbox"][data-state="unchecked"]'),
+    );
+    if (boxes.length === 0) return;
+    const next = boxes.find((b) => b.getBoundingClientRect().top > 130) ?? boxes[0];
+    next.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    next.focus({ preventScroll: true });
+  }, []);
+
   if (tb.isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -51,10 +68,39 @@ export default function FichaProcedimentos({ formType }: FichaProcedimentosProps
       />
     );
 
+    const progress = countTaskProgress(tb.tasks[turnKey]);
+    const allDone = progress.total > 0 && progress.done === progress.total;
+
     return (
       <div className="space-y-6">
         {info}
-        <div className="mt-6">
+
+        <div className="flex items-center gap-3">
+          <div className="h-2 flex-1 rounded-full bg-muted overflow-hidden">
+            <div
+              className="h-full bg-primary transition-all"
+              style={{ width: `${progress.total ? (progress.done / progress.total) * 100 : 0}%` }}
+            />
+          </div>
+          <span className="text-sm font-medium tabular-nums text-muted-foreground">
+            {progress.done}/{progress.total}
+          </span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => jumpToNextUnchecked(turnKey)}
+            disabled={allDone}
+          >
+            {allDone ? (
+              <><CheckCircle2 className="h-4 w-4 mr-1.5" /> Turno completo</>
+            ) : (
+              <><ChevronsDown className="h-4 w-4 mr-1.5" /> Próxima por marcar</>
+            )}
+          </Button>
+        </div>
+
+        <div className="mt-6" ref={(el) => { turnRefs.current[turnKey] = el; }}>
           {turnKey === 'turno1' && (
             <Turno1TasksComponent
               tasks={tb.tasks.turno1}
@@ -116,15 +162,21 @@ export default function FichaProcedimentos({ formType }: FichaProcedimentosProps
           {multiTurn ? (
             <Tabs value={tb.activeTab} onValueChange={(v) => tb.setActiveTab(v as TurnKey)}>
               <TabsList className="mb-6 h-11 p-1 bg-muted">
-                {config.turns.map((turnKey) => (
-                  <TabsTrigger
-                    key={turnKey}
-                    value={turnKey}
-                    className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-6 font-medium"
-                  >
-                    {TURN_LABELS[turnKey]}
-                  </TabsTrigger>
-                ))}
+                {config.turns.map((turnKey) => {
+                  const p = countTaskProgress(tb.tasks[turnKey]);
+                  return (
+                    <TabsTrigger
+                      key={turnKey}
+                      value={turnKey}
+                      className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-6 font-medium"
+                    >
+                      {TURN_LABELS[turnKey]}
+                      <span className="ml-2 text-xs tabular-nums text-muted-foreground">
+                        {p.done}/{p.total}
+                      </span>
+                    </TabsTrigger>
+                  );
+                })}
               </TabsList>
               {config.turns.map((turnKey) => (
                 <TabsContent key={turnKey} value={turnKey}>
