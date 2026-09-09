@@ -68,10 +68,15 @@ export default function CrcTratamento() {
     dbIdRef.current = dbId;
   }, [dbId]);
 
-  /** Passagem a decorrer — bloqueia a edição dos parâmetros. */
   const running = run?.estado === 'aguarda_login' || run?.estado === 'a_processar';
   /** Sessão aberta mas parada (Concluído/Parado/Erro) — dá para Repetir/Terminar. */
   const terminalRun = !!run && !running;
+  /**
+   * Só se bloqueiam os parâmetros durante o processamento. Fora disso — antes
+   * de Iniciar e enquanto se faz login — o código de inconsistência é
+   * editável, tal como no script (o código escolhe-se depois do login).
+   */
+  const paramsLocked = run?.estado === 'a_processar';
 
   const loadHistory = useCallback(async () => {
     const { data } = await listarCrcTratamentos(20);
@@ -151,11 +156,12 @@ export default function CrcTratamento() {
   const iniciar = async () => {
     setBusy(true);
     try {
+      // Só abre o Chrome. O código e o registo no histórico só entram
+      // depois do login, em "continuar".
       const state = await crcStartRun(params);
       setServiceOnline(true);
       setRun(state);
-      const { data } = await criarCrcTratamento(params as unknown as Record<string, unknown>);
-      setDbId(data?.id ?? null);
+      setDbId(null);
       toast.message('Chrome aberto', {
         description: 'Faça login no CRC, escolha o código de inconsistência e a pesquisa, depois clique em "Já fiz login".',
       });
@@ -170,7 +176,11 @@ export default function CrcTratamento() {
     if (!run) return;
     setBusy(true);
     try {
-      setRun(await crcLoginDone(run.id));
+      // O código de inconsistência vai só agora — depois do login.
+      const state = await crcLoginDone(run.id, params);
+      setRun(state);
+      const { data } = await criarCrcTratamento(params as unknown as Record<string, unknown>);
+      setDbId(data?.id ?? null);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Erro ao arrancar o processamento.');
     } finally {
@@ -300,7 +310,7 @@ export default function CrcTratamento() {
                   type="number"
                   min={0}
                   value={params.inconsistencyCode}
-                  disabled={running}
+                  disabled={paramsLocked}
                   onChange={(e) => setNum('inconsistencyCode', e.target.value, 0)}
                 />
               </div>
@@ -311,7 +321,7 @@ export default function CrcTratamento() {
                   type="number"
                   min={0}
                   value={params.inconsistencyState}
-                  disabled={running}
+                  disabled={paramsLocked}
                   onChange={(e) => setNum('inconsistencyState', e.target.value, 0)}
                 />
               </div>
@@ -320,7 +330,7 @@ export default function CrcTratamento() {
                 <Input
                   id="motivo"
                   value={params.motivo}
-                  disabled={running}
+                  disabled={paramsLocked}
                   onChange={(e) => setParams((p) => ({ ...p, motivo: e.target.value }))}
                 />
               </div>
@@ -331,7 +341,7 @@ export default function CrcTratamento() {
                   type="number"
                   min={1}
                   value={params.paginaInicial}
-                  disabled={running}
+                  disabled={paramsLocked}
                   onChange={(e) => setNum('paginaInicial', e.target.value, 1)}
                 />
               </div>
@@ -342,7 +352,7 @@ export default function CrcTratamento() {
                   type="number"
                   min={1}
                   value={params.pageSize}
-                  disabled={running}
+                  disabled={paramsLocked}
                   onChange={(e) => setNum('pageSize', e.target.value, 1)}
                 />
               </div>
@@ -353,7 +363,7 @@ export default function CrcTratamento() {
                   type="number"
                   min={1}
                   value={params.maxThreads}
-                  disabled={running}
+                  disabled={paramsLocked}
                   onChange={(e) => setNum('maxThreads', e.target.value, 1)}
                 />
               </div>
@@ -448,9 +458,18 @@ export default function CrcTratamento() {
                   </p>
                 )}
 
+                {run.paginasSaltadas ? (
+                  <p className="text-xs text-amber-600">
+                    {run.paginasSaltadas} página(s) saltada(s) por falha de resposta do CRC.
+                  </p>
+                ) : null}
+
                 {run.estado === 'concluido' && (
                   <div className="flex items-center gap-2 text-sm text-green-600">
-                    <CheckCircle className="h-4 w-4" /> Passagem concluída.
+                    <CheckCircle className="h-4 w-4" />
+                    {run.totalRegistos === 0
+                      ? `Sem registos para o código ${run.parametros.inconsistencyCode}.`
+                      : 'Passagem concluída.'}
                   </div>
                 )}
                 {run.estado === 'erro' && (
