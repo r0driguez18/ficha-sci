@@ -129,6 +129,10 @@ export type Database = {
           id: string
           pdf_signature: Json
           table_rows: Json
+          tapes_anexada_at: string | null
+          tapes_anexada_by: string | null
+          tapes_evidencia: Json
+          tapes_status: string
           tasks: Json
           turn_data: Json
           updated_at: string
@@ -143,6 +147,10 @@ export type Database = {
           id?: string
           pdf_signature: Json
           table_rows: Json
+          tapes_anexada_at?: string | null
+          tapes_anexada_by?: string | null
+          tapes_evidencia?: Json
+          tapes_status?: string
           tasks: Json
           turn_data: Json
           updated_at?: string
@@ -157,6 +165,10 @@ export type Database = {
           id?: string
           pdf_signature?: Json
           table_rows?: Json
+          tapes_anexada_at?: string | null
+          tapes_anexada_by?: string | null
+          tapes_evidencia?: Json
+          tapes_status?: string
           tasks?: Json
           turn_data?: Json
           updated_at?: string
@@ -296,6 +308,10 @@ export type Database = {
       }
       set_operator_pin: {
         Args: { new_pin: string }
+        Returns: undefined
+      }
+      set_tapes_evidencia: {
+        Args: { taskboard_id: string; evidencia: Json }
         Returns: undefined
       }
       change_operator_pin: {

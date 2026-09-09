@@ -165,6 +165,20 @@ export interface VerificacaoTapes {
   amjrn: boolean;
 }
 
+/** Estado da prova (print do display-tape) associada à folha de verificação. */
+export type TapesStatus = 'nao_aplicavel' | 'pendente' | 'anexada';
+
+/** Um ficheiro de evidência (PDF ou TXT) do display-tape, guardado no Storage. */
+export interface TapesEvidenciaFile {
+  /** Caminho dentro do bucket `tapes-evidencia`. */
+  path: string;
+  name: string;
+  size: number;
+  type: 'application/pdf' | 'text/plain';
+  uploaded_at: string;
+  uploaded_by: string;
+}
+
 export type TurnKey = 'turno1' | 'turno2' | 'turno3';
 
 export type TasksType = {

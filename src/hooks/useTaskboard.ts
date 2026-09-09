@@ -421,6 +421,7 @@ export function useTaskboard(formType: FormType) {
         tasks,
         tableRows,
         signature,
+        showTapeVerification,
       );
 
       if (saveError) {
