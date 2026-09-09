@@ -235,7 +235,8 @@ export const getProcessesStatsByMonth = async () => {
     };
     
     data?.forEach(process => {
-      const date = new Date(process.time_registered);
+      // date_registered vem como 'AAAA-MM-DD' (a coluna time_registered é só a hora).
+      const date = new Date(process.date_registered);
       const monthKey = formatMonthKey(date);
       
       if (!monthlyStats[monthKey]) {
