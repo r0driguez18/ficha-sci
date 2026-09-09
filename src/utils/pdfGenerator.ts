@@ -2,6 +2,8 @@
 import { jsPDF } from 'jspdf';
 import { TasksType, TurnDataType, TurnKey } from '@/types/taskboard';
 import { TaskTableRow } from '@/types/taskTableRow';
+import { FichaSignature } from '@/types/signature';
+import { shortHash } from '@/lib/signatureHash';
 import { centerText, BCA_COLORS, drawSeparator } from './pdf/pdfCommon';
 import { renderTurno1Tasks } from './pdf/pdfTurno1';
 import { renderTurno2Tasks } from './pdf/pdfTurno2';
@@ -15,7 +17,7 @@ export const generateTaskboardPDF = (
   tableRows: TaskTableRow[],
   isDiaNaoUtil: boolean = false,
   isEndOfMonth: boolean = false,
-  signature?: { imageDataUrl: string | null; signerName?: string; signedAt?: string }
+  signature?: Partial<FichaSignature>
 ) => {
   const doc = new jsPDF();
   let y = 15;
@@ -170,6 +172,15 @@ export const generateTaskboardPDF = (
   doc.setFontSize(11);
   doc.setTextColor(100, 100, 100);
   centerText(doc, `Data e Hora da validação: ${signedAt}`, y);
-  
+
+  if (signature?.method === 'pin') {
+    y += 8;
+    centerText(doc, 'Validação por PIN pessoal do operador autenticado', y);
+    if (signature?.contentHash) {
+      y += 7;
+      centerText(doc, `Impressão digital do conteúdo (SHA-256): ${shortHash(signature.contentHash)}`, y);
+    }
+  }
+
   return doc;
 };

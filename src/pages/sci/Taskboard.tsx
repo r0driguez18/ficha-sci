@@ -23,6 +23,8 @@ import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { saveExportedTaskboard, checkDuplicateOperations } from '@/services/exportedTaskboardService';
 import { createCobrancaRetorno } from '@/services/cobrancasRetornoService';
+import { computeFichaHash } from '@/lib/signatureHash';
+import type { FichaSignature } from '@/types/signature';
 
 import { OPERATORS as operatorsList } from '@/lib/operators';
 
@@ -648,9 +650,9 @@ const [isLoading, setIsLoading] = useState(true);
   };
 
   const exportToPDF = async () => {
-    // Verificar se está validado
-    if (!signerName || signerName.trim() === '') {
-      toast.error("A ficha não pode ser gerada sem ser validada (Selecione o seu nome na secção 'Validado por').");
+    // Verificar se está assinada
+    if (!signerName || signerName.trim() === '' || signatureDataUrl !== 'pin') {
+      toast.error("A ficha não pode ser gerada sem ser assinada. Use 'Assinar ficha' e introduza o seu PIN.");
       return;
     }
 
@@ -683,6 +685,18 @@ const [isLoading, setIsLoading] = useState(true);
         return;
       }
 
+      const contentHash = await computeFichaHash({
+        date, formType: getFormType(), turnData, tasks, tableRows
+      });
+      const signatureData: FichaSignature = {
+        signerName,
+        signerUserId: user.id,
+        method: 'pin',
+        signedAt: new Date().toISOString(),
+        contentHash,
+        imageDataUrl: null
+      };
+
       const doc = generateTaskboardPDF(
         date,
         turnData,
@@ -690,21 +704,14 @@ const [isLoading, setIsLoading] = useState(true);
         tableRows,
         false,
         isEndOfMonth,
-        { imageDataUrl: signatureDataUrl, signerName, signedAt: new Date().toISOString() }
+        signatureData
       );
-      
+
       const [yyyy, mm, dd] = date.split('-');
       const yy = yyyy.slice(2);
       const fileName = `FD ${dd}${mm}${yy}.pdf`;
       doc.save(fileName);
-      
-      // Save to exported taskboards history
-      const signatureData = {
-        signerName,
-        signedAt: new Date().toISOString(),
-        imageDataUrl: signatureDataUrl
-      };
-      
+
       const { error: saveError } = await saveExportedTaskboard(
         user.id,
         getFormType(),

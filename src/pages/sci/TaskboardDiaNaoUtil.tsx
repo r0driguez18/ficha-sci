@@ -7,6 +7,8 @@ import { useNavigate } from 'react-router-dom';
 import { createCobrancaRetorno } from '@/services/cobrancasRetornoService';
 import { saveFileProcess } from '@/services/fileProcessService';
 import { saveExportedTaskboard, checkDuplicateOperations } from '@/services/exportedTaskboardService';
+import { computeFichaHash } from '@/lib/signatureHash';
+import type { FichaSignature } from '@/types/signature';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Turno3TasksComponent } from '@/components/tasks/Turno3Tasks';
 import { generateTaskboardPDF } from '@/utils/pdfGenerator';
@@ -413,9 +415,9 @@ const [isLoading, setIsLoading] = useState(true);
   };
 
   const exportToPDF = async () => {
-    // Verificar se está validado
-    if (!signerName || signerName.trim() === '') {
-      toast.error("A ficha não pode ser gerada sem ser validada (Selecione o seu nome na secção 'Validado por').");
+    // Verificar se está assinada
+    if (!signerName || signerName.trim() === '' || signatureDataUrl !== 'pin') {
+      toast.error("A ficha não pode ser gerada sem ser assinada. Use 'Assinar ficha' e introduza o seu PIN.");
       return;
     }
 
@@ -521,6 +523,18 @@ const [isLoading, setIsLoading] = useState(true);
         }
       };
 
+      const contentHash = await computeFichaHash({
+        date, formType: 'dia-nao-util', turnData: completeTurnData, tasks: completeTasksData, tableRows
+      });
+      const signature: FichaSignature = {
+        signerName: signerName || '',
+        signerUserId: user?.id ?? null,
+        method: 'pin',
+        signedAt: new Date().toISOString(),
+        contentHash,
+        imageDataUrl: null
+      };
+
       // Pass isDiaNaoUtil=true AND isEndOfMonth to indicate this is a non-working day PDF
       const doc = generateTaskboardPDF(
         date,
@@ -529,20 +543,13 @@ const [isLoading, setIsLoading] = useState(true);
         tableRows,
         true,
         isEndOfMonth,
-        { imageDataUrl: signatureDataUrl, signerName, signedAt: new Date().toLocaleString('pt-PT') }
+        signature
       );
       const [yyyy, mm, dd] = date.split('-');
       const yy = yyyy.slice(2);
       const fileName = `FD ${dd}${mm}${yy}.pdf`;
       doc.save(fileName);
 
-      // Save to exported_taskboards for history
-      const signature = {
-        signerName: signerName || '',
-        signedAt: new Date().toISOString(),
-        imageDataUrl: signatureDataUrl
-      };
-      
       if (user) {
         const { error: saveError } = await saveExportedTaskboard(
           user.id,
