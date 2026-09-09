@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useToast } from '@/hooks/use-toast';
 import { generateTaskboardPDF } from '@/utils/pdfGenerator';
 import { appendTapesEvidencia } from '@/utils/pdf/appendTapesEvidencia';
+import { fichaFileName } from '@/lib/fichaFileName';
 import { supabase } from '@/integrations/supabase/client';
 import { getExportedTaskboards, ExportedTaskboard } from '@/services/exportedTaskboardService';
 import {
@@ -197,19 +198,28 @@ export default function HistoricoFichas() {
   };
 
   const downloadPDF = async (record: ExportedTaskboard) => {
+    if (record.tapes_status === 'pendente') {
+      toast({
+        title: 'Display de tapes em falta',
+        description: 'Esta ficha só pode ser descarregada depois de anexar o display de tapes.',
+        variant: 'destructive',
+      });
+      return;
+    }
     setBusyId(record.id);
     try {
       const blob = await buildFichaPdfBlob(record);
+      const fileName = fichaFileName(record.date);
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = record.file_name;
+      a.download = fileName;
       a.click();
       URL.revokeObjectURL(url);
 
       toast({
         title: "PDF Gerado",
-        description: `Ficheiro ${record.file_name} foi descarregado com sucesso`
+        description: `Ficheiro ${fileName} foi descarregado com sucesso`
       });
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
@@ -544,10 +554,14 @@ export default function HistoricoFichas() {
                         <Button
                           variant="default"
                           size="sm"
-                          disabled={busyId === record.id}
+                          disabled={busyId === record.id || record.tapes_status === 'pendente'}
                           onClick={() => downloadPDF(record)}
                           aria-label={`Descarregar PDF da ficha de ${record.date}`}
-                          title="Descarregar PDF"
+                          title={
+                            record.tapes_status === 'pendente'
+                              ? 'Anexe o display de tapes antes de descarregar'
+                              : 'Descarregar PDF'
+                          }
                         >
                           {busyId === record.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
                         </Button>

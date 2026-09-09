@@ -2,7 +2,9 @@ import type { TapesEvidenciaFile } from '@/types/taskboard';
 import { downloadTapesEvidencia } from '@/services/tapesEvidenciaService';
 
 /**
- * Junta a prova do display-tape ao PDF da ficha, no fim do documento.
+ * Junta a prova do display-tape ao PDF da ficha, imediatamente a seguir à
+ * folha "PROCEDIMENTO VERIFICAÇÃO DE TAPES" e antes da página de validação
+ * eletrónica (que o gerador coloca sempre como última página).
  *
  * - Ficheiros PDF  → as páginas são copiadas tal como estão.
  * - Ficheiros TXT  → o conteúdo é desenhado em páginas A4 horizontais, em
@@ -25,6 +27,9 @@ export async function appendTapesEvidencia(
   const out = await PDFDocument.load(basePdfBytes);
   const courier = await out.embedFont(StandardFonts.Courier);
 
+  // A última página é a da validação eletrónica; a evidência entra logo antes.
+  let insertAt = Math.max(0, out.getPageCount() - 1);
+
   // A4 horizontal, em pontos.
   const PAGE_W = 841.89;
   const PAGE_H = 595.28;
@@ -36,11 +41,11 @@ export async function appendTapesEvidencia(
   const LINES_PER_PAGE = Math.floor((PAGE_H - 2 * MARGIN) / LINE_H);
 
   const drawTxtPage = (rawLines: string[]) => {
-    let page = out.addPage([PAGE_W, PAGE_H]);
+    let page = out.insertPage(insertAt++, [PAGE_W, PAGE_H]);
     let row = 0;
     const put = (text: string) => {
       if (row >= LINES_PER_PAGE) {
-        page = out.addPage([PAGE_W, PAGE_H]);
+        page = out.insertPage(insertAt++, [PAGE_W, PAGE_H]);
         row = 0;
       }
       page.drawText(text, {
@@ -77,7 +82,9 @@ export async function appendTapesEvidencia(
       try {
         const src = await PDFDocument.load(buf);
         const pages = await out.copyPages(src, src.getPageIndices());
-        pages.forEach((p) => out.addPage(p));
+        pages.forEach((p) => {
+          out.insertPage(insertAt++, p);
+        });
       } catch (e) {
         console.error(`Não foi possível anexar o PDF "${file.name}":`, e);
       }
