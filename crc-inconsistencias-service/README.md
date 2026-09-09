@@ -8,6 +8,10 @@ Corre na máquina onde se faz o tratamento do CRC. Abre o Chrome para o
 **login manual** no CRC; a partir daí sincroniza os cookies e confirma as
 inconsistências em paralelo, exatamente como o script original.
 
+No fim de cada passagem o Chrome **fica aberto**: pode-se **Repetir** (com o
+mesmo código de inconsistência ou outro — o código é um campo na página) ou
+**Terminar** (fecha o Chrome).
+
 ## Requisitos
 
 - Python 3.10+
@@ -47,9 +51,11 @@ operador; basta fazer duplo-clique (mantém a janela aberta).
 | `CRC_BASE` | `https://bcvnet/CRCFRONTOFFICE` | Base do CRC |
 | `CRC_CHROMEDRIVER` | `C:\WebDriver\chromedriver-win64\chromedriver.exe` | Caminho do chromedriver |
 | `CRC_CHROME` | `C:\Program Files\Google\Chrome\Application\chrome.exe` | Caminho do Chrome |
-| `CRC_INCONSISTENCY_CODE` | `51269` | Filtro da pesquisa |
-| `CRC_INCONSISTENCY_STATE` | `225` | Filtro da pesquisa |
+| `CRC_INCONSISTENCY_CODE` | `51269` | Valor **por omissão** do código (editável na página a cada passagem) |
+| `CRC_INCONSISTENCY_STATE` | `225` | Valor **por omissão** do estado (editável na página) |
 | `CRC_PARTICIPANT_ID` / `CRC_REPRESENTANT_ID` / `CRC_CTX_OBSERVED` / `CRC_CTX_REPORTED` | `3` | Filtros da pesquisa |
+| `CRC_LOG_DIR` | `logs` | Pasta dos logs por passagem (`bcv_<codigo>_<ts>.log` + `resultados_<codigo>_<ts>.json`) |
+| `CRC_PAUSA_PAGINA` | `1` | Pausa em segundos entre páginas |
 
 Exemplo (`run.bat`):
 
@@ -65,9 +71,12 @@ crc-inconsistencias.exe
 |---|---|---|
 | `GET` | `/health` | Serviço vivo + execução atual |
 | `POST` | `/runs` | Abre o Chrome; fica em `aguarda_login` |
-| `POST` | `/runs/{id}/login-feito` | Sincroniza cookies e arranca o processamento |
+| `POST` | `/runs/{id}/login-feito` | Sincroniza cookies e arranca a 1.ª passagem |
 | `GET` | `/runs/{id}` | Progresso (polling) |
-| `POST` | `/runs/{id}/parar` | Cancela a execução |
+| `POST` | `/runs/{id}/parar` | Cancela a passagem a decorrer (Chrome fica aberto) |
+| `POST` | `/runs/{id}/repetir` | Nova passagem (novo `RunParams` no corpo) sem fechar o Chrome |
+| `POST` | `/runs/{id}/terminar` | Fecha o Chrome e limpa a sessão |
 
 Estados: `aguarda_login` → `a_processar` → `concluido` \| `parado` \| `erro`.
-Só há uma execução de cada vez.
+De `concluido`/`parado`/`erro` volta-se a `a_processar` com `repetir`.
+Só há uma sessão de cada vez — para começar do zero, `terminar` primeiro.

@@ -20,6 +20,8 @@ export interface CrcRunParams {
   pageSize: number;
   maxThreads: number;
   paginaInicial: number;
+  inconsistencyCode: number;
+  inconsistencyState: number;
 }
 
 export interface CrcRunState {
@@ -31,7 +33,9 @@ export interface CrcRunState {
   paginaAtual: number;
   processados: number;
   falhas: number;
+  passagens?: number;
   erro: string | null;
+  ficheiroLog?: string | null;
   iniciadoEm: number;
   terminadoEm: number | null;
 }
@@ -85,6 +89,16 @@ export async function crcLoginDone(runId: string): Promise<CrcRunState> {
   );
 }
 
+export async function crcRepeatRun(runId: string, params: CrcRunParams): Promise<CrcRunState> {
+  return parse<CrcRunState>(
+    await fetch(`${CRC_SERVICE_URL}/runs/${runId}/repetir`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
+    }),
+  );
+}
+
 export async function crcRunState(runId: string): Promise<CrcRunState> {
   return parse<CrcRunState>(await fetch(`${CRC_SERVICE_URL}/runs/${runId}`));
 }
@@ -93,4 +107,8 @@ export async function crcStopRun(runId: string): Promise<CrcRunState> {
   return parse<CrcRunState>(
     await fetch(`${CRC_SERVICE_URL}/runs/${runId}/parar`, { method: 'POST' }),
   );
+}
+
+export async function crcTerminateRun(runId: string): Promise<void> {
+  await fetch(`${CRC_SERVICE_URL}/runs/${runId}/terminar`, { method: 'POST' });
 }
