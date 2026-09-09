@@ -6,25 +6,31 @@ Faz o que o script de terminal fazia, mas exposto por HTTP para a página
 cookies e corre o ciclo de confirmação paginado, publicando o progresso.
 
 Fluxo:
-    POST /runs                -> abre o Chrome, fica em "aguarda_login"
-    (o operador faz login no CRC e abre a pesquisa correta)
-    POST /runs/{id}/login-feito -> sincroniza cookies e arranca o processamento
-    GET  /runs/{id}            -> progresso (polling)
-    POST /runs/{id}/parar      -> cancela
+    POST /runs                  -> abre o Chrome, fica em "aguarda_login"
+    (o operador faz login no CRC, escolhe o código e abre a pesquisa)
+    POST /runs/{id}/login-feito -> sincroniza cookies e arranca a 1ª passagem
+    GET  /runs/{id}             -> progresso (polling)
+    POST /runs/{id}/parar       -> cancela a passagem (Chrome fica aberto)
+    POST /runs/{id}/repetir     -> nova passagem (novo código, se quiser)
+    POST /runs/{id}/terminar    -> fecha o Chrome
 
-Só existe uma execução de cada vez (um operador, uma sessão do CRC).
+Só existe uma sessão de cada vez (um operador, uma sessão do CRC).
+Cada passagem escreve logs/bcv_<codigo>_<ts>.log e, se houver IDs
+confirmados, logs/resultados_<codigo>_<ts>.json.
 
 Config por variáveis de ambiente (ver README.md).
 """
 from __future__ import annotations
 
+import json
 import math
 import os
 import threading
 import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Any, Optional
+from datetime import datetime
+from typing import Any, Optional, TextIO
 
 import requests
 import urllib3
@@ -54,19 +60,24 @@ SEARCH_URL = f"{BASE}/api/CCR/Inconsistencies/Search"
 CONFIRM_URL = f"{BASE}/api/CCR/Inconsistencies/ConfirmInconsistency"
 LOGIN_URL = f"{BASE}/CCR/Login/Login"
 
-# Parâmetros da pesquisa que não mudam entre execuções (mantidos do script).
-PARAMS_FIXOS = {
+LOG_DIR = os.getenv("CRC_LOG_DIR", "logs")
+PAUSA_PAGINA = float(os.getenv("CRC_PAUSA_PAGINA", "1"))
+
+# Parâmetros da pesquisa que não mudam (mantidos do script). O código e o
+# estado da inconsistência vêm em cada execução (RunParams), para se poder
+# "mudar de código" sem editar nada.
+PARAMS_BASE = {
     "ctxObserved": int(os.getenv("CRC_CTX_OBSERVED", "3")),
     "ctxReported": int(os.getenv("CRC_CTX_REPORTED", "3")),
-    "inconsistencyCode": int(os.getenv("CRC_INCONSISTENCY_CODE", "51269")),
-    "inconsistencyState": int(os.getenv("CRC_INCONSISTENCY_STATE", "225")),
     "orderBy": "date",
     "orderType": "DESC",
     "participantId": int(os.getenv("CRC_PARTICIPANT_ID", "3")),
     "representantId": int(os.getenv("CRC_REPRESENTANT_ID", "3")),
 }
+DEFAULT_INCONSISTENCY_CODE = int(os.getenv("CRC_INCONSISTENCY_CODE", "51269"))
+DEFAULT_INCONSISTENCY_STATE = int(os.getenv("CRC_INCONSISTENCY_STATE", "225"))
 
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 
 # ---------------------------------------------------------------- estado global
 _lock = threading.Lock()
@@ -80,6 +91,8 @@ class RunParams(BaseModel):
     pageSize: int = 100
     maxThreads: int = 20
     paginaInicial: int = 1
+    inconsistencyCode: int = DEFAULT_INCONSISTENCY_CODE
+    inconsistencyState: int = DEFAULT_INCONSISTENCY_STATE
 
 
 # ---------------------------------------------------------------- browser / http
@@ -126,8 +139,14 @@ def _sincronizar_cookies(sessao: requests.Session) -> None:
             sessao.cookies.set(cookie["name"], cookie["value"])
 
 
-def _buscar_pagina(sessao: requests.Session, page_num: int, page_size: int) -> dict:
-    params = dict(PARAMS_FIXOS, pageSize=page_size, page=page_num)
+def _buscar_pagina(sessao: requests.Session, page_num: int, rp: "RunParams") -> dict:
+    params = dict(
+        PARAMS_BASE,
+        inconsistencyCode=rp.inconsistencyCode,
+        inconsistencyState=rp.inconsistencyState,
+        pageSize=rp.pageSize,
+        page=page_num,
+    )
     r = sessao.get(SEARCH_URL, params=params, timeout=30, verify=False)
     if r.status_code == 401:
         _sincronizar_cookies(sessao)
@@ -153,13 +172,47 @@ def _progress(**patch: Any) -> None:
             _run.update(patch)
 
 
+def _abrir_logs(codigo: int) -> tuple[Optional[TextIO], str, str]:
+    """Cria logs/bcv_<codigo>_<ts>.log e devolve (ficheiro, log_path, resultados_path)."""
+    try:
+        os.makedirs(LOG_DIR, exist_ok=True)
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        log_path = os.path.join(LOG_DIR, f"bcv_{codigo}_{ts}.log")
+        resultados_path = os.path.join(LOG_DIR, f"resultados_{codigo}_{ts}.json")
+        f = open(log_path, "w", encoding="utf-8")
+        f.write(f"{'=' * 60}\nBCV - Fecho de Inconsistencias\nCodigo: {codigo}\n")
+        f.write(f"Inicio: {datetime.now():%Y-%m-%d %H:%M:%S}\n{'=' * 60}\n\n")
+        f.flush()
+        return f, log_path, resultados_path
+    except Exception:  # noqa: BLE001
+        return None, "", ""
+
+
+def _log(f: Optional[TextIO], msg: str, tipo: str = "INFO") -> None:
+    linha = f"[{datetime.now():%H:%M:%S}] {tipo}: {msg}"
+    print(linha)
+    if f is not None:
+        try:
+            f.write(linha + "\n")
+            f.flush()
+        except Exception:  # noqa: BLE001
+            pass
+
+
 def _worker(params: RunParams) -> None:
+    """Corre uma passagem completa. NÃO fecha o Chrome no fim — a janela fica
+    aberta para o operador poder Repetir (mesmo código ou outro) ou Terminar."""
     sessao = _nova_sessao()
     processados = 0
     falhas = 0
+    ids_processados: list[Any] = []
+    log_f, log_path, resultados_path = _abrir_logs(params.inconsistencyCode)
+    _progress(ficheiroLog=os.path.abspath(log_path) if log_path else None)
+    _log(log_f, f"Codigo {params.inconsistencyCode} | estado {params.inconsistencyState} | "
+                f"pageSize {params.pageSize} | threads {params.maxThreads}")
     try:
         _sincronizar_cookies(sessao)
-        primeira = _buscar_pagina(sessao, params.paginaInicial, params.pageSize)
+        primeira = _buscar_pagina(sessao, params.paginaInicial, params)
         ctx = primeira.get("pageContext", {})
         total_registos = ctx.get("totalRecords", 0)
         page_size = ctx.get("pageSize", params.pageSize) or params.pageSize
@@ -170,17 +223,21 @@ def _worker(params: RunParams) -> None:
             totalPaginas=total_paginas,
             paginaAtual=params.paginaInicial,
         )
+        _log(log_f, f"{total_registos} registos em {total_paginas} paginas")
 
         for pagina in range(params.paginaInicial, total_paginas + 1):
             with _lock:
                 if _run is None or _run.get("cancelar"):
-                    _progress(estado="parado")
+                    _log(log_f, "Cancelado pelo operador", "AVISO")
+                    _progress(estado="parado", terminadoEm=time.time())
+                    _escrever_resultados(resultados_path, params, processados, ids_processados, log_f)
                     return
             _progress(paginaAtual=pagina)
+            _log(log_f, f"Pagina {pagina}/{total_paginas}")
             _sincronizar_cookies(sessao)
 
             dados = primeira if pagina == params.paginaInicial else _buscar_pagina(
-                sessao, pagina, params.pageSize
+                sessao, pagina, params
             )
             items = dados.get("items", [])
 
@@ -191,18 +248,59 @@ def _worker(params: RunParams) -> None:
                     if it.get("inconsistencyId")
                 }
                 for fut in as_completed(futures):
+                    it = futures[fut]
                     try:
                         fut.result()
                         processados += 1
-                    except Exception:
+                        ids_processados.append(it.get("inconsistencyId"))
+                    except Exception as exc:  # noqa: BLE001
                         falhas += 1
+                        _log(log_f, f"ID {it.get('inconsistencyId')}: {exc}", "ERRO")
                     _progress(processados=processados, falhas=falhas)
 
+            if pagina < total_paginas and PAUSA_PAGINA > 0:
+                time.sleep(PAUSA_PAGINA)
+
+        _log(log_f, f"RESUMO: {processados} processados, {falhas} falhas de {total_registos}")
+        _escrever_resultados(resultados_path, params, processados, ids_processados, log_f)
         _progress(estado="concluido", terminadoEm=time.time())
     except Exception as exc:  # noqa: BLE001
+        _log(log_f, f"Erro geral: {exc}", "ERRO")
+        _escrever_resultados(resultados_path, params, processados, ids_processados, log_f)
         _progress(estado="erro", erro=str(exc), terminadoEm=time.time())
     finally:
-        _fechar_chrome()
+        if log_f is not None:
+            try:
+                log_f.close()
+            except Exception:  # noqa: BLE001
+                pass
+
+
+def _escrever_resultados(
+    path: str,
+    params: "RunParams",
+    processados: int,
+    ids: list[Any],
+    log_f: Optional[TextIO],
+) -> None:
+    if not path or not ids:
+        return
+    try:
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(
+                {
+                    "codigo": params.inconsistencyCode,
+                    "timestamp": datetime.now().isoformat(),
+                    "total_processados": processados,
+                    "ids": ids,
+                },
+                f,
+                indent=2,
+                ensure_ascii=False,
+            )
+        _log(log_f, f"IDs guardados em {os.path.abspath(path)}")
+    except Exception as exc:  # noqa: BLE001
+        _log(log_f, f"Nao foi possivel guardar resultados: {exc}", "ERRO")
 
 
 # ---------------------------------------------------------------- API
@@ -230,8 +328,10 @@ def health() -> dict[str, Any]:
 def criar_run(params: RunParams) -> dict[str, Any]:
     global _driver, _run
     with _lock:
-        if _run is not None and _run["estado"] in ("aguarda_login", "a_processar"):
-            raise HTTPException(409, "Já existe uma execução em curso.")
+        if _run is not None:
+            raise HTTPException(
+                409, "Já existe uma sessão aberta. Use Repetir ou Terminar."
+            )
     try:
         _driver = _abrir_chrome()
     except Exception as exc:  # noqa: BLE001
@@ -246,7 +346,9 @@ def criar_run(params: RunParams) -> dict[str, Any]:
         "paginaAtual": 0,
         "processados": 0,
         "falhas": 0,
+        "passagens": 0,
         "erro": None,
+        "ficheiroLog": None,
         "cancelar": False,
         "iniciadoEm": time.time(),
         "terminadoEm": None,
@@ -256,6 +358,25 @@ def criar_run(params: RunParams) -> dict[str, Any]:
     return run
 
 
+def _arrancar_worker(params: RunParams) -> None:
+    with _lock:
+        _run.update(
+            estado="a_processar",
+            parametros=params.model_dump(),
+            cancelar=False,
+            erro=None,
+            processados=0,
+            falhas=0,
+            paginaAtual=0,
+            totalRegistos=0,
+            totalPaginas=0,
+            ficheiroLog=None,
+            terminadoEm=None,
+            passagens=_run.get("passagens", 0) + 1,
+        )
+    threading.Thread(target=_worker, args=(params,), daemon=True).start()
+
+
 @app.post("/runs/{run_id}/login-feito")
 def login_feito(run_id: str) -> dict[str, Any]:
     with _lock:
@@ -263,9 +384,23 @@ def login_feito(run_id: str) -> dict[str, Any]:
             raise HTTPException(404, "Execução não encontrada.")
         if _run["estado"] != "aguarda_login":
             raise HTTPException(409, f"Estado inválido: {_run['estado']}")
-        _run["estado"] = "a_processar"
         params = RunParams(**_run["parametros"])
-    threading.Thread(target=_worker, args=(params,), daemon=True).start()
+    _arrancar_worker(params)
+    return _snapshot()
+
+
+@app.post("/runs/{run_id}/repetir")
+def repetir_run(run_id: str, params: RunParams) -> dict[str, Any]:
+    """Nova passagem sem fechar o Chrome. O operador pode ter mudado o código
+    de inconsistência (nos `params`) ou ajustado a pesquisa no CRC."""
+    with _lock:
+        if _run is None or _run["id"] != run_id:
+            raise HTTPException(404, "Execução não encontrada.")
+        if _run["estado"] not in ("concluido", "parado", "erro"):
+            raise HTTPException(409, f"Estado inválido: {_run['estado']}")
+        if _driver is None:
+            raise HTTPException(409, "A janela do Chrome já foi fechada. Inicie de novo.")
+    _arrancar_worker(params)
     return _snapshot()
 
 
@@ -279,6 +414,7 @@ def estado_run(run_id: str) -> dict[str, Any]:
 
 @app.post("/runs/{run_id}/parar")
 def parar_run(run_id: str) -> dict[str, Any]:
+    """Cancela a passagem a decorrer. O Chrome fica aberto (Repetir/Terminar)."""
     with _lock:
         if _run is None or _run["id"] != run_id:
             raise HTTPException(404, "Execução não encontrada.")
@@ -286,12 +422,21 @@ def parar_run(run_id: str) -> dict[str, Any]:
         if _run["estado"] == "aguarda_login":
             _run["estado"] = "parado"
             _run["terminadoEm"] = time.time()
-            fechar = True
-        else:
-            fechar = False
-    if fechar:
-        _fechar_chrome()
     return _snapshot()
+
+
+@app.post("/runs/{run_id}/terminar")
+def terminar_run(run_id: str) -> dict[str, Any]:
+    """Fecha o Chrome e limpa a sessão."""
+    global _run
+    with _lock:
+        if _run is None or _run["id"] != run_id:
+            raise HTTPException(404, "Execução não encontrada.")
+        _run["cancelar"] = True
+    _fechar_chrome()
+    with _lock:
+        _run = None
+    return {"ok": True}
 
 
 if __name__ == "__main__":
