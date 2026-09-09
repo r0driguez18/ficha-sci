@@ -1,217 +1,409 @@
-
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Upload } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Play, Square, Loader2, CheckCircle, AlertTriangle, RefreshCw, LogIn } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  crcHealth,
+  crcStartRun,
+  crcLoginDone,
+  crcRunState,
+  crcStopRun,
+  type CrcRunState,
+  type CrcRunParams,
+} from '@/services/crcLocalService';
+import {
+  criarCrcTratamento,
+  atualizarCrcTratamento,
+  listarCrcTratamentos,
+  type CrcTratamento,
+} from '@/services/crcTratamentoService';
 
-const CrcTratamento = () => {
-  const [references, setReferences] = useState<string>('');
-  const [file, setFile] = useState<File | null>(null);
-  const [status, setStatus] = useState<{ message: string, isError: boolean } | null>(null);
+const DEFAULTS: CrcRunParams = {
+  motivo: 'Validado',
+  pageSize: 100,
+  maxThreads: 20,
+  paginaInicial: 1,
+};
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
-    }
-  };
+const ESTADO_LABEL: Record<string, string> = {
+  aguarda_login: 'A aguardar login',
+  a_processar: 'A processar',
+  a_correr: 'A processar',
+  concluido: 'Concluído',
+  parado: 'Parado',
+  erro: 'Erro',
+};
 
-  const removerReferencias = () => {
-    if (!file) {
-      toast.error('Por favor, selecione um arquivo XML.');
-      return;
-    }
+const fmtDateTime = (iso?: string | null) => {
+  if (!iso) return '-';
+  try {
+    return new Date(iso).toLocaleString('pt-PT');
+  } catch {
+    return iso;
+  }
+};
 
-    const referenciasParaEliminar = references.split(/[,\s]+/).map(item => 
-      item.trim()).filter(Boolean);
-    
-    if (referenciasParaEliminar.length === 0) {
-      toast.error('Por favor, insira pelo menos uma referência para eliminar.');
-      return;
-    }
+export default function CrcTratamento() {
+  const [serviceOnline, setServiceOnline] = useState<boolean | null>(null);
+  const [params, setParams] = useState<CrcRunParams>(DEFAULTS);
+  const [run, setRun] = useState<CrcRunState | null>(null);
+  const [dbId, setDbId] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [history, setHistory] = useState<CrcTratamento[]>([]);
+  const pollRef = useRef<number | null>(null);
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
+  const running = run?.estado === 'aguarda_login' || run?.estado === 'a_processar';
+
+  const loadHistory = useCallback(async () => {
+    const { data } = await listarCrcTratamentos(20);
+    setHistory(data ?? []);
+  }, []);
+
+  // Estado do serviço local
+  useEffect(() => {
+    let alive = true;
+    const check = async () => {
+      const h = await crcHealth();
+      if (alive) setServiceOnline(!!h);
+    };
+    check();
+    const id = window.setInterval(check, 10000);
+    return () => {
+      alive = false;
+      window.clearInterval(id);
+    };
+  }, []);
+
+  useEffect(() => {
+    loadHistory();
+  }, [loadHistory]);
+
+  const finalizarRegisto = useCallback(
+    async (state: CrcRunState) => {
+      if (!dbId) return;
+      await atualizarCrcTratamento(dbId, {
+        estado: state.estado === 'a_processar' ? 'a_correr' : (state.estado as CrcTratamento['estado']),
+        total_registos: state.totalRegistos,
+        processados: state.processados,
+        falhas: state.falhas,
+        terminado_em: new Date().toISOString(),
+        resumo:
+          state.estado === 'erro'
+            ? `Erro: ${state.erro ?? 'desconhecido'}`
+            : `${state.processados} processados, ${state.falhas} falhas de ${state.totalRegistos}`,
+      });
+      await loadHistory();
+    },
+    [dbId, loadHistory],
+  );
+
+  // Polling do progresso (só enquanto está "a_processar")
+  const runId = run?.id;
+  const runEstado = run?.estado;
+  useEffect(() => {
+    if (!runId || runEstado !== 'a_processar') return;
+    const tick = async () => {
       try {
-        if (!e.target?.result) {
-          throw new Error('Não foi possível ler o arquivo');
+        const next = await crcRunState(runId);
+        setRun(next);
+        if (next.estado !== 'a_processar') {
+          await finalizarRegisto(next);
+          if (next.estado === 'concluido') toast.success('Fecho de inconsistências concluído.');
+          else if (next.estado === 'parado') toast.info('Execução parada.');
+          else if (next.estado === 'erro') toast.error(`Erro: ${next.erro ?? 'desconhecido'}`);
         }
-        
-        const xmlString = e.target.result as string;
-        const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(xmlString, 'text/xml');
-        
-        // Verificar se é um XML válido
-        const parserError = xmlDoc.querySelector('parsererror');
-        if (parserError) {
-          throw new Error('O arquivo selecionado não é um XML válido.');
-        }
-
-        const referenciasExistentes = Array.from(xmlDoc.querySelectorAll('CD'))
-          .map(cd => cd.getAttribute('C_RefIF')?.trim() || '');
-
-        const referenciasNaoEncontradas: string[] = [];
-
-        // Remover referências
-        for (let i = referenciasParaEliminar.length - 1; i >= 0; i--) {
-          const referenciaParaEliminar = referenciasParaEliminar[i];
-          
-          if (!referenciasExistentes.includes(referenciaParaEliminar)) {
-            referenciasNaoEncontradas.push(referenciaParaEliminar);
-            continue;
-          }
-          
-          const cds = xmlDoc.getElementsByTagName('CD');
-          for (let j = cds.length - 1; j >= 0; j--) {
-            const referencia = cds[j].getAttribute('C_RefIF')?.replace(/\s+/g, '') || '';
-            if (referencia === referenciaParaEliminar) {
-              cds[j].parentNode?.removeChild(cds[j]);
-            }
-          }
-        }
-
-        // Atualizar total
-        const totalEnviadoElement = xmlDoc.querySelector('N_TotalEnviado');
-        if (totalEnviadoElement) {
-          const novoTotal = xmlDoc.createElement('N_TotalEnviado');
-          novoTotal.textContent = String(
-            referenciasExistentes.length - 
-            (referenciasParaEliminar.length - referenciasNaoEncontradas.length)
-          );
-          totalEnviadoElement.parentNode?.replaceChild(novoTotal, totalEnviadoElement);
-        }
-
-        // Serializar de volta para string
-        const serializer = new XMLSerializer();
-        let novoXmlString = serializer.serializeToString(xmlDoc);
-        novoXmlString = novoXmlString.replace(/\n\s*\n/g, '\n');
-
-        // Download
-        downloadFile(
-          novoXmlString, 
-          file.name.replace('.xml', '_sem_referencia.xml'), 
-          'text/xml'
-        );
-
-        // Mostrar status
-        if (referenciasNaoEncontradas.length === 0) {
-          setStatus({
-            message: 'Referências removidas com sucesso.',
-            isError: false
-          });
-          toast.success('Referências removidas com sucesso.');
-        } else {
-          setStatus({
-            message: `As seguintes referências não foram encontradas: ${referenciasNaoEncontradas.join(', ')}`,
-            isError: true
-          });
-          toast.warning('Algumas referências não foram encontradas.');
-        }
-      } catch (error) {
-        console.error('Erro ao processar XML:', error);
-        setStatus({
-          message: `Erro ao processar o arquivo: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
-          isError: true
-        });
-        toast.error('Erro ao processar o arquivo XML.');
+      } catch (e) {
+        console.error('Erro ao consultar o serviço CRC:', e);
       }
     };
-
-    reader.onerror = () => {
-      setStatus({
-        message: 'Erro ao ler o arquivo.',
-        isError: true
-      });
-      toast.error('Erro ao ler o arquivo.');
+    pollRef.current = window.setInterval(tick, 1500);
+    return () => {
+      if (pollRef.current) window.clearInterval(pollRef.current);
     };
+  }, [runId, runEstado, finalizarRegisto]);
 
-    reader.readAsText(file);
+  const setNum = (k: keyof CrcRunParams, v: string, min: number) =>
+    setParams((p) => ({ ...p, [k]: Math.max(min, Number(v) || min) }));
+
+  const iniciar = async () => {
+    setBusy(true);
+    try {
+      const state = await crcStartRun(params);
+      setRun(state);
+      const { data } = await criarCrcTratamento(params as unknown as Record<string, unknown>);
+      setDbId(data?.id ?? null);
+      toast.message('Chrome aberto', {
+        description: 'Faça login no CRC e abra a pesquisa correta, depois clique em Continuar.',
+      });
+    } catch (e) {
+      toast.error(
+        e instanceof Error && e.message
+          ? e.message
+          : 'Não foi possível contactar o serviço local do CRC.',
+      );
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const downloadFile = (content: string, filename: string, contentType: string) => {
-    const a = document.createElement('a');
-    const blob = new Blob([content], {type: contentType});
-    const url = URL.createObjectURL(blob);
-    
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    
-    setTimeout(() => {
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }, 0);
+  const continuar = async () => {
+    if (!run) return;
+    setBusy(true);
+    try {
+      setRun(await crcLoginDone(run.id));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Erro ao arrancar o processamento.');
+    } finally {
+      setBusy(false);
+    }
   };
+
+  const parar = async () => {
+    if (!run) return;
+    setBusy(true);
+    try {
+      const next = await crcStopRun(run.id);
+      setRun(next);
+      if (next.estado !== 'a_processar') await finalizarRegisto(next);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Erro ao parar.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const novo = () => {
+    setRun(null);
+    setDbId(null);
+  };
+
+  const pct =
+    run && run.totalRegistos > 0
+      ? Math.min(100, Math.round(((run.processados + run.falhas) / run.totalRegistos) * 100))
+      : 0;
 
   return (
     <div className="animate-fade-in">
-      <PageHeader 
-        title="CRC - Tratamento de Ficheiros" 
-        subtitle="Remoção de referências em arquivos XML"
+      <PageHeader
+        title="CRC — Fecho de Inconsistências"
+        subtitle="Confirmação em massa das inconsistências no CRC Front Office"
       />
 
       <div className="grid grid-cols-1 gap-6 max-w-3xl mx-auto">
+        {serviceOnline === false && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Serviço local não encontrado</AlertTitle>
+            <AlertDescription>
+              Arranque o <code>crc-inconsistencias</code> na máquina de tratamento do CRC (ver{' '}
+              <code>crc-inconsistencias-service/README.md</code>) e mantenha a janela aberta.
+            </AlertDescription>
+          </Alert>
+        )}
+
         <Card className="shadow-md">
           <CardHeader className="bg-primary/5">
-            <CardTitle className="text-primary">Remover Referências de COM</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-primary">Execução</CardTitle>
+              {run && <Badge variant="outline">{ESTADO_LABEL[run.estado] ?? run.estado}</Badge>}
+            </div>
+            <CardDescription>
+              Abre o Chrome para o login manual no CRC; a partir daí confirma as inconsistências
+              em paralelo.
+            </CardDescription>
           </CardHeader>
-          <CardContent className="pt-6">
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="referencia">Referências para eliminar (separadas por vírgula ou espaço):</Label>
+          <CardContent className="pt-6 space-y-5">
+            {/* Parâmetros */}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="motivo">Motivo da validação</Label>
                 <Input
-                  id="referencia"
-                  placeholder="Ex: REF001, REF002, REF003"
-                  value={references}
-                  onChange={(e) => setReferences(e.target.value)}
+                  id="motivo"
+                  value={params.motivo}
+                  disabled={running}
+                  onChange={(e) => setParams((p) => ({ ...p, motivo: e.target.value }))}
                 />
               </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="fileInput">Selecionar arquivo XML:</Label>
-                <div className="flex items-center gap-3">
-                  <Input
-                    id="fileInput"
-                    type="file"
-                    accept=".xml"
-                    onChange={handleFileChange}
-                    className="flex-1"
-                  />
-                </div>
-                {file && (
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Arquivo selecionado: {file.name}
-                  </p>
-                )}
+              <div className="space-y-1.5">
+                <Label htmlFor="paginaInicial">Página inicial</Label>
+                <Input
+                  id="paginaInicial"
+                  type="number"
+                  min={1}
+                  value={params.paginaInicial}
+                  disabled={running}
+                  onChange={(e) => setNum('paginaInicial', e.target.value, 1)}
+                />
               </div>
-              
-              <Button
-                onClick={removerReferencias}
-                className="w-full"
-              >
-                <Upload className="mr-2 h-4 w-4" />
-                Remover Referências
-              </Button>
-              
-              {status && (
-                <div 
-                  className={`mt-4 p-3 rounded-md ${
-                    status.isError ? 'bg-destructive/10 text-destructive' : 'bg-green-50 text-green-600'
-                  }`}
-                >
-                  {status.message}
-                </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="pageSize">Registos por página</Label>
+                <Input
+                  id="pageSize"
+                  type="number"
+                  min={1}
+                  value={params.pageSize}
+                  disabled={running}
+                  onChange={(e) => setNum('pageSize', e.target.value, 1)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="maxThreads">Ligações em paralelo</Label>
+                <Input
+                  id="maxThreads"
+                  type="number"
+                  min={1}
+                  value={params.maxThreads}
+                  disabled={running}
+                  onChange={(e) => setNum('maxThreads', e.target.value, 1)}
+                />
+              </div>
+            </div>
+
+            {/* Ações */}
+            <div className="flex flex-wrap gap-2">
+              {!run && (
+                <Button onClick={iniciar} disabled={busy || serviceOnline !== true}>
+                  {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
+                  Iniciar
+                </Button>
+              )}
+
+              {run?.estado === 'aguarda_login' && (
+                <Button onClick={continuar} disabled={busy}>
+                  {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogIn className="mr-2 h-4 w-4" />}
+                  Já fiz login — continuar
+                </Button>
+              )}
+
+              {running && (
+                <Button variant="destructive" onClick={parar} disabled={busy}>
+                  <Square className="mr-2 h-4 w-4" />
+                  Parar
+                </Button>
+              )}
+
+              {run && !running && (
+                <Button variant="outline" onClick={novo}>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Nova execução
+                </Button>
               )}
             </div>
+
+            {/* Login pendente */}
+            {run?.estado === 'aguarda_login' && (
+              <Alert>
+                <LogIn className="h-4 w-4" />
+                <AlertTitle>Login no CRC</AlertTitle>
+                <AlertDescription>
+                  Na janela do Chrome que abriu, faça login no CRC e abra a pesquisa correta.
+                  Depois clique em <strong>Já fiz login — continuar</strong>.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Progresso */}
+            {run && run.estado !== 'aguarda_login' && (
+              <div className="space-y-3">
+                <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                  <div
+                    className="h-full bg-primary transition-all"
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">Página</p>
+                    <p className="font-semibold">
+                      {run.paginaAtual}/{run.totalPaginas || '?'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Registos</p>
+                    <p className="font-semibold">{run.totalRegistos}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Processados</p>
+                    <p className="font-semibold text-green-600">{run.processados}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Falhas</p>
+                    <p className="font-semibold text-destructive">{run.falhas}</p>
+                  </div>
+                </div>
+
+                {run.estado === 'concluido' && (
+                  <div className="flex items-center gap-2 text-sm text-green-600">
+                    <CheckCircle className="h-4 w-4" /> Concluído.
+                  </div>
+                )}
+                {run.estado === 'erro' && (
+                  <div className="flex items-center gap-2 text-sm text-destructive">
+                    <AlertTriangle className="h-4 w-4" /> {run.erro ?? 'Erro desconhecido'}
+                  </div>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Histórico */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-base">Histórico</CardTitle>
+            <Button size="sm" variant="ghost" onClick={loadHistory}>
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {history.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">Sem execuções registadas.</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Início</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead className="text-right">Processados</TableHead>
+                    <TableHead className="text-right">Falhas</TableHead>
+                    <TableHead>Resumo</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {history.map((h) => (
+                    <TableRow key={h.id}>
+                      <TableCell className="whitespace-nowrap">{fmtDateTime(h.iniciado_em)}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            h.estado === 'concluido'
+                              ? 'secondary'
+                              : h.estado === 'erro'
+                                ? 'destructive'
+                                : 'outline'
+                          }
+                        >
+                          {ESTADO_LABEL[h.estado] ?? h.estado}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">{h.processados}</TableCell>
+                      <TableCell className="text-right">{h.falhas}</TableCell>
+                      <TableCell className="text-muted-foreground">{h.resumo ?? '-'}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </div>
     </div>
   );
-};
-
-export default CrcTratamento;
+}
