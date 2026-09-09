@@ -11,24 +11,51 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import { generateTaskboardPDF } from '@/utils/pdfGenerator';
+import { appendTapesEvidencia } from '@/utils/pdf/appendTapesEvidencia';
 import { supabase } from '@/integrations/supabase/client';
 import { getExportedTaskboards, ExportedTaskboard } from '@/services/exportedTaskboardService';
+import {
+  addTapesEvidencia,
+  removeTapesEvidencia,
+  downloadTapesEvidencia,
+} from '@/services/tapesEvidenciaService';
 import { useOperators } from '@/hooks/useOperators';
 import { isSigned } from '@/types/signature';
 
-import { 
-  FileDown, 
-  Eye, 
+import {
+  FileDown,
+  Eye,
   Calendar,
   Search,
   Filter,
   FileText,
   Clock,
   User,
-  CheckCircle
+  CheckCircle,
+  Paperclip,
+  AlertTriangle,
+  Trash2,
+  Loader2
 } from 'lucide-react';
 
 type TaskboardRecord = ExportedTaskboard;
+
+/** Dias corridos a partir dos quais uma pendência de display é "em atraso". */
+const TAPES_ATRASO_DIAS = 3;
+
+const isTapesAtrasado = (record: ExportedTaskboard): boolean => {
+  if (record.tapes_status !== 'pendente') return false;
+  const ref = record.exported_at || record.created_at;
+  if (!ref) return false;
+  const dias = (Date.now() - new Date(ref).getTime()) / 86_400_000;
+  return dias >= TAPES_ATRASO_DIAS;
+};
+
+const formatBytes = (n: number): string => {
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(0)} KB`;
+  return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+};
 
 interface SignatureData {
   imageDataUrl: string | null;
@@ -64,7 +91,10 @@ export default function HistoricoFichas() {
   const [searchTerm, setSearchTerm] = useState('');
   const [formTypeFilter, setFormTypeFilter] = useState<string>('all');
   const [signerFilter, setSignerFilter] = useState<string>('all');
+  const [tapesFilter, setTapesFilter] = useState<string>('all');
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [attachTarget, setAttachTarget] = useState<ExportedTaskboard | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -73,7 +103,7 @@ export default function HistoricoFichas() {
 
   useEffect(() => {
     filterRecords();
-  }, [records, searchTerm, formTypeFilter, signerFilter]);
+  }, [records, searchTerm, formTypeFilter, signerFilter, tapesFilter]);
 
   const loadRecords = async () => {
     try {
@@ -126,6 +156,14 @@ export default function HistoricoFichas() {
       filtered = filtered.filter(record => record.pdf_signature?.signerName === signerFilter);
     }
 
+    if (tapesFilter === 'pendente') {
+      filtered = filtered.filter(record => record.tapes_status === 'pendente');
+    } else if (tapesFilter === 'anexada') {
+      filtered = filtered.filter(record => record.tapes_status === 'anexada');
+    } else if (tapesFilter === 'atraso') {
+      filtered = filtered.filter(isTapesAtrasado);
+    }
+
     if (searchTerm) {
       filtered = filtered.filter(record =>
         record.date.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -137,19 +175,37 @@ export default function HistoricoFichas() {
     setFilteredRecords(filtered);
   };
 
-  const downloadPDF = async (record: ExportedTaskboard) => {
-    try {
-      const pdf = generateTaskboardPDF(
-        record.date,
-        record.turn_data,
-        record.tasks,
-        record.table_rows,
-        isNaoUtilType(record.form_type),
-        record.pdf_signature,
-        (record.turn_data as { verificacaoTapes?: unknown })?.verificacaoTapes as never,
-      );
+  /** Gera o PDF da ficha e, se houver evidência de tapes anexada, junta-a no fim. */
+  const buildFichaPdfBlob = async (record: ExportedTaskboard): Promise<Blob> => {
+    const pdf = generateTaskboardPDF(
+      record.date,
+      record.turn_data,
+      record.tasks,
+      record.table_rows,
+      isNaoUtilType(record.form_type),
+      record.pdf_signature,
+      (record.turn_data as { verificacaoTapes?: unknown })?.verificacaoTapes as never,
+    );
 
-      pdf.save(record.file_name);
+    const evidencia = record.tapes_evidencia ?? [];
+    if (evidencia.length === 0) {
+      return pdf.output('blob');
+    }
+
+    const merged = await appendTapesEvidencia(pdf.output('arraybuffer'), evidencia);
+    return new Blob([merged], { type: 'application/pdf' });
+  };
+
+  const downloadPDF = async (record: ExportedTaskboard) => {
+    setBusyId(record.id);
+    try {
+      const blob = await buildFichaPdfBlob(record);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = record.file_name;
+      a.click();
+      URL.revokeObjectURL(url);
 
       toast({
         title: "PDF Gerado",
@@ -162,21 +218,15 @@ export default function HistoricoFichas() {
         description: "Erro ao gerar PDF",
         variant: "destructive"
       });
+    } finally {
+      setBusyId(null);
     }
   };
 
-  const handlePreviewPDF = (record: ExportedTaskboard) => {
+  const handlePreviewPDF = async (record: ExportedTaskboard) => {
+    setBusyId(record.id);
     try {
-      const pdf = generateTaskboardPDF(
-        record.date,
-        record.turn_data,
-        record.tasks,
-        record.table_rows,
-        isNaoUtilType(record.form_type),
-        record.pdf_signature,
-        (record.turn_data as { verificacaoTapes?: unknown })?.verificacaoTapes as never,
-      );
-      const blob = pdf.output('blob');
+      const blob = await buildFichaPdfBlob(record);
       const url = URL.createObjectURL(blob);
       if (pdfPreviewUrl) URL.revokeObjectURL(pdfPreviewUrl);
       setPdfPreviewUrl(url);
@@ -187,12 +237,80 @@ export default function HistoricoFichas() {
         description: "Erro ao gerar preview do PDF",
         variant: "destructive"
       });
+    } finally {
+      setBusyId(null);
     }
+  };
+
+  const handleAttachFiles = async (record: ExportedTaskboard, files: File[]) => {
+    if (files.length === 0) return;
+    setBusyId(record.id);
+    try {
+      const { data, error } = await addTapesEvidencia(
+        record.id,
+        record.form_type,
+        record.date,
+        record.tapes_evidencia ?? [],
+        files,
+      );
+      if (error || !data) {
+        toast({ title: 'Erro', description: error ?? 'Falha ao anexar', variant: 'destructive' });
+        return;
+      }
+      applyTapesUpdate(record.id, data);
+      toast({ title: 'Display anexado', description: `${files.length} ficheiro(s) anexado(s) à ficha de ${record.date}.` });
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleRemoveFile = async (record: ExportedTaskboard, path: string) => {
+    setBusyId(record.id);
+    try {
+      const { data, error } = await removeTapesEvidencia(record.id, record.tapes_evidencia ?? [], path);
+      if (error || !data) {
+        toast({ title: 'Erro', description: error ?? 'Falha ao remover', variant: 'destructive' });
+        return;
+      }
+      applyTapesUpdate(record.id, data);
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  /** Atualiza o registo em memória depois de anexar/remover evidência. */
+  const applyTapesUpdate = (id: string, evidencia: ExportedTaskboard['tapes_evidencia']) => {
+    const status: ExportedTaskboard['tapes_status'] = evidencia.length > 0 ? 'anexada' : 'pendente';
+    setRecords((rows) =>
+      rows.map((r) =>
+        r.id === id
+          ? {
+              ...r,
+              tapes_evidencia: evidencia,
+              tapes_status: status,
+              tapes_anexada_at: status === 'anexada' ? new Date().toISOString() : null,
+            }
+          : r,
+      ),
+    );
+    setAttachTarget((t) => (t && t.id === id ? { ...t, tapes_evidencia: evidencia, tapes_status: status } : t));
+    window.dispatchEvent(new Event('update-tapes-badge'));
   };
 
   const closePdfPreview = () => {
     if (pdfPreviewUrl) URL.revokeObjectURL(pdfPreviewUrl);
     setPdfPreviewUrl(null);
+  };
+
+  const viewAttachedFile = async (path: string) => {
+    const blob = await downloadTapesEvidencia(path);
+    if (!blob) {
+      toast({ title: 'Erro', description: 'Não foi possível abrir o ficheiro.', variant: 'destructive' });
+      return;
+    }
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
   };
 
   const getSignatureStatus = (record: ExportedTaskboard) => {
@@ -223,7 +341,7 @@ export default function HistoricoFichas() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-5">
             <div className="space-y-2">
               <label className="text-sm font-medium">Pesquisar</label>
               <div className="relative">
@@ -266,6 +384,21 @@ export default function HistoricoFichas() {
               </Select>
             </div>
 
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Display de Tapes</label>
+              <Select value={tapesFilter} onValueChange={setTapesFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="pendente">Pendentes de display</SelectItem>
+                  <SelectItem value="atraso">Pendentes em atraso</SelectItem>
+                  <SelectItem value="anexada">Display anexado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="flex items-end">
               <Button onClick={loadRecords} variant="outline" className="w-full">
                 Atualizar Lista
@@ -285,6 +418,22 @@ export default function HistoricoFichas() {
           <CardDescription>
             Clique numa ficha para visualizar os detalhes ou descarregar o PDF
           </CardDescription>
+          {(() => {
+            const pendentes = records.filter((r) => r.tapes_status === 'pendente');
+            if (pendentes.length === 0) return null;
+            const atraso = pendentes.filter(isTapesAtrasado).length;
+            return (
+              <button
+                type="button"
+                onClick={() => setTapesFilter('pendente')}
+                className="mt-2 inline-flex items-center gap-2 rounded-md bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 px-3 py-1.5 text-sm text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-950/70"
+              >
+                <AlertTriangle className="h-4 w-4" />
+                {pendentes.length} ficha(s) a aguardar o display de tapes
+                {atraso > 0 && <span className="font-semibold">· {atraso} em atraso</span>}
+              </button>
+            );
+          })()}
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -301,6 +450,7 @@ export default function HistoricoFichas() {
                   <TableHead>Data da Ficha</TableHead>
                   <TableHead>Exportado em</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Display de Tapes</TableHead>
                   <TableHead>Responsável</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
@@ -338,6 +488,25 @@ export default function HistoricoFichas() {
                       )}
                     </TableCell>
                     <TableCell>
+                      {record.tapes_status === 'nao_aplicavel' ? (
+                        <span className="text-muted-foreground">—</span>
+                      ) : record.tapes_status === 'anexada' ? (
+                        <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                          <Paperclip className="h-3 w-3 mr-1" />
+                          Anexado ({record.tapes_evidencia?.length ?? 0})
+                        </Badge>
+                      ) : isTapesAtrasado(record) ? (
+                        <Badge variant="secondary" className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
+                          <AlertTriangle className="h-3 w-3 mr-1" />
+                          Em atraso
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-amber-700 border-amber-300 dark:text-amber-300">
+                          Pendente
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
                       {record.pdf_signature?.signerName ? (
                         <div className="flex items-center gap-2">
                           <User className="h-4 w-4" />
@@ -349,24 +518,38 @@ export default function HistoricoFichas() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
+                        {record.tapes_status !== 'nao_aplicavel' && (
+                          <Button
+                            variant={record.tapes_status === 'pendente' ? 'secondary' : 'outline'}
+                            size="sm"
+                            onClick={() => setAttachTarget(record)}
+                            aria-label={`Anexar display de tapes da ficha de ${record.date}`}
+                            title="Anexar/gerir o display de tapes"
+                          >
+                            <Paperclip className="h-4 w-4" />
+                          </Button>
+                        )}
+
                         <Button
                           variant="outline"
                           size="sm"
+                          disabled={busyId === record.id}
                           onClick={() => handlePreviewPDF(record)}
                           aria-label={`Pré-visualizar PDF da ficha de ${record.date}`}
                           title="Pré-visualizar PDF"
                         >
-                          <Eye className="h-4 w-4" />
+                          {busyId === record.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
                         </Button>
 
                         <Button
                           variant="default"
                           size="sm"
+                          disabled={busyId === record.id}
                           onClick={() => downloadPDF(record)}
                           aria-label={`Descarregar PDF da ficha de ${record.date}`}
                           title="Descarregar PDF"
                         >
-                          <FileDown className="h-4 w-4" />
+                          {busyId === record.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
                         </Button>
                       </div>
                     </TableCell>
@@ -377,6 +560,82 @@ export default function HistoricoFichas() {
           )}
         </CardContent>
       </Card>
+
+      {/* Anexar display de tapes */}
+      <Dialog open={!!attachTarget} onOpenChange={(open) => { if (!open) setAttachTarget(null); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Display de Tapes — ficha de {attachTarget?.date}</DialogTitle>
+            <DialogDescription>
+              Anexe o print do <code>display-tape</code> (PDF ou TXT). O ficheiro é junto ao fim do PDF
+              da ficha quando esta é descarregada do histórico.
+            </DialogDescription>
+          </DialogHeader>
+
+          {attachTarget && (
+            <div className="space-y-4">
+              <div className="rounded border divide-y">
+                {(attachTarget.tapes_evidencia ?? []).length === 0 ? (
+                  <p className="p-3 text-sm text-muted-foreground">Sem ficheiros anexados.</p>
+                ) : (
+                  (attachTarget.tapes_evidencia ?? []).map((f) => (
+                    <div key={f.path} className="flex items-center gap-2 p-2 text-sm">
+                      <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <button
+                        type="button"
+                        className="flex-1 text-left truncate hover:underline"
+                        onClick={() => viewAttachedFile(f.path)}
+                        title="Abrir ficheiro"
+                      >
+                        {f.name}
+                      </button>
+                      <span className="text-xs text-muted-foreground shrink-0">{formatBytes(f.size)}</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 shrink-0"
+                        disabled={busyId === attachTarget.id}
+                        onClick={() => handleRemoveFile(attachTarget, f.path)}
+                        aria-label={`Remover ${f.name}`}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div>
+                <input
+                  id="tapes-file-input"
+                  type="file"
+                  accept=".pdf,.txt,application/pdf,text/plain"
+                  multiple
+                  className="hidden"
+                  disabled={busyId === attachTarget.id}
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files ?? []);
+                    e.target.value = '';
+                    if (attachTarget) handleAttachFiles(attachTarget, files);
+                  }}
+                />
+                <Button
+                  variant="secondary"
+                  className="w-full"
+                  disabled={busyId === attachTarget.id}
+                  onClick={() => document.getElementById('tapes-file-input')?.click()}
+                >
+                  {busyId === attachTarget.id ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> A carregar…</>
+                  ) : (
+                    <><Paperclip className="h-4 w-4 mr-2" /> Escolher ficheiros (PDF/TXT)</>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* PDF Preview Dialog */}
       <Dialog open={!!pdfPreviewUrl} onOpenChange={(open) => { if (!open) closePdfPreview(); }}>
