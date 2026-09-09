@@ -7,14 +7,16 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Play, Square, Loader2, CheckCircle, AlertTriangle, RefreshCw, LogIn } from 'lucide-react';
+import { Play, Square, Loader2, CheckCircle, AlertTriangle, RefreshCw, LogIn, RotateCw, Power } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   crcHealth,
   crcStartRun,
   crcLoginDone,
+  crcRepeatRun,
   crcRunState,
   crcStopRun,
+  crcTerminateRun,
   type CrcRunState,
   type CrcRunParams,
 } from '@/services/crcLocalService';
@@ -30,6 +32,8 @@ const DEFAULTS: CrcRunParams = {
   pageSize: 100,
   maxThreads: 20,
   paginaInicial: 1,
+  inconsistencyCode: 51269,
+  inconsistencyState: 225,
 };
 
 const ESTADO_LABEL: Record<string, string> = {
@@ -59,18 +63,29 @@ export default function CrcTratamento() {
   const [busy, setBusy] = useState(false);
   const [history, setHistory] = useState<CrcTratamento[]>([]);
   const pollRef = useRef<number | null>(null);
+  const dbIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    dbIdRef.current = dbId;
+  }, [dbId]);
 
+  /** Passagem a decorrer — bloqueia a edição dos parâmetros. */
   const running = run?.estado === 'aguarda_login' || run?.estado === 'a_processar';
+  /** Sessão aberta mas parada (Concluído/Parado/Erro) — dá para Repetir/Terminar. */
+  const terminalRun = !!run && !running;
 
   const loadHistory = useCallback(async () => {
     const { data } = await listarCrcTratamentos(20);
     setHistory(data ?? []);
   }, []);
 
+  useEffect(() => {
+    loadHistory();
+  }, [loadHistory]);
+
   /**
-   * Verifica (sem arrancar nada) se o serviço local está a responder. É só
-   * um GET a http://localhost:8765/health — não abre o Chrome nem toca no
-   * CRC. Corre uma vez ao abrir a página e antes de "Iniciar".
+   * Verifica se o serviço local responde. É só um GET a /health — não abre o
+   * Chrome nem toca no CRC. Não corre sozinha: só quando o utilizador pede ou
+   * ao carregar em "Iniciar".
    */
   const verificarServico = useCallback(async () => {
     const h = await crcHealth();
@@ -78,15 +93,10 @@ export default function CrcTratamento() {
     return !!h;
   }, []);
 
-  useEffect(() => {
-    verificarServico();
-    loadHistory();
-  }, [verificarServico, loadHistory]);
-
-  const finalizarRegisto = useCallback(
-    async (state: CrcRunState) => {
-      if (!dbId) return;
-      await atualizarCrcTratamento(dbId, {
+  const registarFimDaPassagem = useCallback(
+    async (id: string | null, state: CrcRunState) => {
+      if (!id) return;
+      await atualizarCrcTratamento(id, {
         estado: state.estado === 'a_processar' ? 'a_correr' : (state.estado as CrcTratamento['estado']),
         total_registos: state.totalRegistos,
         processados: state.processados,
@@ -99,7 +109,7 @@ export default function CrcTratamento() {
       });
       await loadHistory();
     },
-    [dbId, loadHistory],
+    [loadHistory],
   );
 
   // Polling do progresso (só enquanto está "a_processar")
@@ -112,9 +122,9 @@ export default function CrcTratamento() {
         const next = await crcRunState(runId);
         setRun(next);
         if (next.estado !== 'a_processar') {
-          await finalizarRegisto(next);
-          if (next.estado === 'concluido') toast.success('Fecho de inconsistências concluído.');
-          else if (next.estado === 'parado') toast.info('Execução parada.');
+          await registarFimDaPassagem(dbIdRef.current, next);
+          if (next.estado === 'concluido') toast.success('Passagem concluída.');
+          else if (next.estado === 'parado') toast.info('Passagem parada.');
           else if (next.estado === 'erro') toast.error(`Erro: ${next.erro ?? 'desconhecido'}`);
         }
       } catch (e) {
@@ -125,32 +135,32 @@ export default function CrcTratamento() {
     return () => {
       if (pollRef.current) window.clearInterval(pollRef.current);
     };
-  }, [runId, runEstado, finalizarRegisto]);
+  }, [runId, runEstado, registarFimDaPassagem]);
 
   const setNum = (k: keyof CrcRunParams, v: string, min: number) =>
     setParams((p) => ({ ...p, [k]: Math.max(min, Number(v) || min) }));
 
+  const relatarFalhaServico = (e: unknown) => {
+    setServiceOnline(false);
+    setShowServiceHelp(true);
+    toast.error(
+      e instanceof Error && e.message ? e.message : 'O serviço local do CRC não está a responder.',
+    );
+  };
+
   const iniciar = async () => {
     setBusy(true);
     try {
-      if (!(await verificarServico())) {
-        setShowServiceHelp(true);
-        toast.error('O serviço local do CRC não está a responder.');
-        return;
-      }
       const state = await crcStartRun(params);
+      setServiceOnline(true);
       setRun(state);
       const { data } = await criarCrcTratamento(params as unknown as Record<string, unknown>);
       setDbId(data?.id ?? null);
       toast.message('Chrome aberto', {
-        description: 'Faça login no CRC e abra a pesquisa correta, depois clique em Continuar.',
+        description: 'Faça login no CRC, escolha o código de inconsistência e a pesquisa, depois clique em "Já fiz login".',
       });
     } catch (e) {
-      toast.error(
-        e instanceof Error && e.message
-          ? e.message
-          : 'Não foi possível contactar o serviço local do CRC.',
-      );
+      relatarFalhaServico(e);
     } finally {
       setBusy(false);
     }
@@ -168,13 +178,29 @@ export default function CrcTratamento() {
     }
   };
 
+  const repetir = async () => {
+    if (!run) return;
+    setBusy(true);
+    try {
+      const state = await crcRepeatRun(run.id, params);
+      setRun(state);
+      const { data } = await criarCrcTratamento(params as unknown as Record<string, unknown>);
+      setDbId(data?.id ?? null);
+      toast.message('Nova passagem', { description: `Código ${params.inconsistencyCode}.` });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Erro ao repetir.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const parar = async () => {
     if (!run) return;
     setBusy(true);
     try {
       const next = await crcStopRun(run.id);
       setRun(next);
-      if (next.estado !== 'a_processar') await finalizarRegisto(next);
+      if (next.estado !== 'a_processar') await registarFimDaPassagem(dbId, next);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Erro ao parar.');
     } finally {
@@ -182,9 +208,18 @@ export default function CrcTratamento() {
     }
   };
 
-  const novo = () => {
-    setRun(null);
-    setDbId(null);
+  const terminar = async () => {
+    if (!run) return;
+    setBusy(true);
+    try {
+      await crcTerminateRun(run.id);
+    } catch {
+      /* fecha na mesma do lado da UI */
+    } finally {
+      setRun(null);
+      setDbId(null);
+      setBusy(false);
+    }
   };
 
   const pct =
@@ -204,58 +239,82 @@ export default function CrcTratamento() {
           <CardHeader className="bg-primary/5">
             <div className="flex items-center justify-between">
               <CardTitle className="text-primary">Execução</CardTitle>
-              {run && <Badge variant="outline">{ESTADO_LABEL[run.estado] ?? run.estado}</Badge>}
+              {run && (
+                <Badge variant="outline">
+                  {ESTADO_LABEL[run.estado] ?? run.estado}
+                  {run.passagens && run.passagens > 1 ? ` · ${run.passagens}ª passagem` : ''}
+                </Badge>
+              )}
             </div>
             <CardDescription>
               Abre o Chrome para o login manual no CRC; a partir daí confirma as inconsistências
-              em paralelo.
+              em paralelo. No fim, dá para repetir (mesmo código ou outro) ou terminar.
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-6 space-y-5">
             {/* Estado do serviço local */}
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-              <span
-                className={`inline-block h-2 w-2 rounded-full ${
-                  serviceOnline
-                    ? 'bg-green-500'
-                    : serviceOnline === false
-                      ? 'bg-muted-foreground/40'
-                      : 'bg-amber-400'
-                }`}
-              />
-              <span className="text-muted-foreground">
-                Serviço local{' '}
-                {serviceOnline === null ? 'a verificar…' : serviceOnline ? 'ligado' : 'desligado'}
-              </span>
-              <button
-                type="button"
-                onClick={() => verificarServico()}
-                className="text-primary hover:underline"
-              >
-                verificar
-              </button>
-              {serviceOnline === false && (
+            {serviceOnline !== null && (
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                <span
+                  className={`inline-block h-2 w-2 rounded-full ${
+                    serviceOnline ? 'bg-green-500' : 'bg-muted-foreground/40'
+                  }`}
+                />
+                <span className="text-muted-foreground">
+                  Serviço local {serviceOnline ? 'ligado' : 'desligado'}
+                </span>
                 <button
                   type="button"
-                  onClick={() => setShowServiceHelp((v) => !v)}
+                  onClick={() => verificarServico()}
                   className="text-primary hover:underline"
                 >
-                  como arrancar?
+                  verificar
                 </button>
-              )}
-            </div>
+                {!serviceOnline && (
+                  <button
+                    type="button"
+                    onClick={() => setShowServiceHelp((v) => !v)}
+                    className="text-primary hover:underline"
+                  >
+                    como arrancar?
+                  </button>
+                )}
+              </div>
+            )}
             {showServiceHelp && serviceOnline === false && (
               <p className="text-xs text-muted-foreground rounded-md bg-muted/50 p-3 -mt-2">
                 Na máquina onde se faz o tratamento do CRC, arranque o{' '}
                 <code>crc-inconsistencias</code> (ver{' '}
                 <code>crc-inconsistencias-service/README.md</code>) e mantenha a janela aberta.
-                Depois clique em <strong>verificar</strong>. É apenas uma verificação — não
-                arranca o processamento (isso é só com o botão <strong>Iniciar</strong>).
+                É só uma verificação — o processamento só arranca com o botão{' '}
+                <strong>Iniciar</strong>.
               </p>
             )}
 
             {/* Parâmetros */}
             <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="inconsistencyCode">Código de inconsistência</Label>
+                <Input
+                  id="inconsistencyCode"
+                  type="number"
+                  min={0}
+                  value={params.inconsistencyCode}
+                  disabled={running}
+                  onChange={(e) => setNum('inconsistencyCode', e.target.value, 0)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="inconsistencyState">Estado da inconsistência</Label>
+                <Input
+                  id="inconsistencyState"
+                  type="number"
+                  min={0}
+                  value={params.inconsistencyState}
+                  disabled={running}
+                  onChange={(e) => setNum('inconsistencyState', e.target.value, 0)}
+                />
+              </div>
               <div className="space-y-1.5">
                 <Label htmlFor="motivo">Motivo da validação</Label>
                 <Input
@@ -303,31 +362,43 @@ export default function CrcTratamento() {
             {/* Ações */}
             <div className="flex flex-wrap gap-2">
               {!run && (
-                <Button onClick={iniciar} disabled={busy || serviceOnline !== true}>
+                <Button onClick={iniciar} disabled={busy}>
                   {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
                   Iniciar
                 </Button>
               )}
 
               {run?.estado === 'aguarda_login' && (
-                <Button onClick={continuar} disabled={busy}>
-                  {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogIn className="mr-2 h-4 w-4" />}
-                  Já fiz login — continuar
-                </Button>
+                <>
+                  <Button onClick={continuar} disabled={busy}>
+                    {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogIn className="mr-2 h-4 w-4" />}
+                    Já fiz login — continuar
+                  </Button>
+                  <Button variant="outline" onClick={terminar} disabled={busy}>
+                    <Power className="mr-2 h-4 w-4" />
+                    Terminar
+                  </Button>
+                </>
               )}
 
-              {running && (
+              {run?.estado === 'a_processar' && (
                 <Button variant="destructive" onClick={parar} disabled={busy}>
                   <Square className="mr-2 h-4 w-4" />
                   Parar
                 </Button>
               )}
 
-              {run && !running && (
-                <Button variant="outline" onClick={novo}>
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Nova execução
-                </Button>
+              {terminalRun && (
+                <>
+                  <Button onClick={repetir} disabled={busy}>
+                    {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RotateCw className="mr-2 h-4 w-4" />}
+                    Repetir
+                  </Button>
+                  <Button variant="outline" onClick={terminar} disabled={busy}>
+                    <Power className="mr-2 h-4 w-4" />
+                    Terminar
+                  </Button>
+                </>
               )}
             </div>
 
@@ -337,8 +408,9 @@ export default function CrcTratamento() {
                 <LogIn className="h-4 w-4" />
                 <AlertTitle>Login no CRC</AlertTitle>
                 <AlertDescription>
-                  Na janela do Chrome que abriu, faça login no CRC e abra a pesquisa correta.
-                  Depois clique em <strong>Já fiz login — continuar</strong>.
+                  Na janela do Chrome que abriu, faça login no CRC, escolha o código de
+                  inconsistência e abra a pesquisa. Depois clique em{' '}
+                  <strong>Já fiz login — continuar</strong>.
                 </AlertDescription>
               </Alert>
             )}
@@ -347,10 +419,7 @@ export default function CrcTratamento() {
             {run && run.estado !== 'aguarda_login' && (
               <div className="space-y-3">
                 <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
-                  <div
-                    className="h-full bg-primary transition-all"
-                    style={{ width: `${pct}%` }}
-                  />
+                  <div className="h-full bg-primary transition-all" style={{ width: `${pct}%` }} />
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
                   <div>
@@ -373,9 +442,15 @@ export default function CrcTratamento() {
                   </div>
                 </div>
 
+                {run.ficheiroLog && (
+                  <p className="text-xs text-muted-foreground break-all">
+                    Log: <code>{run.ficheiroLog}</code>
+                  </p>
+                )}
+
                 {run.estado === 'concluido' && (
                   <div className="flex items-center gap-2 text-sm text-green-600">
-                    <CheckCircle className="h-4 w-4" /> Concluído.
+                    <CheckCircle className="h-4 w-4" /> Passagem concluída.
                   </div>
                 )}
                 {run.estado === 'erro' && (
