@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { TurnDataType, TasksType } from '@/types/taskboard';
 import { TaskTableRow } from '@/types/taskTableRow';
+import { FichaSignature } from '@/types/signature';
 
 export interface ExportedTaskboard {
   id: string;
@@ -11,11 +12,7 @@ export interface ExportedTaskboard {
   turn_data: TurnDataType;
   tasks: TasksType;
   table_rows: TaskTableRow[];
-  pdf_signature: {
-    signerName: string;
-    signedAt: string;
-    imageDataUrl: string | null;
-  };
+  pdf_signature: FichaSignature;
   file_name: string;
   created_at: string;
   updated_at: string;
@@ -31,13 +28,9 @@ export async function saveExportedTaskboard(
   turnData: TurnDataType,
   tasks: TasksType,
   tableRows: TaskTableRow[],
-  signature: {
-    signerName: string;
-    signedAt: string;
-    imageDataUrl: string | null;
-  }
+  signature: FichaSignature
 ): Promise<{ data: ExportedTaskboard | null; error: any }> {
-  const fileName = `Taskboard_${formType}_${date}_${signature.signerName.replace(/\s+/g, '_')}.pdf`;
+  const fileName = `Taskboard_${formType}_${date}_${(signature.signerName || 'sem_nome').replace(/\s+/g, '_')}.pdf`;
   
   // Check if already exists for this date and form type
   const { data: existing } = await supabase

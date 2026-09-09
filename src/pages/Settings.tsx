@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { PinManagerCard } from '@/components/settings/PinManagerCard';
 
 const Settings = () => {
   const { user } = useAuth();
@@ -19,8 +20,8 @@ const Settings = () => {
       if (error) throw error;
       toast.success('Logout bem-sucedido');
       navigate('/auth/login');
-    } catch (error: any) {
-      toast.error(error.message || 'Erro ao sair');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erro ao sair');
     }
   };
   
@@ -31,7 +32,7 @@ const Settings = () => {
         subtitle="Gerencie as configurações do seu sistema"
       />
       
-      <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Conta</CardTitle>
@@ -46,12 +47,13 @@ const Settings = () => {
               <p className="text-sm font-medium">Nome</p>
               <p className="text-sm">{user?.user_metadata?.name || user?.email || 'Utilizador'}</p>
             </div>
-            <div className="flex justify-between pt-4">
-              <Button variant="outline">Alterar senha</Button>
+            <div className="flex justify-end pt-4">
               <Button variant="destructive" onClick={handleLogout}>Sair</Button>
             </div>
           </CardContent>
         </Card>
+
+        <PinManagerCard />
       </div>
     </div>
   );

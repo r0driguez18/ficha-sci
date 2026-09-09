@@ -249,7 +249,22 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      operator_has_pin: {
+        Args: Record<string, never>
+        Returns: boolean
+      }
+      set_operator_pin: {
+        Args: { new_pin: string }
+        Returns: undefined
+      }
+      change_operator_pin: {
+        Args: { current_pin: string; new_pin: string }
+        Returns: boolean
+      }
+      verify_operator_pin: {
+        Args: { pin: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
