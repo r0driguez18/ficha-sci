@@ -458,9 +458,18 @@ export default function CrcTratamento() {
                   </p>
                 )}
 
+                {run.paginasSaltadas ? (
+                  <p className="text-xs text-amber-600">
+                    {run.paginasSaltadas} página(s) saltada(s) por falha de resposta do CRC.
+                  </p>
+                ) : null}
+
                 {run.estado === 'concluido' && (
                   <div className="flex items-center gap-2 text-sm text-green-600">
-                    <CheckCircle className="h-4 w-4" /> Passagem concluída.
+                    <CheckCircle className="h-4 w-4" />
+                    {run.totalRegistos === 0
+                      ? `Sem registos para o código ${run.parametros.inconsistencyCode}.`
+                      : 'Passagem concluída.'}
                   </div>
                 )}
                 {run.estado === 'erro' && (

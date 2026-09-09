@@ -33,6 +33,7 @@ export interface CrcRunState {
   paginaAtual: number;
   processados: number;
   falhas: number;
+  paginasSaltadas?: number;
   passagens?: number;
   erro: string | null;
   ficheiroLog?: string | null;
