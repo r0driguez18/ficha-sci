@@ -14,7 +14,7 @@ import { FormType } from '@/services/taskboardService';
 import { generateTaskboardPDF } from '@/utils/pdfGenerator';
 import { supabase } from '@/integrations/supabase/client';
 import { getExportedTaskboards, ExportedTaskboard } from '@/services/exportedTaskboardService';
-import { SIGNATORY_OPTIONS } from '@/lib/operators';
+import { useOperators } from '@/hooks/useOperators';
 import { isSigned } from '@/types/signature';
 
 import { 
@@ -52,6 +52,7 @@ const formTypeColors: Record<FormType, string> = {
 };
 
 export default function HistoricoFichas() {
+  const { operators } = useOperators();
   const [records, setRecords] = useState<ExportedTaskboard[]>([]);
   const [filteredRecords, setFilteredRecords] = useState<ExportedTaskboard[]>([]);
   const [loading, setLoading] = useState(true);
@@ -255,8 +256,8 @@ export default function HistoricoFichas() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os operadores</SelectItem>
-                  {SIGNATORY_OPTIONS.map((name) => (
-                    <SelectItem key={name} value={name}>{name}</SelectItem>
+                  {operators.map((op) => (
+                    <SelectItem key={op.value} value={op.label}>{op.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

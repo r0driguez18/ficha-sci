@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      operators: {
+        Row: {
+          id: string
+          value: string
+          nome: string
+          ativo: boolean
+          papel: string
+          user_id: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          value: string
+          nome: string
+          ativo?: boolean
+          papel?: string
+          user_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          value?: string
+          nome?: string
+          ativo?: boolean
+          papel?: string
+          user_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cobrancas_retornos: {
         Row: {
           created_at: string
@@ -249,6 +282,14 @@ export type Database = {
       }
     }
     Functions: {
+      claim_operator: {
+        Args: { operator_value: string }
+        Returns: undefined
+      }
+      is_admin: {
+        Args: Record<string, never>
+        Returns: boolean
+      }
       operator_has_pin: {
         Args: Record<string, never>
         Returns: boolean
