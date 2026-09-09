@@ -8,17 +8,14 @@ import { TaskTableRow, TaskTableRowJson } from '@/types/taskTableRow';
 import { toast } from '@/components/ui/use-toast';
 import { Json } from '@/integrations/supabase/types';
 
-export type FormType = 'dia-util' | 'dia-nao-util' | 'final-mes-util' | 'final-mes-nao-util';
+export type FormType = 'dia-util' | 'dia-nao-util';
 
 /** Estado da gravação automática do rascunho da ficha (RF-03.3). */
 export type SyncStatus = 'idle' | 'saving' | 'saved' | 'error';
 
 /** Prefixo das chaves de localStorage do rascunho, por tipo de ficha. */
 export function taskboardLocalPrefix(formType: FormType): string {
-  return formType === 'dia-util' ? 'taskboard'
-    : formType === 'dia-nao-util' ? 'taskboard-nao-util'
-    : formType === 'final-mes-util' ? 'taskboard-final-mes-util'
-    : 'taskboard-final-mes-nao-util';
+  return formType === 'dia-util' ? 'taskboard' : 'taskboard-nao-util';
 }
 
 export interface TaskboardData {

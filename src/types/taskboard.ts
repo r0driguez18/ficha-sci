@@ -19,6 +19,8 @@ export interface Turno1Tasks {
   validacaoDigitalizacaoFichaDiaria: boolean;
   verificarDebitos: boolean;
   enviarReportes: boolean;
+  /** "Validar receção/envio ficheiros VISA (BCTA/CPRR/BCCB/VSS)" */
+  validarRececaoEnvioVisa: boolean;
   verificarRecepcaoSisp: boolean;
   verificarAsc: boolean;
   verificarCsv: boolean;
@@ -133,8 +135,34 @@ export interface Turno3Tasks {
   percurso76922: boolean;
   percurso76923: boolean;
 
+  /** "Transferências Interbancárias Imediatas - 76924" */
+  transferenciasInterbancarias: boolean;
+
   impressaoCheques: boolean;
   arquivarCheques: boolean;
+}
+
+/**
+ * Folha "Procedimento Verificação de Tapes" (DSI-CI/2018). Presente na ficha
+ * de dia não útil e sempre que a data é o último dia do mês.
+ */
+export interface VerificacaoTapes {
+  verificadoPor: string;
+  // Tapes AS/400 - BANKA
+  bmmes: boolean;
+  bmmesb: boolean;
+  trlog: boolean;
+  blc: boolean;
+  notlh: boolean;
+  savsys: boolean;
+  bmsem: boolean;
+  brjrn: boolean;
+  mvcoh: boolean;
+  // Tapes AS/400 - HRM/IM/AM
+  hrm: boolean;
+  im: boolean;
+  am: boolean;
+  amjrn: boolean;
 }
 
 export type TurnKey = 'turno1' | 'turno2' | 'turno3';
@@ -153,7 +181,5 @@ export type TurnDataType = {
 
 export enum FormType {
   TASKBOARD = "dia-util",
-  TASKBOARD_DIA_NAO_UTIL = "dia-nao-util",
-  TASKBOARD_FINAL_MES_UTIL = "final-mes-util",
-  TASKBOARD_FINAL_MES_NAO_UTIL = "final-mes-nao-util"
+  TASKBOARD_DIA_NAO_UTIL = "dia-nao-util"
 }

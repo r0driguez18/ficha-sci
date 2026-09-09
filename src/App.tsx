@@ -47,8 +47,9 @@ const App = () => (
               <Route path="/sci/procedimentos" element={<PrivateRoute><DashboardLayout><Procedimentos /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/taskboard" element={<PrivateRoute><DashboardLayout><FichaProcedimentos key="dia-util" formType="dia-util" /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/taskboard-dia-nao-util" element={<PrivateRoute><DashboardLayout><FichaProcedimentos key="dia-nao-util" formType="dia-nao-util" /></DashboardLayout></PrivateRoute>} />
-              <Route path="/sci/taskboard-final-mes-util" element={<PrivateRoute><DashboardLayout><FichaProcedimentos key="final-mes-util" formType="final-mes-util" /></DashboardLayout></PrivateRoute>} />
-              <Route path="/sci/taskboard-final-mes-nao-util" element={<PrivateRoute><DashboardLayout><FichaProcedimentos key="final-mes-nao-util" formType="final-mes-nao-util" /></DashboardLayout></PrivateRoute>} />
+              {/* Rotas antigas de "final de mês" — a folha de tapes passou a viver dentro das 2 fichas */}
+              <Route path="/sci/taskboard-final-mes-util" element={<Navigate to="/sci/taskboard" replace />} />
+              <Route path="/sci/taskboard-final-mes-nao-util" element={<Navigate to="/sci/taskboard-dia-nao-util" replace />} />
               <Route path="/sci/historico-fichas" element={<PrivateRoute><DashboardLayout><HistoricoFichas /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/retornos-cobrancas" element={<PrivateRoute><DashboardLayout><RetornosCobrancas /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/calendario" element={<PrivateRoute><DashboardLayout><CalendarPage /></DashboardLayout></PrivateRoute>} />
