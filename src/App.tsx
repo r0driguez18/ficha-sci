@@ -45,10 +45,10 @@ const App = () => (
               {/* SCI Routes */}
               <Route path="/sci" element={<Navigate to="/sci/procedimentos" replace />} />
               <Route path="/sci/procedimentos" element={<PrivateRoute><DashboardLayout><Procedimentos /></DashboardLayout></PrivateRoute>} />
-              <Route path="/sci/taskboard" element={<PrivateRoute><DashboardLayout><FichaProcedimentos formType="dia-util" /></DashboardLayout></PrivateRoute>} />
-              <Route path="/sci/taskboard-dia-nao-util" element={<PrivateRoute><DashboardLayout><FichaProcedimentos formType="dia-nao-util" /></DashboardLayout></PrivateRoute>} />
-              <Route path="/sci/taskboard-final-mes-util" element={<PrivateRoute><DashboardLayout><FichaProcedimentos formType="final-mes-util" /></DashboardLayout></PrivateRoute>} />
-              <Route path="/sci/taskboard-final-mes-nao-util" element={<PrivateRoute><DashboardLayout><FichaProcedimentos formType="final-mes-nao-util" /></DashboardLayout></PrivateRoute>} />
+              <Route path="/sci/taskboard" element={<PrivateRoute><DashboardLayout><FichaProcedimentos key="dia-util" formType="dia-util" /></DashboardLayout></PrivateRoute>} />
+              <Route path="/sci/taskboard-dia-nao-util" element={<PrivateRoute><DashboardLayout><FichaProcedimentos key="dia-nao-util" formType="dia-nao-util" /></DashboardLayout></PrivateRoute>} />
+              <Route path="/sci/taskboard-final-mes-util" element={<PrivateRoute><DashboardLayout><FichaProcedimentos key="final-mes-util" formType="final-mes-util" /></DashboardLayout></PrivateRoute>} />
+              <Route path="/sci/taskboard-final-mes-nao-util" element={<PrivateRoute><DashboardLayout><FichaProcedimentos key="final-mes-nao-util" formType="final-mes-nao-util" /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/historico-fichas" element={<PrivateRoute><DashboardLayout><HistoricoFichas /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/retornos-cobrancas" element={<PrivateRoute><DashboardLayout><RetornosCobrancas /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/calendario" element={<PrivateRoute><DashboardLayout><CalendarPage /></DashboardLayout></PrivateRoute>} />

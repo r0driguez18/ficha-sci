@@ -10,7 +10,7 @@
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
-CREATE TABLE public.operator_pins (
+CREATE TABLE IF NOT EXISTS public.operator_pins (
   user_id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   pin_hash text NOT NULL,
   updated_at timestamptz NOT NULL DEFAULT now(),
@@ -27,7 +27,7 @@ CREATE OR REPLACE FUNCTION public.operator_has_pin()
 RETURNS boolean
 LANGUAGE sql
 SECURITY DEFINER
-SET search_path = public, pg_temp
+SET search_path = public, extensions, pg_temp
 AS $$
   SELECT EXISTS (SELECT 1 FROM public.operator_pins WHERE user_id = auth.uid());
 $$;
@@ -37,7 +37,7 @@ CREATE OR REPLACE FUNCTION public.set_operator_pin(new_pin text)
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, pg_temp
+SET search_path = public, extensions, pg_temp
 AS $$
 BEGIN
   IF auth.uid() IS NULL THEN
@@ -62,7 +62,7 @@ CREATE OR REPLACE FUNCTION public.change_operator_pin(current_pin text, new_pin 
 RETURNS boolean
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, pg_temp
+SET search_path = public, extensions, pg_temp
 AS $$
 DECLARE
   stored text;
@@ -94,7 +94,7 @@ CREATE OR REPLACE FUNCTION public.verify_operator_pin(pin text)
 RETURNS boolean
 LANGUAGE sql
 SECURITY DEFINER
-SET search_path = public, pg_temp
+SET search_path = public, extensions, pg_temp
 AS $$
   SELECT COALESCE(
     (SELECT pin_hash = crypt(pin, pin_hash)

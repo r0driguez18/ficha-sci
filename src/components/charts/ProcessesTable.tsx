@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { FileProcess } from '@/services/fileProcessService';
-import { operatorLabel } from '@/lib/operators';
+import { useOperators } from '@/hooks/useOperators';
 
 interface ProcessesTableProps {
   processes: FileProcess[];
@@ -22,10 +22,11 @@ const TIPO: Record<string, { label: string; classes: string }> = {
 function typeBadge(process: FileProcess) {
   return process.tipo && TIPO[process.tipo]
     ? TIPO[process.tipo]
-    : { label: process.tipo ? process.tipo : 'Sem categoria', classes: 'bg-muted text-muted-foreground' };
+    : { label: process.tipo ? process.tipo : 'Outros', classes: 'bg-muted text-muted-foreground' };
 }
 
 const ProcessesTable: React.FC<ProcessesTableProps> = ({ processes, title = 'Últimos Processamentos' }) => {
+  const { labelOf } = useOperators();
   const [page, setPage] = useState(0);
   const pageCount = Math.max(1, Math.ceil(processes.length / PAGE_SIZE));
 
@@ -79,7 +80,7 @@ const ProcessesTable: React.FC<ProcessesTableProps> = ({ processes, title = 'Úl
                       <TableCell>{process.task}</TableCell>
                       <TableCell>{process.as400_name}</TableCell>
                       <TableCell className="tabular-nums">{process.operation_number}</TableCell>
-                      <TableCell>{operatorLabel(process.executed_by) || process.executed_by}</TableCell>
+                      <TableCell>{labelOf(process.executed_by) || process.executed_by}</TableCell>
                       <TableCell>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${badge.classes}`}>
                           {badge.label}

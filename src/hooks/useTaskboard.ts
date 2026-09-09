@@ -31,14 +31,16 @@ const OP_LENGTH = 9;
 type AnyRecord = Record<string, any>;
 
 /** Reconstrói o estado completo a partir de dados guardados que podem estar
- *  na forma de 3 turnos ou só do turno 3 (dias não úteis). */
+ *  na forma de 3 turnos ou só do turno 3 (dias não úteis). Cada turno é
+ *  fundido sobre os valores por omissão, para que um registo parcial ou
+ *  antigo (sem algum campo) não deixe campos `undefined` no estado. */
 function mergeTurnData(stored: AnyRecord | undefined | null): TurnDataType {
   const base = emptyTurnData();
   if (!stored) return base;
   return {
-    turno1: stored.turno1 ?? base.turno1,
-    turno2: stored.turno2 ?? base.turno2,
-    turno3: stored.turno3 ?? base.turno3,
+    turno1: { ...base.turno1, ...(stored.turno1 ?? {}) },
+    turno2: { ...base.turno2, ...(stored.turno2 ?? {}) },
+    turno3: { ...base.turno3, ...(stored.turno3 ?? {}) },
   };
 }
 
@@ -68,6 +70,8 @@ export function useTaskboard(formType: FormType) {
   const [signerName, setSignerName] = useState('');
   const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  /** Bloqueia "Guardar" / "Exportar PDF" durante a operação (evita duplo-clique). */
+  const [busy, setBusy] = useState(false);
 
   const singleTurn = config.turns.length === 1;
   const activeTabForSync = singleTurn ? undefined : activeTab;
@@ -275,6 +279,7 @@ export function useTaskboard(formType: FormType) {
 
   // ---------- Guardar ----------
   const handleSave = async () => {
+    if (busy) return;
     if (!signerName || signerName.trim() === '') {
       toast.error("A ficha não pode ser guardada sem ser assinada. Use 'Assinar ficha' e introduza o seu PIN.");
       return;
@@ -299,6 +304,7 @@ export function useTaskboard(formType: FormType) {
       return;
     }
 
+    setBusy(true);
     try {
       await syncData(); // grava o rascunho agora (turnos, tarefas, tabela)
       const { savedCount, duplicateCount } = await saveTableRowsToSupabase();
@@ -319,11 +325,14 @@ export function useTaskboard(formType: FormType) {
     } catch (error) {
       console.error('Erro ao guardar ficha:', error);
       toast.error('Erro ao guardar ficha. Tente novamente.');
+    } finally {
+      setBusy(false);
     }
   };
 
   // ---------- Exportar PDF ----------
   const exportToPDF = async () => {
+    if (busy) return;
     if (!isSigned) {
       toast.error("A ficha não pode ser gerada sem ser assinada. Use 'Assinar ficha' e introduza o seu PIN.");
       return;
@@ -333,6 +342,7 @@ export function useTaskboard(formType: FormType) {
       return;
     }
 
+    setBusy(true);
     try {
       const duplicates = await findDuplicateOps();
       if (duplicates.length > 0) {
@@ -393,14 +403,22 @@ export function useTaskboard(formType: FormType) {
       }
 
       toast.success(`PDF gerado e guardado no histórico: ${fileName}`);
-      const next = new Date(date);
-      next.setDate(next.getDate() + 1);
-      const nextIso = next.toISOString().split('T')[0];
+
+      // A assinatura não transita para o dia seguinte: exportar de novo exige
+      // reautenticar com o PIN (a data avança para a ficha do próximo dia).
+      setSignerName('');
+      setSignatureDataUrl(null);
+
+      const [ny, nm, nd] = date.split('-').map(Number);
+      const next = new Date(ny, nm - 1, nd + 1);
+      const nextIso = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-${String(next.getDate()).padStart(2, '0')}`;
       setDate(nextIso);
       toast.info(`Data atualizada para ${nextIso}`);
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
       toast.error('Erro ao gerar PDF. Tente novamente.');
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -434,6 +452,7 @@ export function useTaskboard(formType: FormType) {
     signatureDataUrl,
     setSignatureDataUrl,
     isLoading,
+    busy,
     syncStatus,
     lastSavedAt,
     isValidated: isSigned,

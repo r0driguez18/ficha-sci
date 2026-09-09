@@ -168,6 +168,8 @@ export function emptyTableRow(id: number, executado = ''): TaskTableRow {
   return { id, hora: '', tarefa: '', nomeAs: '', operacao: '', executado, tipo: '' };
 }
 
+/** Data local de hoje em 'AAAA-MM-DD' (não UTC — a app corre em UTC−1). */
 export function todayIso(): string {
-  return new Date().toISOString().split('T')[0];
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }

@@ -79,7 +79,7 @@ export const saveFileProcess = async (data: FileProcessData) => {
 
 export const fetchFileProcesses = async (timeframe = 'week') => {
   const today = new Date();
-  let startDate = new Date();
+  const startDate = new Date();
 
   switch (timeframe) {
     case 'week':
@@ -205,87 +205,10 @@ export const getCompensacaoProcesses = async () => {
   }
 };
 
-// Function to get processes stats by month with correct categorization and formatting
-export const getProcessesStatsByMonth = async () => {
-  try {
-    // Get all processes
-    const { data, error } = await supabase
-      .from('file_processes')
-      .select('*')
-      .order('date_registered', { ascending: true });
-    
-    if (error) {
-      console.error('Erro ao buscar estatísticas de processos:', error);
-      return [];
-    }
-    
-    // Process data to group by month
-    const monthlyStats: Record<string, { 
-      month: string; 
-      salario: number; 
-      cobrancas: number;
-      compensacao: number;
-      outros: number;
-    }> = {};
-    
-    // Helper function to format date properly
-    const formatMonthKey = (date: Date) => {
-      // Format as MM/YY for better display
-      return `${date.getMonth() + 1}/${date.getFullYear().toString().slice(-2)}`;
-    };
-    
-    data?.forEach(process => {
-      // date_registered vem como 'AAAA-MM-DD' (a coluna time_registered é só a hora).
-      const date = new Date(process.date_registered);
-      const monthKey = formatMonthKey(date);
-      
-      if (!monthlyStats[monthKey]) {
-        monthlyStats[monthKey] = {
-          month: monthKey,
-          salario: 0,
-          cobrancas: 0,
-          compensacao: 0,
-          outros: 0
-        };
-      }
-      
-      // Categorize based on tipo field
-      if (process.tipo) {
-        switch (process.tipo) {
-          case 'salario':
-            monthlyStats[monthKey].salario += 1;
-            break;
-          case 'cobrancas':
-            monthlyStats[monthKey].cobrancas += 1;
-            break;
-          case 'compensacao':
-            monthlyStats[monthKey].compensacao += 1;
-            break;
-          default:
-            monthlyStats[monthKey].outros += 1;
-            break;
-        }
-      } else {
-        // Process without tipo gets categorized as Others
-        monthlyStats[monthKey].outros += 1;
-      }
-    });
-    
-    // Convert to array and sort by month/year
-    return Object.values(monthlyStats).sort((a, b) => {
-      const [aMonth, aYear] = a.month.split('/').map(Number);
-      const [bMonth, bYear] = b.month.split('/').map(Number);
-      
-      if (aYear !== bYear) {
-        return aYear - bYear;
-      }
-      return aMonth - bMonth;
-    });
-  } catch (error) {
-    console.error('Erro ao processar estatísticas:', error);
-    return [];
-  }
-};
+// Agregação mensal: agora feita no cliente em `src/lib/processStats.ts`
+// (`buildMonthlyStats`), a partir da lista já carregada e com parsing de data
+// local. A antiga `getProcessesStatsByMonth` foi removida (sem consumidores e
+// agrupava por data em UTC).
 
 export const cleanupDuplicateProcesses = async () => {
   try {
