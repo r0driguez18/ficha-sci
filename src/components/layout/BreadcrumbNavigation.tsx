@@ -21,7 +21,7 @@ const routeLabels: Record<string, string> = {
   '/sci/historico-fichas': 'Histórico de Fichas',
   '/sci/retornos-cobrancas': 'Retornos de Cobranças',
   '/crc': 'CRC',
-  '/crc/tratamento': 'Tratamento',
+  '/crc/tratamento': 'Fecho de Inconsistências',
   '/dis': 'DIS',
   '/dis/dados': 'Dados',
   '/easyvista': 'Processamentos',

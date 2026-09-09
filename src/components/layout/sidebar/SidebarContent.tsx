@@ -76,7 +76,7 @@ export const SidebarContent = () => {
     { label: 'SCI - Histórico', path: '/sci/historico-fichas', keywords: ['sci', 'histórico', 'fichas', 'guardadas'] },
     { label: 'SCI - Retornos de Cobranças', path: '/sci/retornos-cobrancas', keywords: ['sci', 'retornos', 'cobranças', 'ficheiros'] },
     { label: 'SCI - Calendário', path: '/sci/calendario', keywords: ['sci', 'calendário', 'eventos', 'notas', 'agenda'] },
-    { label: 'CRC - Tratamento', path: '/crc/tratamento', keywords: ['crc', 'tratamento', 'ficheiros'] },
+    { label: 'CRC - Fecho de Inconsistências', path: '/crc/tratamento', keywords: ['crc', 'inconsistências', 'fecho', 'validar'] },
     { label: 'DIS - Dados', path: '/dis/dados', keywords: ['dis', 'dados', 'database'] },
     { label: 'Processamentos - Estatísticas', path: '/easyvista/estatisticas', keywords: ['processamentos', 'estatísticas', 'charts'] },
     { label: 'Configurações', path: '/settings', keywords: ['settings', 'configurações', 'config'] },
@@ -127,7 +127,7 @@ export const SidebarContent = () => {
             label="CRC"
             to="/crc"
             subItems={[
-              { label: "Tratamento de Ficheiros", to: "/crc/tratamento" }
+              { label: "Fecho de Inconsistências", to: "/crc/tratamento" }
             ]}
           />
           <SidebarItem
