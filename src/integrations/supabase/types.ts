@@ -92,6 +92,54 @@ export type Database = {
         }
         Relationships: []
       }
+      crc_tratamentos: {
+        Row: {
+          created_at: string
+          estado: string
+          falhas: number
+          id: string
+          iniciado_em: string
+          parametros: Json
+          processados: number
+          resumo: string | null
+          terminado_em: string | null
+          tipo: string
+          total_registos: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          estado?: string
+          falhas?: number
+          id?: string
+          iniciado_em?: string
+          parametros?: Json
+          processados?: number
+          resumo?: string | null
+          terminado_em?: string | null
+          tipo?: string
+          total_registos?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          estado?: string
+          falhas?: number
+          id?: string
+          iniciado_em?: string
+          parametros?: Json
+          processados?: number
+          resumo?: string | null
+          terminado_em?: string | null
+          tipo?: string
+          total_registos?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       daily_alerts: {
         Row: {
           alert_name: string
