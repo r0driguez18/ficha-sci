@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { getPendingReturns } from '@/services/cobrancasRetornoService';
+import { getPendingTapesEvidencia } from '@/services/exportedTaskboardService';
 
 export const SidebarContent = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -25,12 +26,13 @@ export const SidebarContent = () => {
   const collapsed = state === 'collapsed';
   const { user } = useAuth();
   const [retornosBadge, setRetornosBadge] = useState<number>(0);
+  const [tapesBadge, setTapesBadge] = useState<number>(0);
 
   useEffect(() => {
     if (!user) return;
-    
+
     let isMounted = true;
-    
+
     const fetchCounts = async () => {
       try {
         const { data } = await getPendingReturns();
@@ -43,17 +45,29 @@ export const SidebarContent = () => {
       }
     };
 
+    const fetchTapes = async () => {
+      try {
+        const { data } = await getPendingTapesEvidencia();
+        if (isMounted) setTapesBadge(data?.length || 0);
+      } catch (error) {
+        console.error('Failed to load pending tapes count:', error);
+      }
+    };
+
     fetchCounts();
+    fetchTapes();
     // Refresh every 5 minutes in background
-    const interval = setInterval(fetchCounts, 5 * 60 * 1000);
-    
+    const interval = setInterval(() => { fetchCounts(); fetchTapes(); }, 5 * 60 * 1000);
+
     // Listen for manual updates triggered by other components
     window.addEventListener('update-returns-badge', fetchCounts);
-    
+    window.addEventListener('update-tapes-badge', fetchTapes);
+
     return () => {
       isMounted = false;
       clearInterval(interval);
       window.removeEventListener('update-returns-badge', fetchCounts);
+      window.removeEventListener('update-tapes-badge', fetchTapes);
     };
   }, [user]);
 
@@ -103,7 +117,7 @@ export const SidebarContent = () => {
             to="/sci"
             subItems={[
               { label: "Ficha de Procedimentos", to: "/sci/procedimentos" },
-              { label: "Histórico de Fichas", to: "/sci/historico-fichas" },
+              { label: "Histórico de Fichas", to: "/sci/historico-fichas", badge: tapesBadge },
               { label: "Retornos Cobranças", to: "/sci/retornos-cobrancas", badge: retornosBadge },
               { label: "Calendário", to: "/sci/calendario" }
             ]}
