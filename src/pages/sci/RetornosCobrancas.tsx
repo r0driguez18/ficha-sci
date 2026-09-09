@@ -23,10 +23,10 @@ export default function RetornosCobrancas() {
 
   const fetchReturns = async () => {
     if (!user?.id) return;
-    
+
     setLoading(true);
     try {
-      const { data, error } = await getAllReturns(user.id);
+      const { data, error } = await getAllReturns();
       if (error) throw error;
       
       setReturns(data || []);

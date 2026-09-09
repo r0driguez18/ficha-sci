@@ -87,13 +87,13 @@ export async function saveExportedTaskboard(
 }
 
 /**
- * Get all exported taskboards for a user
+ * Todas as fichas exportadas da equipa (F1 — o histórico é consultado pela
+ * auditoria e pela chefia, independentemente de quem esteve ao serviço).
  */
-export async function getExportedTaskboards(userId: string): Promise<{ data: ExportedTaskboard[] | null; error: any }> {
+export async function getExportedTaskboards(): Promise<{ data: ExportedTaskboard[] | null; error: any }> {
   const { data, error } = await supabase
     .from('exported_taskboards')
     .select('*')
-    .eq('user_id', userId)
     .order('exported_at', { ascending: false });
 
   return { data: data as unknown as ExportedTaskboard[], error };
