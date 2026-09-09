@@ -22,7 +22,7 @@ export const renderTurno2Tasks = (
     {key: 'datacenter', text: "Verificar Alarmes e Sistemas/Climatização DATA CENTER"},
     {key: 'sistemas', text: "Verificar Sistemas: BCACV1 / BCACV2"},
     {key: 'servicos', text: "Verificar Serviços Vinti4/BCADirecto/Replicação/ Servidor MIA"},
-    {key: 'verificarReportes', text: "Verificar Envio Enviar Reportes (INPS, Visto USA, BCV, IMPC)"},
+    {key: 'verificarReportes', text: "Verificar Envio de Reportes (INPS, Visto USA, BCV, IMPC)"},
     {key: 'verificarDebitos', text: "Verificar Débitos/Créditos Aplicados no Turno Anterior"},
     {key: 'percurso76857', text: "Percurso 76857 –"},
     {key: 'inpsEnviarRetorno', text: "Processar e enviar os ficheiros retorno do INPS"},
