@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
+import { ThemeToggle } from './ThemeToggle';
 import { LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -40,7 +41,7 @@ function HeaderBar() {
   };
 
   return (
-    <header className="h-16 flex items-center gap-4 border-b border-border/40 bg-white/80 backdrop-blur-md sticky top-0 z-30 px-4 sm:px-6 shadow-sm">
+    <header className="h-16 flex items-center gap-4 border-b border-border/40 bg-background/80 backdrop-blur-md sticky top-0 z-30 px-4 sm:px-6 shadow-sm">
       <SidebarTrigger className="shrink-0" />
 
       <div className="min-w-0 flex-1 hidden sm:block">
@@ -52,6 +53,7 @@ function HeaderBar() {
 
       <div className="ml-auto flex items-center gap-3 sm:gap-4">
         <span className="hidden md:inline text-xs text-muted-foreground capitalize">{today}</span>
+        <ThemeToggle />
         <div className="text-right leading-tight">
           <p className="text-sm font-medium text-foreground truncate max-w-[10rem]">{operatorName}</p>
           <p className="text-[11px] text-muted-foreground">Sessão ativa</p>
@@ -73,7 +75,7 @@ function HeaderBar() {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-slate-50/50">
+      <div className="min-h-screen flex w-full bg-muted/30">
         <Sidebar />
         <div className="flex-1 flex flex-col min-w-0 bg-background/50">
           <HeaderBar />

@@ -8,7 +8,6 @@ import { Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import ProcessesTable from '@/components/charts/ProcessesTable';
-import { useTheme } from '@/hooks/use-theme';
 
 const EasyVistaEstatisticas = () => {
   const [activeTab, setActiveTab] = useState('all');
@@ -18,7 +17,6 @@ const EasyVistaEstatisticas = () => {
   const [cobrancasProcesses, setCobrancasProcesses] = useState<any[]>([]);
   const [compensacaoProcesses, setCompensacaoProcesses] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
-  const { isDarkMode } = useTheme();
 
   // Use this for URL hash navigation
   useEffect(() => {
@@ -109,7 +107,7 @@ const EasyVistaEstatisticas = () => {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card className="bg-blue-50">
+                <Card className="bg-muted/50">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-lg">Total de Processamentos</CardTitle>
                   </CardHeader>
@@ -118,7 +116,7 @@ const EasyVistaEstatisticas = () => {
                   </CardContent>
                 </Card>
                 
-                <Card className="bg-orange-50">
+                <Card className="bg-muted/50">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-lg">Salário</CardTitle>
                   </CardHeader>
@@ -127,7 +125,7 @@ const EasyVistaEstatisticas = () => {
                   </CardContent>
                 </Card>
                 
-                <Card className="bg-purple-50">
+                <Card className="bg-muted/50">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-lg">Cobranças</CardTitle>
                   </CardHeader>
@@ -136,7 +134,7 @@ const EasyVistaEstatisticas = () => {
                   </CardContent>
                 </Card>
                 
-                <Card className="bg-green-50">
+                <Card className="bg-muted/50">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-lg">Compensação</CardTitle>
                   </CardHeader>
