@@ -140,7 +140,9 @@ def _sincronizar_cookies(sessao: requests.Session) -> None:
             sessao.cookies.set(cookie["name"], cookie["value"])
 
 
-def _buscar_pagina(sessao: requests.Session, page_num: int, rp: "RunParams") -> dict:
+def _buscar_pagina(sessao: requests.Session, page_num: int, rp: "RunParams") -> Optional[dict]:
+    """Devolve os dados da página, ou `None` se o CRC não respondeu OK (200).
+    Num 401 tenta uma vez renovar os cookies a partir do browser aberto."""
     params = dict(
         PARAMS_BASE,
         inconsistencyCode=rp.inconsistencyCode,
@@ -148,22 +150,28 @@ def _buscar_pagina(sessao: requests.Session, page_num: int, rp: "RunParams") -> 
         pageSize=rp.pageSize,
         page=page_num,
     )
-    r = sessao.get(SEARCH_URL, params=params, timeout=30, verify=False)
-    if r.status_code == 401:
-        _sincronizar_cookies(sessao)
+    try:
         r = sessao.get(SEARCH_URL, params=params, timeout=30, verify=False)
-    r.raise_for_status()
-    return r.json()
+        if r.status_code == 401:
+            _sincronizar_cookies(sessao)
+            r = sessao.get(SEARCH_URL, params=params, timeout=30, verify=False)
+        if r.status_code != 200:
+            return None
+        return r.json()
+    except (requests.RequestException, ValueError):
+        return None
 
 
-def _confirmar(sessao: requests.Session, inconsistency_id: Any, motivo: str) -> int:
+def _confirmar(sessao: requests.Session, inconsistency_id: Any, motivo: str) -> None:
+    """Confirma uma inconsistência. Só o 200 conta como sucesso — qualquer
+    outro estado levanta exceção e o item é contado como falha."""
     params = {"confirmationReason": motivo, "inconsistencyId": inconsistency_id}
     r = sessao.post(CONFIRM_URL, params=params, timeout=30, verify=False)
     if r.status_code == 401:
         _sincronizar_cookies(sessao)
         r = sessao.post(CONFIRM_URL, params=params, timeout=30, verify=False)
-    r.raise_for_status()
-    return r.status_code
+    if r.status_code != 200:
+        raise RuntimeError(f"HTTP {r.status_code}")
 
 
 # ---------------------------------------------------------------- worker
@@ -206,6 +214,7 @@ def _worker(params: RunParams) -> None:
     sessao = _nova_sessao()
     processados = 0
     falhas = 0
+    paginas_saltadas = 0
     ids_processados: list[Any] = []
     log_f, log_path, resultados_path = _abrir_logs(params.inconsistencyCode)
     _progress(ficheiroLog=os.path.abspath(log_path) if log_path else None)
@@ -214,6 +223,15 @@ def _worker(params: RunParams) -> None:
     try:
         _sincronizar_cookies(sessao)
         primeira = _buscar_pagina(sessao, params.paginaInicial, params)
+        if primeira is None:
+            _log(log_f, "O CRC nao respondeu a pesquisa (sessao expirada?)", "ERRO")
+            _progress(
+                estado="erro",
+                erro="O CRC não respondeu à pesquisa. Confirme o login no Chrome e clique em Repetir.",
+                terminadoEm=time.time(),
+            )
+            return
+
         ctx = primeira.get("pageContext", {})
         total_registos = ctx.get("totalRecords", 0)
         page_size = ctx.get("pageSize", params.pageSize) or params.pageSize
@@ -224,7 +242,10 @@ def _worker(params: RunParams) -> None:
             totalPaginas=total_paginas,
             paginaAtual=params.paginaInicial,
         )
-        _log(log_f, f"{total_registos} registos em {total_paginas} paginas")
+        if total_registos == 0:
+            _log(log_f, f"Codigo {params.inconsistencyCode}: nenhum registo encontrado", "AVISO")
+        else:
+            _log(log_f, f"{total_registos} registos em {total_paginas} paginas")
 
         for pagina in range(params.paginaInicial, total_paginas + 1):
             with _lock:
@@ -240,6 +261,10 @@ def _worker(params: RunParams) -> None:
             dados = primeira if pagina == params.paginaInicial else _buscar_pagina(
                 sessao, pagina, params
             )
+            if dados is None:
+                paginas_saltadas += 1
+                _log(log_f, f"Pagina {pagina} sem resposta OK do CRC - saltada", "AVISO")
+                continue
             items = dados.get("items", [])
 
             with ThreadPoolExecutor(max_workers=max(1, params.maxThreads)) as ex:
@@ -262,9 +287,14 @@ def _worker(params: RunParams) -> None:
             if pagina < total_paginas and PAUSA_PAGINA > 0:
                 time.sleep(PAUSA_PAGINA)
 
-        _log(log_f, f"RESUMO: {processados} processados, {falhas} falhas de {total_registos}")
+        extra = f", {paginas_saltadas} paginas saltadas" if paginas_saltadas else ""
+        _log(log_f, f"RESUMO: {processados} processados, {falhas} falhas de {total_registos}{extra}")
         _escrever_resultados(resultados_path, params, processados, ids_processados, log_f)
-        _progress(estado="concluido", terminadoEm=time.time())
+        _progress(
+            estado="concluido",
+            paginasSaltadas=paginas_saltadas,
+            terminadoEm=time.time(),
+        )
     except Exception as exc:  # noqa: BLE001
         _log(log_f, f"Erro geral: {exc}", "ERRO")
         _escrever_resultados(resultados_path, params, processados, ids_processados, log_f)
@@ -350,6 +380,7 @@ def criar_run(params: RunParams) -> dict[str, Any]:
         "passagens": 0,
         "erro": None,
         "ficheiroLog": None,
+        "paginasSaltadas": 0,
         "cancelar": False,
         "iniciadoEm": time.time(),
         "terminadoEm": None,
@@ -372,6 +403,7 @@ def _arrancar_worker(params: RunParams) -> None:
             totalRegistos=0,
             totalPaginas=0,
             ficheiroLog=None,
+            paginasSaltadas=0,
             terminadoEm=None,
             passagens=_run.get("passagens", 0) + 1,
         )
