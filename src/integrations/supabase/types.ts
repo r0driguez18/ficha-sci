@@ -51,6 +51,8 @@ export type Database = {
         Row: {
           created_at: string
           data_aplicacao: string
+          data_retorno_alterada_em: string | null
+          data_retorno_alterada_por: string | null
           data_retorno_enviado: string | null
           data_retorno_esperada: string
           ficheiro_nome: string
@@ -63,6 +65,8 @@ export type Database = {
         Insert: {
           created_at?: string
           data_aplicacao: string
+          data_retorno_alterada_em?: string | null
+          data_retorno_alterada_por?: string | null
           data_retorno_enviado?: string | null
           data_retorno_esperada: string
           ficheiro_nome: string
@@ -75,6 +79,8 @@ export type Database = {
         Update: {
           created_at?: string
           data_aplicacao?: string
+          data_retorno_alterada_em?: string | null
+          data_retorno_alterada_por?: string | null
           data_retorno_enviado?: string | null
           data_retorno_esperada?: string
           ficheiro_nome?: string
