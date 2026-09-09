@@ -1,7 +1,8 @@
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/auth/AuthProvider';
+import { useSyncStatus } from '@/hooks/useSyncStatus';
 import { TurnDataType, TasksType } from '@/types/taskboard';
 import { TaskTableRow, TaskTableRowJson } from '@/types/taskTableRow';
 import { toast } from '@/components/ui/use-toast';
@@ -208,8 +209,15 @@ export const useTaskboardSync = (
   activeTab?: string
 ) => {
   const { user } = useAuth();
+  const { report, clear } = useSyncStatus();
   const [status, setStatus] = useState<SyncStatus>('idle');
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+
+  // Publica o estado da gravação para o cabeçalho e limpa-o ao sair da ficha.
+  useEffect(() => {
+    report(status, lastSavedAt);
+  }, [status, lastSavedAt, report]);
+  useEffect(() => () => clear(), [clear]);
 
   const localStoragePrefix =
     formType === 'dia-util' ? 'taskboard' :
