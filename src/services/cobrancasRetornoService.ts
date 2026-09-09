@@ -38,8 +38,6 @@ export async function createCobrancaRetorno(
 
   if (error) {
     console.error('Erro ao criar retorno de cobrança:', error);
-  } else {
-    console.log('Retorno de cobrança criado com sucesso:', data);
   }
 
   return { data, error };

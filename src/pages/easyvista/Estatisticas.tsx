@@ -34,22 +34,18 @@ const EasyVistaEstatisticas = () => {
     try {
       // Carregar todos os processos
       const processes = await getFileProcesses();
-      console.log("Processos carregados (página Estatisticas):", processes);
       setAllProcesses(processes);
-      
+
       // Carregar processos de salário
       const salaries = await getSalaryProcesses();
-      console.log("Processos de salário carregados (página Estatisticas):", salaries);
       setSalaryProcesses(salaries);
 
       // Carregar processos de cobranças
       const cobrancas = await getCobrancasProcesses();
-      console.log("Processos de cobranças carregados:", cobrancas);
       setCobrancasProcesses(cobrancas);
-      
+
       // Carregar processos de compensação
       const compensacao = await getCompensacaoProcesses();
-      console.log("Processos de compensação carregados:", compensacao);
       setCompensacaoProcesses(compensacao);
       
       if (processes.length === 0) {
@@ -64,15 +60,10 @@ const EasyVistaEstatisticas = () => {
     }
   };
 
-  // Carregar dados inicialmente
+  // Carregar dados inicialmente. A atualização passa a ser manual, pelo botão "Atualizar" —
+  // o polling de 30 s refazia quatro leituras completas das tabelas em cada ciclo.
   useEffect(() => {
     loadData();
-  }, []);
-
-  // Atualizar dados a cada 30 segundos
-  useEffect(() => {
-    const interval = setInterval(loadData, 30000);
-    return () => clearInterval(interval);
   }, []);
 
   const handleRefresh = () => {

@@ -49,7 +49,7 @@ const CalendarPage = () => {
     title: '',
     date: new Date(),
     description: '',
-    color: '#18467e',
+    color: '#00398f',
     time: ''
   });
   const [newNote, setNewNote] = useState<Omit<Note, 'id'>>({
@@ -148,7 +148,7 @@ const CalendarPage = () => {
       title: '',
       date: new Date(),
       description: '',
-      color: '#18467e',
+      color: '#00398f',
       time: ''
     });
     setSelectedEvent(null);
@@ -218,7 +218,7 @@ const CalendarPage = () => {
   return (
     <div className="container mx-auto p-4 space-y-4">
       <Card className="border-blue-100 overflow-hidden">
-        <div className="bg-[#18467e] text-white p-4 flex justify-between items-center">
+        <div className="bg-primary text-primary-foreground p-4 flex justify-between items-center">
           <div className="text-2xl font-semibold">
             {format(currentDate, 'MMMM yyyy', { locale: pt })}
           </div>
@@ -226,7 +226,7 @@ const CalendarPage = () => {
             <Button 
               variant="outline" 
               size="sm" 
-              className="text-[#18467e] border-[#18467e] hover:bg-[#18467e]/10"
+              className="text-primary border-primary hover:bg-primary/10"
               onClick={() => changeMonth(-1)}
             >
               <ChevronLeft className="h-4 w-4" />
@@ -234,7 +234,7 @@ const CalendarPage = () => {
             <Button 
               variant="outline" 
               size="sm" 
-              className="text-[#18467e] border-[#18467e] hover:bg-[#18467e]/10"
+              className="text-primary border-primary hover:bg-primary/10"
               onClick={goToToday}
             >
               Hoje
@@ -242,7 +242,7 @@ const CalendarPage = () => {
             <Button 
               variant="outline" 
               size="sm" 
-              className="text-[#18467e] border-[#18467e] hover:bg-[#18467e]/10"
+              className="text-primary border-primary hover:bg-primary/10"
               onClick={() => changeMonth(1)}
             >
               <ChevronRight className="h-4 w-4" />
@@ -254,7 +254,7 @@ const CalendarPage = () => {
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="text-[#18467e] border-[#18467e] hover:bg-[#18467e]/10"
+                    className="text-primary border-primary hover:bg-primary/10"
                   >
                     {viewMode === 'month' ? 'Mês' : 'Semana'}
                   </Button>
@@ -287,12 +287,12 @@ const CalendarPage = () => {
                   title: '',
                   date: new Date(),
                   description: '',
-                  color: '#18467e',
+                  color: '#00398f',
                   time: ''
                 });
                 setIsEventDialogOpen(true);
               }}
-              className="bg-[#ea384c] hover:bg-[#ea384c]/90 ml-2 text-white"
+              className="bg-destructive hover:bg-destructive/90 ml-2 text-destructive-foreground"
             >
               <PlusCircle className="h-4 w-4 mr-2" /> Novo Evento
             </Button>
@@ -367,7 +367,9 @@ const CalendarPage = () => {
                             <Button
                               size="icon"
                               variant="ghost"
-                              className="h-4 w-4 opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700"
+                              className="h-5 w-5 shrink-0 text-destructive/70 hover:text-destructive"
+                              aria-label={`Eliminar evento ${event.title}`}
+                              title="Eliminar evento"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleDeleteEvent(event.id);

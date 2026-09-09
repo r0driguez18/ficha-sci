@@ -25,6 +25,7 @@ import Settings from "./pages/Settings";
 import Documentation from "./pages/Documentation";
 import HistoricoFichas from './pages/sci/HistoricoFichas';
 import RetornosCobrancas from './pages/sci/RetornosCobrancas';
+import CalendarPage from './pages/sci/Calendar';
 
 // Initialize theme from localStorage - Always use light mode
 const initTheme = () => {
@@ -60,6 +61,7 @@ const App = () => (
               <Route path="/sci/taskboard-final-mes-nao-util" element={<PrivateRoute><DashboardLayout><TaskboardFinalMesNaoUtil /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/historico-fichas" element={<PrivateRoute><DashboardLayout><HistoricoFichas /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/retornos-cobrancas" element={<PrivateRoute><DashboardLayout><RetornosCobrancas /></DashboardLayout></PrivateRoute>} />
+              <Route path="/sci/calendario" element={<PrivateRoute><DashboardLayout><CalendarPage /></DashboardLayout></PrivateRoute>} />
               
               {/* CRC Routes */}
               <Route path="/crc" element={<Navigate to="/crc/tratamento" replace />} />
