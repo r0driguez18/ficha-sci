@@ -28,10 +28,9 @@ export const renderTurno2Tasks = (
     {key: 'inpsEnviarRetorno', text: "Processar e enviar os ficheiros retorno do INPS"},
     {key: 'processarTef', text: "Processar Ficheiros TEF – RTR/RCT/ERR"},
     {key: 'processarTelecomp', text: "Processar Ficheiros Telecompensação – RCB/RTC/FCT/IMR"},
-    {key: 'rececaoFicheirosVisaVss', text: "Receção ficheiros VISA (VSS)"},
+    {key: 'rececaoFicheirosVisaVss', text: "Verificar envio ficheiro VISA (VSS)"},
     {key: 'enviarEciEdv', text: "Enviar Ficheiro ECI/EDV"},
     {key: 'confirmarAtualizacaoFicheiros', text: "Confirmar Atualização Ficheiros Enviados à SISP (ECI * ENV/IMA)"},
-    {key: 'envioFicheirosVisaPafCaf', text: "Envio Ficheiros VISA (PAF e CAF)"},
     {key: 'verificarPendentes', text: "Verificar Pendentes dos Balcões abertos"},
     {key: 'validarSaco', text: "Validar Contas Saco – Percurso 1935"},
     {key: 'fecharBalcoes', text: "Fechar os Balcões Centrais"},
@@ -63,11 +62,6 @@ export const renderTurno2Tasks = (
       doc.text("Confirmar Atualização Ficheiros Enviados à SISP ", 22, y);
       doc.setFont("helvetica", "bold");
       doc.text("(ECI * ENV/IMA)", 22 + doc.getTextWidth("Confirmar Atualização Ficheiros Enviados à SISP "), y);
-      doc.setFont("helvetica", "normal");
-    } else if (item.key === 'envioFicheirosVisaPafCaf') {
-      doc.text("Envio Ficheiros ", 22, y);
-      doc.setFont("helvetica", "bold");
-      doc.text("VISA (PAF e CAF)", 22 + doc.getTextWidth("Envio Ficheiros "), y);
       doc.setFont("helvetica", "normal");
     } else if (item.key === 'verificarSistemas2') {
       doc.text("Verificar Sistemas: ", 22, y);

@@ -11,7 +11,6 @@ interface Turno3TasksProps {
   onTaskChange: (task: keyof Turno3Tasks, value: boolean | string) => void;
   observations: string;
   onObservationsChange: (value: string) => void;
-  isEndOfMonth?: boolean;
 }
 
 export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
@@ -19,7 +18,6 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
   onTaskChange,
   observations,
   onObservationsChange,
-  isEndOfMonth = false
 }) => {
   return (
     <div className="space-y-4 text-foreground pb-10">
@@ -211,6 +209,11 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
       <div className="flex items-start space-x-2">
         <Checkbox id="backupBm" checked={tasks.backupBm} onCheckedChange={(c) => onTaskChange('backupBm', !!c)} />
         <Label htmlFor="backupBm" className="cursor-pointer">Backup BM – Automático</Label>
+      </div>
+
+      <div className="flex items-start space-x-2">
+        <Checkbox id="transferenciasInterbancarias" checked={tasks.transferenciasInterbancarias} onCheckedChange={(c) => onTaskChange('transferenciasInterbancarias', !!c)} />
+        <Label htmlFor="transferenciasInterbancarias" className="cursor-pointer">Transferências Interbancárias Imediatas - 76924</Label>
       </div>
 
       <div className="flex items-start space-x-2">

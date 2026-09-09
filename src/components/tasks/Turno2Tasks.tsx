@@ -81,7 +81,7 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
 
       <div className="flex items-start space-x-2">
         <Checkbox id="rececaoFicheirosVisaVss" checked={tasks.rececaoFicheirosVisaVss} onCheckedChange={(c) => onTaskChange('rececaoFicheirosVisaVss', !!c)} />
-        <Label htmlFor="rececaoFicheirosVisaVss" className="cursor-pointer text-foreground">Receção ficheiros VISA (VSS)</Label>
+        <Label htmlFor="rececaoFicheirosVisaVss" className="cursor-pointer text-foreground">Verificar envio ficheiro VISA (VSS)</Label>
       </div>
 
       <div className="flex items-start space-x-2">
@@ -92,11 +92,6 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
       <div className="flex items-start space-x-2">
         <Checkbox id="confirmarAtualizacaoFicheiros" checked={tasks.confirmarAtualizacaoFicheiros} onCheckedChange={(c) => onTaskChange('confirmarAtualizacaoFicheiros', !!c)} />
         <Label htmlFor="confirmarAtualizacaoFicheiros" className="cursor-pointer text-foreground">Confirmar Atualização Ficheiros Enviados à SISP <span className="font-bold">(ECI * ENV/IMA)</span></Label>
-      </div>
-
-      <div className="flex items-start space-x-2">
-        <Checkbox id="envioFicheirosVisaPafCaf" checked={tasks.envioFicheirosVisaPafCaf} onCheckedChange={(c) => onTaskChange('envioFicheirosVisaPafCaf', !!c)} />
-        <Label htmlFor="envioFicheirosVisaPafCaf" className="cursor-pointer text-foreground">Envio Ficheiros <span className="font-bold">VISA (PAF e CAF)</span></Label>
       </div>
 
       <div className="flex items-start space-x-2">

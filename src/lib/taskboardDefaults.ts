@@ -8,6 +8,7 @@ import type {
   Turno3Tasks,
   TasksType,
   TurnDataType,
+  VerificacaoTapes,
 } from '@/types/taskboard';
 import type { TaskTableRow } from '@/types/taskTableRow';
 
@@ -32,6 +33,7 @@ export function emptyTurno1Tasks(): Turno1Tasks {
     bcta: false,
     verificarDebitos: false,
     enviarReportes: false,
+    validarRececaoEnvioVisa: false,
     verificarRecepcaoSisp: false,
     backupsDiferidos: false,
     processarTef: false,
@@ -143,8 +145,28 @@ export function emptyTurno3Tasks(): Turno3Tasks {
     percurso76921: false,
     percurso76922: false,
     percurso76923: false,
+    transferenciasInterbancarias: false,
     impressaoCheques: false,
     arquivarCheques: false,
+  };
+}
+
+export function emptyVerificacaoTapes(): VerificacaoTapes {
+  return {
+    verificadoPor: '',
+    bmmes: false,
+    bmmesb: false,
+    trlog: false,
+    blc: false,
+    notlh: false,
+    savsys: false,
+    bmsem: false,
+    brjrn: false,
+    mvcoh: false,
+    hrm: false,
+    im: false,
+    am: false,
+    amjrn: false,
   };
 }
 

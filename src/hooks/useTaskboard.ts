@@ -19,10 +19,11 @@ import {
   emptyTasks,
   emptyTurnData,
   emptyTableRow,
+  emptyVerificacaoTapes,
   todayIso,
 } from '@/lib/taskboardDefaults';
 import type { FichaSignature } from '@/types/signature';
-import type { TasksType, TurnDataType, TurnKey } from '@/types/taskboard';
+import type { TasksType, TurnDataType, TurnKey, VerificacaoTapes } from '@/types/taskboard';
 import type { TaskTableRow } from '@/types/taskTableRow';
 
 const OP_LENGTH = 9;
@@ -62,11 +63,12 @@ export function useTaskboard(formType: FormType) {
   const currentOperator = useCurrentOperator();
 
   const [date, setDate] = useState(todayIso());
-  const [isEndOfMonth, setIsEndOfMonth] = useState<boolean>(config.forceEndOfMonth);
+  const [isEndOfMonth, setIsEndOfMonth] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<TurnKey>(config.turns[0]);
   const [tableRows, setTableRows] = useState<TaskTableRow[]>([emptyTableRow(1)]);
   const [turnData, setTurnData] = useState<TurnDataType>(emptyTurnData());
   const [tasks, setTasks] = useState<TasksType>(emptyTasks());
+  const [verificacaoTapes, setVerificacaoTapes] = useState<VerificacaoTapes>(emptyVerificacaoTapes());
   const [signerName, setSignerName] = useState('');
   const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -76,9 +78,15 @@ export function useTaskboard(formType: FormType) {
   const singleTurn = config.turns.length === 1;
   const activeTabForSync = singleTurn ? undefined : activeTab;
 
+  /** A folha de tapes aparece nos dias não úteis e sempre no último dia do mês. */
+  const showTapeVerification = config.formType === 'dia-nao-util' || isEndOfMonth;
+
   // A forma guardada preserva o que cada variante sempre gravou: dias não úteis
-  // guardam apenas { turno3: ... }.
-  const storedTurnData = singleTurn ? { turno3: turnData.turno3 } : turnData;
+  // guardam apenas { turno3: ... }. A folha de tapes vai junto quando visível.
+  const storedTurnData = {
+    ...(singleTurn ? { turno3: turnData.turno3 } : turnData),
+    ...(showTapeVerification ? { verificacaoTapes } : {}),
+  };
   const storedTasks = singleTurn ? { turno3: tasks.turno3 } : tasks;
 
   const { syncData, loadData, resetData, status: syncStatus, lastSavedAt } = useTaskboardSync(
@@ -103,7 +111,13 @@ export function useTaskboard(formType: FormType) {
       const savedActiveTab = localStorage.getItem(`${prefix}-activeTab`);
 
       if (savedDate) setDate(savedDate);
-      if (savedTurnData) setTurnData(mergeTurnData(JSON.parse(savedTurnData)));
+      if (savedTurnData) {
+        const parsed = JSON.parse(savedTurnData);
+        setTurnData(mergeTurnData(parsed));
+        if (parsed?.verificacaoTapes) {
+          setVerificacaoTapes({ ...emptyVerificacaoTapes(), ...parsed.verificacaoTapes });
+        }
+      }
       if (savedTasks) setTasks(mergeTasks(JSON.parse(savedTasks)));
       if (savedTableRows) setTableRows(JSON.parse(savedTableRows));
       if (!singleTurn && savedActiveTab) setActiveTab(savedActiveTab as TurnKey);
@@ -117,7 +131,11 @@ export function useTaskboard(formType: FormType) {
 
         if (remote) {
           if (remote.date) setDate(remote.date);
-          if (remote.turn_data) setTurnData(mergeTurnData(remote.turn_data));
+          if (remote.turn_data) {
+            setTurnData(mergeTurnData(remote.turn_data));
+            const vt = (remote.turn_data as { verificacaoTapes?: Partial<VerificacaoTapes> }).verificacaoTapes;
+            if (vt) setVerificacaoTapes({ ...emptyVerificacaoTapes(), ...vt });
+          }
           if (remote.tasks) setTasks(mergeTasks(remote.tasks));
           if (remote.table_rows) setTableRows(remote.table_rows);
           if (!singleTurn && remote.active_tab) setActiveTab(remote.active_tab as TurnKey);
@@ -143,19 +161,15 @@ export function useTaskboard(formType: FormType) {
   useEffect(() => {
     if (!isLoading) syncData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [date, turnData, tasks, tableRows, activeTab, isLoading]);
+  }, [date, turnData, tasks, tableRows, verificacaoTapes, activeTab, isLoading]);
 
-  // ---------- Fim de mês ----------
+  // ---------- Último dia do mês (controla a folha de verificação de tapes) ----------
   useEffect(() => {
-    if (config.forceEndOfMonth) {
-      setIsEndOfMonth(true);
-      return;
-    }
     if (!date) return;
-    const d = new Date(date);
-    const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
-    setIsEndOfMonth(d.getDate() === lastDay);
-  }, [date, config.forceEndOfMonth]);
+    const [y, m, d] = date.split('-').map(Number);
+    const lastDay = new Date(y, m, 0).getDate();
+    setIsEndOfMonth(d === lastDay);
+  }, [date]);
 
   // ---------- Pré-preencher "Executado por" na 1.ª linha intacta ----------
   useEffect(() => {
@@ -198,6 +212,13 @@ export function useTaskboard(formType: FormType) {
     (id: number, field: keyof TaskTableRow, value: string) => {
       const v = field === 'operacao' ? value.replace(/\D/g, '').slice(0, OP_LENGTH) : value;
       setTableRows((rows) => rows.map((row) => (row.id === id ? { ...row, [field]: v } : row)));
+    },
+    [],
+  );
+
+  const handleTapesChange = useCallback(
+    (field: keyof VerificacaoTapes, value: boolean | string) => {
+      setVerificacaoTapes((prev) => ({ ...prev, [field]: value }));
     },
     [],
   );
@@ -356,13 +377,13 @@ export function useTaskboard(formType: FormType) {
         return;
       }
 
-      const effectiveEndOfMonth = config.forceEndOfMonth || isEndOfMonth;
       const contentHash = await computeFichaHash({
         date,
         formType,
         turnData,
         tasks,
         tableRows,
+        verificacaoTapes: showTapeVerification ? verificacaoTapes : undefined,
       });
       const signature: FichaSignature = {
         signerName,
@@ -373,24 +394,30 @@ export function useTaskboard(formType: FormType) {
         imageDataUrl: null,
       };
 
+      const tapesForExport = showTapeVerification ? verificacaoTapes : undefined;
+
       const doc = generateTaskboardPDF(
         date,
         turnData,
         tasks,
         tableRows,
         config.isDiaNaoUtil,
-        effectiveEndOfMonth,
         signature,
+        tapesForExport,
       );
       const [yyyy, mm, dd] = date.split('-');
       const fileName = `FD ${dd}${mm}${yyyy.slice(2)}.pdf`;
       doc.save(fileName);
 
+      const turnDataToPersist = tapesForExport
+        ? ({ ...turnData, verificacaoTapes: tapesForExport } as TurnDataType)
+        : turnData;
+
       const { error: saveError } = await saveExportedTaskboard(
         authUser.id,
         formType,
         date,
-        turnData,
+        turnDataToPersist,
         tasks,
         tableRows,
         signature,
@@ -427,6 +454,7 @@ export function useTaskboard(formType: FormType) {
     setDate(todayIso());
     setTurnData(emptyTurnData());
     setTasks(emptyTasks());
+    setVerificacaoTapes(emptyVerificacaoTapes());
     setTableRows([emptyTableRow(1, currentOperator?.value ?? '')]);
     setActiveTab(config.turns[0]);
     setSignerName('');
@@ -442,6 +470,8 @@ export function useTaskboard(formType: FormType) {
     date,
     setDate,
     isEndOfMonth,
+    showTapeVerification,
+    verificacaoTapes,
     activeTab,
     setActiveTab,
     tableRows,
@@ -458,6 +488,7 @@ export function useTaskboard(formType: FormType) {
     isValidated: isSigned,
     handleTaskChange,
     handleTurnDataChange,
+    handleTapesChange,
     addTableRow,
     removeTableRow,
     handleInputChange,

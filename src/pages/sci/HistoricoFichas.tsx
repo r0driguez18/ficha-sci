@@ -10,7 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { FormType } from '@/services/taskboardService';
 import { generateTaskboardPDF } from '@/utils/pdfGenerator';
 import { supabase } from '@/integrations/supabase/client';
 import { getExportedTaskboards, ExportedTaskboard } from '@/services/exportedTaskboardService';
@@ -37,19 +36,25 @@ interface SignatureData {
   signedAt?: string;
 }
 
-const formTypeLabels: Record<FormType, string> = {
+// Inclui os tipos antigos "final-mes-*" para as fichas já arquivadas continuarem
+// a ter etiqueta/cor no histórico (não se criam novas).
+const formTypeLabels: Record<string, string> = {
   'dia-util': 'Dia Útil',
   'dia-nao-util': 'Dia Não Útil',
   'final-mes-util': 'Final de Mês Útil',
   'final-mes-nao-util': 'Final de Mês Não Útil'
 };
 
-const formTypeColors: Record<FormType, string> = {
+const formTypeColors: Record<string, string> = {
   'dia-util': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
   'dia-nao-util': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
   'final-mes-util': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
   'final-mes-nao-util': 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300'
 };
+
+const labelForType = (t: string) => formTypeLabels[t] ?? t;
+const colorForType = (t: string) => formTypeColors[t] ?? 'bg-muted text-muted-foreground';
+const isNaoUtilType = (t: string) => t === 'dia-nao-util' || t === 'final-mes-nao-util';
 
 export default function HistoricoFichas() {
   const { operators } = useOperators();
@@ -124,7 +129,7 @@ export default function HistoricoFichas() {
     if (searchTerm) {
       filtered = filtered.filter(record =>
         record.date.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        formTypeLabels[record.form_type].toLowerCase().includes(searchTerm.toLowerCase()) ||
+        labelForType(record.form_type).toLowerCase().includes(searchTerm.toLowerCase()) ||
         (record.pdf_signature?.signerName || '').toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
@@ -139,9 +144,9 @@ export default function HistoricoFichas() {
         record.turn_data,
         record.tasks,
         record.table_rows,
-        record.form_type === 'dia-nao-util' || record.form_type === 'final-mes-nao-util',
-        record.form_type === 'final-mes-util' || record.form_type === 'final-mes-nao-util',
-        record.pdf_signature
+        isNaoUtilType(record.form_type),
+        record.pdf_signature,
+        (record.turn_data as { verificacaoTapes?: unknown })?.verificacaoTapes as never,
       );
 
       pdf.save(record.file_name);
@@ -167,9 +172,9 @@ export default function HistoricoFichas() {
         record.turn_data,
         record.tasks,
         record.table_rows,
-        record.form_type === 'dia-nao-util' || record.form_type === 'final-mes-nao-util',
-        record.form_type === 'final-mes-util' || record.form_type === 'final-mes-nao-util',
-        record.pdf_signature
+        isNaoUtilType(record.form_type),
+        record.pdf_signature,
+        (record.turn_data as { verificacaoTapes?: unknown })?.verificacaoTapes as never,
       );
       const blob = pdf.output('blob');
       const url = URL.createObjectURL(blob);
@@ -242,8 +247,6 @@ export default function HistoricoFichas() {
                   <SelectItem value="all">Todos os tipos</SelectItem>
                   <SelectItem value="dia-util">Dia Útil</SelectItem>
                   <SelectItem value="dia-nao-util">Dia Não Útil</SelectItem>
-                  <SelectItem value="final-mes-util">Final de Mês Útil</SelectItem>
-                  <SelectItem value="final-mes-nao-util">Final de Mês Não Útil</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -306,8 +309,8 @@ export default function HistoricoFichas() {
                 {filteredRecords.map((record) => (
                   <TableRow key={record.id}>
                     <TableCell>
-                      <Badge className={formTypeColors[record.form_type]}>
-                        {formTypeLabels[record.form_type]}
+                      <Badge className={colorForType(record.form_type)}>
+                        {labelForType(record.form_type)}
                       </Badge>
                     </TableCell>
                     <TableCell className="font-medium">

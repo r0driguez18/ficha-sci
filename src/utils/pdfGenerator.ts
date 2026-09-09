@@ -1,6 +1,6 @@
 
 import { jsPDF } from 'jspdf';
-import { TasksType, TurnDataType, TurnKey } from '@/types/taskboard';
+import { TasksType, TurnDataType, TurnKey, VerificacaoTapes } from '@/types/taskboard';
 import { TaskTableRow } from '@/types/taskTableRow';
 import { FichaSignature } from '@/types/signature';
 import { shortHash } from '@/lib/signatureHash';
@@ -9,15 +9,16 @@ import { renderTurno1Tasks } from './pdf/pdfTurno1';
 import { renderTurno2Tasks } from './pdf/pdfTurno2';
 import { renderTurno3Tasks } from './pdf/pdfTurno3';
 import { renderTaskTable } from './pdf/pdfTable';
+import { renderVerificacaoTapes } from './pdf/pdfVerificacaoTapes';
 
 export const generateTaskboardPDF = (
   date: string,
-  turnData: TurnDataType, 
+  turnData: TurnDataType,
   tasks: TasksType,
   tableRows: TaskTableRow[],
   isDiaNaoUtil: boolean = false,
-  isEndOfMonth: boolean = false,
-  signature?: Partial<FichaSignature>
+  signature?: Partial<FichaSignature>,
+  verificacaoTapes?: VerificacaoTapes | null,
 ) => {
   const doc = new jsPDF();
   let y = 15;
@@ -83,7 +84,7 @@ export const generateTaskboardPDF = (
     y += 15;
     
     // Process only Turn 3 tasks
-    y = renderTurno3Tasks(doc, tasks.turno3, turnData.turno3.observations, y, true, isEndOfMonth);
+    y = renderTurno3Tasks(doc, tasks.turno3, turnData.turno3.observations, y, true);
   } else {
     // Process all three turns for regular days
     const turnKeys: TurnKey[] = ['turno1', 'turno2', 'turno3'];
@@ -123,13 +124,19 @@ export const generateTaskboardPDF = (
       } else if (turnKey === 'turno2') {
         y = renderTurno2Tasks(doc, tasks.turno2, turn.observations, y);
       } else if (turnKey === 'turno3') {
-        y = renderTurno3Tasks(doc, tasks.turno3, turn.observations, y, false, isEndOfMonth);
+        y = renderTurno3Tasks(doc, tasks.turno3, turn.observations, y, false);
       }
     });
   }
-  
+
   // Always add task table no matter what
   renderTaskTable(doc, tableRows);
+
+  // Folha "Verificação de Tapes" (dia não útil, ou último dia do mês)
+  if (verificacaoTapes) {
+    const operador = turnData.turno3?.operator || '';
+    renderVerificacaoTapes(doc, verificacaoTapes, date, operador);
+  }
 
   // Signature page (simple and safe: new page)
   doc.addPage();

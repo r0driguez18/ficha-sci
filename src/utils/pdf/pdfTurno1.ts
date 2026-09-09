@@ -22,17 +22,17 @@ export const renderTurno1Tasks = (
     {key: 'datacenter', text: "Verificar Alarmes e Sistemas/Climatização DATA CENTER"},
     {key: 'sistemas', text: "Verificar Sistemas: BCACV1 / BCACV2"},
     {key: 'servicos', text: "Verificar Serviços Vinti4/BCADirecto/Replicação/ Servidor MIA"},
-    {key: 'abrirServidores', text: "Abrir Servidores (PFS, SWIFT, OPDIF, TRMSG, CDGOV)"},
+    {key: 'abrirServidores', text: "Abrir Servidores (OPDIF, SWIFT, CDPFS, CDGOV, TRMSG, AML)"},
     {key: 'percurso76931', text: "Percurso 76931 - Atualiza os alertas nos clientes com dados desatualizados"},
     {key: 'percurso76857', text: "Percurso 76857 -"},
     {key: 'enviar', text: "Enviar:"},
     {key: 'enviarReportes', text: "Enviar Reportes (INPS, Visto USA, BCV, IMPC)"},
+    {key: 'validarRececaoEnvioVisa', text: "Validar receção/envio ficheiros VISA (BCTA/CPRR/BCCB/VSS)"},
     {key: 'verificarRecepcaoSisp', text: "Verificar Sequencia Ficheiros - SISP:"},
     {key: 'verificarDebitos', text: "Verificar Débitos/Créditos Aplicados no dia Anterior"},
     {key: 'validacaoDigitalizacao', text: "Validação e digitalização Ficha Diária dia Anterior"},
     {key: 'processarTef', text: "Processar Ficheiros TEF – RTR/RCT/ERR"},
     {key: 'processarTelecomp', text: "Processar Ficheiros Telecompensação – RCB/RTC/FCT/IMR"},
-    {key: 'envioVisa', text: "Envio Ficheiros VISA (12h30)"},
     {key: 'enviarSegundoEtr', text: "Enviar 2º Ficheiro ETR (13 horas)"},
     {key: 'enviarFicheiroCom', text: "Preparar e enviar ficheiro COM, dias:"},
     {key: 'atualizarCentralRisco', text: "Atualização Nº Central de Risco (todas as Sextas-feiras)"},
@@ -62,7 +62,6 @@ export const renderTurno1Tasks = (
     } else {
       let isChecked = false;
       if (item.key === 'validacaoDigitalizacao') isChecked = ensureBoolean(tasks.validacaoDigitalizacaoFichaDiaria);
-      else if (item.key === 'envioVisa') isChecked = ensureBoolean(tasks.envioFicheirosVisa12h30);
       else isChecked = ensureBoolean(tasks[item.key as keyof typeof tasks]);
       
       drawCheckbox(doc, 15, y - 3, isChecked);
@@ -106,8 +105,7 @@ export const renderTurno1Tasks = (
         { key: 'impostos', text: 'Impostos' },
         { key: 'inpsExtrato', text: 'INPS/Extrato' },
         { key: 'vistoUsa', text: 'Visto USA' },
-        { key: 'ben', text: 'BEN' },
-        { key: 'bcta', text: 'BCTA' }
+        { key: 'ben', text: 'BEN' }
       ];
       for (let i = 0; i < enviarSubItems.length; i += 3) {
         y = checkPageSpace(doc, y, 8);
