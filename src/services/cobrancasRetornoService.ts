@@ -44,13 +44,13 @@ export async function createCobrancaRetorno(
 }
 
 /**
- * Get all pending returns for a user
+ * Retornos pendentes de toda a equipa (F1 — o controlo de retornos é
+ * responsabilidade partilhada entre turnos).
  */
-export async function getPendingReturns(userId: string): Promise<{ data: CobrancaRetorno[] | null; error: any }> {
+export async function getPendingReturns(): Promise<{ data: CobrancaRetorno[] | null; error: any }> {
   const { data, error } = await supabase
     .from('cobrancas_retornos')
     .select('*')
-    .eq('user_id', userId)
     .eq('retorno_enviado', false)
     .order('data_retorno_esperada');
 
@@ -58,15 +58,14 @@ export async function getPendingReturns(userId: string): Promise<{ data: Cobranc
 }
 
 /**
- * Get returns due today for a user
+ * Retornos da equipa que vencem hoje.
  */
-export async function getReturnsDueToday(userId: string): Promise<{ data: CobrancaRetorno[] | null; error: any }> {
+export async function getReturnsDueToday(): Promise<{ data: CobrancaRetorno[] | null; error: any }> {
   const today = new Date().toISOString().split('T')[0];
-  
+
   const { data, error } = await supabase
     .from('cobrancas_retornos')
     .select('*')
-    .eq('user_id', userId)
     .eq('retorno_enviado', false)
     .eq('data_retorno_esperada', today)
     .order('created_at');
@@ -75,15 +74,14 @@ export async function getReturnsDueToday(userId: string): Promise<{ data: Cobran
 }
 
 /**
- * Get overdue returns for a user
+ * Retornos da equipa em atraso.
  */
-export async function getOverdueReturns(userId: string): Promise<{ data: CobrancaRetorno[] | null; error: any }> {
+export async function getOverdueReturns(): Promise<{ data: CobrancaRetorno[] | null; error: any }> {
   const today = new Date().toISOString().split('T')[0];
-  
+
   const { data, error } = await supabase
     .from('cobrancas_retornos')
     .select('*')
-    .eq('user_id', userId)
     .eq('retorno_enviado', false)
     .lt('data_retorno_esperada', today)
     .order('data_retorno_esperada');
@@ -113,13 +111,12 @@ export async function markReturnAsSent(
 }
 
 /**
- * Get all returns for a user (including sent)
+ * Todos os retornos da equipa, incluindo os já enviados (F1).
  */
-export async function getAllReturns(userId: string): Promise<{ data: CobrancaRetorno[] | null; error: any }> {
+export async function getAllReturns(): Promise<{ data: CobrancaRetorno[] | null; error: any }> {
   const { data, error } = await supabase
     .from('cobrancas_retornos')
     .select('*')
-    .eq('user_id', userId)
     .order('data_aplicacao', { ascending: false });
 
   return { data, error };

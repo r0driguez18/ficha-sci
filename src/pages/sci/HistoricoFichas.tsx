@@ -14,6 +14,7 @@ import { FormType } from '@/services/taskboardService';
 import { generateTaskboardPDF } from '@/utils/pdfGenerator';
 import { supabase } from '@/integrations/supabase/client';
 import { getExportedTaskboards, ExportedTaskboard } from '@/services/exportedTaskboardService';
+import { SIGNATORY_OPTIONS } from '@/lib/operators';
 
 import { 
   FileDown, 
@@ -55,6 +56,7 @@ export default function HistoricoFichas() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [formTypeFilter, setFormTypeFilter] = useState<string>('all');
+  const [signerFilter, setSignerFilter] = useState<string>('all');
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -64,7 +66,7 @@ export default function HistoricoFichas() {
 
   useEffect(() => {
     filterRecords();
-  }, [records, searchTerm, formTypeFilter]);
+  }, [records, searchTerm, formTypeFilter, signerFilter]);
 
   const loadRecords = async () => {
     try {
@@ -80,8 +82,8 @@ export default function HistoricoFichas() {
         return;
       }
 
-      // Load exported taskboards only
-      const { data: allRecords, error } = await getExportedTaskboards(user.id);
+      // Load exported taskboards for the whole team (F1)
+      const { data: allRecords, error } = await getExportedTaskboards();
       
       if (error) {
         console.error('Erro ao carregar histórico:', error);
@@ -113,10 +115,15 @@ export default function HistoricoFichas() {
       filtered = filtered.filter(record => record.form_type === formTypeFilter);
     }
 
+    if (signerFilter !== 'all') {
+      filtered = filtered.filter(record => record.pdf_signature?.signerName === signerFilter);
+    }
+
     if (searchTerm) {
-      filtered = filtered.filter(record => 
+      filtered = filtered.filter(record =>
         record.date.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        formTypeLabels[record.form_type].toLowerCase().includes(searchTerm.toLowerCase())
+        formTypeLabels[record.form_type].toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (record.pdf_signature?.signerName || '').toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -209,13 +216,13 @@ export default function HistoricoFichas() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Pesquisar</label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Pesquisar por data ou tipo..."
+                  placeholder="Pesquisar por data, tipo ou responsável..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-9"
@@ -235,6 +242,21 @@ export default function HistoricoFichas() {
                   <SelectItem value="dia-nao-util">Dia Não Útil</SelectItem>
                   <SelectItem value="final-mes-util">Final de Mês Útil</SelectItem>
                   <SelectItem value="final-mes-nao-util">Final de Mês Não Útil</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Responsável</label>
+              <Select value={signerFilter} onValueChange={setSignerFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos os operadores" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os operadores</SelectItem>
+                  {SIGNATORY_OPTIONS.map((name) => (
+                    <SelectItem key={name} value={name}>{name}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

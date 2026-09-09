@@ -15,6 +15,7 @@ import { TurnInfoSection } from '@/components/taskboard/TurnInfoSection';
 import { TableRowsSection } from '@/components/taskboard/TableRowsSection';
 import { FormActions } from '@/components/taskboard/FormActions';
 import { SignatureSection } from '@/components/taskboard/SignatureSection';
+import { SyncStatusBadge } from '@/components/taskboard/SyncStatusBadge';
 import { useTaskboardSync } from '@/services/taskboardService';
 import type { TurnKey, TasksType, TurnDataType } from '@/types/taskboard';
 import type { TaskTableRow } from '@/types/taskTableRow';
@@ -183,7 +184,7 @@ const [isLoading, setIsLoading] = useState(true);
     return 'dia-util'; // For now, always return dia-util. Can be enhanced later.
   };
 
-  const { syncData, loadData, resetData } = useTaskboardSync(
+  const { syncData, loadData, resetData, status: syncStatus, lastSavedAt } = useTaskboardSync(
     'dia-util',
     date,
     turnData,
@@ -486,22 +487,9 @@ const [isLoading, setIsLoading] = useState(true);
       } else if (duplicateCount > 0) {
         toast.info(`Todos os ${duplicateCount} processamentos já existem no sistema.`);
       }
-      // Save to exported_taskboards for history
-      const signature = {
-        signerName: signerName || '',
-        signedAt: new Date().toISOString(),
-        imageDataUrl: signatureDataUrl
-      };
-      
-      await saveExportedTaskboard(
-        user.data.user.id,
-        getFormType(),
-        date,
-        turnData,
-        tasks,
-        tableRows,
-        signature
-      );
+      // O arquivo em exported_taskboards passa a ser feito apenas na exportação
+      // do PDF (RF-06.1 — "as fichas exportadas ficam arquivadas"). "Guardar"
+      // grava o rascunho (automático) e regista os processamentos.
     } catch (error) {
       console.error('Erro ao guardar ficha:', error);
       toast.error('Erro ao guardar ficha. Tente novamente.');
@@ -766,12 +754,7 @@ const [isLoading, setIsLoading] = useState(true);
               <CardTitle className="text-xl font-bold text-foreground">Ficha de Procedimentos</CardTitle>
               <CardDescription className="mt-1">Preencha as informações necessárias para cada turno</CardDescription>
             </div>
-            {user && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-                <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse-subtle" />
-                Sincronizado
-              </span>
-            )}
+            {user && <SyncStatusBadge status={syncStatus} lastSavedAt={lastSavedAt} />}
           </div>
         </CardHeader>
         <CardContent className="pt-6">

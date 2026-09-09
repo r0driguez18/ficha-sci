@@ -45,12 +45,12 @@ export function useAlerts() {
       const { data: dailyAlertsData, error: alertsError } = await getTodayAlerts();
       if (alertsError) throw alertsError;
 
-      // Fetch pending returns
-      const { data: pendingReturnsData, error: pendingError } = await getReturnsDueToday(user.id);
+      // Fetch pending returns (toda a equipa)
+      const { data: pendingReturnsData, error: pendingError } = await getReturnsDueToday();
       if (pendingError) throw pendingError;
 
-      // Fetch overdue returns
-      const { data: overdueReturnsData, error: overdueError } = await getOverdueReturns(user.id);
+      // Fetch overdue returns (toda a equipa)
+      const { data: overdueReturnsData, error: overdueError } = await getOverdueReturns();
       if (overdueError) throw overdueError;
 
       setAlerts({
