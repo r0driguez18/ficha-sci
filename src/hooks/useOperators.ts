@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { OPERATORS } from '@/lib/operators';
@@ -23,16 +24,26 @@ const FALLBACK: OperatorRow[] = OPERATORS.map((o) => ({
 
 /**
  * Lista de operadores ativos para dropdowns e filtros. Nunca fica vazia —
- * cai na lista estática enquanto a base de dados não responde.
+ * cai na lista estática enquanto a base de dados não responde. `labelOf`
+ * resolve um código de operador (`file_processes.executed_by`, etc.) para o
+ * nome, usando a lista da BD (F9) e não a constante estática.
  */
-export function useOperators(): { operators: OperatorRow[]; loading: boolean } {
+export function useOperators(): {
+  operators: OperatorRow[];
+  loading: boolean;
+  labelOf: (value: string | null | undefined) => string;
+} {
   const { data, isLoading } = useQuery({
     queryKey: ['operators'],
     queryFn: listOperators,
     staleTime: FIVE_MIN,
   });
   const operators = data && data.length > 0 ? data : FALLBACK;
-  return { operators, loading: isLoading };
+  const labelOf = useMemo(() => {
+    const map = new Map(operators.map((o) => [o.value, o.label]));
+    return (value: string | null | undefined) => (value ? map.get(value) ?? value : '');
+  }, [operators]);
+  return { operators, loading: isLoading, labelOf };
 }
 
 /** O operador ligado à conta em sessão, ou null se ainda não foi associado. */

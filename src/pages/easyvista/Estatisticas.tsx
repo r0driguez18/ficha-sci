@@ -9,6 +9,7 @@ import { Loader2, RefreshCw, FileSpreadsheet, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { getFileProcesses, type FileProcess } from '@/services/fileProcessService';
 import { buildMonthlyStats, defaultRange } from '@/lib/processStats';
+import { useOperators } from '@/hooks/useOperators';
 import ProcessesTable from '@/components/charts/ProcessesTable';
 import ProcessesBarChart from '@/components/charts/ProcessesBarChart';
 
@@ -22,6 +23,7 @@ const TAB_TITLES: Record<TabKey, string> = {
 };
 
 const EasyVistaEstatisticas = () => {
+  const { labelOf } = useOperators();
   const [allProcesses, setAllProcesses] = useState<FileProcess[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -70,8 +72,8 @@ const EasyVistaEstatisticas = () => {
   const handleExport = async (kind: 'xlsx' | 'pdf') => {
     try {
       const mod = await import('@/lib/exportProcesses');
-      if (kind === 'xlsx') mod.exportProcessesXlsx(currentList, currentTitle);
-      else mod.exportProcessesPdf(currentList, currentTitle);
+      if (kind === 'xlsx') mod.exportProcessesXlsx(currentList, currentTitle, labelOf);
+      else mod.exportProcessesPdf(currentList, currentTitle, labelOf);
     } catch (error) {
       console.error('Erro ao exportar:', error);
       toast.error('Não foi possível gerar o ficheiro.');

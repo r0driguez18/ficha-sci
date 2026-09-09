@@ -156,6 +156,7 @@ export default function FichaProcedimentos({ formType }: FichaProcedimentosProps
             onExportPDF={tb.exportToPDF}
             onReset={tb.resetForm}
             isValidated={tb.isValidated}
+            busy={tb.busy}
           />
         </CardContent>
       </Card>

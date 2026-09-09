@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { CheckCircle2, PenLine, ShieldCheck } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { CheckCircle2, PenLine, RefreshCw, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/auth/AuthProvider';
+import { useCurrentOperator } from '@/hooks/useOperators';
 import { PinDialog } from '@/components/taskboard/PinDialog';
 import {
   operatorHasPin,
@@ -20,13 +21,6 @@ interface SignatureSectionProps {
   onSignatureChange?: (dataUrl: string | null) => void;
 }
 
-function operatorDisplayName(
-  user: ReturnType<typeof useAuth>['user'],
-): string {
-  const meta = user?.user_metadata as { name?: string } | undefined;
-  return meta?.name || user?.email || 'Operador';
-}
-
 export const SignatureSection: React.FC<SignatureSectionProps> = ({
   signerName,
   onSignerNameChange,
@@ -34,16 +28,35 @@ export const SignatureSection: React.FC<SignatureSectionProps> = ({
   onSignatureChange,
 }) => {
   const { user } = useAuth();
-  const operatorName = operatorDisplayName(user);
+  const operator = useCurrentOperator();
+  // O nome impresso no PDF e usado no filtro "Responsável" do histórico tem de
+  // ser o nome do operador (tabela `operators`), não o metadata da conta.
+  const meta = user?.user_metadata as { name?: string } | undefined;
+  const operatorName = operator?.label || meta?.name || user?.email || 'Operador';
+  const operatorLinked = !!operator;
   const signed = signatureDataUrl === PIN_SENTINEL && !!signerName;
 
   const [hasPin, setHasPin] = useState<boolean | null>(null);
+  const [pinCheckFailed, setPinCheckFailed] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  const checkPin = useCallback(async () => {
+    setPinCheckFailed(false);
+    const v = await operatorHasPin();
+    if (v === null) {
+      setPinCheckFailed(true); // erro — não assumir "sem PIN"
+    } else {
+      setHasPin(v);
+    }
+  }, []);
 
   useEffect(() => {
     let active = true;
+    setHasPin(null);
     operatorHasPin().then((v) => {
-      if (active) setHasPin(v);
+      if (!active) return;
+      if (v === null) setPinCheckFailed(true);
+      else setHasPin(v);
     });
     return () => {
       active = false;
@@ -86,6 +99,12 @@ export const SignatureSection: React.FC<SignatureSectionProps> = ({
           <span className="text-muted-foreground">Operador:</span>
           <span className="font-medium">{operatorName}</span>
         </div>
+        {!operatorLinked && (
+          <p className="mt-1 text-xs text-warning">
+            A sua conta ainda não está associada a um código de operador. Ligue-a em
+            Configurações para que o seu nome fique correto no PDF e no histórico.
+          </p>
+        )}
 
         {signed ? (
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-md border border-success/30 bg-success/10 p-3">
@@ -102,6 +121,14 @@ export const SignatureSection: React.FC<SignatureSectionProps> = ({
             </div>
             <Button type="button" variant="ghost" size="sm" onClick={clearSignature}>
               Remover assinatura
+            </Button>
+          </div>
+        ) : pinCheckFailed ? (
+          <div className="mt-3 flex items-center gap-3">
+            <span className="text-sm text-destructive">Não foi possível verificar o seu PIN.</span>
+            <Button type="button" variant="outline" size="sm" onClick={checkPin} className="gap-2">
+              <RefreshCw className="h-4 w-4" />
+              Tentar novamente
             </Button>
           </div>
         ) : (
