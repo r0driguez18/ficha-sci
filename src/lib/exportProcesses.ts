@@ -9,6 +9,10 @@ import { format } from 'date-fns';
 import type { FileProcess } from '@/services/fileProcessService';
 import { operatorLabel } from '@/lib/operators';
 
+/** Resolve um código de operador para o nome. Por omissão usa a lista estática;
+ *  quem chama passa o `labelOf` de `useOperators()` para incluir operadores da BD. */
+type ResolveOperator = (value: string | null | undefined) => string;
+
 const TIPO_LABEL: Record<string, string> = {
   salario: 'Salário',
   cobrancas: 'Cobranças',
@@ -17,14 +21,14 @@ const TIPO_LABEL: Record<string, string> = {
 
 const HEADERS = ['Data', 'Hora', 'Tarefa', 'Nome AS/400', 'Operação', 'Executado por', 'Tipo'];
 
-function toRow(p: FileProcess): string[] {
+function toRow(p: FileProcess, resolveOperator: ResolveOperator): string[] {
   return [
     p.date_registered ? format(new Date(p.date_registered), 'dd/MM/yyyy') : '',
     p.time_registered ?? '',
     p.task ?? '',
     p.as400_name ?? '',
     p.operation_number ?? '',
-    operatorLabel(p.executed_by) || p.executed_by || '',
+    resolveOperator(p.executed_by) || p.executed_by || '',
     p.tipo ? (TIPO_LABEL[p.tipo] ?? p.tipo) : 'Outros',
   ];
 }
@@ -39,8 +43,12 @@ function fileStem(title: string): string {
   return `processamentos-${slug}-${format(new Date(), 'yyyyMMdd')}`;
 }
 
-export function exportProcessesXlsx(processes: FileProcess[], title: string): void {
-  const rows = [HEADERS, ...processes.map(toRow)];
+export function exportProcessesXlsx(
+  processes: FileProcess[],
+  title: string,
+  resolveOperator: ResolveOperator = operatorLabel,
+): void {
+  const rows = [HEADERS, ...processes.map((p) => toRow(p, resolveOperator))];
   const ws = XLSX.utils.aoa_to_sheet(rows);
   ws['!cols'] = [{ wch: 12 }, { wch: 8 }, { wch: 32 }, { wch: 18 }, { wch: 12 }, { wch: 18 }, { wch: 14 }];
   const wb = XLSX.utils.book_new();
@@ -48,7 +56,11 @@ export function exportProcessesXlsx(processes: FileProcess[], title: string): vo
   XLSX.writeFile(wb, `${fileStem(title)}.xlsx`);
 }
 
-export function exportProcessesPdf(processes: FileProcess[], title: string): void {
+export function exportProcessesPdf(
+  processes: FileProcess[],
+  title: string,
+  resolveOperator: ResolveOperator = operatorLabel,
+): void {
   const doc = new jsPDF({ orientation: 'landscape' });
   doc.setFontSize(14);
   doc.text('CENTRO INFORMÁTICA — DSI-CI/2025', 14, 14);
@@ -59,7 +71,7 @@ export function exportProcessesPdf(processes: FileProcess[], title: string): voi
 
   autoTable(doc, {
     head: [HEADERS],
-    body: processes.map(toRow),
+    body: processes.map((p) => toRow(p, resolveOperator)),
     startY: 33,
     styles: { fontSize: 8, cellPadding: 2 },
     headStyles: { fillColor: [0, 57, 143] },

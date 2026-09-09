@@ -24,12 +24,10 @@ export const OPERATORS: Operator[] = [
 ];
 
 /**
- * Opções para o campo "Validado por" da assinatura da ficha.
- * Usa o nome como valor porque é o que é impresso no PDF final.
+ * Nome apresentável a partir do `value` guardado nos dados. Só conhece os 5
+ * operadores estáticos — para dados que possam conter operadores da tabela
+ * `operators` (F9), usar `labelOf` de `useOperators()`.
  */
-export const SIGNATORY_OPTIONS: string[] = OPERATORS.map((o) => o.label);
-
-/** Procura o nome apresentável a partir do `value` guardado nos dados. */
 export function operatorLabel(value: string | null | undefined): string {
   if (!value) return '';
   return OPERATORS.find((o) => o.value === value)?.label ?? value;
