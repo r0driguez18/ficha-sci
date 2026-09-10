@@ -8,10 +8,10 @@ import { FileText, Book } from 'lucide-react';
 const Documentation = () => {
   const docs = [
     {
-      title: 'SCI - Sistema de Controle Interno',
-      description: 'Documentação para gerenciamento de tarefas e relatórios',
+      title: 'SCI — Sistema de Controlo Interno',
+      description: 'Fichas de procedimentos, histórico, retornos e passagem de turno',
       icon: FileText,
-      content: 'Utilize o módulo SCI para gerenciar tarefas internas, criar relatórios e acompanhar o progresso das atividades. O Taskboard permite criar listas de tarefas com checkboxes e gerar relatórios em PDF.'
+      content: 'No módulo SCI preenche-se a ficha de procedimentos do turno (tarefas com marcação, observações e assinatura), consulta-se o histórico de fichas guardadas, acompanham-se os retornos de cobrança com o respetivo SLA e regista-se a passagem de turno. As fichas são exportadas em PDF.'
     },
     {
       title: 'CRC - Fecho de Inconsistências',
