@@ -176,7 +176,7 @@ export const Turno1TasksComponent: React.FC<Turno1TasksProps> = ({
       {/* Backups Diferidos */}
       <div className="mt-8">
         <div className="flex items-center space-x-2 mb-2">
-          <Label className="font-bold underline text-md">Backups Diferidos</Label>
+          <Label className="text-sm font-semibold underline">Backups Diferidos</Label>
         </div>
         <div className="ml-4 space-y-3">
           <div className="flex items-start space-x-2">
@@ -209,7 +209,7 @@ export const Turno1TasksComponent: React.FC<Turno1TasksProps> = ({
       {/* Operações Semanais / Mensais */}
       <div className="mt-8 border-t pt-6 border-border">
         <div className="flex items-center space-x-2 mb-4">
-          <Label className="font-bold underline text-md">Operações Semanais / Mensais</Label>
+          <Label className="text-sm font-semibold underline">Operações Semanais / Mensais</Label>
         </div>
         <div className="ml-4 space-y-3">
           <div className="flex items-start space-x-2">

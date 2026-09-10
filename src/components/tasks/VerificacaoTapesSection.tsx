@@ -35,7 +35,7 @@ const HRM: { key: keyof VerificacaoTapes; label: string }[] = [
 export const VerificacaoTapesSection: React.FC<Props> = ({ data, operador, tapes, onChange }) => {
   const renderGroup = (title: string, items: typeof BANKA) => (
     <div className="space-y-3">
-      <h4 className="font-bold underline text-sm">{title}</h4>
+      <h4 className="text-sm font-semibold underline">{title}</h4>
       <div className="ml-2 space-y-3">
         {items.map((it) => (
           <div key={it.key} className="flex items-start space-x-2">
@@ -53,7 +53,7 @@ export const VerificacaoTapesSection: React.FC<Props> = ({ data, operador, tapes
 
   return (
     <section className="mt-10 pt-6 border-t">
-      <h3 className="font-bold text-lg text-primary uppercase mb-1">Procedimento Verificação de Tapes</h3>
+      <h3 className="text-sm font-semibold uppercase tracking-wide text-primary mb-1">Procedimento Verificação de Tapes</h3>
       <p className="text-xs text-muted-foreground mb-4">
         Presente na ficha de dia não útil e sempre que a data corresponde ao último dia do mês.
       </p>
