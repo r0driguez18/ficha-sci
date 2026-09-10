@@ -1,14 +1,22 @@
 
-# BCA - SCI Sistema de Controle Interno
+# BCA - SCI — Sistema de Controlo Interno
 
-## Sobre o Projeto
+## Sobre o projeto
 
-Este é um sistema administrativo para controle interno que permite gerenciar:
+Aplicação web de apoio ao turno do Centro Informática. Corre numa rede
+isolada (sem Internet em produção), em português de Portugal, sobretudo
+em turno noturno. Cobre:
 
-- Procedimentos e tarefas internas (fichas diárias, passagem de turno)
-- Fecho de inconsistências no CRC Front Office
-- Retornos de cobranças e prazos
-- Estatísticas e análises de desempenho
+- Ficha de procedimentos do turno (com assinatura eletrónica e exportação em PDF)
+- Histórico de fichas e verificação de tapes / display
+- Retornos de cobranças, com prazo (SLA) em dias úteis
+- Passagem de turno (nota + confirmação de leitura)
+- Fecho de inconsistências no CRC Front Office (via serviço local)
+- Gerador de ficheiro PS2 a partir da folha de salários
+- Estatísticas dos processamentos de ficheiros
+
+Funciona como PWA: o *shell* fica em cache, por isso a aplicação abre
+mesmo com o Supabase em baixo (mostra um aviso e recupera sozinha).
 
 ## Stack Tecnológica
 
@@ -23,7 +31,8 @@ Este é um sistema administrativo para controle interno que permite gerenciar:
 - **shadcn/ui** - Componentes de UI baseados em Radix UI
 - **Radix UI** - Primitivos de UI acessíveis e não estilizados
 - **Lucide React** 0.462.0 - Biblioteca de ícones
-- **next-themes** 0.3.0 - Gestão de temas (dark/light mode)
+- **@fontsource/inter** 5.1.0 - Tipo de letra Inter alojado localmente (a rede isolada não tem Google Fonts)
+- Temas (claro / escuro / alto contraste): gestão própria em `src/hooks/use-theme.tsx`
 
 ### Backend & Database
 - **Supabase** (Self-hosted via Docker) - Plataforma backend completa
@@ -44,12 +53,13 @@ Este é um sistema administrativo para controle interno que permite gerenciar:
 - **date-fns** 3.6.0 - Manipulação de datas
 - **xlsx** 0.18.5 - Leitura e escrita de ficheiros Excel
 - **jsPDF** 3.0.1 + **jspdf-autotable** 5.0.2 - Geração de PDFs
+- **pdf-lib** 1.17.1 - Anexar o display de tapes ao PDF da ficha (import dinâmico)
 
 ### Utilities & UI Enhancement
 - **class-variance-authority** 0.7.1 - Gestão de variantes de componentes
 - **clsx** 2.1.1 + **tailwind-merge** 2.5.2 - Merge de classes Tailwind
-- **cmdk** 1.0.0 - Command menu
 - **sonner** 1.5.0 - Toast notifications elegantes
+- **vite-plugin-pwa** 0.20.5 - Service worker / precache do *shell* (funcionamento offline)
 
 ## Executando o Projeto
 
@@ -73,15 +83,20 @@ npm run dev
 
 O sistema está dividido nos seguintes módulos:
 
-- **SCI**: Sistema de Controle Interno para gerenciamento de procedimentos
-  - Ficha de Procedimentos
-  - Taskboard de tarefas
-  - Passagem de Turno
-  - Histórico de Fichas
-  - Retornos de Cobranças
-  - Gerador PS2 (ficheiro de pagamentos em massa)
-- **CRC**: Fecho de inconsistências no CRC Front Office
-- **Processamentos**: Estatísticas e Relatórios de processamentos
+O menu é plano, agrupado por:
+
+- **SCI**
+  - Ficha de Procedimentos (por turno; assinatura por PIN; verificação de tapes nos dias não úteis e no fim do mês)
+  - Histórico de Fichas (visão de equipa, filtros, anexar display de tapes)
+  - Retornos de Cobranças (SLA em dias úteis; > 2 dias úteis de atraso = urgente)
+  - Passagem de Turno (nota por turno + confirmação de leitura)
+  - Gerador PS2 (folha de salários → NIB → `PS2_AAAAMMDD.txt`)
+- **Ferramentas**
+  - CRC — Inconsistências (fecho em massa via serviço local que abre o Chrome)
+  - Estatísticas (evolução mensal dos processamentos; exportar XLSX/PDF)
+- **Sistema**: Configurações, Documentação
+
+Nota: o **Gerador PS2** está no grupo *Ferramentas* mas a rota é `/sci/gerador-ps2`.
 
 ## Estrutura do Projeto
 
@@ -130,14 +145,19 @@ As rotas da aplicação estão organizadas por módulos:
 - `src/routes/sciRoutes.tsx` - Rotas do módulo SCI
 - Outras rotas são definidas diretamente no App.tsx
 
-## Funcionalidades Principais
+## Funcionalidades principais
 
-### Taskboard
-Permite o gerenciamento de tarefas diárias com diferentes visualizações:
+### Ficha de procedimentos
+Duas variantes, escolhidas pela data:
 - Dia Útil
-- Dia Não Útil
-- Final do Mês Dia Útil
-- Final do Mês Dia Não Útil
+- Dia Não Útil (inclui o Procedimento Verificação de Tapes; também aparece no último dia do mês)
+
+Grava automaticamente, exporta em PDF (`FD DD.MM.AA.pdf`) e só permite o
+download depois de o display de tapes estar anexado, quando aplicável.
+
+### Ferramentas de apoio
+- `node scripts/contrast-audit.mjs` — auditoria de contraste WCAG dos temas (ver `docs/contraste.md`).
+- `crc-inconsistencias-service/` — serviço local (Python/FastAPI) para o fecho de inconsistências no CRC.
 
 
 ## Boas Práticas de Desenvolvimento
