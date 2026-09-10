@@ -2,6 +2,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -27,8 +28,8 @@ const Settings = () => {
   };
   
   return (
-    <div className="animate-fade-in">
-      <PageHeader 
+    <PageContainer size="default">
+      <PageHeader
         title="Configurações" 
         subtitle="Gerencie as configurações do seu sistema"
       />
@@ -58,7 +59,7 @@ const Settings = () => {
 
         <PinManagerCard />
       </div>
-    </div>
+    </PageContainer>
   );
 };
 

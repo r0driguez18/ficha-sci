@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileText, Book } from 'lucide-react';
 
@@ -21,8 +22,8 @@ const Documentation = () => {
   ];
 
   return (
-    <div className="animate-fade-in">
-      <PageHeader 
+    <PageContainer size="default">
+      <PageHeader
         title="Documentação" 
         subtitle="Guias de utilização do sistema"
       />
@@ -43,7 +44,7 @@ const Documentation = () => {
           </Card>
         ))}
       </div>
-    </div>
+    </PageContainer>
   );
 };
 

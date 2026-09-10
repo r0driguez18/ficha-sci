@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -238,13 +239,13 @@ export default function CrcTratamento() {
       : 0;
 
   return (
-    <div className="animate-fade-in">
+    <PageContainer size="narrow">
       <PageHeader
         title="CRC — Fecho de Inconsistências"
         subtitle="Confirmação em massa das inconsistências no CRC Front Office"
       />
 
-      <div className="grid grid-cols-1 gap-6 max-w-3xl mx-auto">
+      <div className="grid grid-cols-1 gap-6">
         <Card className="shadow-md">
           <CardHeader className="bg-primary/5">
             <div className="flex items-center justify-between">
@@ -532,6 +533,6 @@ export default function CrcTratamento() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </PageContainer>
   );
 }

@@ -2,6 +2,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { EnhancedCard, EnhancedCardContent, EnhancedCardDescription, EnhancedCardHeader, EnhancedCardTitle } from '@/components/ui/enhanced-card';
 import { FileText, ArrowRight } from 'lucide-react';
 
@@ -24,7 +25,7 @@ const Procedimentos = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="animate-fade-in container mx-auto px-4">
+    <PageContainer size="default">
       <PageHeader
         title="Ficha de Procedimentos"
         subtitle="Selecione o tipo de ficha de procedimentos que deseja executar"
@@ -63,7 +64,7 @@ const Procedimentos = () => {
           ))}
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 };
 
