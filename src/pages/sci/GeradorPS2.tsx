@@ -8,8 +8,16 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FileDown, AlertTriangle, Upload, ClipboardPaste, CheckCircle2, Plus, Trash2 } from 'lucide-react';
+import {
+  FileDown,
+  AlertTriangle,
+  Upload,
+  ClipboardPaste,
+  CheckCircle2,
+  Plus,
+  Trash2,
+  Undo2,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { gerarPS2, montarNib, nomeFicheiroPS2, TIPOS_OPERACAO, type PS2Resultado } from '@/lib/ps2';
 import { tratarNib, NATUREZA_PADRAO, type NaturezaRegra, type NibTratado } from '@/lib/nibBca';
@@ -18,6 +26,13 @@ interface LinhaBruta {
   recebido: string;
   valor: string;
   nome: string;
+}
+
+interface LinhaTratada extends LinhaBruta {
+  idx: number;
+  trat: NibTratado;
+  nibFinal: string;
+  estado: NibTratado['estado'] | 'excluido';
 }
 
 const todayIso = () => {
@@ -51,11 +66,77 @@ function parseColagem(txt: string): LinhaBruta[] {
     });
 }
 
-interface LinhaTratada extends LinhaBruta {
-  trat: NibTratado;
-  nibFinal: string;
-  estado: NibTratado['estado'];
+const pareceNib = (v: unknown) => String(v ?? '').replace(/\D/g, '').length >= 8;
+const pareceValor = (v: unknown) => {
+  const s = String(v ?? '').replace(/[.,\s]/g, '');
+  return s.length > 0 && !Number.isNaN(Number(s)) && Number(s) > 0;
+};
+
+/** Adivinha as colunas (NIB / valor / nome) e a linha onde começam os dados. */
+function autodetectar(rows: string[][]) {
+  const nCols = rows.reduce((m, r) => Math.max(m, r.length), 0);
+  let header = -1;
+  for (let i = 0; i < Math.min(rows.length, 12); i++) {
+    const txt = (rows[i] ?? []).filter(
+      (c) => String(c).trim().length > 1 && Number.isNaN(Number(String(c).replace(/[.,\s]/g, ''))),
+    ).length;
+    if (txt >= 2) {
+      header = i;
+      break;
+    }
+  }
+  const heads = (header >= 0 ? rows[header] ?? [] : []).map((c) => String(c ?? '').toLowerCase());
+  const acha = (...keys: string[]) => heads.findIndex((h) => keys.some((k) => h.includes(k)));
+  let cConta = acha('nib', 'iban', 'conta');
+  let cValor = acha('valor', 'montante', 'líquido', 'liquido', 'a pagar', 'total');
+  let cNome = acha('nome', 'benefici', 'deputado', 'funcion', 'colaborad');
+
+  const dataStart = header < 0 ? 0 : header + 1;
+  if (cConta < 0) {
+    let best = 0;
+    let bestN = -1;
+    for (let c = 0; c < nCols; c++) {
+      let n = 0;
+      for (let i = dataStart; i < rows.length; i++) if (pareceNib((rows[i] ?? [])[c])) n++;
+      if (n > bestN) {
+        bestN = n;
+        best = c;
+      }
+    }
+    cConta = best;
+  }
+  if (cValor < 0) {
+    for (let c = nCols - 1; c >= 0; c--) {
+      let n = 0;
+      for (let i = dataStart; i < rows.length; i++) if (pareceValor((rows[i] ?? [])[c])) n++;
+      if (c !== cConta && n > 0) {
+        cValor = c;
+        break;
+      }
+    }
+    if (cValor < 0) cValor = Math.min(cConta + 1, nCols - 1);
+  }
+  if (cNome < 0) cNome = cConta > 1 ? cConta - 1 : nCols > 2 ? 2 : 0;
+
+  let li = dataStart;
+  for (let i = dataStart; i < rows.length; i++) {
+    if (pareceNib((rows[i] ?? [])[cConta])) {
+      li = i;
+      break;
+    }
+  }
+  return {
+    colConta: Math.max(0, cConta),
+    colValor: Math.max(0, cValor),
+    colNome: Math.max(0, cNome),
+    linhaInicial: li + 1,
+  };
 }
+
+const fmtNum = (v: string) => {
+  const n = Math.trunc(Number(limparValor(v)));
+  return Number.isNaN(n) ? v : n.toLocaleString('pt-PT');
+};
 
 export default function GeradorPS2() {
   const [contaEmpresa, setContaEmpresa] = useState('');
@@ -77,7 +158,14 @@ export default function GeradorPS2() {
 
   const [natTabela, setNatTabela] = useState<NaturezaRegra[]>(NATUREZA_PADRAO);
   const [overrides, setOverrides] = useState<Record<number, string>>({});
+  const [excluidos, setExcluidos] = useState<Set<number>>(new Set());
   const [resultado, setResultado] = useState<PS2Resultado | null>(null);
+
+  const resetLinhas = () => {
+    setOverrides({});
+    setExcluidos(new Set());
+    setResultado(null);
+  };
 
   const linhas: LinhaBruta[] = useMemo(() => {
     if (modo === 'colar') return parseColagem(colagem);
@@ -94,34 +182,38 @@ export default function GeradorPS2() {
   }, [modo, colagem, sheetRows, colConta, colValor, colNome, linhaInicial]);
 
   const comDados = useMemo(
-    () => linhas.filter((l) => l.recebido !== '' || l.valor !== ''),
+    () => linhas.map((l, i) => ({ ...l, idx: i })).filter((l) => l.recebido !== '' || l.valor !== ''),
     [linhas],
   );
 
   const tratadas: LinhaTratada[] = useMemo(
     () =>
-      comDados.map((l, i) => {
+      comDados.map((l) => {
+        if (excluidos.has(l.idx)) {
+          return { ...l, trat: tratarNib(l.recebido, natTabela), nibFinal: '', estado: 'excluido' };
+        }
         const trat = tratarNib(l.recebido, natTabela);
-        const ov = (overrides[i] ?? '').replace(/\D/g, '');
+        const ov = (overrides[l.idx] ?? '').replace(/\D/g, '');
         if (ov) {
-          const ok = /^\d{21}$/.test(ov);
-          return { ...l, trat, nibFinal: ov, estado: ok ? 'ok' : 'alerta' };
+          return { ...l, trat, nibFinal: ov, estado: /^\d{21}$/.test(ov) ? 'ok' : 'alerta' };
         }
         return { ...l, trat, nibFinal: trat.nib, estado: trat.estado };
       }),
-    [comDados, natTabela, overrides],
+    [comDados, natTabela, overrides, excluidos],
   );
 
   const contagem = useMemo(() => {
-    let ok = 0,
-      naoBca = 0,
-      alerta = 0;
+    let ok = 0;
+    let naoBca = 0;
+    let alerta = 0;
+    let excluidas = 0;
     for (const t of tratadas) {
       if (t.estado === 'ok') ok++;
       else if (t.estado === 'nao-bca') naoBca++;
+      else if (t.estado === 'excluido') excluidas++;
       else alerta++;
     }
-    return { ok, naoBca, alerta };
+    return { ok, naoBca, alerta, excluidas };
   }, [tratadas]);
 
   const carregarFicheiro = async (file: File) => {
@@ -133,18 +225,30 @@ export default function GeradorPS2() {
       const norm = rows.map((r) => (Array.isArray(r) ? r.map((c) => (c ?? '').toString()) : []));
       setSheetRows(norm);
       setNColunas(norm.reduce((m, r) => Math.max(m, r.length), 0));
-      setOverrides({});
-      setResultado(null);
-      toast.success(`${norm.length} linha(s) lidas de "${file.name}".`);
+      const det = autodetectar(norm);
+      setColConta(det.colConta);
+      setColValor(det.colValor);
+      setColNome(det.colNome);
+      setLinhaInicial(det.linhaInicial);
+      resetLinhas();
+      toast.success(`${norm.length} linha(s) lidas — colunas detetadas.`);
     } catch (e) {
       console.error(e);
       toast.error('Não foi possível ler o ficheiro.');
     }
   };
 
+  const toggleExcluir = (idx: number) =>
+    setExcluidos((prev) => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx);
+      else next.add(idx);
+      return next;
+    });
+
   const gerar = () => {
     if (contagem.alerta > 0) {
-      toast.error(`${contagem.alerta} linha(s) em alerta — corrige os NIB antes de gerar.`);
+      toast.error(`${contagem.alerta} linha(s) em alerta — corrige ou exclui antes de gerar.`);
       return;
     }
     const res = gerarPS2({
@@ -178,7 +282,12 @@ export default function GeradorPS2() {
 
   const nibEmpresaPreview = contaEmpresa.trim() ? montarNib(contaEmpresa) : '—';
   const colOpts = Array.from({ length: Math.max(nColunas, 3) }, (_, i) => i);
-  const previewLinhas = tratadas.slice(0, 200);
+  const previewLinhas = tratadas.slice(0, 300);
+  const headerRow = sheetRows[Math.max(0, linhaInicial - 2)] ?? [];
+  const nomeCol = (i: number) => {
+    const h = String(headerRow[i] ?? '').trim();
+    return h ? `${XLSX.utils.encode_col(i)} — ${h.slice(0, 22)}` : XLSX.utils.encode_col(i);
+  };
 
   const previewConteudo = useMemo(() => {
     if (!resultado || resultado.erros.length > 0) return '';
@@ -210,12 +319,7 @@ export default function GeradorPS2() {
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
             <Label htmlFor="contaEmpresa">Nº de conta da empresa</Label>
-            <Input
-              id="contaEmpresa"
-              value={contaEmpresa}
-              onChange={(e) => setContaEmpresa(e.target.value)}
-              placeholder="dígitos da conta (célula B8 da folha)"
-            />
+            <Input id="contaEmpresa" value={contaEmpresa} onChange={(e) => setContaEmpresa(e.target.value)} placeholder="dígitos da conta" />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="data">Data de processamento</Label>
@@ -223,36 +327,22 @@ export default function GeradorPS2() {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="referencia">Referência do ordenante</Label>
-            <Input
-              id="referencia"
-              value={referencia}
-              maxLength={35}
-              onChange={(e) => setReferencia(e.target.value)}
-            />
+            <Input id="referencia" value={referencia} maxLength={35} onChange={(e) => setReferencia(e.target.value)} />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="tipo">Tipo de operação</Label>
             <Select value={tipo} onValueChange={setTipo}>
-              <SelectTrigger id="tipo">
-                <SelectValue />
-              </SelectTrigger>
+              <SelectTrigger id="tipo"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {TIPOS_OPERACAO.map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {t}
-                  </SelectItem>
+                  <SelectItem key={t} value={t}>{t}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-1.5 sm:col-span-2">
             <Label htmlFor="prefixo">Descritivo (prefixo)</Label>
-            <Input
-              id="prefixo"
-              value={prefixo}
-              onChange={(e) => setPrefixo(e.target.value)}
-              placeholder="ex.: Ordenado — junta-se ao nome de cada linha"
-            />
+            <Input id="prefixo" value={prefixo} onChange={(e) => setPrefixo(e.target.value)} placeholder="ex.: Ordenado — junta-se ao nome de cada linha" />
           </div>
         </CardContent>
       </Card>
@@ -262,51 +352,33 @@ export default function GeradorPS2() {
         <CardHeader>
           <CardTitle className="text-base">Tabela de natureza</CardTitle>
           <CardDescription>
-            Índice recebido (1–9, ou `1`/`10`/`101`/`10001`…) → natureza final de 5 dígitos.
-            Editável — quando surgir um caso novo, ajusta aqui.
+            O que vem no fim do NIB (`1`, `10`, `101`, `10001`, `102`…) → natureza final. Editável.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
             {natTabela.map((r, i) => (
               <div key={i} className="flex items-center gap-1 rounded-md border px-2 py-1">
-                <span className="text-xs text-muted-foreground w-10 text-right">{r.recebida} →</span>
+                <span className="text-xs text-muted-foreground w-6 text-right">{r.recebida}→</span>
                 <Input
                   value={r.final}
                   onChange={(e) =>
-                    setNatTabela((prev) =>
-                      prev.map((x, j) => (j === i ? { ...x, final: e.target.value.replace(/\D/g, '') } : x)),
-                    )
+                    setNatTabela((prev) => prev.map((x, j) => (j === i ? { ...x, final: e.target.value.replace(/\D/g, '') } : x)))
                   }
                   className="h-7 w-20 font-mono text-xs"
                   maxLength={5}
                 />
                 {r.recebida.length >= 3 && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={() => setNatTabela((prev) => prev.filter((_, j) => j !== i))}
-                    aria-label="Remover regra"
-                  >
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setNatTabela((p) => p.filter((_, j) => j !== i))}>
                     <Trash2 className="h-3 w-3 text-destructive" />
                   </Button>
                 )}
               </div>
             ))}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setNatTabela((prev) => [...prev, { recebida: '', final: '' }])}
-            >
+            <Button variant="outline" size="sm" onClick={() => setNatTabela((p) => [...p, { recebida: '', final: '' }])}>
               <Plus className="h-4 w-4 mr-1" /> Regra
             </Button>
           </div>
-          {natTabela.some((r) => r.recebida === '' || r.final === '') && (
-            <p className="mt-2 text-xs text-muted-foreground">
-              Preenche "recebida" (o que vem no fim do NIB) e "final" nas regras novas.
-            </p>
-          )}
         </CardContent>
       </Card>
 
@@ -314,10 +386,7 @@ export default function GeradorPS2() {
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-base">Beneficiários</CardTitle>
-          <CardDescription>
-            Cola a folha (NIB/conta, valor, nome) ou carrega o ficheiro. Centenas de linhas de uma
-            vez. As contas são transformadas em NIB automaticamente.
-          </CardDescription>
+          <CardDescription>Cola a folha ou carrega o ficheiro. As contas viram NIB automaticamente.</CardDescription>
           <div className="flex gap-2 pt-2">
             <Button size="sm" variant={modo === 'colar' ? 'default' : 'outline'} onClick={() => setModo('colar')}>
               <ClipboardPaste className="h-4 w-4 mr-1" /> Colar
@@ -333,11 +402,10 @@ export default function GeradorPS2() {
               value={colagem}
               onChange={(e) => {
                 setColagem(e.target.value);
-                setOverrides({});
-                setResultado(null);
+                resetLinhas();
               }}
-              placeholder={'Uma linha por beneficiário: NIB/conta [tab] valor [tab] nome\n000300006757980410176\t108800,00\tJOÃO SILVA\n67579804\t142500\tMARIA COSTA'}
-              className="min-h-[160px] font-mono text-xs"
+              placeholder={'NIB/conta [tab] valor [tab] nome\n000300006757980410176\t108800,00\tJOÃO SILVA\n67579804\t142500\tMARIA COSTA'}
+              className="min-h-[150px] font-mono text-xs"
             />
           ) : (
             <div className="space-y-4">
@@ -357,33 +425,63 @@ export default function GeradorPS2() {
               </Button>
 
               {sheetRows.length > 0 && (
-                <div className="grid gap-3 sm:grid-cols-4">
-                  {[
-                    ['NIB / conta', colConta, setColConta] as const,
-                    ['Valor', colValor, setColValor] as const,
-                    ['Nome', colNome, setColNome] as const,
-                  ].map(([label, val, set]) => (
-                    <div key={label} className="space-y-1">
-                      <Label className="text-xs">Coluna {label}</Label>
-                      <Select value={String(val)} onValueChange={(v) => set(Number(v))}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {colOpts.map((i) => (
-                            <SelectItem key={i} value={String(i)}>{XLSX.utils.encode_col(i)}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                <div className="space-y-3">
+                  <div className="overflow-x-auto rounded-md border">
+                    <table className="text-[11px] w-full">
+                      <thead>
+                        <tr className="bg-muted/60 text-left">
+                          <th className="px-2 py-1 font-normal text-muted-foreground w-10">linha</th>
+                          {colOpts.map((i) => {
+                            const papel = i === colConta ? 'NIB' : i === colValor ? 'Valor' : i === colNome ? 'Nome' : '';
+                            const cor = i === colConta ? 'text-blue-600' : i === colValor ? 'text-green-600' : i === colNome ? 'text-amber-600' : 'text-muted-foreground';
+                            return (
+                              <th key={i} className={`px-2 py-1 whitespace-nowrap font-medium ${cor}`}>
+                                {XLSX.utils.encode_col(i)}
+                                {papel && <span className="ml-1 font-normal">· {papel}</span>}
+                              </th>
+                            );
+                          })}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {sheetRows.slice(0, 8).map((r, ri) => (
+                          <tr key={ri} className={`border-t ${ri === linhaInicial - 1 ? 'border-l-2 border-l-primary' : ''} ${ri >= linhaInicial - 1 ? '' : 'opacity-45'}`}>
+                            <td className="px-2 py-1 text-muted-foreground">{ri + 1}</td>
+                            {colOpts.map((ci) => (
+                              <td key={ci} className={`px-2 py-1 max-w-[14rem] truncate ${ci === colConta ? 'text-blue-700 font-mono' : ci === colValor ? 'text-green-700' : ci === colNome ? 'text-amber-700' : ''}`}>
+                                {(r[ci] ?? '').toString()}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-4">
+                    {(
+                      [
+                        ['NIB', colConta, setColConta] as const,
+                        ['Valor', colValor, setColValor] as const,
+                        ['Nome', colNome, setColNome] as const,
+                      ] as const
+                    ).map(([label, val, set]) => (
+                      <div key={label} className="space-y-1">
+                        <Label className="text-xs">Coluna do {label}</Label>
+                        <Select value={String(val)} onValueChange={(v) => set(Number(v))}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {colOpts.map((i) => (
+                              <SelectItem key={i} value={String(i)}>{nomeCol(i)}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ))}
+                    <div className="space-y-1">
+                      <Label className="text-xs" htmlFor="li">Dados começam na linha</Label>
+                      <Input id="li" type="number" min={1} value={linhaInicial} onChange={(e) => setLinhaInicial(Math.max(1, Number(e.target.value) || 1))} />
                     </div>
-                  ))}
-                  <div className="space-y-1">
-                    <Label className="text-xs" htmlFor="li">Linha inicial</Label>
-                    <Input
-                      id="li"
-                      type="number"
-                      min={1}
-                      value={linhaInicial}
-                      onChange={(e) => setLinhaInicial(Math.max(1, Number(e.target.value) || 1))}
-                    />
                   </div>
                 </div>
               )}
@@ -394,73 +492,98 @@ export default function GeradorPS2() {
             <div className="space-y-2">
               <div className="flex flex-wrap gap-2 text-sm">
                 <Badge variant="secondary">{contagem.ok} prontos</Badge>
+                {contagem.alerta > 0 && <Badge variant="destructive">{contagem.alerta} em alerta</Badge>}
                 {contagem.naoBca > 0 && <Badge variant="outline">{contagem.naoBca} não-BCA (fora)</Badge>}
-                {contagem.alerta > 0 && (
-                  <Badge variant="destructive">{contagem.alerta} em alerta — corrigir</Badge>
-                )}
-                {tratadas.length > previewLinhas.length && (
-                  <span className="text-xs text-muted-foreground self-center">
-                    (mostra as primeiras {previewLinhas.length})
-                  </span>
-                )}
+                {contagem.excluidas > 0 && <Badge variant="outline">{contagem.excluidas} excluídas</Badge>}
               </div>
-              <div className="max-h-[28rem] overflow-auto rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-8">#</TableHead>
-                      <TableHead>Nome</TableHead>
-                      <TableHead>Recebido</TableHead>
-                      <TableHead>Nat.</TableHead>
-                      <TableHead>NIB final</TableHead>
-                      <TableHead>Valor</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {previewLinhas.map((t, i) => (
-                      <TableRow
-                        key={i}
-                        className={
-                          t.estado === 'nao-bca'
-                            ? 'opacity-45'
-                            : t.estado === 'alerta'
-                              ? 'bg-destructive/5'
-                              : undefined
-                        }
+
+              <div className="max-h-[30rem] overflow-y-auto rounded-md border">
+                <table className="w-full table-fixed text-sm">
+                  <colgroup>
+                    <col className="w-8" />
+                    <col />
+                    <col className="w-[13.5rem]" />
+                    <col className="w-24" />
+                    <col className="w-28" />
+                    <col className="w-10" />
+                  </colgroup>
+                  <thead className="sticky top-0 bg-background">
+                    <tr className="border-b text-left text-xs text-muted-foreground">
+                      <th className="px-2 py-2">#</th>
+                      <th className="px-2 py-2">Nome</th>
+                      <th className="px-2 py-2">NIB final</th>
+                      <th className="px-2 py-2 text-right">Valor</th>
+                      <th className="px-2 py-2">Natureza</th>
+                      <th className="px-2 py-2" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {previewLinhas.map((t) => (
+                      <tr
+                        key={t.idx}
+                        className={`border-b last:border-0 ${
+                          t.estado === 'excluido'
+                            ? 'line-through opacity-40'
+                            : t.estado === 'nao-bca'
+                              ? 'opacity-50'
+                              : t.estado === 'alerta'
+                                ? 'bg-destructive/5'
+                                : ''
+                        }`}
                       >
-                        <TableCell className="text-muted-foreground">{i + 1}</TableCell>
-                        <TableCell className="max-w-[10rem] truncate">{t.nome || '—'}</TableCell>
-                        <TableCell className="font-mono text-[11px]">{t.recebido}</TableCell>
-                        <TableCell className="text-xs whitespace-nowrap">
-                          {t.trat.naturezaRecebida
-                            ? `${t.trat.naturezaRecebida} → ${t.trat.naturezaFinal}`
-                            : '—'}
-                        </TableCell>
-                        <TableCell className="font-mono text-[11px]">
+                        <td className="px-2 py-1.5 text-muted-foreground">{t.idx + 1}</td>
+                        <td className="px-2 py-1.5 truncate" title={t.nome}>
+                          {t.nome || <span className="text-muted-foreground">(sem nome)</span>}
+                        </td>
+                        <td className="px-2 py-1.5 font-mono text-[11px]">
                           {t.estado === 'nao-bca' ? (
                             <span className="text-muted-foreground">{t.trat.motivo}</span>
                           ) : t.estado === 'alerta' ? (
                             <div className="flex items-center gap-1">
                               <AlertTriangle className="h-3 w-3 text-destructive shrink-0" />
                               <Input
-                                value={overrides[i] ?? ''}
-                                onChange={(e) =>
-                                  setOverrides((prev) => ({ ...prev, [i]: e.target.value }))
-                                }
-                                placeholder={t.trat.motivo ?? 'NIB (21 díg.)'}
-                                className="h-7 w-52 font-mono text-[11px]"
+                                value={overrides[t.idx] ?? ''}
+                                onChange={(e) => setOverrides((p) => ({ ...p, [t.idx]: e.target.value }))}
+                                placeholder="NIB (21 díg.)"
+                                className="h-7 font-mono text-[11px]"
+                                title={`Recebido: ${t.recebido}`}
                               />
                             </div>
                           ) : (
-                            t.nibFinal
+                            t.nibFinal || '—'
                           )}
-                        </TableCell>
-                        <TableCell className="text-xs">{t.valor}</TableCell>
-                      </TableRow>
+                        </td>
+                        <td className="px-2 py-1.5 text-right tabular-nums">{fmtNum(t.valor)}</td>
+                        <td className="px-2 py-1.5 text-xs text-muted-foreground">
+                          {t.trat.naturezaRecebida && t.trat.naturezaRecebida !== t.trat.naturezaFinal
+                            ? `${t.trat.naturezaRecebida} → ${t.trat.naturezaFinal}`
+                            : '—'}
+                        </td>
+                        <td className="px-2 py-1.5">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => toggleExcluir(t.idx)}
+                            title={t.estado === 'excluido' ? 'Repor linha' : 'Excluir linha'}
+                          >
+                            {t.estado === 'excluido' ? (
+                              <Undo2 className="h-4 w-4" />
+                            ) : (
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            )}
+                          </Button>
+                        </td>
+                      </tr>
                     ))}
-                  </TableBody>
-                </Table>
+                  </tbody>
+                </table>
               </div>
+              {tratadas.length > previewLinhas.length && (
+                <p className="text-xs text-muted-foreground">
+                  Mostra as primeiras {previewLinhas.length} de {tratadas.length}.
+                </p>
+              )}
             </div>
           )}
         </CardContent>
@@ -470,11 +593,7 @@ export default function GeradorPS2() {
         <Button onClick={gerar} disabled={contagem.ok === 0 || contagem.alerta > 0}>
           Gerar ficheiro PS2
         </Button>
-        <Button
-          variant="outline"
-          onClick={descarregar}
-          disabled={!resultado || resultado.erros.length > 0}
-        >
+        <Button variant="outline" onClick={descarregar} disabled={!resultado || resultado.erros.length > 0}>
           <FileDown className="h-4 w-4 mr-1" /> Descarregar {nomeFicheiroPS2()}
         </Button>
       </div>
@@ -503,10 +622,7 @@ export default function GeradorPS2() {
               <CheckCircle2 className="h-4 w-4" /> Ficheiro pronto
             </CardTitle>
             <Badge variant="secondary">{resultado.totalRegistos} registos</Badge>
-            <Badge variant="outline">total {Math.trunc(resultado.somaTotal)}</Badge>
-            {resultado.linhasIgnoradas > 0 && (
-              <Badge variant="outline">{resultado.linhasIgnoradas} linha(s) vazia(s) ignorada(s)</Badge>
-            )}
+            <Badge variant="outline">total {Math.trunc(resultado.somaTotal).toLocaleString('pt-PT')}</Badge>
           </CardHeader>
           <CardContent>
             <pre className="overflow-x-auto rounded-md bg-muted p-3 text-xs leading-relaxed">
