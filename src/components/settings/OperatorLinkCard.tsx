@@ -61,7 +61,7 @@ export function OperatorLinkCard() {
         ) : (
           <div className="flex flex-wrap items-end gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="op-choice">Selecione o seu operador</Label>
+              <Label htmlFor="op-choice">Escolhe o teu operador</Label>
               <Select value={choice} onValueChange={setChoice}>
                 <SelectTrigger id="op-choice" className="min-w-[16rem]">
                   <SelectValue placeholder="Selecionar operador" />

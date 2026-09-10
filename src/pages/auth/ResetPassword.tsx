@@ -99,7 +99,7 @@ const ResetPassword = () => {
               minLength={6}
             />
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Alterando...' : 'Alterar senha'}
+              {loading ? 'A alterar…' : 'Alterar senha'}
             </Button>
           </form>
         </CardContent>

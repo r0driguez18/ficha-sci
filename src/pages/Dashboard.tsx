@@ -15,7 +15,7 @@ import { existeExportadaNaData } from '@/services/exportedTaskboardService';
 const MODULES = [
   { title: 'SCI', description: 'Sistema de Controlo Interno', icon: ClipboardCheck, path: '/sci/procedimentos' },
   { title: 'CRC', description: 'Fecho de inconsistências', icon: LayoutDashboard, path: '/crc/tratamento' },
-  { title: 'Processamentos', description: 'Estatísticas e relatórios', icon: PieChart, path: '/easyvista/estatisticas' },
+  { title: 'Processamentos', description: 'Estatísticas dos processamentos', icon: PieChart, path: '/easyvista/estatisticas' },
 ];
 
 function useNow(intervalMs = 30000) {
