@@ -64,7 +64,7 @@ const Login = () => {
   if (showForgotPassword) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10 p-4">
-        <Card className="w-full max-w-[420px] shadow-2xl border border-border/50 rounded-2xl overflow-hidden">
+        <Card className="w-full max-w-[420px] shadow-lg border border-border/60 rounded-xl overflow-hidden">
           <div className="h-1.5 bg-gradient-to-r from-primary via-primary/80 to-primary/60" />
           <CardHeader className="space-y-1 pb-2 pt-8 px-8">
             <button
@@ -115,14 +115,14 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10 p-4">
-      <Card className="w-full max-w-[420px] shadow-2xl border border-border/50 rounded-2xl overflow-hidden">
+      <Card className="w-full max-w-[420px] shadow-lg border border-border/60 rounded-xl overflow-hidden">
         {/* Top accent bar */}
         <div className="h-1.5 bg-gradient-to-r from-primary via-primary/80 to-primary/60" />
         
         <CardHeader className="space-y-4 pb-0 pt-8 px-8">
           {/* Icon + Branding */}
           <div className="flex flex-col items-center text-center space-y-3">
-            <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center">
+            <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center">
               <ShieldCheck className="h-7 w-7 text-primary" />
             </div>
             <div>
