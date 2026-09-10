@@ -20,8 +20,11 @@ export default {
 		},
 		extend: {
 			fontFamily: {
-				sans: ['SF Pro Display', 'system-ui', 'sans-serif'],
-				mono: ['SF Mono', 'monospace'],
+				// Inter é alojado localmente (src/main.tsx) — a rede isolada não
+				// tem Google Fonts. A cadeia de recurso cobre Windows (Segoe UI)
+				// e Linux (Roboto) enquanto o Inter carrega.
+				sans: ['Inter', 'system-ui', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+				mono: ['ui-monospace', 'SFMono-Regular', 'Consolas', 'Liberation Mono', 'Menlo', 'monospace'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',

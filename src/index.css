@@ -163,8 +163,10 @@
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
-    font-feature-settings: "ss01" on, "ss02" on, "cv01" on, "cv03" on;
+    @apply bg-background text-foreground antialiased font-sans;
+    /* Inter: 'cv05' (l com cauda) e 'cv11' (a de um andar) ajudam a
+       distinguir 1 / l / I nos números de conta e NIB. */
+    font-feature-settings: "cv05" 1, "cv11" 1;
   }
   
   /* Custom scrollbar for modern browsers */
