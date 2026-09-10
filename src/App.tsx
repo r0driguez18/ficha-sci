@@ -8,6 +8,7 @@ import { AuthProvider } from "./components/auth/AuthProvider";
 import { PrivateRoute } from "./components/auth/PrivateRoute";
 import { ThemeProvider } from "./hooks/use-theme";
 import { SyncStatusProvider } from "./hooks/useSyncStatus";
+import { ServerStatusProvider } from "./hooks/useServerStatus";
 import Login from "./pages/auth/Login";
 import ResetPassword from "./pages/auth/ResetPassword";
 
@@ -30,6 +31,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <ThemeProvider>
+        <ServerStatusProvider>
         <SyncStatusProvider>
         <TooltipProvider>
           <BrowserRouter>
@@ -72,6 +74,7 @@ const App = () => (
 
         </TooltipProvider>
         </SyncStatusProvider>
+        </ServerStatusProvider>
       </ThemeProvider>
     </AuthProvider>
   </QueryClientProvider>
