@@ -17,7 +17,6 @@ import NotFound from "./pages/NotFound";
 import FichaProcedimentos from "./pages/sci/FichaProcedimentos";
 import Procedimentos from "./pages/sci/Procedimentos";
 import CrcTratamento from "./pages/crc/Tratamento";
-import DisDados from "./pages/dis/Dados";
 import EasyVistaEstatisticas from "./pages/easyvista/Estatisticas";
 import Settings from "./pages/Settings";
 import Documentation from "./pages/Documentation";
@@ -57,10 +56,6 @@ const App = () => (
               {/* CRC Routes */}
               <Route path="/crc" element={<Navigate to="/crc/tratamento" replace />} />
               <Route path="/crc/tratamento" element={<PrivateRoute><DashboardLayout><CrcTratamento /></DashboardLayout></PrivateRoute>} />
-              
-              {/* DIS Routes */}
-              <Route path="/dis" element={<Navigate to="/dis/dados" replace />} />
-              <Route path="/dis/dados" element={<PrivateRoute><DashboardLayout><DisDados /></DashboardLayout></PrivateRoute>} />
               
               {/* Processamentos Routes */}
               <Route path="/easyvista" element={<Navigate to="/easyvista/estatisticas" replace />} />

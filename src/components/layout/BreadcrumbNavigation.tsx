@@ -22,8 +22,6 @@ const routeLabels: Record<string, string> = {
   '/sci/retornos-cobrancas': 'Retornos de Cobranças',
   '/crc': 'CRC',
   '/crc/tratamento': 'Fecho de Inconsistências',
-  '/dis': 'DIS',
-  '/dis/dados': 'Dados',
   '/easyvista': 'Processamentos',
   '/easyvista/estatisticas': 'Estatísticas',
   '/settings': 'Configurações',

@@ -5,9 +5,8 @@ import { SidebarItem } from './SidebarItem';
 import { Button } from '@/components/ui/button';
 import { SearchSidebar } from '../SearchSidebar';
 import { SidebarGroup, SidebarGroupLabel, SidebarGroupContent, useSidebar } from '@/components/ui/sidebar';
-import { 
+import {
   ClipboardCheck,
-  Database,
   FileText,
   LayoutDashboard,
   Home,
@@ -77,7 +76,6 @@ export const SidebarContent = () => {
     { label: 'SCI - Retornos de Cobranças', path: '/sci/retornos-cobrancas', keywords: ['sci', 'retornos', 'cobranças', 'ficheiros'] },
     { label: 'SCI - Calendário', path: '/sci/calendario', keywords: ['sci', 'calendário', 'eventos', 'notas', 'agenda'] },
     { label: 'CRC - Fecho de Inconsistências', path: '/crc/tratamento', keywords: ['crc', 'inconsistências', 'fecho', 'validar'] },
-    { label: 'DIS - Dados', path: '/dis/dados', keywords: ['dis', 'dados', 'database'] },
     { label: 'Processamentos - Estatísticas', path: '/easyvista/estatisticas', keywords: ['processamentos', 'estatísticas', 'charts'] },
     { label: 'Configurações', path: '/settings', keywords: ['settings', 'configurações', 'config'] },
     { label: 'Documentação', path: '/docs', keywords: ['docs', 'documentação', 'help', 'ajuda'] },
@@ -128,14 +126,6 @@ export const SidebarContent = () => {
             to="/crc"
             subItems={[
               { label: "Fecho de Inconsistências", to: "/crc/tratamento" }
-            ]}
-          />
-          <SidebarItem
-            icon={Database}
-            label="DIS"
-            to="/dis"
-            subItems={[
-              { label: "Dados", to: "/dis/dados" }
             ]}
           />
           <SidebarItem

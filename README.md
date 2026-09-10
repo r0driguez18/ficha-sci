@@ -79,8 +79,7 @@ O sistema está dividido nos seguintes módulos:
   - Taskboard de tarefas
   - Calendário
   - Gerador PS2
-- **CRC**: Tratamento de Ficheiros 
-- **DIS**: Módulo para Dados e Inserção
+- **CRC**: Fecho de inconsistências no CRC Front Office
 - **Processamentos**: Estatísticas e Relatórios de processamentos
 
 ## Estrutura do Projeto
@@ -101,7 +100,6 @@ O sistema está dividido nos seguintes módulos:
 │   ├── pages/                    # Páginas principais da aplicação
 │   │   ├── auth/                 # Páginas de autenticação
 │   │   ├── crc/                  # Páginas do módulo CRC
-│   │   ├── dis/                  # Páginas do módulo DIS
 │   │   ├── easyvista/            # Páginas de processamentos e estatísticas
 │   │   └── sci/                  # Páginas do Sistema de Controle Interno
 │   ├── routes/                   # Configurações de rotas
