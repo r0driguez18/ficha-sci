@@ -114,7 +114,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <ServerStatusBanner />
           <main className="flex-1 overflow-auto relative">
             <div className="absolute inset-0 bg-gradient-to-br from-transparent to-primary/5 -z-10" />
-            <div className="container py-8 px-4 sm:px-6 lg:px-8 animate-fade-in max-w-7xl mx-auto">
+            <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8 animate-fade-in">
               {children}
             </div>
           </main>
