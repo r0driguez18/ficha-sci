@@ -39,7 +39,7 @@ export const CollapsibleSection: React.FC<Props> = ({
         <span className="font-bold text-lg underline">{title}</span>
         <Badge
           variant={complete ? 'secondary' : 'outline'}
-          className={`ml-auto ${complete ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : ''}`}
+          className={`ml-auto ${complete ? 'bg-success/15 text-success' : ''}`}
         >
           {done}/{total}
         </Badge>

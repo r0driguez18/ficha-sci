@@ -84,9 +84,9 @@ const Dashboard = () => {
           {exportada === null ? (
             <span className="text-muted-foreground">a verificar…</span>
           ) : exportada ? (
-            <span className="text-green-600 font-medium">já foi exportada uma ficha para hoje</span>
+            <span className="text-success font-medium">já foi exportada uma ficha para hoje</span>
           ) : (
-            <span className="text-amber-600 font-medium">ainda sem ficha exportada hoje</span>
+            <span className="text-warning font-medium">ainda sem ficha exportada hoje</span>
           )}
         </CardContent>
       </Card>

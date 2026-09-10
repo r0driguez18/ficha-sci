@@ -14,7 +14,7 @@ export function ServerStatusBanner() {
   return (
     <div
       role="status"
-      className="flex items-center gap-3 border-b border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/60 dark:text-amber-200"
+      className="flex items-center gap-3 border-b border-warning/40 bg-warning/10 px-4 py-2 text-sm text-foreground"
     >
       {checking ? (
         <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
@@ -29,7 +29,7 @@ export function ServerStatusBanner() {
         type="button"
         onClick={() => check()}
         disabled={checking}
-        className="inline-flex items-center gap-1 rounded-md border border-amber-400 px-2 py-1 text-xs font-medium hover:bg-amber-100 disabled:opacity-50 dark:border-amber-800 dark:hover:bg-amber-900/50"
+        className="inline-flex items-center gap-1 rounded-md border border-warning/50 px-2 py-1 text-xs font-medium hover:bg-warning/15 disabled:opacity-50"
       >
         <RefreshCw className="h-3 w-3" />
         Tentar agora

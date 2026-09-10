@@ -28,10 +28,10 @@ const fmt = (iso?: string | null) => {
 };
 
 const SEVERITY_BADGE: Record<ReturnSeverity, { cls: string; icon: typeof Clock }> = {
-  enviado: { cls: 'bg-green-500 text-white', icon: CheckCircle },
-  urgente: { cls: 'bg-red-600 text-white', icon: Flame },
+  enviado: { cls: 'bg-success text-success-foreground', icon: CheckCircle },
+  urgente: { cls: 'bg-destructive text-destructive-foreground', icon: Flame },
   atrasado: { cls: 'bg-destructive text-destructive-foreground', icon: AlertTriangle },
-  due: { cls: 'bg-amber-500 text-white', icon: Clock },
+  due: { cls: 'bg-warning text-warning-foreground', icon: Clock },
   pendente: { cls: 'border border-input text-foreground', icon: Clock },
 };
 
@@ -154,11 +154,11 @@ export default function RetornosCobrancas() {
       {/* Resumo */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
         {[
-          { n: counts.urgente, label: 'Urgentes', icon: Flame, tone: 'text-red-600' },
+          { n: counts.urgente, label: 'Urgentes', icon: Flame, tone: 'text-destructive' },
           { n: counts.atrasado, label: 'Em Atraso', icon: AlertTriangle, tone: 'text-destructive' },
-          { n: counts.due, label: 'Vencem Hoje', icon: Clock, tone: 'text-amber-500' },
-          { n: counts.pendente, label: 'Pendentes', icon: FileText, tone: 'text-blue-500' },
-          { n: sentReturns.length, label: 'Enviados', icon: CheckCircle, tone: 'text-green-500' },
+          { n: counts.due, label: 'Vencem Hoje', icon: Clock, tone: 'text-warning' },
+          { n: counts.pendente, label: 'Pendentes', icon: FileText, tone: 'text-primary' },
+          { n: sentReturns.length, label: 'Enviados', icon: CheckCircle, tone: 'text-success' },
         ].map(({ n, label, icon: Icon, tone }) => (
           <Card key={label}>
             <CardContent className="p-4">
@@ -194,7 +194,7 @@ export default function RetornosCobrancas() {
             <CardContent>
               {pendingReturns.length === 0 ? (
                 <div className="text-center py-8">
-                  <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
+                  <CheckCircle className="h-12 w-12 text-success mx-auto mb-4" />
                   <p className="text-lg font-medium">Sem retornos pendentes!</p>
                   <p className="text-sm text-muted-foreground">Todos os retornos foram enviados.</p>
                 </div>

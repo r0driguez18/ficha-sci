@@ -76,7 +76,7 @@ export const SidebarItem = ({ icon: Icon, label, to, subItems }: SidebarItemProp
                       <NavLink to={subItem.to} className="flex justify-between items-center w-full min-w-0 pr-1 gap-2">
                         <span className="truncate">{subItem.label}</span>
                         {!!subItem.badge && subItem.badge > 0 && (
-                          <span className="bg-red-600 shrink-0 text-white text-[10px] leading-[14px] font-bold px-1.5 rounded-sm shadow-sm z-10">
+                          <span className="bg-destructive shrink-0 text-destructive-foreground text-[10px] leading-[14px] font-bold px-1.5 rounded-sm shadow-sm z-10">
                             {subItem.badge}
                           </span>
                         )}
