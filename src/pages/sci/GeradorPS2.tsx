@@ -19,8 +19,20 @@ import {
   Undo2,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { gerarPS2, montarNib, nomeFicheiroPS2, TIPOS_OPERACAO, type PS2Resultado } from '@/lib/ps2';
-import { tratarNib, NATUREZA_PADRAO, type NaturezaRegra, type NibTratado } from '@/lib/nibBca';
+import { gerarPS2, nomeFicheiroPS2, TIPOS_OPERACAO, type PS2Resultado } from '@/lib/ps2';
+import {
+  tratarNib,
+  NATUREZA_PADRAO,
+  type NaturezaRegra,
+  type NibTratado,
+  type ModoConta,
+} from '@/lib/nibBca';
+
+const MODOS: { valor: ModoConta; label: string; hint: string }[] = [
+  { valor: 'auto', label: 'Detetar automaticamente', hint: 'tenta perceber se há natureza no fim' },
+  { valor: 'so-conta', label: 'Só o nº de conta', hint: 'concatena 0003…10176, não mexe no fim' },
+  { valor: 'nib', label: 'NIB completo (21 díg.)', hint: 'só limpa e converte a natureza' },
+];
 
 interface LinhaBruta {
   recebido: string;
@@ -40,18 +52,16 @@ const todayIso = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
-/** Limpa um valor colado do Excel: espaços e separadores de milhar → número canónico. */
+/**
+ * Valor do Excel → escudos inteiros (o PS2 e o VBA só usam a parte inteira).
+ * Um `.` ou `,` com **exatamente 2 dígitos a seguir** são cêntimos e caem;
+ * os restantes separadores são milhares. Ex.: "6,860"→6860 · "108,800.00"→108800.
+ */
 function limparValor(s: string): string {
-  let t = (s ?? '').toString().trim().replace(/\s/g, '').replace(/[^\d.,-]/g, '');
-  if (t.includes('.') && t.includes(',')) {
-    t =
-      t.lastIndexOf(',') > t.lastIndexOf('.')
-        ? t.replace(/\./g, '').replace(',', '.')
-        : t.replace(/,/g, '');
-  } else if (t.includes(',')) {
-    t = t.replace(',', '.');
-  }
-  return t;
+  let t = String(s ?? '').replace(/[^\d.,-]/g, '').trim();
+  if (!t) return '';
+  if (/[.,]\d{2}$/.test(t)) t = t.slice(0, -3); // cêntimos
+  return t.replace(/[.,]/g, '');
 }
 
 function parseColagem(txt: string): LinhaBruta[] {
@@ -147,6 +157,8 @@ export default function GeradorPS2() {
 
   const [modo, setModo] = useState<'colar' | 'ficheiro'>('colar');
   const [colagem, setColagem] = useState('');
+  const [modoConta, setModoConta] = useState<ModoConta>('auto');
+  const [soAlertas, setSoAlertas] = useState(false);
 
   const fileRef = useRef<HTMLInputElement>(null);
   const [sheetRows, setSheetRows] = useState<string[][]>([]);
@@ -165,6 +177,26 @@ export default function GeradorPS2() {
     setOverrides({});
     setExcluidos(new Set());
     setResultado(null);
+    setSoAlertas(false);
+  };
+
+  const recomecar = () => {
+    setContaEmpresa('');
+    setData(todayIso());
+    setReferencia('');
+    setPrefixo('');
+    setTipo(TIPOS_OPERACAO[0]);
+    setModo('colar');
+    setColagem('');
+    setModoConta('auto');
+    setSheetRows([]);
+    setNColunas(0);
+    setColConta(0);
+    setColValor(1);
+    setColNome(2);
+    setLinhaInicial(1);
+    setNatTabela(NATUREZA_PADRAO);
+    resetLinhas();
   };
 
   const linhas: LinhaBruta[] = useMemo(() => {
@@ -189,17 +221,20 @@ export default function GeradorPS2() {
   const tratadas: LinhaTratada[] = useMemo(
     () =>
       comDados.map((l) => {
-        if (excluidos.has(l.idx)) {
-          return { ...l, trat: tratarNib(l.recebido, natTabela), nibFinal: '', estado: 'excluido' };
-        }
-        const trat = tratarNib(l.recebido, natTabela);
+        const trat = tratarNib(l.recebido, natTabela, modoConta);
+        if (excluidos.has(l.idx)) return { ...l, trat, nibFinal: '', estado: 'excluido' };
         const ov = (overrides[l.idx] ?? '').replace(/\D/g, '');
         if (ov) {
           return { ...l, trat, nibFinal: ov, estado: /^\d{21}$/.test(ov) ? 'ok' : 'alerta' };
         }
         return { ...l, trat, nibFinal: trat.nib, estado: trat.estado };
       }),
-    [comDados, natTabela, overrides, excluidos],
+    [comDados, natTabela, overrides, excluidos, modoConta],
+  );
+
+  const nibEmpresa = useMemo(
+    () => tratarNib(contaEmpresa, natTabela, modoConta),
+    [contaEmpresa, natTabela, modoConta],
   );
 
   const contagem = useMemo(() => {
@@ -251,9 +286,13 @@ export default function GeradorPS2() {
       toast.error(`${contagem.alerta} linha(s) em alerta — corrige ou exclui antes de gerar.`);
       return;
     }
+    if (nibEmpresa.estado !== 'ok') {
+      toast.error(`NIB da empresa inválido: ${nibEmpresa.motivo ?? 'verifica o nº de conta'}.`);
+      return;
+    }
     const res = gerarPS2({
       tipo,
-      nibEmpresa: montarNib(contaEmpresa),
+      nibEmpresa: nibEmpresa.nib,
       data,
       referenciaOrdenante: referencia,
       linhas: tratadas
@@ -280,9 +319,10 @@ export default function GeradorPS2() {
     URL.revokeObjectURL(url);
   };
 
-  const nibEmpresaPreview = contaEmpresa.trim() ? montarNib(contaEmpresa) : '—';
+  const nibEmpresaPreview = contaEmpresa.trim() ? nibEmpresa.nib || '(inválido)' : '—';
+  const previewFonte = soAlertas ? tratadas.filter((t) => t.estado === 'alerta') : tratadas;
   const colOpts = Array.from({ length: Math.max(nColunas, 3) }, (_, i) => i);
-  const previewLinhas = tratadas.slice(0, 300);
+  const previewLinhas = previewFonte.slice(0, 400);
   const headerRow = sheetRows[Math.max(0, linhaInicial - 2)] ?? [];
   const nomeCol = (i: number) => {
     const h = String(headerRow[i] ?? '').trim();
@@ -303,17 +343,32 @@ export default function GeradorPS2() {
 
   return (
     <div className="container mx-auto p-6 max-w-5xl">
-      <PageHeader
-        title="Gerador PS2"
-        subtitle="Trata a folha de salários (contas → NIB) e gera o ficheiro PS2"
-      />
+      <div className="flex items-start justify-between gap-3">
+        <PageHeader
+          title="Gerador PS2"
+          subtitle="Trata a folha de salários (contas → NIB) e gera o ficheiro PS2"
+        />
+        <Button variant="outline" size="sm" onClick={recomecar}>
+          <Undo2 className="h-4 w-4 mr-1" /> Recomeçar
+        </Button>
+      </div>
 
       {/* Cabeçalho */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-base">Dados do ordenante</CardTitle>
           <CardDescription>
-            NIB da empresa montado: <code>{nibEmpresaPreview}</code>
+            NIB da empresa:{' '}
+            <code
+              className={
+                contaEmpresa.trim() && nibEmpresa.estado !== 'ok' ? 'text-destructive' : undefined
+              }
+            >
+              {nibEmpresaPreview}
+            </code>
+            {contaEmpresa.trim() && nibEmpresa.estado !== 'ok' && (
+              <span className="ml-2 text-destructive text-xs">{nibEmpresa.motivo}</span>
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
@@ -386,14 +441,32 @@ export default function GeradorPS2() {
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-base">Beneficiários</CardTitle>
-          <CardDescription>Cola a folha ou carrega o ficheiro. As contas viram NIB automaticamente.</CardDescription>
-          <div className="flex gap-2 pt-2">
-            <Button size="sm" variant={modo === 'colar' ? 'default' : 'outline'} onClick={() => setModo('colar')}>
-              <ClipboardPaste className="h-4 w-4 mr-1" /> Colar
-            </Button>
-            <Button size="sm" variant={modo === 'ficheiro' ? 'default' : 'outline'} onClick={() => setModo('ficheiro')}>
-              <Upload className="h-4 w-4 mr-1" /> Carregar ficheiro
-            </Button>
+          <CardDescription>Cola a folha ou carrega o ficheiro. As contas viram NIB.</CardDescription>
+          <div className="flex flex-wrap items-end gap-3 pt-2">
+            <div className="flex gap-2">
+              <Button size="sm" variant={modo === 'colar' ? 'default' : 'outline'} onClick={() => setModo('colar')}>
+                <ClipboardPaste className="h-4 w-4 mr-1" /> Colar
+              </Button>
+              <Button size="sm" variant={modo === 'ficheiro' ? 'default' : 'outline'} onClick={() => setModo('ficheiro')}>
+                <Upload className="h-4 w-4 mr-1" /> Carregar ficheiro
+              </Button>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Formato das contas recebidas</Label>
+              <Select value={modoConta} onValueChange={(v) => setModoConta(v as ModoConta)}>
+                <SelectTrigger className="h-9 w-64"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {MODOS.map((m) => (
+                    <SelectItem key={m.valor} value={m.valor}>
+                      {m.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground">
+                {MODOS.find((m) => m.valor === modoConta)?.hint}
+              </p>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -490,9 +563,20 @@ export default function GeradorPS2() {
 
           {tratadas.length > 0 && (
             <div className="space-y-2">
-              <div className="flex flex-wrap gap-2 text-sm">
+              <div className="flex flex-wrap items-center gap-2 text-sm">
                 <Badge variant="secondary">{contagem.ok} prontos</Badge>
-                {contagem.alerta > 0 && <Badge variant="destructive">{contagem.alerta} em alerta</Badge>}
+                {contagem.alerta > 0 && (
+                  <button type="button" onClick={() => setSoAlertas((v) => !v)}>
+                    <Badge variant={soAlertas ? 'default' : 'destructive'}>
+                      {contagem.alerta} em alerta {soAlertas ? '· a mostrar' : '· ver só estes'}
+                    </Badge>
+                  </button>
+                )}
+                {soAlertas && (
+                  <button type="button" onClick={() => setSoAlertas(false)} className="text-xs text-primary hover:underline">
+                    mostrar todas
+                  </button>
+                )}
                 {contagem.naoBca > 0 && <Badge variant="outline">{contagem.naoBca} não-BCA (fora)</Badge>}
                 {contagem.excluidas > 0 && <Badge variant="outline">{contagem.excluidas} excluídas</Badge>}
               </div>
@@ -579,9 +663,9 @@ export default function GeradorPS2() {
                   </tbody>
                 </table>
               </div>
-              {tratadas.length > previewLinhas.length && (
+              {previewFonte.length > previewLinhas.length && (
                 <p className="text-xs text-muted-foreground">
-                  Mostra as primeiras {previewLinhas.length} de {tratadas.length}.
+                  Mostra as primeiras {previewLinhas.length} de {previewFonte.length}.
                 </p>
               )}
             </div>
