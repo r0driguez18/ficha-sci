@@ -173,6 +173,48 @@ export type Database = {
         }
         Relationships: []
       }
+      handover_notes: {
+        Row: {
+          autor_nome: string | null
+          autor_user_id: string | null
+          created_at: string
+          date: string
+          id: string
+          lida_em: string | null
+          lida_por: string | null
+          lida_por_nome: string | null
+          nota: string
+          turno: string
+          updated_at: string
+        }
+        Insert: {
+          autor_nome?: string | null
+          autor_user_id?: string | null
+          created_at?: string
+          date: string
+          id?: string
+          lida_em?: string | null
+          lida_por?: string | null
+          lida_por_nome?: string | null
+          nota?: string
+          turno: string
+          updated_at?: string
+        }
+        Update: {
+          autor_nome?: string | null
+          autor_user_id?: string | null
+          created_at?: string
+          date?: string
+          id?: string
+          lida_em?: string | null
+          lida_por?: string | null
+          lida_por_nome?: string | null
+          nota?: string
+          turno?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       exported_taskboards: {
         Row: {
           created_at: string
