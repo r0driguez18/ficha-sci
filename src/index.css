@@ -51,9 +51,10 @@
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 354 85% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 216 100% 14%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 216 100% 14%;
+    /* Estados (hover / item ativo) — mais claros que o fundo para se verem. */
+    --sidebar-accent: 216 70% 30%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 216 55% 27%;
     --sidebar-ring: 354 85% 50%;
   }
 
