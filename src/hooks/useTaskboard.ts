@@ -248,14 +248,17 @@ export function useTaskboard(formType: FormType) {
 
   const isSigned = signatureDataUrl === 'pin' && !!signerName;
 
+  /** Uma linha da tabela conta como processamento a registar? */
+  const isSavableRow = (row: (typeof tableRows)[number]) => {
+    const common = row.hora.trim() !== '' && row.executado.trim() !== '';
+    const taskOnly = common && row.tarefa.trim() !== '';
+    const asWithOp = common && row.nomeAs.trim() !== '' && row.operacao.trim() !== '';
+    return taskOnly || asWithOp;
+  };
+
   // ---------- Guardar processamentos ----------
   const saveTableRowsToSupabase = async () => {
-    const rowsToSave = tableRows.filter((row) => {
-      const common = row.hora.trim() !== '' && row.executado.trim() !== '';
-      const taskOnly = common && row.tarefa.trim() !== '';
-      const asWithOp = common && row.nomeAs.trim() !== '' && row.operacao.trim() !== '';
-      return taskOnly || asWithOp;
-    });
+    const rowsToSave = tableRows.filter(isSavableRow);
 
     if (rowsToSave.length === 0) {
       toast.error(
@@ -301,60 +304,10 @@ export function useTaskboard(formType: FormType) {
     return { savedCount, duplicateCount };
   };
 
-  // ---------- Guardar ----------
-  const handleSave = async () => {
-    if (busy) return;
-    if (!signerName || signerName.trim() === '') {
-      toast.error("A ficha não pode ser guardada sem ser assinada. Use 'Assinar ficha' e introduza o seu PIN.");
-      return;
-    }
-    if (invalidOpFormat()) {
-      toast.error('O(s) número(s) de operação devem conter exatamente 9 dígitos. Verifique a tabela.');
-      return;
-    }
-    const duplicates = await findDuplicateOps();
-    if (duplicates.length > 0) {
-      toast.error(`A(s) operação(ões) já se encontram no arquivo e não podem ser duplicadas: ${duplicates.join(', ')}`);
-      return;
-    }
-    const missingTurn = turnsFilled();
-    if (missingTurn) {
-      const labels: Record<TurnKey, string> = { turno1: 'Turno 1', turno2: 'Turno 2', turno3: 'Turno 3' };
-      toast.error(`Preencha Operador, Entrada e Saída do ${labels[missingTurn]} antes de guardar.`);
-      return;
-    }
-    if (!isSigned) {
-      toast.error('Não é possível guardar sem assinatura. Assine a ficha com o seu PIN.');
-      return;
-    }
-
-    setBusy(true);
-    try {
-      await syncData(); // grava o rascunho agora (turnos, tarefas, tabela)
-      const { savedCount, duplicateCount } = await saveTableRowsToSupabase();
-
-      toast.success('Ficha guardada com sucesso!');
-      if (savedCount > 0) {
-        toast.success(`${savedCount} processamentos guardados.`);
-        if (duplicateCount > 0) {
-          toast.info(`${duplicateCount} processamentos foram ignorados por já existirem.`);
-        }
-        toast.message('Dados guardados.', {
-          action: { label: 'Ver Gráficos', onClick: () => navigate('/easyvista/estatisticas') },
-        });
-      } else if (duplicateCount > 0) {
-        toast.info(`Todos os ${duplicateCount} processamentos já existem no sistema.`);
-      }
-      // O arquivo em exported_taskboards é feito apenas na exportação do PDF (RF-06.1).
-    } catch (error) {
-      console.error('Erro ao guardar ficha:', error);
-      toast.error('Erro ao guardar ficha. Tente novamente.');
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  // ---------- Exportar PDF ----------
+  // ---------- Exportar e guardar ----------
+  // Um só passo: valida, regista os processamentos (para a Estatística),
+  // gera o PDF e arquiva a ficha no histórico. Não há "guardar" à parte —
+  // o rascunho já grava sozinho enquanto se preenche.
   const exportToPDF = async () => {
     if (busy) return;
     if (!isSigned) {
@@ -374,10 +327,26 @@ export function useTaskboard(formType: FormType) {
         return;
       }
 
+      const missingTurn = turnsFilled();
+      if (missingTurn) {
+        const labels: Record<TurnKey, string> = { turno1: 'Turno 1', turno2: 'Turno 2', turno3: 'Turno 3' };
+        toast.error(`Preencha Operador, Entrada e Saída do ${labels[missingTurn]} antes de exportar.`);
+        return;
+      }
+
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) {
         toast.error('Utilizador não autenticado');
         return;
+      }
+
+      // Regista os processamentos da tabela (alimenta a Estatística). Só há
+      // toast quando há linhas — uma ficha pode legitimamente não ter nenhuma.
+      const temProcessamentos = tableRows.some(isSavableRow);
+      let savedCount = 0;
+      let duplicateCount = 0;
+      if (temProcessamentos) {
+        ({ savedCount, duplicateCount } = await saveTableRowsToSupabase());
       }
 
       const contentHash = await computeFichaHash({
@@ -433,6 +402,15 @@ export function useTaskboard(formType: FormType) {
       }
 
       toast.success(`PDF gerado e guardado no histórico: ${fileName}`);
+      if (savedCount > 0) {
+        toast.success(`${savedCount} processamento(s) registado(s) na Estatística.`);
+        toast.message('Dados guardados.', {
+          action: { label: 'Ver Gráficos', onClick: () => navigate('/easyvista/estatisticas') },
+        });
+      }
+      if (duplicateCount > 0) {
+        toast.info(`${duplicateCount} processamento(s) já existiam e foram ignorados.`);
+      }
 
       // A assinatura não transita para o dia seguinte: exportar de novo exige
       // reautenticar com o PIN (a data avança para a ficha do próximo dia).
@@ -495,7 +473,6 @@ export function useTaskboard(formType: FormType) {
     addTableRow,
     removeTableRow,
     handleInputChange,
-    handleSave,
     exportToPDF,
     resetForm,
   };
