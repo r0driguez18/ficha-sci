@@ -342,7 +342,7 @@ export default function HistoricoFichas() {
     <PageContainer size="wide">
       <PageHeader
         title="Histórico de Fichas" 
-        subtitle="Consulte e gira as fichas de procedimentos guardadas"
+        subtitle="As fichas de procedimentos guardadas"
       />
 
       {/* Filtros */}
@@ -429,7 +429,7 @@ export default function HistoricoFichas() {
             Fichas Guardadas ({filteredRecords.length})
           </CardTitle>
           <CardDescription>
-            Clique numa ficha para visualizar os detalhes ou descarregar o PDF
+            Abre uma ficha para ver os detalhes ou descarregar o PDF
           </CardDescription>
           {(() => {
             const pendentes = records.filter((r) => r.tapes_status === 'pendente');

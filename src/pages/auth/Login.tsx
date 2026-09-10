@@ -52,7 +52,7 @@ const Login = () => {
         redirectTo: `${window.location.origin}/reset-password`
       });
       if (error) throw error;
-      toast.success('Email de recuperação enviado! Verifique a sua caixa de entrada.');
+      toast.success('Email de recuperação enviado! Vê a tua caixa de entrada.');
       setShowForgotPassword(false);
     } catch (error: any) {
       toast.error(error.message || 'Erro ao enviar email de recuperação');
@@ -76,7 +76,7 @@ const Login = () => {
             </button>
             <h1 className="text-2xl font-bold text-foreground">Recuperar Senha</h1>
             <p className="text-sm text-muted-foreground">
-              Insira o seu email para receber um link de recuperação
+              Escreve o teu email para receber um link de recuperação
             </p>
           </CardHeader>
           <CardContent className="px-8 pb-8">
@@ -95,7 +95,7 @@ const Login = () => {
                   <Input
                     id="recovery-email"
                     type="email"
-                    placeholder="seu@email.com"
+                    placeholder="nome@exemplo.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -104,7 +104,7 @@ const Login = () => {
                 </div>
               </div>
               <Button type="submit" className="w-full h-11 rounded-xl text-sm font-semibold" disabled={loading}>
-                {loading ? 'Enviando...' : 'Enviar link de recuperação'}
+                {loading ? 'A enviar…' : 'Enviar link de recuperação'}
               </Button>
             </form>
           </CardContent>
@@ -151,7 +151,7 @@ const Login = () => {
                 <Input
                   id="login-email"
                   type="email"
-                  placeholder="seu@email.com"
+                  placeholder="nome@exemplo.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required

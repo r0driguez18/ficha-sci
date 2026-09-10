@@ -28,7 +28,7 @@ const Procedimentos = () => {
     <PageContainer size="default">
       <PageHeader
         title="Ficha de Procedimentos"
-        subtitle="Selecione o tipo de ficha de procedimentos que deseja executar"
+        subtitle="Escolhe a ficha a preencher"
       />
 
       <div className="flex justify-center">
