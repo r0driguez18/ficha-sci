@@ -44,9 +44,9 @@ export const SidebarItem = ({ icon: Icon, label, to, subItems }: SidebarItemProp
                     setOpen(true);
                   }}
                   isActive={!!hasActiveChild}
-                  className="w-full flex justify-center py-6"
+                  className="w-full justify-center"
                 >
-                  <Icon className="h-6 w-6 shrink-0" />
+                  <Icon className="h-4 w-4 shrink-0" />
                   <span className="sr-only">{label}</span>
                 </SidebarMenuButton>
               </TooltipTrigger>
@@ -56,10 +56,10 @@ export const SidebarItem = ({ icon: Icon, label, to, subItems }: SidebarItemProp
             <SidebarMenuButton
               onClick={() => setOpen(!open)}
               isActive={!!hasActiveChild}
-              className="w-full py-5"
+              className="w-full"
             >
-              <Icon className="h-5 w-5 shrink-0" />
-              <span className="flex-1 text-base">{label}</span>
+              <Icon className="h-4 w-4 shrink-0" />
+              <span className="flex-1">{label}</span>
               {open
                 ? <ChevronDown className="h-4 w-4 shrink-0 opacity-60" />
                 : <ChevronRight className="h-4 w-4 shrink-0 opacity-60" />
@@ -98,9 +98,9 @@ export const SidebarItem = ({ icon: Icon, label, to, subItems }: SidebarItemProp
         <SidebarMenuItem>
           <Tooltip>
             <TooltipTrigger asChild>
-              <SidebarMenuButton asChild isActive={isActive} className="w-full flex justify-center py-6">
+              <SidebarMenuButton asChild isActive={isActive} className="w-full justify-center">
                 <NavLink to={to}>
-                  <Icon className="h-6 w-6 shrink-0" />
+                  <Icon className="h-4 w-4 shrink-0" />
                   <span className="sr-only">{label}</span>
                 </NavLink>
               </SidebarMenuButton>
@@ -115,10 +115,10 @@ export const SidebarItem = ({ icon: Icon, label, to, subItems }: SidebarItemProp
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <SidebarMenuButton asChild isActive={isActive} className="w-full py-5">
+        <SidebarMenuButton asChild isActive={isActive} className="w-full">
           <NavLink to={to}>
-            <Icon className="h-5 w-5 shrink-0" />
-            <span className="text-base">{label}</span>
+            <Icon className="h-4 w-4 shrink-0" />
+            <span>{label}</span>
           </NavLink>
         </SidebarMenuButton>
       </SidebarMenuItem>
