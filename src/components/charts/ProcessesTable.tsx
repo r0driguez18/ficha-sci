@@ -14,7 +14,7 @@ interface ProcessesTableProps {
 const PAGE_SIZE = 25;
 
 const TIPO: Record<string, { label: string; classes: string }> = {
-  salario: { label: 'Salário', classes: 'bg-warning/15 text-warning' },
+  salario: { label: 'Salário', classes: 'bg-warning/20 text-foreground' },
   cobrancas: { label: 'Cobranças', classes: 'bg-primary/15 text-primary' },
   compensacao: { label: 'Compensação', classes: 'bg-success/15 text-success' },
 };

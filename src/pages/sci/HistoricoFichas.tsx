@@ -77,9 +77,9 @@ const formTypeLabels: Record<string, string> = {
 };
 
 const formTypeColors: Record<string, string> = {
-  'dia-util': 'bg-success/15 text-success',
+  'dia-util': 'bg-success/20 text-foreground',
   'dia-nao-util': 'bg-primary/15 text-primary',
-  'final-mes-util': 'bg-warning/15 text-warning',
+  'final-mes-util': 'bg-warning/20 text-foreground',
   'final-mes-nao-util': 'bg-destructive/15 text-destructive'
 };
 
@@ -520,7 +520,7 @@ export default function HistoricoFichas() {
                           Em atraso
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="text-warning border-warning/40">
+                        <Badge variant="outline" className="text-foreground border-warning/50">
                           Pendente
                         </Badge>
                       )}
