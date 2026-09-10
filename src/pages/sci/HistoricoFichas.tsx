@@ -74,10 +74,10 @@ const formTypeLabels: Record<string, string> = {
 };
 
 const formTypeColors: Record<string, string> = {
-  'dia-util': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-  'dia-nao-util': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-  'final-mes-util': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
-  'final-mes-nao-util': 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300'
+  'dia-util': 'bg-success/15 text-success',
+  'dia-nao-util': 'bg-primary/15 text-primary',
+  'final-mes-util': 'bg-warning/15 text-warning',
+  'final-mes-nao-util': 'bg-destructive/15 text-destructive'
 };
 
 const labelForType = (t: string) => formTypeLabels[t] ?? t;
@@ -436,7 +436,7 @@ export default function HistoricoFichas() {
               <button
                 type="button"
                 onClick={() => setTapesFilter('pendente')}
-                className="mt-2 inline-flex items-center gap-2 rounded-md bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 px-3 py-1.5 text-sm text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-950/70"
+                className="mt-2 inline-flex items-center gap-2 rounded-md bg-warning/10 border border-warning/30 px-3 py-1.5 text-sm text-foreground hover:bg-warning/20"
               >
                 <AlertTriangle className="h-4 w-4" />
                 {pendentes.length} ficha(s) a aguardar o display de tapes
@@ -487,7 +487,7 @@ export default function HistoricoFichas() {
                     </TableCell>
                     <TableCell>
                       {getSignatureStatus(record) ? (
-                        <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                        <Badge variant="secondary" className="bg-success/15 text-success">
                           <CheckCircle className="h-3 w-3 mr-1" />
                           Assinado
                         </Badge>
@@ -501,17 +501,17 @@ export default function HistoricoFichas() {
                       {record.tapes_status === 'nao_aplicavel' ? (
                         <span className="text-muted-foreground">—</span>
                       ) : record.tapes_status === 'anexada' ? (
-                        <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                        <Badge variant="secondary" className="bg-success/15 text-success">
                           <Paperclip className="h-3 w-3 mr-1" />
                           Anexado ({record.tapes_evidencia?.length ?? 0})
                         </Badge>
                       ) : isTapesAtrasado(record) ? (
-                        <Badge variant="secondary" className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
+                        <Badge variant="secondary" className="bg-destructive/15 text-destructive">
                           <AlertTriangle className="h-3 w-3 mr-1" />
                           Em atraso
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="text-amber-700 border-amber-300 dark:text-amber-300">
+                        <Badge variant="outline" className="text-warning border-warning/40">
                           Pendente
                         </Badge>
                       )}

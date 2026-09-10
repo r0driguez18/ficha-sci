@@ -267,7 +267,7 @@ export default function CrcTratamento() {
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
                 <span
                   className={`inline-block h-2 w-2 rounded-full ${
-                    serviceOnline ? 'bg-green-500' : 'bg-muted-foreground/40'
+                    serviceOnline ? 'bg-success' : 'bg-muted-foreground/40'
                   }`}
                 />
                 <span className="text-muted-foreground">
@@ -444,7 +444,7 @@ export default function CrcTratamento() {
                   </div>
                   <div>
                     <p className="text-muted-foreground">Processados</p>
-                    <p className="font-semibold text-green-600">{run.processados}</p>
+                    <p className="font-semibold text-success">{run.processados}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">Falhas</p>
@@ -459,13 +459,13 @@ export default function CrcTratamento() {
                 )}
 
                 {run.paginasSaltadas ? (
-                  <p className="text-xs text-amber-600">
+                  <p className="text-xs text-warning">
                     {run.paginasSaltadas} página(s) saltada(s) por falha de resposta do CRC.
                   </p>
                 ) : null}
 
                 {run.estado === 'concluido' && (
-                  <div className="flex items-center gap-2 text-sm text-green-600">
+                  <div className="flex items-center gap-2 text-sm text-success">
                     <CheckCircle className="h-4 w-4" />
                     {run.totalRegistos === 0
                       ? `Sem registos para o código ${run.parametros.inconsistencyCode}.`

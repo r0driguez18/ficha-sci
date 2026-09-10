@@ -145,7 +145,7 @@ export default function PassagemTurno() {
                 <CardHeader className="flex flex-row items-center justify-between gap-3">
                   <CardTitle className="text-base">{label}</CardTitle>
                   {lida ? (
-                    <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                    <Badge variant="secondary" className="bg-success/15 text-success">
                       <CheckCircle2 className="h-3 w-3 mr-1" />
                       Lida por {note?.lida_por_nome ?? labelOf(note?.lida_por)} · {fmt(note?.lida_em)}
                     </Badge>
