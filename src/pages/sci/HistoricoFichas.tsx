@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -336,8 +337,8 @@ export default function HistoricoFichas() {
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
-      <PageHeader 
+    <PageContainer size="wide">
+      <PageHeader
         title="Histórico de Fichas" 
         subtitle="Consulte e gira as fichas de procedimentos guardadas"
       />
@@ -670,6 +671,6 @@ export default function HistoricoFichas() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </PageContainer>
   );
 }

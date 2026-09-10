@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { ClipboardCheck, PieChart, ArrowRight, LayoutDashboard, CalendarClock, FileCheck2, Bell } from 'lucide-react';
 import { Link as RouterLink } from 'react-router-dom';
 import { DailyAlertsWidget } from '@/components/alerts/DailyAlertsWidget';
@@ -59,7 +60,7 @@ const Dashboard = () => {
   }, [dailyAlerts, now]);
 
   return (
-    <div className="animate-fade-in">
+    <PageContainer size="wide">
       <PageHeader title="Hoje em resumo" subtitle="O estado do turno num relance" />
 
       {/* Ficha de hoje */}
@@ -138,7 +139,7 @@ const Dashboard = () => {
           <DailyAlertsWidget />
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 };
 

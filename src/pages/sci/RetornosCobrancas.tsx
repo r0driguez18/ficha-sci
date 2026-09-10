@@ -20,6 +20,7 @@ import { useOperators } from '@/hooks/useOperators';
 import { returnStatus, type ReturnSeverity } from '@/lib/cobrancasSla';
 import { useToast } from '@/hooks/use-toast';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { PageContainer } from '@/components/layout/PageContainer';
 
 const fmt = (iso?: string | null) => {
   if (!iso) return '-';
@@ -140,15 +141,15 @@ export default function RetornosCobrancas() {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-6">
+      <PageContainer size="wide">
         <PageHeader title="Retornos de Cobranças" subtitle="Gestão de retornos de ficheiros de cobrança" />
         <Card><CardContent className="p-6"><p>A carregar retornos...</p></CardContent></Card>
-      </div>
+      </PageContainer>
     );
   }
 
   return (
-    <div className="container mx-auto p-6">
+    <PageContainer size="wide">
       <PageHeader title="Retornos de Cobranças" subtitle="Gestão de retornos de ficheiros de cobrança" />
 
       {/* Resumo */}
@@ -325,6 +326,6 @@ export default function RetornosCobrancas() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </PageContainer>
   );
 }
