@@ -14,19 +14,13 @@ import {
   Upload,
   ClipboardPaste,
   CheckCircle2,
-  Plus,
   Trash2,
   Undo2,
+  ChevronDown,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { gerarPS2, nomeFicheiroPS2, TIPOS_OPERACAO, type PS2Resultado } from '@/lib/ps2';
-import {
-  tratarNib,
-  NATUREZA_PADRAO,
-  type NaturezaRegra,
-  type NibTratado,
-  type ModoConta,
-} from '@/lib/nibBca';
+import { tratarNib, NATUREZA_PADRAO, type NibTratado, type ModoConta } from '@/lib/nibBca';
 
 const MODOS: { valor: ModoConta; label: string; hint: string }[] = [
   { valor: 'auto', label: 'Detetar automaticamente', hint: 'tenta perceber se há natureza no fim' },
@@ -168,7 +162,7 @@ export default function GeradorPS2() {
   const [colNome, setColNome] = useState(2);
   const [linhaInicial, setLinhaInicial] = useState(1);
 
-  const [natTabela, setNatTabela] = useState<NaturezaRegra[]>(NATUREZA_PADRAO);
+  const [verNatureza, setVerNatureza] = useState(false);
   const [overrides, setOverrides] = useState<Record<number, string>>({});
   const [excluidos, setExcluidos] = useState<Set<number>>(new Set());
   const [resultado, setResultado] = useState<PS2Resultado | null>(null);
@@ -181,6 +175,9 @@ export default function GeradorPS2() {
   };
 
   const recomecar = () => {
+    const temDados =
+      contaEmpresa.trim() !== '' || colagem.trim() !== '' || sheetRows.length > 0;
+    if (temDados && !window.confirm('Limpar todos os campos e recomeçar do zero?')) return;
     setContaEmpresa('');
     setData(todayIso());
     setReferencia('');
@@ -195,8 +192,8 @@ export default function GeradorPS2() {
     setColValor(1);
     setColNome(2);
     setLinhaInicial(1);
-    setNatTabela(NATUREZA_PADRAO);
     resetLinhas();
+    toast.success('Dados limpos.');
   };
 
   const linhas: LinhaBruta[] = useMemo(() => {
@@ -221,7 +218,7 @@ export default function GeradorPS2() {
   const tratadas: LinhaTratada[] = useMemo(
     () =>
       comDados.map((l) => {
-        const trat = tratarNib(l.recebido, natTabela, modoConta);
+        const trat = tratarNib(l.recebido, NATUREZA_PADRAO, modoConta);
         if (excluidos.has(l.idx)) return { ...l, trat, nibFinal: '', estado: 'excluido' };
         const ov = (overrides[l.idx] ?? '').replace(/\D/g, '');
         if (ov) {
@@ -229,12 +226,15 @@ export default function GeradorPS2() {
         }
         return { ...l, trat, nibFinal: trat.nib, estado: trat.estado };
       }),
-    [comDados, natTabela, overrides, excluidos, modoConta],
+    [comDados, overrides, excluidos, modoConta],
   );
 
+  // O nº de conta da empresa é sempre escrito à mão com a natureza no fim
+  // (ex.: …10002). Trata-se sempre em modo "auto", independentemente do
+  // formato escolhido para a folha dos beneficiários.
   const nibEmpresa = useMemo(
-    () => tratarNib(contaEmpresa, natTabela, modoConta),
-    [contaEmpresa, natTabela, modoConta],
+    () => tratarNib(contaEmpresa, NATUREZA_PADRAO, 'auto'),
+    [contaEmpresa],
   );
 
   const contagem = useMemo(() => {
@@ -319,7 +319,6 @@ export default function GeradorPS2() {
     URL.revokeObjectURL(url);
   };
 
-  const nibEmpresaPreview = contaEmpresa.trim() ? nibEmpresa.nib || '(inválido)' : '—';
   const previewFonte = soAlertas ? tratadas.filter((t) => t.estado === 'alerta') : tratadas;
   const colOpts = Array.from({ length: Math.max(nColunas, 3) }, (_, i) => i);
   const previewLinhas = previewFonte.slice(0, 400);
@@ -343,38 +342,44 @@ export default function GeradorPS2() {
 
   return (
     <div className="container mx-auto p-6 max-w-5xl">
-      <div className="flex items-start justify-between gap-3">
-        <PageHeader
-          title="Gerador PS2"
-          subtitle="Trata a folha de salários (contas → NIB) e gera o ficheiro PS2"
-        />
+      <PageHeader
+        title="Gerador PS2"
+        subtitle="Trata a folha de salários (contas → NIB) e gera o ficheiro PS2"
+      >
         <Button variant="outline" size="sm" onClick={recomecar}>
           <Undo2 className="h-4 w-4 mr-1" /> Recomeçar
         </Button>
-      </div>
+      </PageHeader>
 
       {/* Cabeçalho */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-base">Dados do ordenante</CardTitle>
-          <CardDescription>
-            NIB da empresa:{' '}
-            <code
-              className={
-                contaEmpresa.trim() && nibEmpresa.estado !== 'ok' ? 'text-destructive' : undefined
-              }
-            >
-              {nibEmpresaPreview}
-            </code>
-            {contaEmpresa.trim() && nibEmpresa.estado !== 'ok' && (
-              <span className="ml-2 text-destructive text-xs">{nibEmpresa.motivo}</span>
-            )}
-          </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
             <Label htmlFor="contaEmpresa">Nº de conta da empresa</Label>
-            <Input id="contaEmpresa" value={contaEmpresa} onChange={(e) => setContaEmpresa(e.target.value)} placeholder="dígitos da conta" />
+            <Input
+              id="contaEmpresa"
+              value={contaEmpresa}
+              onChange={(e) => setContaEmpresa(e.target.value)}
+              placeholder="ex.: 9315589110002 (com a natureza no fim)"
+              className="font-mono"
+            />
+            {contaEmpresa.trim() && (
+              <p className="text-xs">
+                NIB:{' '}
+                <code
+                  className={
+                    nibEmpresa.estado === 'ok'
+                      ? 'text-foreground'
+                      : 'text-destructive'
+                  }
+                >
+                  {nibEmpresa.estado === 'ok' ? nibEmpresa.nib : nibEmpresa.motivo}
+                </code>
+              </p>
+            )}
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="data">Data de processamento</Label>
@@ -402,40 +407,39 @@ export default function GeradorPS2() {
         </CardContent>
       </Card>
 
-      {/* Tabela de natureza */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-base">Tabela de natureza</CardTitle>
-          <CardDescription>
-            O que vem no fim do NIB (`1`, `10`, `101`, `10001`, `102`…) → natureza final. Editável.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
-            {natTabela.map((r, i) => (
-              <div key={i} className="flex items-center gap-1 rounded-md border px-2 py-1">
-                <span className="text-xs text-muted-foreground w-6 text-right">{r.recebida}→</span>
-                <Input
-                  value={r.final}
-                  onChange={(e) =>
-                    setNatTabela((prev) => prev.map((x, j) => (j === i ? { ...x, final: e.target.value.replace(/\D/g, '') } : x)))
-                  }
-                  className="h-7 w-20 font-mono text-xs"
-                  maxLength={5}
-                />
-                {r.recebida.length >= 3 && (
-                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setNatTabela((p) => p.filter((_, j) => j !== i))}>
-                    <Trash2 className="h-3 w-3 text-destructive" />
-                  </Button>
-                )}
-              </div>
-            ))}
-            <Button variant="outline" size="sm" onClick={() => setNatTabela((p) => [...p, { recebida: '', final: '' }])}>
-              <Plus className="h-4 w-4 mr-1" /> Regra
-            </Button>
+      {/* Como a natureza é convertida (referência) */}
+      <div className="mb-6 rounded-md border bg-muted/30">
+        <button
+          type="button"
+          onClick={() => setVerNatureza((v) => !v)}
+          className="flex w-full items-center justify-between px-4 py-2.5 text-sm font-medium"
+        >
+          Como a natureza é convertida
+          <ChevronDown
+            className={`h-4 w-4 transition-transform ${verNatureza ? 'rotate-180' : ''}`}
+          />
+        </button>
+        {verNatureza && (
+          <div className="border-t px-4 py-3 text-xs text-muted-foreground">
+            <p className="mb-2">
+              Quando a conta traz a natureza no fim (<code>1</code>, <code>10</code>,{' '}
+              <code>101</code>, <code>10001</code>, <code>102</code>…), o gerador substitui-a
+              pela natureza final de 5 dígitos:
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {NATUREZA_PADRAO.map((r) => (
+                <span key={r.recebida} className="rounded border bg-background px-2 py-0.5 font-mono">
+                  {r.recebida} → {r.final}
+                </span>
+              ))}
+            </div>
+            <p className="mt-2">
+              Em <strong>Só o nº de conta</strong> nada disto é aplicado — a conta é usada tal
+              como vem, com <code>10176</code> no fim.
+            </p>
           </div>
-        </CardContent>
-      </Card>
+        )}
+      </div>
 
       {/* Beneficiários */}
       <Card className="mb-6">
@@ -679,6 +683,9 @@ export default function GeradorPS2() {
         </Button>
         <Button variant="outline" onClick={descarregar} disabled={!resultado || resultado.erros.length > 0}>
           <FileDown className="h-4 w-4 mr-1" /> Descarregar {nomeFicheiroPS2()}
+        </Button>
+        <Button variant="ghost" onClick={recomecar} className="ml-auto text-muted-foreground">
+          <Undo2 className="h-4 w-4 mr-1" /> Recomeçar
         </Button>
       </div>
 
