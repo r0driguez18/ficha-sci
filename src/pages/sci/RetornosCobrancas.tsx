@@ -21,6 +21,8 @@ import { returnStatus, type ReturnSeverity } from '@/lib/cobrancasSla';
 import { useToast } from '@/hooks/use-toast';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PageContainer } from '@/components/layout/PageContainer';
+import { LoadingState } from '@/components/ui/loading-state';
+import { EmptyState } from '@/components/ui/empty-state';
 
 const fmt = (iso?: string | null) => {
   if (!iso) return '-';
@@ -143,7 +145,7 @@ export default function RetornosCobrancas() {
     return (
       <PageContainer size="wide">
         <PageHeader title="Retornos de Cobranças" subtitle="Gestão de retornos de ficheiros de cobrança" />
-        <Card><CardContent className="p-6"><p>A carregar retornos...</p></CardContent></Card>
+        <LoadingState label="A carregar retornos…" />
       </PageContainer>
     );
   }
@@ -194,11 +196,11 @@ export default function RetornosCobrancas() {
             </CardHeader>
             <CardContent>
               {pendingReturns.length === 0 ? (
-                <div className="text-center py-8">
-                  <CheckCircle className="h-12 w-12 text-success mx-auto mb-4" />
-                  <p className="text-lg font-medium">Sem retornos pendentes!</p>
-                  <p className="text-sm text-muted-foreground">Todos os retornos foram enviados.</p>
-                </div>
+                <EmptyState
+                  icon={CheckCircle}
+                  title="Sem retornos pendentes"
+                  hint="Todos os retornos de cobrança foram enviados."
+                />
               ) : (
                 <Table>
                   <TableHeader>
@@ -264,11 +266,11 @@ export default function RetornosCobrancas() {
             <CardHeader><CardTitle>Retornos Enviados</CardTitle></CardHeader>
             <CardContent>
               {sentReturns.length === 0 ? (
-                <div className="text-center py-8">
-                  <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-lg font-medium">Nenhum retorno enviado ainda</p>
-                  <p className="text-sm text-muted-foreground">Os retornos enviados aparecerão aqui.</p>
-                </div>
+                <EmptyState
+                  icon={FileText}
+                  title="Ainda sem retornos enviados"
+                  hint="Os retornos que marcares como enviados aparecem aqui."
+                />
               ) : (
                 <Table>
                   <TableHeader>

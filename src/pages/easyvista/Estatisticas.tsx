@@ -6,7 +6,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, RefreshCw, FileSpreadsheet, FileText } from 'lucide-react';
+import { RefreshCw, FileSpreadsheet, FileText, BarChart3 } from 'lucide-react';
+import { LoadingState } from '@/components/ui/loading-state';
+import { EmptyState } from '@/components/ui/empty-state';
 import { toast } from 'sonner';
 import { getFileProcesses, type FileProcess } from '@/services/fileProcessService';
 import { buildMonthlyStats, defaultRange } from '@/lib/processStats';
@@ -128,10 +130,13 @@ const EasyVistaEstatisticas = () => {
       </PageHeader>
 
       {loading ? (
-        <div className="flex justify-center items-center h-80">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <span className="ml-2">A carregar dados...</span>
-        </div>
+        <LoadingState label="A carregar processamentos…" />
+      ) : allProcesses.length === 0 ? (
+        <EmptyState
+          icon={BarChart3}
+          title="Sem processamentos registados"
+          hint="Regista processamentos de ficheiros na Ficha de Procedimentos para os veres aqui."
+        />
       ) : (
         <div className="space-y-6">
           {/* Filtro de intervalo + exportação */}

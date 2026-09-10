@@ -3,6 +3,8 @@ import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PageContainer } from '@/components/layout/PageContainer';
+import { LoadingState } from '@/components/ui/loading-state';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -448,11 +450,17 @@ export default function HistoricoFichas() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8">Carregando fichas...</div>
+            <LoadingState label="A carregar fichas…" />
           ) : filteredRecords.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              Nenhuma ficha encontrada
-            </div>
+            <EmptyState
+              icon={FileText}
+              title={records.length === 0 ? 'Sem fichas guardadas' : 'Nenhuma ficha corresponde aos filtros'}
+              hint={
+                records.length === 0
+                  ? 'As fichas de procedimentos exportadas aparecem aqui.'
+                  : 'Ajusta ou limpa os filtros acima.'
+              }
+            />
           ) : (
             <Table>
               <TableHeader>

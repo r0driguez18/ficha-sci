@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PageContainer } from '@/components/layout/PageContainer';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -493,7 +494,11 @@ export default function CrcTratamento() {
           </CardHeader>
           <CardContent>
             {history.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">Sem execuções registadas.</p>
+              <EmptyState
+                icon={RotateCw}
+                title="Sem passagens registadas"
+                hint="Cada passagem de fecho de inconsistências fica aqui com o resultado."
+              />
             ) : (
               <Table>
                 <TableHeader>
