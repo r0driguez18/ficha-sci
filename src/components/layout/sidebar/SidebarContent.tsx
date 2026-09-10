@@ -74,6 +74,7 @@ export const SidebarContent = () => {
     { label: 'SCI - Procedimentos', path: '/sci/procedimentos', keywords: ['sci', 'taskboard', 'procedimentos'] },
     { label: 'SCI - Histórico', path: '/sci/historico-fichas', keywords: ['sci', 'histórico', 'fichas', 'guardadas'] },
     { label: 'SCI - Retornos de Cobranças', path: '/sci/retornos-cobrancas', keywords: ['sci', 'retornos', 'cobranças', 'ficheiros'] },
+    { label: 'SCI - Passagem de Turno', path: '/sci/passagem-turno', keywords: ['sci', 'passagem', 'turno', 'notas', 'handover'] },
     { label: 'SCI - Calendário', path: '/sci/calendario', keywords: ['sci', 'calendário', 'eventos', 'notas', 'agenda'] },
     { label: 'CRC - Fecho de Inconsistências', path: '/crc/tratamento', keywords: ['crc', 'inconsistências', 'fecho', 'validar'] },
     { label: 'Processamentos - Estatísticas', path: '/easyvista/estatisticas', keywords: ['processamentos', 'estatísticas', 'charts'] },
@@ -117,6 +118,7 @@ export const SidebarContent = () => {
               { label: "Ficha de Procedimentos", to: "/sci/procedimentos" },
               { label: "Histórico de Fichas", to: "/sci/historico-fichas", badge: tapesBadge },
               { label: "Retornos Cobranças", to: "/sci/retornos-cobrancas", badge: retornosBadge },
+              { label: "Passagem de Turno", to: "/sci/passagem-turno" },
               { label: "Calendário", to: "/sci/calendario" }
             ]}
           />
