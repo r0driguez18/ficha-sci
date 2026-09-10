@@ -133,8 +133,8 @@ export default function FichaProcedimentos({ formType }: FichaProcedimentosProps
 
   return (
     <PageContainer size="default">
-      <Card className="shadow-sm border">
-        <CardHeader className="pb-4 border-b bg-muted/30">
+      <Card>
+        <CardHeader className="border-b bg-muted/30">
           <div className="flex items-start justify-between gap-3">
             <div>
               <CardTitle className="text-xl font-bold text-foreground">{config.title}</CardTitle>

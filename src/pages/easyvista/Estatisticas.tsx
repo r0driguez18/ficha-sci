@@ -116,17 +116,16 @@ const EasyVistaEstatisticas = () => {
 
   return (
     <PageContainer size="wide" className="space-y-6">
-      <div className="flex flex-wrap justify-between items-start gap-3">
-        <PageHeader
-          title="Processamentos - Estatísticas"
-          subtitle="Evolução mensal e detalhe dos processamentos de ficheiros"
-          id="estatisticas-page"
-        />
+      <PageHeader
+        title="Estatísticas de Processamentos"
+        subtitle="Evolução mensal e detalhe dos processamentos de ficheiros"
+        id="estatisticas-page"
+      >
         <Button variant="outline" onClick={handleRefresh} disabled={loading || refreshing} className="gap-2">
           <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
           Atualizar
         </Button>
-      </div>
+      </PageHeader>
 
       {loading ? (
         <div className="flex justify-center items-center h-80">
