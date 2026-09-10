@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
   FileDown,
   AlertTriangle,
@@ -166,6 +167,7 @@ export default function GeradorPS2() {
   const [overrides, setOverrides] = useState<Record<number, string>>({});
   const [excluidos, setExcluidos] = useState<Set<number>>(new Set());
   const [resultado, setResultado] = useState<PS2Resultado | null>(null);
+  const [confirmarReset, setConfirmarReset] = useState(false);
 
   const resetLinhas = () => {
     setOverrides({});
@@ -174,10 +176,7 @@ export default function GeradorPS2() {
     setSoAlertas(false);
   };
 
-  const recomecar = () => {
-    const temDados =
-      contaEmpresa.trim() !== '' || colagem.trim() !== '' || sheetRows.length > 0;
-    if (temDados && !window.confirm('Limpar todos os campos e recomeçar do zero?')) return;
+  const limparTudo = () => {
     setContaEmpresa('');
     setData(todayIso());
     setReferencia('');
@@ -194,6 +193,13 @@ export default function GeradorPS2() {
     setLinhaInicial(1);
     resetLinhas();
     toast.success('Dados limpos.');
+  };
+
+  const recomecar = () => {
+    const temDados =
+      contaEmpresa.trim() !== '' || colagem.trim() !== '' || sheetRows.length > 0;
+    if (temDados) setConfirmarReset(true);
+    else limparTudo();
   };
 
   const linhas: LinhaBruta[] = useMemo(() => {
@@ -355,54 +361,55 @@ export default function GeradorPS2() {
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-base">Dados do ordenante</CardTitle>
+          <CardDescription>Aplicam-se ao ficheiro inteiro (cabeçalho PS2).</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="contaEmpresa">Nº de conta da empresa</Label>
+        <CardContent className="space-y-5">
+          {/* Conta da empresa + NIB resolvido — bloco próprio */}
+          <div className="rounded-md border bg-muted/30 p-4 space-y-2">
+            <Label htmlFor="contaEmpresa">Conta da empresa (ordenante)</Label>
             <Input
               id="contaEmpresa"
               value={contaEmpresa}
               onChange={(e) => setContaEmpresa(e.target.value)}
               placeholder="ex.: 9315589110002 (com a natureza no fim)"
-              className="font-mono"
+              className="font-mono max-w-sm bg-background"
             />
-            {contaEmpresa.trim() && (
-              <p className="text-xs">
-                NIB:{' '}
-                <code
-                  className={
-                    nibEmpresa.estado === 'ok'
-                      ? 'text-foreground'
-                      : 'text-destructive'
-                  }
-                >
+            <div className="flex items-baseline gap-2 text-xs">
+              <span className="text-muted-foreground">NIB:</span>
+              {contaEmpresa.trim() ? (
+                <code className={nibEmpresa.estado === 'ok' ? 'font-medium' : 'text-destructive'}>
                   {nibEmpresa.estado === 'ok' ? nibEmpresa.nib : nibEmpresa.motivo}
                 </code>
-              </p>
-            )}
+              ) : (
+                <span className="text-muted-foreground">—</span>
+              )}
+            </div>
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="data">Data de processamento</Label>
-            <Input id="data" type="date" value={data} onChange={(e) => setData(e.target.value)} />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="referencia">Referência do ordenante</Label>
-            <Input id="referencia" value={referencia} maxLength={35} onChange={(e) => setReferencia(e.target.value)} />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="tipo">Tipo de operação</Label>
-            <Select value={tipo} onValueChange={setTipo}>
-              <SelectTrigger id="tipo"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {TIPOS_OPERACAO.map((t) => (
-                  <SelectItem key={t} value={t}>{t}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="prefixo">Descritivo (prefixo)</Label>
-            <Input id="prefixo" value={prefixo} onChange={(e) => setPrefixo(e.target.value)} placeholder="ex.: Ordenado — junta-se ao nome de cada linha" />
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="data">Data de processamento</Label>
+              <Input id="data" type="date" value={data} onChange={(e) => setData(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="tipo">Tipo de operação</Label>
+              <Select value={tipo} onValueChange={setTipo}>
+                <SelectTrigger id="tipo"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {TIPOS_OPERACAO.map((t) => (
+                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="referencia">Referência do ordenante</Label>
+              <Input id="referencia" value={referencia} maxLength={35} onChange={(e) => setReferencia(e.target.value)} placeholder="máx. 35 caracteres" />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="prefixo">Descritivo (prefixo)</Label>
+              <Input id="prefixo" value={prefixo} onChange={(e) => setPrefixo(e.target.value)} placeholder="ex.: Ordenado — junta-se ao nome" />
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -446,19 +453,24 @@ export default function GeradorPS2() {
         <CardHeader>
           <CardTitle className="text-base">Beneficiários</CardTitle>
           <CardDescription>Cola a folha ou carrega o ficheiro. As contas viram NIB.</CardDescription>
-          <div className="flex flex-wrap items-end gap-3 pt-2">
-            <div className="flex gap-2">
-              <Button size="sm" variant={modo === 'colar' ? 'default' : 'outline'} onClick={() => setModo('colar')}>
-                <ClipboardPaste className="h-4 w-4 mr-1" /> Colar
-              </Button>
-              <Button size="sm" variant={modo === 'ficheiro' ? 'default' : 'outline'} onClick={() => setModo('ficheiro')}>
-                <Upload className="h-4 w-4 mr-1" /> Carregar ficheiro
-              </Button>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Como introduzir</Label>
+              <div className="flex gap-2">
+                <Button size="sm" variant={modo === 'colar' ? 'default' : 'outline'} onClick={() => setModo('colar')}>
+                  <ClipboardPaste className="h-4 w-4 mr-1" /> Colar
+                </Button>
+                <Button size="sm" variant={modo === 'ficheiro' ? 'default' : 'outline'} onClick={() => setModo('ficheiro')}>
+                  <Upload className="h-4 w-4 mr-1" /> Carregar ficheiro
+                </Button>
+              </div>
             </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Formato das contas recebidas</Label>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground" htmlFor="modoConta">Formato das contas recebidas</Label>
               <Select value={modoConta} onValueChange={(v) => setModoConta(v as ModoConta)}>
-                <SelectTrigger className="h-9 w-64"><SelectValue /></SelectTrigger>
+                <SelectTrigger id="modoConta"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {MODOS.map((m) => (
                     <SelectItem key={m.valor} value={m.valor}>
@@ -472,8 +484,7 @@ export default function GeradorPS2() {
               </p>
             </div>
           </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
+
           {modo === 'colar' ? (
             <Textarea
               value={colagem}
@@ -722,6 +733,17 @@ export default function GeradorPS2() {
           </CardContent>
         </Card>
       )}
+
+      <ConfirmDialog
+        open={confirmarReset}
+        onOpenChange={setConfirmarReset}
+        title="Recomeçar do zero?"
+        description="Limpa todos os campos, a folha colada/carregada e o resultado."
+        confirmLabel="Limpar tudo"
+        cancelLabel="Cancelar"
+        variant="destructive"
+        onConfirm={limparTudo}
+      />
     </div>
   );
 }
