@@ -218,7 +218,6 @@ export default function FichaProcedimentos({ formType }: FichaProcedimentosProps
           />
 
           <FormActions
-            onSave={tb.handleSave}
             onExportPDF={tb.exportToPDF}
             onReset={tb.resetForm}
             isValidated={tb.isValidated}
