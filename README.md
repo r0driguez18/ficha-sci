@@ -5,11 +5,10 @@
 
 Este é um sistema administrativo para controle interno que permite gerenciar:
 
-- Procedimentos e tarefas internas
-- Processamento de dados e relatórios
+- Procedimentos e tarefas internas (fichas diárias, passagem de turno)
+- Fecho de inconsistências no CRC Front Office
+- Retornos de cobranças e prazos
 - Estatísticas e análises de desempenho
-- Tratamento de ficheiros e registros
-- Gerador PS2 para ficheiros bancários
 
 ## Stack Tecnológica
 
