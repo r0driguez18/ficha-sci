@@ -36,7 +36,7 @@ export const CollapsibleSection: React.FC<Props> = ({
         <ChevronDown
           className={`h-4 w-4 shrink-0 transition-transform ${open ? '' : '-rotate-90'}`}
         />
-        <span className="font-bold text-lg underline">{title}</span>
+        <span className="text-sm font-semibold uppercase tracking-wide text-primary">{title}</span>
         <Badge
           variant={complete ? 'secondary' : 'outline'}
           className={`ml-auto ${complete ? 'bg-success/15 text-success' : ''}`}
