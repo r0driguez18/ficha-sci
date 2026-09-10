@@ -145,34 +145,6 @@ export const Turno1TasksComponent: React.FC<Turno1TasksProps> = ({
         <Label htmlFor="enviarSegundoEtr" className="cursor-pointer text-foreground">Enviar 2º Ficheiro ETR (13 horas)</Label>
       </div>
       
-      <div className="flex items-center space-x-2">
-        <Checkbox id="enviarFicheiroCom" checked={tasks.enviarFicheiroCom} onCheckedChange={(c) => onTaskChange('enviarFicheiroCom', !!c)} />
-        <Label htmlFor="enviarFicheiroCom" className="cursor-pointer text-foreground">Preparar e enviar ficheiro COM, dias:</Label>
-        <div className="flex items-center space-x-4 ml-4">
-          <div className="flex items-center space-x-1">
-            <Label htmlFor="dia01" className="cursor-pointer text-foreground">01</Label>
-            <Checkbox id="dia01" checked={tasks.dia01} onCheckedChange={(c) => onTaskChange('dia01', !!c)} />
-          </div>
-          <div className="flex items-center space-x-1">
-            <Label htmlFor="dia08" className="cursor-pointer text-foreground">08</Label>
-            <Checkbox id="dia08" checked={tasks.dia08} onCheckedChange={(c) => onTaskChange('dia08', !!c)} />
-          </div>
-          <div className="flex items-center space-x-1">
-            <Label htmlFor="dia16" className="cursor-pointer text-foreground">16</Label>
-            <Checkbox id="dia16" checked={tasks.dia16} onCheckedChange={(c) => onTaskChange('dia16', !!c)} />
-          </div>
-          <div className="flex items-center space-x-1">
-            <Label htmlFor="dia23" className="cursor-pointer text-foreground">23</Label>
-            <Checkbox id="dia23" checked={tasks.dia23} onCheckedChange={(c) => onTaskChange('dia23', !!c)} />
-          </div>
-        </div>
-      </div>
-      
-      <div className="flex items-start space-x-2">
-        <Checkbox id="atualizarCentralRisco" checked={tasks.atualizarCentralRisco} onCheckedChange={(c) => onTaskChange('atualizarCentralRisco', !!c)} />
-        <Label htmlFor="atualizarCentralRisco" className="cursor-pointer text-foreground">Atualização Nº Central de Risco (todas as Sextas-feiras)</Label>
-      </div>
-
       {/* Backups Diferidos */}
       <div className="mt-8">
         <div className="flex items-center space-x-2 mb-2">
