@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { PageContainer } from '@/components/layout/PageContainer';
 import {
   FileDown,
   AlertTriangle,
@@ -347,7 +348,7 @@ export default function GeradorPS2() {
   }, [resultado]);
 
   return (
-    <div className="container mx-auto p-6 max-w-5xl">
+    <PageContainer size="default">
       <PageHeader
         title="Gerador PS2"
         subtitle="Trata a folha de salários (contas → NIB) e gera o ficheiro PS2"
@@ -744,6 +745,6 @@ export default function GeradorPS2() {
         variant="destructive"
         onConfirm={limparTudo}
       />
-    </div>
+    </PageContainer>
   );
 }

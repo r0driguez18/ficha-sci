@@ -1,4 +1,5 @@
 import React, { useCallback, useRef } from 'react';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -131,7 +132,7 @@ export default function FichaProcedimentos({ formType }: FichaProcedimentosProps
   };
 
   return (
-    <div className="container py-6 max-w-5xl">
+    <PageContainer size="default">
       <Card className="shadow-sm border">
         <CardHeader className="pb-4 border-b bg-muted/30">
           <div className="flex items-start justify-between gap-3">
@@ -225,6 +226,6 @@ export default function FichaProcedimentos({ formType }: FichaProcedimentosProps
           />
         </CardContent>
       </Card>
-    </div>
+    </PageContainer>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -109,7 +110,7 @@ export default function PassagemTurno() {
   const isToday = useMemo(() => date === todayIso(), [date]);
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
+    <PageContainer size="default">
       <PageHeader
         title="Passagem de Turno"
         subtitle="Quem sai deixa o resumo do turno; quem entra confirma a leitura"
@@ -197,6 +198,6 @@ export default function PassagemTurno() {
           })}
         </div>
       )}
-    </div>
+    </PageContainer>
   );
 }

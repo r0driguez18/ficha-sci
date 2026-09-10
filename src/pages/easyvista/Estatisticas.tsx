@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -114,7 +115,7 @@ const EasyVistaEstatisticas = () => {
   const currentTitle = TAB_TITLES[activeTab];
 
   return (
-    <div className="animate-fade-in space-y-6">
+    <PageContainer size="wide" className="space-y-6">
       <div className="flex flex-wrap justify-between items-start gap-3">
         <PageHeader
           title="Processamentos - Estatísticas"
@@ -232,7 +233,7 @@ const EasyVistaEstatisticas = () => {
           </Tabs>
         </div>
       )}
-    </div>
+    </PageContainer>
   );
 };
 
