@@ -5,7 +5,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Loader2, ChevronsDown, CheckCircle2 } from 'lucide-react';
+import { ChevronsDown, CheckCircle2 } from 'lucide-react';
+import { LoadingState } from '@/components/ui/loading-state';
 import { countTaskProgress } from '@/lib/taskboardProgress';
 import { Turno1TasksComponent } from '@/components/tasks/Turno1Tasks';
 import { Turno2TasksComponent } from '@/components/tasks/Turno2Tasks';
@@ -48,10 +49,9 @@ export default function FichaProcedimentos({ formType }: FichaProcedimentosProps
 
   if (tb.isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin mr-2" />
-        <p>A carregar dados...</p>
-      </div>
+      <PageContainer size="default">
+        <LoadingState label="A carregar a ficha…" />
+      </PageContainer>
     );
   }
 

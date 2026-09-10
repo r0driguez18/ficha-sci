@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PageContainer } from '@/components/layout/PageContainer';
+import { LoadingState } from '@/components/ui/loading-state';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -131,9 +132,7 @@ export default function PassagemTurno() {
       </div>
 
       {loading ? (
-        <div className="flex items-center gap-2 text-muted-foreground py-10 justify-center">
-          <Loader2 className="h-5 w-5 animate-spin" /> A carregar…
-        </div>
+        <LoadingState label="A carregar as notas…" />
       ) : (
         <div className="space-y-5">
           {TURNOS.map(({ key, label }) => {
