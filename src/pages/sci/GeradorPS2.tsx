@@ -9,12 +9,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FileDown, AlertTriangle, Upload, ClipboardPaste, CheckCircle2 } from 'lucide-react';
+import { FileDown, AlertTriangle, Upload, ClipboardPaste, CheckCircle2, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { gerarPS2, montarNib, nomeFicheiroPS2, TIPOS_OPERACAO, type PS2Resultado } from '@/lib/ps2';
+import { tratarNib, NATUREZA_PADRAO, type NaturezaRegra, type NibTratado } from '@/lib/nibBca';
 
 interface LinhaBruta {
-  contaBenef: string;
+  recebido: string;
   valor: string;
   nome: string;
 }
@@ -23,15 +24,6 @@ const todayIso = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
-
-/**
- * Aceita tanto o nº de conta curto (como na folha Excel, que o embrulha em
- * "00030000…10176") como um NIB completo já colado da origem.
- */
-function nibDe(conta: string): string {
-  const c = (conta ?? '').replace(/\s/g, '');
-  return c.startsWith('0003') && c.length >= 13 ? c : montarNib(c);
-}
 
 /** Limpa um valor colado do Excel: espaços e separadores de milhar → número canónico. */
 function limparValor(s: string): string {
@@ -47,7 +39,6 @@ function limparValor(s: string): string {
   return t;
 }
 
-/** Parte texto colado (tab / ; / ,) em linhas {conta, valor, nome}. */
 function parseColagem(txt: string): LinhaBruta[] {
   return txt
     .split(/\r?\n/)
@@ -56,8 +47,14 @@ function parseColagem(txt: string): LinhaBruta[] {
     .map((l) => {
       const sep = l.includes('\t') ? '\t' : l.includes(';') ? ';' : ',';
       const [c = '', v = '', n = ''] = l.split(sep).map((x) => x.trim());
-      return { contaBenef: c, valor: v, nome: n };
+      return { recebido: c, valor: v, nome: n };
     });
+}
+
+interface LinhaTratada extends LinhaBruta {
+  trat: NibTratado;
+  nibFinal: string;
+  estado: NibTratado['estado'];
 }
 
 export default function GeradorPS2() {
@@ -70,7 +67,6 @@ export default function GeradorPS2() {
   const [modo, setModo] = useState<'colar' | 'ficheiro'>('colar');
   const [colagem, setColagem] = useState('');
 
-  // Importação de ficheiro
   const fileRef = useRef<HTMLInputElement>(null);
   const [sheetRows, setSheetRows] = useState<string[][]>([]);
   const [nColunas, setNColunas] = useState(0);
@@ -79,6 +75,8 @@ export default function GeradorPS2() {
   const [colNome, setColNome] = useState(2);
   const [linhaInicial, setLinhaInicial] = useState(1);
 
+  const [natTabela, setNatTabela] = useState<NaturezaRegra[]>(NATUREZA_PADRAO);
+  const [overrides, setOverrides] = useState<Record<number, string>>({});
   const [resultado, setResultado] = useState<PS2Resultado | null>(null);
 
   const linhas: LinhaBruta[] = useMemo(() => {
@@ -87,13 +85,44 @@ export default function GeradorPS2() {
     for (let i = Math.max(0, linhaInicial - 1); i < sheetRows.length; i++) {
       const r = sheetRows[i] ?? [];
       out.push({
-        contaBenef: (r[colConta] ?? '').toString().trim(),
+        recebido: (r[colConta] ?? '').toString().trim(),
         valor: (r[colValor] ?? '').toString().trim(),
         nome: (r[colNome] ?? '').toString().trim(),
       });
     }
     return out;
   }, [modo, colagem, sheetRows, colConta, colValor, colNome, linhaInicial]);
+
+  const comDados = useMemo(
+    () => linhas.filter((l) => l.recebido !== '' || l.valor !== ''),
+    [linhas],
+  );
+
+  const tratadas: LinhaTratada[] = useMemo(
+    () =>
+      comDados.map((l, i) => {
+        const trat = tratarNib(l.recebido, natTabela);
+        const ov = (overrides[i] ?? '').replace(/\D/g, '');
+        if (ov) {
+          const ok = /^\d{21}$/.test(ov);
+          return { ...l, trat, nibFinal: ov, estado: ok ? 'ok' : 'alerta' };
+        }
+        return { ...l, trat, nibFinal: trat.nib, estado: trat.estado };
+      }),
+    [comDados, natTabela, overrides],
+  );
+
+  const contagem = useMemo(() => {
+    let ok = 0,
+      naoBca = 0,
+      alerta = 0;
+    for (const t of tratadas) {
+      if (t.estado === 'ok') ok++;
+      else if (t.estado === 'nao-bca') naoBca++;
+      else alerta++;
+    }
+    return { ok, naoBca, alerta };
+  }, [tratadas]);
 
   const carregarFicheiro = async (file: File) => {
     try {
@@ -104,6 +133,7 @@ export default function GeradorPS2() {
       const norm = rows.map((r) => (Array.isArray(r) ? r.map((c) => (c ?? '').toString()) : []));
       setSheetRows(norm);
       setNColunas(norm.reduce((m, r) => Math.max(m, r.length), 0));
+      setOverrides({});
       setResultado(null);
       toast.success(`${norm.length} linha(s) lidas de "${file.name}".`);
     } catch (e) {
@@ -113,17 +143,22 @@ export default function GeradorPS2() {
   };
 
   const gerar = () => {
-    const uteis = linhas.filter((l) => l.contaBenef !== '' || l.valor !== '');
+    if (contagem.alerta > 0) {
+      toast.error(`${contagem.alerta} linha(s) em alerta — corrige os NIB antes de gerar.`);
+      return;
+    }
     const res = gerarPS2({
       tipo,
       nibEmpresa: montarNib(contaEmpresa),
       data,
       referenciaOrdenante: referencia,
-      linhas: uteis.map((l) => ({
-        nib: nibDe(l.contaBenef),
-        valor: limparValor(l.valor),
-        descritivo: `${prefixo} ${l.nome}`.trim(),
-      })),
+      linhas: tratadas
+        .filter((t) => t.estado === 'ok')
+        .map((t) => ({
+          nib: t.nibFinal,
+          valor: limparValor(t.valor),
+          descritivo: `${prefixo} ${t.nome}`.trim(),
+        })),
     });
     setResultado(res);
     if (res.erros.length === 0) toast.success(`Ficheiro PS2 pronto — ${res.totalRegistos} registos.`);
@@ -142,9 +177,8 @@ export default function GeradorPS2() {
   };
 
   const nibEmpresaPreview = contaEmpresa.trim() ? montarNib(contaEmpresa) : '—';
-  const comDados = linhas.filter((l) => l.contaBenef !== '' || l.valor !== '');
-  const previewLinhas = comDados.slice(0, 100);
   const colOpts = Array.from({ length: Math.max(nColunas, 3) }, (_, i) => i);
+  const previewLinhas = tratadas.slice(0, 200);
 
   const previewConteudo = useMemo(() => {
     if (!resultado || resultado.erros.length > 0) return '';
@@ -159,10 +193,10 @@ export default function GeradorPS2() {
   }, [resultado]);
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
+    <div className="container mx-auto p-6 max-w-5xl">
       <PageHeader
         title="Gerador PS2"
-        subtitle="Trata a folha de salários e gera o ficheiro PS2 para processar no sistema"
+        subtitle="Trata a folha de salários (contas → NIB) e gera o ficheiro PS2"
       />
 
       {/* Cabeçalho */}
@@ -223,27 +257,72 @@ export default function GeradorPS2() {
         </CardContent>
       </Card>
 
-      {/* Beneficiários em massa */}
+      {/* Tabela de natureza */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-base">Tabela de natureza</CardTitle>
+          <CardDescription>
+            Índice recebido (1–9, ou `1`/`10`/`101`/`10001`…) → natureza final de 5 dígitos.
+            Editável — quando surgir um caso novo, ajusta aqui.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            {natTabela.map((r, i) => (
+              <div key={i} className="flex items-center gap-1 rounded-md border px-2 py-1">
+                <span className="text-xs text-muted-foreground w-10 text-right">{r.recebida} →</span>
+                <Input
+                  value={r.final}
+                  onChange={(e) =>
+                    setNatTabela((prev) =>
+                      prev.map((x, j) => (j === i ? { ...x, final: e.target.value.replace(/\D/g, '') } : x)),
+                    )
+                  }
+                  className="h-7 w-20 font-mono text-xs"
+                  maxLength={5}
+                />
+                {r.recebida.length >= 3 && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() => setNatTabela((prev) => prev.filter((_, j) => j !== i))}
+                    aria-label="Remover regra"
+                  >
+                    <Trash2 className="h-3 w-3 text-destructive" />
+                  </Button>
+                )}
+              </div>
+            ))}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setNatTabela((prev) => [...prev, { recebida: '', final: '' }])}
+            >
+              <Plus className="h-4 w-4 mr-1" /> Regra
+            </Button>
+          </div>
+          {natTabela.some((r) => r.recebida === '' || r.final === '') && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Preenche "recebida" (o que vem no fim do NIB) e "final" nas regras novas.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Beneficiários */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-base">Beneficiários</CardTitle>
           <CardDescription>
-            Cola a folha do Excel (nº conta, valor, nome) ou carrega o ficheiro. Centenas de linhas
-            de uma vez.
+            Cola a folha (NIB/conta, valor, nome) ou carrega o ficheiro. Centenas de linhas de uma
+            vez. As contas são transformadas em NIB automaticamente.
           </CardDescription>
           <div className="flex gap-2 pt-2">
-            <Button
-              size="sm"
-              variant={modo === 'colar' ? 'default' : 'outline'}
-              onClick={() => setModo('colar')}
-            >
+            <Button size="sm" variant={modo === 'colar' ? 'default' : 'outline'} onClick={() => setModo('colar')}>
               <ClipboardPaste className="h-4 w-4 mr-1" /> Colar
             </Button>
-            <Button
-              size="sm"
-              variant={modo === 'ficheiro' ? 'default' : 'outline'}
-              onClick={() => setModo('ficheiro')}
-            >
+            <Button size="sm" variant={modo === 'ficheiro' ? 'default' : 'outline'} onClick={() => setModo('ficheiro')}>
               <Upload className="h-4 w-4 mr-1" /> Carregar ficheiro
             </Button>
           </div>
@@ -254,9 +333,10 @@ export default function GeradorPS2() {
               value={colagem}
               onChange={(e) => {
                 setColagem(e.target.value);
+                setOverrides({});
                 setResultado(null);
               }}
-              placeholder={'Uma linha por beneficiário, colunas separadas por tab:\n0003…\t150000\tJOÃO SILVA\n0003…\t142500\tMARIA COSTA'}
+              placeholder={'Uma linha por beneficiário: NIB/conta [tab] valor [tab] nome\n000300006757980410176\t108800,00\tJOÃO SILVA\n67579804\t142500\tMARIA COSTA'}
               className="min-h-[160px] font-mono text-xs"
             />
           ) : (
@@ -278,39 +358,23 @@ export default function GeradorPS2() {
 
               {sheetRows.length > 0 && (
                 <div className="grid gap-3 sm:grid-cols-4">
-                  <div className="space-y-1">
-                    <Label className="text-xs">Coluna Nº conta</Label>
-                    <Select value={String(colConta)} onValueChange={(v) => setColConta(Number(v))}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {colOpts.map((i) => (
-                          <SelectItem key={i} value={String(i)}>{XLSX.utils.encode_col(i)}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Coluna Valor</Label>
-                    <Select value={String(colValor)} onValueChange={(v) => setColValor(Number(v))}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {colOpts.map((i) => (
-                          <SelectItem key={i} value={String(i)}>{XLSX.utils.encode_col(i)}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Coluna Nome</Label>
-                    <Select value={String(colNome)} onValueChange={(v) => setColNome(Number(v))}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {colOpts.map((i) => (
-                          <SelectItem key={i} value={String(i)}>{XLSX.utils.encode_col(i)}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  {[
+                    ['NIB / conta', colConta, setColConta] as const,
+                    ['Valor', colValor, setColValor] as const,
+                    ['Nome', colNome, setColNome] as const,
+                  ].map(([label, val, set]) => (
+                    <div key={label} className="space-y-1">
+                      <Label className="text-xs">Coluna {label}</Label>
+                      <Select value={String(val)} onValueChange={(v) => set(Number(v))}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {colOpts.map((i) => (
+                            <SelectItem key={i} value={String(i)}>{XLSX.utils.encode_col(i)}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ))}
                   <div className="space-y-1">
                     <Label className="text-xs" htmlFor="li">Linha inicial</Label>
                     <Input
@@ -326,28 +390,72 @@ export default function GeradorPS2() {
             </div>
           )}
 
-          {comDados.length > 0 && (
+          {tratadas.length > 0 && (
             <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">
-                {comDados.length} linha(s) com dados. Pré-visualização (máx. 100):
-              </p>
-              <div className="max-h-72 overflow-auto rounded-md border">
+              <div className="flex flex-wrap gap-2 text-sm">
+                <Badge variant="secondary">{contagem.ok} prontos</Badge>
+                {contagem.naoBca > 0 && <Badge variant="outline">{contagem.naoBca} não-BCA (fora)</Badge>}
+                {contagem.alerta > 0 && (
+                  <Badge variant="destructive">{contagem.alerta} em alerta — corrigir</Badge>
+                )}
+                {tratadas.length > previewLinhas.length && (
+                  <span className="text-xs text-muted-foreground self-center">
+                    (mostra as primeiras {previewLinhas.length})
+                  </span>
+                )}
+              </div>
+              <div className="max-h-[28rem] overflow-auto rounded-md border">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-10">#</TableHead>
-                      <TableHead>Nº conta</TableHead>
-                      <TableHead>Valor</TableHead>
+                      <TableHead className="w-8">#</TableHead>
                       <TableHead>Nome</TableHead>
+                      <TableHead>Recebido</TableHead>
+                      <TableHead>Nat.</TableHead>
+                      <TableHead>NIB final</TableHead>
+                      <TableHead>Valor</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {previewLinhas.map((l, i) => (
-                      <TableRow key={i}>
+                    {previewLinhas.map((t, i) => (
+                      <TableRow
+                        key={i}
+                        className={
+                          t.estado === 'nao-bca'
+                            ? 'opacity-45'
+                            : t.estado === 'alerta'
+                              ? 'bg-destructive/5'
+                              : undefined
+                        }
+                      >
                         <TableCell className="text-muted-foreground">{i + 1}</TableCell>
-                        <TableCell className="font-mono text-xs">{l.contaBenef}</TableCell>
-                        <TableCell>{l.valor}</TableCell>
-                        <TableCell>{l.nome}</TableCell>
+                        <TableCell className="max-w-[10rem] truncate">{t.nome || '—'}</TableCell>
+                        <TableCell className="font-mono text-[11px]">{t.recebido}</TableCell>
+                        <TableCell className="text-xs whitespace-nowrap">
+                          {t.trat.naturezaRecebida
+                            ? `${t.trat.naturezaRecebida} → ${t.trat.naturezaFinal}`
+                            : '—'}
+                        </TableCell>
+                        <TableCell className="font-mono text-[11px]">
+                          {t.estado === 'nao-bca' ? (
+                            <span className="text-muted-foreground">{t.trat.motivo}</span>
+                          ) : t.estado === 'alerta' ? (
+                            <div className="flex items-center gap-1">
+                              <AlertTriangle className="h-3 w-3 text-destructive shrink-0" />
+                              <Input
+                                value={overrides[i] ?? ''}
+                                onChange={(e) =>
+                                  setOverrides((prev) => ({ ...prev, [i]: e.target.value }))
+                                }
+                                placeholder={t.trat.motivo ?? 'NIB (21 díg.)'}
+                                className="h-7 w-52 font-mono text-[11px]"
+                              />
+                            </div>
+                          ) : (
+                            t.nibFinal
+                          )}
+                        </TableCell>
+                        <TableCell className="text-xs">{t.valor}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -359,7 +467,7 @@ export default function GeradorPS2() {
       </Card>
 
       <div className="flex flex-wrap gap-2">
-        <Button onClick={gerar} disabled={comDados.length === 0}>
+        <Button onClick={gerar} disabled={contagem.ok === 0 || contagem.alerta > 0}>
           Gerar ficheiro PS2
         </Button>
         <Button
