@@ -31,7 +31,7 @@ const Settings = () => {
     <PageContainer size="default">
       <PageHeader
         title="Configurações" 
-        subtitle="Conta, palavra-passe e tema"
+        subtitle="Conta, segurança e tema"
       />
       
       <div className="grid grid-cols-1 gap-6">

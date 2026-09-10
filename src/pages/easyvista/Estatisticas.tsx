@@ -45,12 +45,9 @@ const EasyVistaEstatisticas = () => {
     try {
       const processes = await getFileProcesses();
       setAllProcesses(processes as FileProcess[]);
-      if (processes.length === 0) {
-        toast.info('Nenhum dado de processamento disponível. Registe processamentos na ficha para os ver aqui.');
-      }
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
-      toast.error('Erro ao carregar dados. Por favor, tente novamente.');
+      toast.error('Não foi possível carregar os dados.');
     } finally {
       setLoading(false);
       setRefreshing(false);
