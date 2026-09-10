@@ -79,6 +79,7 @@ O sistema está dividido nos seguintes módulos:
   - Passagem de Turno
   - Histórico de Fichas
   - Retornos de Cobranças
+  - Gerador PS2 (ficheiro de pagamentos em massa)
 - **CRC**: Fecho de inconsistências no CRC Front Office
 - **Processamentos**: Estatísticas e Relatórios de processamentos
 

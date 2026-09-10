@@ -75,6 +75,7 @@ export const SidebarContent = () => {
     { label: 'SCI - Histórico', path: '/sci/historico-fichas', keywords: ['sci', 'histórico', 'fichas', 'guardadas'] },
     { label: 'SCI - Retornos de Cobranças', path: '/sci/retornos-cobrancas', keywords: ['sci', 'retornos', 'cobranças', 'ficheiros'] },
     { label: 'SCI - Passagem de Turno', path: '/sci/passagem-turno', keywords: ['sci', 'passagem', 'turno', 'notas', 'handover'] },
+    { label: 'SCI - Gerador PS2', path: '/sci/gerador-ps2', keywords: ['sci', 'ps2', 'salários', 'pagamentos', 'ficheiro', 'banco'] },
     { label: 'CRC - Fecho de Inconsistências', path: '/crc/tratamento', keywords: ['crc', 'inconsistências', 'fecho', 'validar'] },
     { label: 'Processamentos - Estatísticas', path: '/easyvista/estatisticas', keywords: ['processamentos', 'estatísticas', 'charts'] },
     { label: 'Configurações', path: '/settings', keywords: ['settings', 'configurações', 'config'] },
@@ -117,7 +118,8 @@ export const SidebarContent = () => {
               { label: "Ficha de Procedimentos", to: "/sci/procedimentos" },
               { label: "Histórico de Fichas", to: "/sci/historico-fichas", badge: tapesBadge },
               { label: "Retornos Cobranças", to: "/sci/retornos-cobrancas", badge: retornosBadge },
-              { label: "Passagem de Turno", to: "/sci/passagem-turno" }
+              { label: "Passagem de Turno", to: "/sci/passagem-turno" },
+              { label: "Gerador PS2", to: "/sci/gerador-ps2" }
             ]}
           />
           <SidebarItem
