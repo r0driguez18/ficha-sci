@@ -68,9 +68,22 @@ export interface NibTratado {
   motivo?: string;
 }
 
+/**
+ * Como interpretar o que chega na coluna do "NIB":
+ *   auto     — deteta se há natureza no fim e converte-a (heurística);
+ *   so-conta — o que chega é SÓ o nº de conta, sem natureza; concatena
+ *              `0003` + zeros + conta + `10176` (como a folha Excel);
+ *   nib      — já é um NIB completo de 21 dígitos; só limpa e mapeia a
+ *              natureza dos últimos 5.
+ */
+export type ModoConta = 'auto' | 'so-conta' | 'nib';
+
+const NAT_POR_OMISSAO = '10176';
+
 export function tratarNib(
   recebido: string,
   tabela: NaturezaRegra[] = NATUREZA_PADRAO,
+  modo: ModoConta = 'auto',
 ): NibTratado {
   const digitos = (recebido ?? '').replace(/\D/g, '');
   const vazio: NibTratado = {
@@ -90,40 +103,48 @@ export function tratarNib(
     return { ...vazio, estado: 'nao-bca', motivo: `Banco ${digitos.slice(0, 4)} — não BCA` };
   }
 
-  // Tira "0003" + agência (4) do início quando há um NIB completo.
-  let resto = digitos;
-  if (digitos.startsWith(BANCO_BCA) && digitos.length >= 13) {
-    resto = digitos.slice(8);
-  } else if (digitos.startsWith(BANCO_BCA)) {
-    resto = digitos.slice(4);
-  }
-
-  // Deteta a natureza no fim (tenta 5,4,3,2,1 dígitos; a conta tem de ficar 4–8).
-  let conta = resto;
+  let conta = '';
   let natRec = '';
-  for (let n = Math.min(5, resto.length - 1); n >= 1; n--) {
-    const cand = resto.slice(-n);
-    const acc = resto.slice(0, -n);
-    if (indiceNatureza(cand) != null && acc.length >= 4 && acc.length <= 8) {
-      conta = acc;
-      natRec = cand;
-      break;
+
+  if (modo === 'so-conta') {
+    // O que chega é o nº de conta e mais nada.
+    conta = digitos.startsWith(BANCO_BCA) && digitos.length >= 17 ? digitos.slice(8) : digitos;
+    natRec = '1';
+  } else if (modo === 'nib') {
+    if (!digitos.startsWith(BANCO_BCA) || digitos.length !== 21) {
+      return { ...vazio, motivo: `Esperava um NIB de 21 dígitos (tem ${digitos.length})` };
+    }
+    natRec = digitos.slice(-5);
+    conta = digitos.slice(8, 16);
+  } else {
+    // auto — tira "0003" + agência (4) do início quando há um NIB completo.
+    let resto = digitos;
+    if (digitos.startsWith(BANCO_BCA) && digitos.length >= 13) resto = digitos.slice(8);
+    else if (digitos.startsWith(BANCO_BCA)) resto = digitos.slice(4);
+
+    // Deteta a natureza no fim (5,4,3,2,1 dígitos; a conta tem de ficar 4–8).
+    conta = resto;
+    for (let n = Math.min(5, resto.length - 1); n >= 1; n--) {
+      const cand = resto.slice(-n);
+      const acc = resto.slice(0, -n);
+      if (indiceNatureza(cand) != null && acc.length >= 4 && acc.length <= 8) {
+        conta = acc;
+        natRec = cand;
+        break;
+      }
+    }
+    if (natRec === '') {
+      if (resto.length <= 8) {
+        conta = resto;
+        natRec = '1';
+      } else {
+        natRec = resto.slice(-5);
+        conta = resto.slice(0, -5);
+      }
     }
   }
 
-  if (natRec === '') {
-    if (resto.length <= 8) {
-      // Só a conta → natureza índice 1.
-      conta = resto;
-      natRec = '1';
-    } else {
-      // Provavelmente já vem com natureza final (5 díg. não mapeáveis).
-      natRec = resto.slice(-5);
-      conta = resto.slice(0, -5);
-    }
-  }
-
-  const natFin = naturezaFinal(natRec, tabela) ?? natRec;
+  const natFin = naturezaFinal(natRec, tabela) ?? natRec ?? NAT_POR_OMISSAO;
   const contaPad = conta.padStart(8, '0');
   const filler = '0'.repeat(Math.max(0, 12 - contaPad.length));
   const nib = BANCO_BCA + filler + contaPad + natFin;
