@@ -100,7 +100,7 @@ export const SignatureSection: React.FC<SignatureSectionProps> = ({
           <span className="font-medium">{operatorName}</span>
         </div>
         {!operatorLinked && (
-          <p className="mt-1 text-xs text-warning">
+          <p className="mt-1 text-xs text-muted-foreground">
             A sua conta ainda não está associada a um código de operador. Ligue-a em
             Configurações para que o seu nome fique correto no PDF e no histórico.
           </p>
