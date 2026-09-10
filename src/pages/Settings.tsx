@@ -31,14 +31,14 @@ const Settings = () => {
     <PageContainer size="default">
       <PageHeader
         title="Configurações" 
-        subtitle="Gerencie as configurações do seu sistema"
+        subtitle="Conta, palavra-passe e tema"
       />
       
       <div className="grid grid-cols-1 gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Conta</CardTitle>
-            <CardDescription>Gerencie suas informações de conta</CardDescription>
+            <CardDescription>As suas informações de conta</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-1">
