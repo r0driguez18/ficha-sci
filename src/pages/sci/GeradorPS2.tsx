@@ -522,7 +522,7 @@ export default function GeradorPS2() {
                           <th className="px-2 py-1 font-normal text-muted-foreground w-10">linha</th>
                           {colOpts.map((i) => {
                             const papel = i === colConta ? 'NIB' : i === colValor ? 'Valor' : i === colNome ? 'Nome' : '';
-                            const cor = i === colConta ? 'text-primary' : i === colValor ? 'text-success' : i === colNome ? 'text-warning' : 'text-muted-foreground';
+                            const cor = i === colConta ? 'text-primary' : i === colValor ? 'text-success' : i === colNome ? 'text-foreground' : 'text-muted-foreground';
                             return (
                               <th key={i} className={`px-2 py-1 whitespace-nowrap font-medium ${cor}`}>
                                 {XLSX.utils.encode_col(i)}
@@ -537,7 +537,7 @@ export default function GeradorPS2() {
                           <tr key={ri} className={`border-t ${ri === linhaInicial - 1 ? 'border-l-2 border-l-primary' : ''} ${ri >= linhaInicial - 1 ? '' : 'opacity-45'}`}>
                             <td className="px-2 py-1 text-muted-foreground">{ri + 1}</td>
                             {colOpts.map((ci) => (
-                              <td key={ci} className={`px-2 py-1 max-w-[14rem] truncate ${ci === colConta ? 'text-primary font-mono' : ci === colValor ? 'text-success' : ci === colNome ? 'text-warning' : ''}`}>
+                              <td key={ci} className={`px-2 py-1 max-w-[14rem] truncate ${ci === colConta ? 'text-primary font-mono' : ci === colValor ? 'text-success' : ci === colNome ? 'text-foreground' : ''}`}>
                                 {(r[ci] ?? '').toString()}
                               </td>
                             ))}

@@ -461,7 +461,7 @@ export default function CrcTratamento() {
                 )}
 
                 {run.paginasSaltadas ? (
-                  <p className="text-xs text-warning">
+                  <p className="text-xs text-muted-foreground">
                     {run.paginasSaltadas} página(s) saltada(s) por falha de resposta do CRC.
                   </p>
                 ) : null}

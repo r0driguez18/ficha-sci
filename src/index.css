@@ -22,26 +22,26 @@
     --secondary-foreground: 216 100% 28%;
 
     --muted: 210 30% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted-foreground: 215 20% 42%;
 
     --accent: 210 30% 96%;
     --accent-foreground: 216 100% 28%;
 
     /* Vermelho BCA (Destrutivo e Destaques críticos) */
-    --destructive: 354 85% 50%;
+    --destructive: 354 74% 44%;
     --destructive-foreground: 210 40% 98%;
 
-    --success: 142 76% 36%;
+    --success: 142 72% 29%;
     --success-foreground: 355 20% 99%;
 
     --warning: 38 92% 50%;
     --warning-foreground: 48 96% 12%;
 
     --info: 204 94% 94%;
-    --info-foreground: 210 92% 45%;
+    --info-foreground: 210 92% 37%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
+    --border: 214 26% 85%;
+    --input: 214 20% 76%;
     --ring: 216 100% 28%;
 
     --radius: 0.75rem;
@@ -49,12 +49,12 @@
     /* Sidebar com fundo azul BCA escurecido */
     --sidebar-background: 216 100% 18%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 354 85% 50%;
+    --sidebar-primary: 354 76% 44%;
     --sidebar-primary-foreground: 0 0% 100%;
     /* Estados (hover / item ativo) — mais claros que o fundo para se verem. */
     --sidebar-accent: 216 70% 30%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 216 55% 27%;
+    --sidebar-border: 216 38% 46%;
     --sidebar-ring: 354 85% 50%;
   }
 

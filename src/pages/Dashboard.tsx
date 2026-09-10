@@ -87,7 +87,7 @@ const Dashboard = () => {
           ) : exportada ? (
             <span className="text-success font-medium">já foi exportada uma ficha para hoje</span>
           ) : (
-            <span className="text-warning font-medium">ainda sem ficha exportada hoje</span>
+            <span className="text-foreground font-medium">ainda sem ficha exportada hoje</span>
           )}
         </CardContent>
       </Card>
