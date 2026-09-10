@@ -5,11 +5,10 @@
 
 Este é um sistema administrativo para controle interno que permite gerenciar:
 
-- Procedimentos e tarefas internas
-- Processamento de dados e relatórios
+- Procedimentos e tarefas internas (fichas diárias, passagem de turno)
+- Fecho de inconsistências no CRC Front Office
+- Retornos de cobranças e prazos
 - Estatísticas e análises de desempenho
-- Tratamento de ficheiros e registros
-- Gerador PS2 para ficheiros bancários
 
 ## Stack Tecnológica
 
@@ -77,8 +76,9 @@ O sistema está dividido nos seguintes módulos:
 - **SCI**: Sistema de Controle Interno para gerenciamento de procedimentos
   - Ficha de Procedimentos
   - Taskboard de tarefas
-  - Calendário
-  - Gerador PS2
+  - Passagem de Turno
+  - Histórico de Fichas
+  - Retornos de Cobranças
 - **CRC**: Fecho de inconsistências no CRC Front Office
 - **Processamentos**: Estatísticas e Relatórios de processamentos
 
@@ -138,14 +138,6 @@ Permite o gerenciamento de tarefas diárias com diferentes visualizações:
 - Final do Mês Dia Útil
 - Final do Mês Dia Não Útil
 
-### Calendário
-Visualização de eventos e tarefas em formato de calendário.
-
-### Gerador PS2
-Ferramenta para geração de ficheiros bancários no formato PS2, com:
-- Validação de NIB
-- Formatação de valores
-- Geração de cabeçalho e rodapé segundo as especificações oficiais
 
 ## Boas Práticas de Desenvolvimento
 
