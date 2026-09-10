@@ -101,6 +101,21 @@ export async function saveExportedTaskboard(
 }
 
 /**
+ * Já existe (de qualquer operador da equipa) uma ficha exportada para esta
+ * data? Usado no Dashboard para o cartão "Ficha de hoje".
+ */
+export async function existeExportadaNaData(
+  date: string,
+): Promise<{ exportada: boolean; error: PostgrestError | null }> {
+  const { data, error } = await supabase
+    .from('exported_taskboards')
+    .select('id')
+    .eq('date', date)
+    .limit(1);
+  return { exportada: !!(data && data.length > 0), error };
+}
+
+/**
  * Fichas arquivadas cuja folha de verificação de tapes ainda está sem o
  * print do display-tape anexado.
  */
