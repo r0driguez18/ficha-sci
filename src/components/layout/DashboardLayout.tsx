@@ -3,6 +3,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { BreadcrumbNavigation } from './BreadcrumbNavigation';
+import { ServerStatusBanner } from './ServerStatusBanner';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
@@ -110,6 +111,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <Sidebar />
         <div className="flex-1 flex flex-col min-w-0 bg-background/50">
           <HeaderBar />
+          <ServerStatusBanner />
           <main className="flex-1 overflow-auto relative">
             <div className="absolute inset-0 bg-gradient-to-br from-transparent to-primary/5 -z-10" />
             <div className="container py-8 px-4 sm:px-6 lg:px-8 animate-fade-in max-w-7xl mx-auto">
