@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SidebarItem } from './SidebarItem';
 import { Button } from '@/components/ui/button';
-import { SearchSidebar } from '../SearchSidebar';
+import { CommandPalette } from '../CommandPalette';
 import { SidebarGroup, SidebarGroupLabel, SidebarGroupContent, useSidebar } from '@/components/ui/sidebar';
 import {
   ClipboardCheck,
@@ -21,6 +21,18 @@ import { getPendingTapesEvidencia } from '@/services/exportedTaskboardService';
 export const SidebarContent = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const navigate = useNavigate();
+
+  // Atalho ⌘K / Ctrl+K abre a paleta de comandos.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsSearchOpen(true);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
   const { user } = useAuth();
@@ -71,30 +83,34 @@ export const SidebarContent = () => {
   }, [user]);
 
   const searchItems = [
-    { label: 'SCI - Procedimentos', path: '/sci/procedimentos', keywords: ['sci', 'taskboard', 'procedimentos'] },
-    { label: 'SCI - Histórico', path: '/sci/historico-fichas', keywords: ['sci', 'histórico', 'fichas', 'guardadas'] },
-    { label: 'SCI - Retornos de Cobranças', path: '/sci/retornos-cobrancas', keywords: ['sci', 'retornos', 'cobranças', 'ficheiros'] },
-    { label: 'SCI - Passagem de Turno', path: '/sci/passagem-turno', keywords: ['sci', 'passagem', 'turno', 'notas', 'handover'] },
-    { label: 'SCI - Gerador PS2', path: '/sci/gerador-ps2', keywords: ['sci', 'ps2', 'salários', 'pagamentos', 'ficheiro', 'banco'] },
-    { label: 'CRC - Fecho de Inconsistências', path: '/crc/tratamento', keywords: ['crc', 'inconsistências', 'fecho', 'validar'] },
-    { label: 'Processamentos - Estatísticas', path: '/easyvista/estatisticas', keywords: ['processamentos', 'estatísticas', 'charts'] },
-    { label: 'Configurações', path: '/settings', keywords: ['settings', 'configurações', 'config'] },
-    { label: 'Documentação', path: '/docs', keywords: ['docs', 'documentação', 'help', 'ajuda'] },
+    { label: 'Home', path: '/dashboard', group: 'Início', keywords: ['dashboard', 'resumo', 'hoje'] },
+    { label: 'Procedimentos', path: '/sci/procedimentos', group: 'SCI', keywords: ['taskboard', 'procedimentos', 'ficha'] },
+    { label: 'Histórico de Fichas', path: '/sci/historico-fichas', group: 'SCI', keywords: ['histórico', 'fichas', 'guardadas', 'arquivo'] },
+    { label: 'Retornos de Cobranças', path: '/sci/retornos-cobrancas', group: 'SCI', keywords: ['retornos', 'cobranças', 'ficheiros', 'sla'] },
+    { label: 'Passagem de Turno', path: '/sci/passagem-turno', group: 'SCI', keywords: ['passagem', 'turno', 'notas', 'handover'] },
+    { label: 'Gerador PS2', path: '/sci/gerador-ps2', group: 'SCI', keywords: ['ps2', 'salários', 'pagamentos', 'ficheiro', 'banco', 'nib'] },
+    { label: 'Fecho de Inconsistências', path: '/crc/tratamento', group: 'CRC', keywords: ['inconsistências', 'fecho', 'validar', 'crc'] },
+    { label: 'Estatísticas', path: '/easyvista/estatisticas', group: 'Processamentos', keywords: ['estatísticas', 'gráficos', 'charts'] },
+    { label: 'Configurações', path: '/settings', group: 'Sistema', keywords: ['settings', 'configurações', 'tema', 'senha'] },
+    { label: 'Documentação', path: '/docs', group: 'Sistema', keywords: ['docs', 'documentação', 'ajuda', 'help'] },
   ];
 
   return (
     <>
-      {/* Search */}
+      {/* Pesquisa / paleta de comandos */}
       {!collapsed && (
         <div className="mb-4 px-1">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setIsSearchOpen(true)}
-            className="w-full justify-start text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent border border-sidebar-foreground/20 rounded-lg h-9"
+            className="w-full justify-start gap-2 rounded-lg border border-sidebar-foreground/15 h-9 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
           >
-            <Search className="h-4 w-4 mr-2 shrink-0" />
-            <span className="text-sm">Pesquisar...</span>
+            <Search className="h-4 w-4 shrink-0" />
+            <span className="text-sm">Pesquisar</span>
+            <kbd className="ml-auto rounded border border-sidebar-foreground/20 px-1.5 font-mono text-[10px] text-sidebar-foreground/50">
+              Ctrl K
+            </kbd>
           </Button>
         </div>
       )}
@@ -150,9 +166,9 @@ export const SidebarContent = () => {
         </SidebarGroupContent>
       </SidebarGroup>
 
-      <SearchSidebar
-        isOpen={isSearchOpen}
-        onClose={() => setIsSearchOpen(false)}
+      <CommandPalette
+        open={isSearchOpen}
+        onOpenChange={setIsSearchOpen}
         items={searchItems}
         onNavigate={navigate}
       />
