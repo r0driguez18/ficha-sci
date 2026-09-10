@@ -1,127 +1,41 @@
-
-import React, { useState } from 'react';
+import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { cn } from '@/lib/utils';
-import { ChevronDown, ChevronRight } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { useSidebar } from '@/components/ui/sidebar';
 import {
-  SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarMenuSub,
-  SidebarMenuSubItem,
-  SidebarMenuSubButton,
+  SidebarMenuBadge,
 } from '@/components/ui/sidebar';
 
 interface SidebarItemProps {
   icon: React.ElementType;
   label: string;
   to: string;
-  subItems?: { label: string; to: string; badge?: number }[];
+  /** Contador opcional (ex.: pendências). */
+  badge?: number;
 }
 
-export const SidebarItem = ({ icon: Icon, label, to, subItems }: SidebarItemProps) => {
+/**
+ * Item de menu — sempre um link direto (o menu é plano, sem submenus).
+ * Recolhido: só o ícone, com tooltip do label (tratado pelo SidebarMenuButton).
+ */
+export const SidebarItem = ({ icon: Icon, label, to, badge }: SidebarItemProps) => {
   const location = useLocation();
-  const { state, setOpen: setSidebarOpen } = useSidebar();
-  const collapsed = state === 'collapsed';
   const isActive = location.pathname === to || location.pathname.startsWith(`${to}/`);
-  const hasActiveChild = subItems?.some(
-    (sub) => location.pathname === sub.to || location.pathname.startsWith(`${sub.to}/`)
-  );
-  const [open, setOpen] = useState(isActive || !!hasActiveChild);
-
-  if (subItems) {
-    return (
-      <SidebarMenu>
-        <SidebarMenuItem>
-          {collapsed ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <SidebarMenuButton
-                  onClick={() => {
-                    if (setSidebarOpen) setSidebarOpen(true);
-                    setOpen(true);
-                  }}
-                  isActive={!!hasActiveChild}
-                  className="w-full justify-center"
-                >
-                  <Icon className="h-4 w-4 shrink-0" />
-                  <span className="sr-only">{label}</span>
-                </SidebarMenuButton>
-              </TooltipTrigger>
-              <TooltipContent side="right">{label}</TooltipContent>
-            </Tooltip>
-          ) : (
-            <SidebarMenuButton
-              onClick={() => setOpen(!open)}
-              isActive={!!hasActiveChild}
-              className="w-full"
-            >
-              <Icon className="h-4 w-4 shrink-0" />
-              <span className="flex-1">{label}</span>
-              {open
-                ? <ChevronDown className="h-4 w-4 shrink-0 opacity-60" />
-                : <ChevronRight className="h-4 w-4 shrink-0 opacity-60" />
-              }
-            </SidebarMenuButton>
-          )}
-          {open && !collapsed && (
-            <SidebarMenuSub>
-              {subItems.map((subItem) => {
-                const subActive = location.pathname === subItem.to || location.pathname.startsWith(`${subItem.to}/`);
-                return (
-                  <SidebarMenuSubItem key={subItem.to}>
-                    <SidebarMenuSubButton asChild isActive={subActive}>
-                      <NavLink to={subItem.to} className="flex justify-between items-center w-full min-w-0 pr-1 gap-2">
-                        <span className="truncate">{subItem.label}</span>
-                        {!!subItem.badge && subItem.badge > 0 && (
-                          <span className="bg-destructive shrink-0 text-destructive-foreground text-[10px] leading-[14px] font-bold px-1.5 rounded-sm shadow-sm z-10">
-                            {subItem.badge}
-                          </span>
-                        )}
-                      </NavLink>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                );
-              })}
-            </SidebarMenuSub>
-          )}
-        </SidebarMenuItem>
-      </SidebarMenu>
-    );
-  }
-
-  if (collapsed) {
-    return (
-      <SidebarMenu>
-        <SidebarMenuItem>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <SidebarMenuButton asChild isActive={isActive} className="w-full justify-center">
-                <NavLink to={to}>
-                  <Icon className="h-4 w-4 shrink-0" />
-                  <span className="sr-only">{label}</span>
-                </NavLink>
-              </SidebarMenuButton>
-            </TooltipTrigger>
-            <TooltipContent side="right">{label}</TooltipContent>
-          </Tooltip>
-        </SidebarMenuItem>
-      </SidebarMenu>
-    );
-  }
+  const showBadge = typeof badge === 'number' && badge > 0;
 
   return (
-    <SidebarMenu>
-      <SidebarMenuItem>
-        <SidebarMenuButton asChild isActive={isActive} className="w-full">
-          <NavLink to={to}>
-            <Icon className="h-4 w-4 shrink-0" />
-            <span>{label}</span>
-          </NavLink>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-    </SidebarMenu>
+    <SidebarMenuItem>
+      <SidebarMenuButton asChild isActive={isActive} tooltip={showBadge ? `${label} (${badge})` : label}>
+        <NavLink to={to}>
+          <Icon className="h-4 w-4 shrink-0" />
+          <span>{label}</span>
+        </NavLink>
+      </SidebarMenuButton>
+      {showBadge && (
+        <SidebarMenuBadge className="bg-destructive text-destructive-foreground">
+          {badge}
+        </SidebarMenuBadge>
+      )}
+    </SidebarMenuItem>
   );
 };
