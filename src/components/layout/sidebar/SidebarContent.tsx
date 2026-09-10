@@ -93,8 +93,8 @@ export const SidebarContent = () => {
     { label: 'Histórico de Fichas', path: '/sci/historico-fichas', group: 'SCI', keywords: ['histórico', 'fichas', 'guardadas', 'arquivo'] },
     { label: 'Retornos de Cobranças', path: '/sci/retornos-cobrancas', group: 'SCI', keywords: ['retornos', 'cobranças', 'ficheiros', 'sla'] },
     { label: 'Passagem de Turno', path: '/sci/passagem-turno', group: 'SCI', keywords: ['passagem', 'turno', 'notas', 'handover'] },
-    { label: 'Gerador PS2', path: '/sci/gerador-ps2', group: 'SCI', keywords: ['ps2', 'salários', 'pagamentos', 'ficheiro', 'banco', 'nib'] },
     { label: 'CRC — Inconsistências', path: '/crc/tratamento', group: 'Ferramentas', keywords: ['inconsistências', 'fecho', 'validar', 'crc'] },
+    { label: 'Gerador PS2', path: '/sci/gerador-ps2', group: 'Ferramentas', keywords: ['ps2', 'salários', 'pagamentos', 'ficheiro', 'banco', 'nib'] },
     { label: 'Estatísticas', path: '/easyvista/estatisticas', group: 'Ferramentas', keywords: ['estatísticas', 'gráficos', 'processamentos', 'charts'] },
     { label: 'Configurações', path: '/settings', group: 'Sistema', keywords: ['settings', 'configurações', 'tema', 'senha'] },
     { label: 'Documentação', path: '/docs', group: 'Sistema', keywords: ['docs', 'documentação', 'ajuda', 'help'] },
@@ -138,7 +138,6 @@ export const SidebarContent = () => {
             <SidebarItem icon={Archive} label="Histórico de Fichas" to="/sci/historico-fichas" badge={tapesBadge} />
             <SidebarItem icon={Undo2} label="Retornos de Cobranças" to="/sci/retornos-cobrancas" badge={retornosBadge} />
             <SidebarItem icon={ArrowRightLeft} label="Passagem de Turno" to="/sci/passagem-turno" />
-            <SidebarItem icon={Banknote} label="Gerador PS2" to="/sci/gerador-ps2" />
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>
@@ -150,6 +149,7 @@ export const SidebarContent = () => {
         <SidebarGroupContent>
           <SidebarMenu>
             <SidebarItem icon={ShieldCheck} label="CRC — Inconsistências" to="/crc/tratamento" />
+            <SidebarItem icon={Banknote} label="Gerador PS2" to="/sci/gerador-ps2" />
             <SidebarItem icon={BarChart3} label="Estatísticas" to="/easyvista/estatisticas" />
           </SidebarMenu>
         </SidebarGroupContent>
