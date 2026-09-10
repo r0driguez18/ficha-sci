@@ -30,12 +30,6 @@ export interface Turno1Tasks {
   processarTelecomp: boolean;
   enviarSegundoEtr: boolean;
   envioFicheirosVisa12h30: boolean;
-  enviarFicheiroCom: boolean;
-  dia01: boolean;
-  dia08: boolean;
-  dia16: boolean;
-  dia23: boolean;
-  atualizarCentralRisco: boolean;
   bmjrn: boolean;
   grjrcv: boolean;
   aujrn: boolean;

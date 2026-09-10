@@ -34,8 +34,6 @@ export const renderTurno1Tasks = (
     {key: 'processarTef', text: "Processar Ficheiros TEF – RTR/RCT/ERR"},
     {key: 'processarTelecomp', text: "Processar Ficheiros Telecompensação – RCB/RTC/FCT/IMR"},
     {key: 'enviarSegundoEtr', text: "Enviar 2º Ficheiro ETR (13 horas)"},
-    {key: 'enviarFicheiroCom', text: "Preparar e enviar ficheiro COM, dias:"},
-    {key: 'atualizarCentralRisco', text: "Atualização Nº Central de Risco (todas as Sextas-feiras)"},
     {key: 'backupsDiferidos', text: "Backups Diferidos"},
     {key: 'operacoesSemanais', text: "Operações Semanais / Mensais"}
   ];
@@ -128,21 +126,6 @@ export const renderTurno1Tasks = (
         { key: 'verificarEci', text: 'ECI' }
       ];
       sispItems.forEach(subItem => {
-        const itemKey = subItem.key as keyof typeof tasks;
-        drawCheckbox(doc, xOffset, y - 3, ensureBoolean(tasks[itemKey]));
-        doc.text(subItem.text, xOffset + 6, y);
-        xOffset += 20;
-      });
-      y += 6;
-    } else if (item.key === 'enviarFicheiroCom') {
-      let xOffset = 90;
-      const comDaysItems = [
-        { key: 'dia01', text: '01' },
-        { key: 'dia08', text: '08' },
-        { key: 'dia16', text: '16' },
-        { key: 'dia23', text: '23' }
-      ];
-      comDaysItems.forEach(subItem => {
         const itemKey = subItem.key as keyof typeof tasks;
         drawCheckbox(doc, xOffset, y - 3, ensureBoolean(tasks[itemKey]));
         doc.text(subItem.text, xOffset + 6, y);
