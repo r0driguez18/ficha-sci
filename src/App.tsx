@@ -23,7 +23,6 @@ import Documentation from "./pages/Documentation";
 import HistoricoFichas from './pages/sci/HistoricoFichas';
 import RetornosCobrancas from './pages/sci/RetornosCobrancas';
 import PassagemTurno from './pages/sci/PassagemTurno';
-import CalendarPage from './pages/sci/Calendar';
 
 const queryClient = new QueryClient();
 
@@ -53,8 +52,7 @@ const App = () => (
               <Route path="/sci/historico-fichas" element={<PrivateRoute><DashboardLayout><HistoricoFichas /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/retornos-cobrancas" element={<PrivateRoute><DashboardLayout><RetornosCobrancas /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/passagem-turno" element={<PrivateRoute><DashboardLayout><PassagemTurno /></DashboardLayout></PrivateRoute>} />
-              <Route path="/sci/calendario" element={<PrivateRoute><DashboardLayout><CalendarPage /></DashboardLayout></PrivateRoute>} />
-              
+
               {/* CRC Routes */}
               <Route path="/crc" element={<Navigate to="/crc/tratamento" replace />} />
               <Route path="/crc/tratamento" element={<PrivateRoute><DashboardLayout><CrcTratamento /></DashboardLayout></PrivateRoute>} />
