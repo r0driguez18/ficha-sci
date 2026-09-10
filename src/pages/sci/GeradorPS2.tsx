@@ -521,7 +521,7 @@ export default function GeradorPS2() {
                           <th className="px-2 py-1 font-normal text-muted-foreground w-10">linha</th>
                           {colOpts.map((i) => {
                             const papel = i === colConta ? 'NIB' : i === colValor ? 'Valor' : i === colNome ? 'Nome' : '';
-                            const cor = i === colConta ? 'text-blue-600' : i === colValor ? 'text-green-600' : i === colNome ? 'text-amber-600' : 'text-muted-foreground';
+                            const cor = i === colConta ? 'text-primary' : i === colValor ? 'text-success' : i === colNome ? 'text-warning' : 'text-muted-foreground';
                             return (
                               <th key={i} className={`px-2 py-1 whitespace-nowrap font-medium ${cor}`}>
                                 {XLSX.utils.encode_col(i)}
@@ -536,7 +536,7 @@ export default function GeradorPS2() {
                           <tr key={ri} className={`border-t ${ri === linhaInicial - 1 ? 'border-l-2 border-l-primary' : ''} ${ri >= linhaInicial - 1 ? '' : 'opacity-45'}`}>
                             <td className="px-2 py-1 text-muted-foreground">{ri + 1}</td>
                             {colOpts.map((ci) => (
-                              <td key={ci} className={`px-2 py-1 max-w-[14rem] truncate ${ci === colConta ? 'text-blue-700 font-mono' : ci === colValor ? 'text-green-700' : ci === colNome ? 'text-amber-700' : ''}`}>
+                              <td key={ci} className={`px-2 py-1 max-w-[14rem] truncate ${ci === colConta ? 'text-primary font-mono' : ci === colValor ? 'text-success' : ci === colNome ? 'text-warning' : ''}`}>
                                 {(r[ci] ?? '').toString()}
                               </td>
                             ))}
@@ -720,7 +720,7 @@ export default function GeradorPS2() {
       {resultado && resultado.erros.length === 0 && (
         <Card className="mt-6">
           <CardHeader className="flex flex-row flex-wrap items-center gap-3">
-            <CardTitle className="text-base flex items-center gap-2 text-green-600">
+            <CardTitle className="text-base flex items-center gap-2 text-success">
               <CheckCircle2 className="h-4 w-4" /> Ficheiro pronto
             </CardTitle>
             <Badge variant="secondary">{resultado.totalRegistos} registos</Badge>

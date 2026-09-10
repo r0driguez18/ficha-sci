@@ -95,7 +95,7 @@ export function DailyAlertsWidget() {
 
         {total === 0 && (
           <div className="text-center py-4">
-            <CheckCircle className="h-8 w-8 text-green-500 mx-auto mb-2" />
+            <CheckCircle className="h-8 w-8 text-success mx-auto mb-2" />
             <p className="text-sm text-muted-foreground">Sem alertas para hoje!</p>
           </div>
         )}

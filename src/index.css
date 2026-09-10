@@ -294,7 +294,7 @@
   position: absolute;
   height: 0;
   width: calc(var(--checkbox-height) * .2);
-  background-color: #34b93d;
+  background-color: hsl(var(--success));
   display: inline-block;
   transform-origin: left top;
   border-radius: 5px;
@@ -316,7 +316,7 @@
 }
 
 .checkbox-wrapper-19 .check-box[data-state="checked"] {
-  border-color: #34b93d;
+  border-color: hsl(var(--success));
 }
 
 .checkbox-wrapper-19 .check-box[data-state="checked"]::after {
