@@ -26,7 +26,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
 }) => {
   return (
     <div className="space-y-4 text-foreground pb-10">
-      <h3 className="font-bold text-lg mb-2 text-primary uppercase">OPERAÇÕES FECHO DIA</h3>
+      <h3 className="text-sm font-semibold uppercase tracking-wide text-primary mb-3">OPERAÇÕES FECHO DIA</h3>
 
       <div className="flex items-start space-x-2">
         <Checkbox id="datacenter3" checked={tasks.datacenter} onCheckedChange={(c) => onTaskChange('datacenter', !!c)} />
@@ -372,7 +372,7 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
 
       {/* OBSERVAÇÕES */}
       <div className="pt-8 mt-6">
-        <Label htmlFor="observations3" className="text-lg font-bold underline">Situações Pontuais</Label>
+        <Label htmlFor="observations3" className="text-sm font-semibold underline">Situações Pontuais</Label>
         <Textarea 
           id="observations3" 
           value={observations}
