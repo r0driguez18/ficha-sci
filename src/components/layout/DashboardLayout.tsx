@@ -62,8 +62,8 @@ function HeaderBar() {
     <header className="h-16 flex items-center gap-3 sm:gap-4 border-b border-border/40 bg-background/80 backdrop-blur-md sticky top-0 z-30 px-4 sm:px-6 shadow-sm">
       <SidebarTrigger className="shrink-0" />
 
-      <div className="min-w-0 flex-1 hidden sm:block">
-        {/* Breadcrumbs herdam a margem inferior do componente; anulada aqui para caber no header */}
+      <div className="min-w-0 flex-1 overflow-hidden">
+        {/* Único sítio com breadcrumbs. Anula a margem inferior do componente. */}
         <div className="[&>div]:mb-0">
           <BreadcrumbNavigation />
         </div>

@@ -246,10 +246,10 @@ export default function CrcTratamento() {
       />
 
       <div className="grid grid-cols-1 gap-6">
-        <Card className="shadow-md">
-          <CardHeader className="bg-primary/5">
+        <Card>
+          <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-primary">Execução</CardTitle>
+              <CardTitle>Execução</CardTitle>
               {run && (
                 <Badge variant="outline">
                   {ESTADO_LABEL[run.estado] ?? run.estado}
