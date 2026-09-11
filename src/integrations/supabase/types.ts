@@ -416,7 +416,11 @@ export type Database = {
       }
       verify_operator_pin: {
         Args: { pin: string }
-        Returns: boolean
+        Returns: string | null
+      }
+      consumir_token_assinatura: {
+        Args: { p_token: string }
+        Returns: undefined
       }
     }
     Enums: {
