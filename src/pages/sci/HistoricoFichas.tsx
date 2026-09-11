@@ -25,6 +25,7 @@ import {
 } from '@/services/tapesEvidenciaService';
 import { useOperators } from '@/hooks/useOperators';
 import { isSigned } from '@/types/signature';
+import { ehFeriadoCaboVerde } from '@/lib/feriadosCaboVerde';
 
 import {
   FileDown,
@@ -47,12 +48,32 @@ type TaskboardRecord = ExportedTaskboard;
 /** Dias corridos a partir dos quais uma pendência de display é "em atraso". */
 const TAPES_ATRASO_DIAS = 3;
 
+/**
+ * Feriados de Cabo Verde entre duas datas — usado só para alargar o
+ * limiar quando um feriado cai no intervalo. Fins de semana não entram
+ * aqui: o limiar de 3 dias corridos já foi pensado para dar margem a um
+ * fim de semana normal (o caso mais comum é exportar ao domingo); somar
+ * também os fins de semana duplicaria essa margem.
+ */
+function feriadosEntre(inicio: Date, fim: Date): number {
+  let count = 0;
+  const cur = new Date(inicio.getFullYear(), inicio.getMonth(), inicio.getDate());
+  const limite = new Date(fim.getFullYear(), fim.getMonth(), fim.getDate());
+  while (cur < limite) {
+    cur.setDate(cur.getDate() + 1);
+    if (ehFeriadoCaboVerde(cur)) count++;
+  }
+  return count;
+}
+
 const isTapesAtrasado = (record: ExportedTaskboard): boolean => {
   if (record.tapes_status !== 'pendente') return false;
   const ref = record.exported_at || record.created_at;
   if (!ref) return false;
-  const dias = (Date.now() - new Date(ref).getTime()) / 86_400_000;
-  return dias >= TAPES_ATRASO_DIAS;
+  const refDate = new Date(ref);
+  const dias = (Date.now() - refDate.getTime()) / 86_400_000;
+  const folga = feriadosEntre(refDate, new Date());
+  return dias >= TAPES_ATRASO_DIAS + folga;
 };
 
 const formatBytes = (n: number): string => {
@@ -280,7 +301,7 @@ export default function HistoricoFichas() {
   const handleRemoveFile = async (record: ExportedTaskboard, path: string) => {
     setBusyId(record.id);
     try {
-      const { data, error } = await removeTapesEvidencia(record.id, record.tapes_evidencia ?? [], path);
+      const { data, error } = await removeTapesEvidencia(record.id, path);
       if (error || !data) {
         toast({ title: 'Erro', description: error ?? 'Falha ao remover', variant: 'destructive' });
         return;

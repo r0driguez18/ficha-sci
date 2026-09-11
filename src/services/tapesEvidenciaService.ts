@@ -5,8 +5,10 @@ import type { TapesEvidenciaFile } from '@/types/taskboard';
  * Prova do "display-tape" (folha de verificação de tapes).
  *
  * O ficheiro (PDF ou TXT) é guardado no bucket privado `tapes-evidencia`; a
- * lista de ficheiros anexados a cada ficha é gravada pela função
- * `set_tapes_evidencia` (SECURITY DEFINER), que também atualiza o
+ * lista de ficheiros anexados a cada ficha é gravada (um de cada vez, nunca
+ * a lista inteira substituída) pelas funções `adicionar_evidencia_tapes` /
+ * `remover_evidencia_tapes` (SECURITY DEFINER), que também confirmam no
+ * servidor que o ficheiro existe mesmo no bucket e atualizam o
  * `tapes_status` da ficha.
  */
 
@@ -31,7 +33,11 @@ function slug(name: string): string {
 }
 
 /**
- * Carrega um ou mais ficheiros de evidência e junta-os aos já existentes.
+ * Carrega um ou mais ficheiros de evidência e junta-os aos já existentes —
+ * um de cada vez, via `adicionar_evidencia_tapes` (RPC), que confirma no
+ * servidor que o ficheiro existe mesmo no bucket e pertence a quem está a
+ * chamar, e ACRESCENTA (nunca substitui a lista inteira) — duas pessoas a
+ * anexar quase ao mesmo tempo já não perdem uma o anexo da outra.
  * Devolve a lista final gravada na ficha.
  */
 export async function addTapesEvidencia(
@@ -44,7 +50,7 @@ export async function addTapesEvidencia(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { data: null, error: 'Utilizador não autenticado' };
 
-  const uploaded: TapesEvidenciaFile[] = [];
+  let lista = existing;
   for (const file of files) {
     const type = classifyFile(file);
     if (!type) {
@@ -62,44 +68,35 @@ export async function addTapesEvidencia(
       return { data: null, error: `Erro ao carregar "${file.name}": ${upErr.message}` };
     }
 
-    uploaded.push({
-      path,
-      name: file.name,
-      size: file.size,
-      type,
-      uploaded_at: new Date().toISOString(),
-      uploaded_by: user.id,
+    const { data, error } = await supabase.rpc('adicionar_evidencia_tapes', {
+      p_taskboard_id: taskboardId,
+      p_path: path,
+      p_name: file.name,
+      p_size: file.size,
+      p_type: type,
     });
+    if (error) {
+      // Best-effort: limpar o que foi carregado nesta chamada.
+      await supabase.storage.from(BUCKET).remove([path]);
+      return { data: null, error: error.message };
+    }
+    lista = (data ?? []) as unknown as TapesEvidenciaFile[];
   }
 
-  const nextList = [...existing, ...uploaded];
-  const { error } = await supabase.rpc('set_tapes_evidencia', {
-    taskboard_id: taskboardId,
-    evidencia: nextList as unknown as never,
-  });
-  if (error) {
-    // Best-effort: limpar o que foi carregado nesta chamada.
-    await supabase.storage.from(BUCKET).remove(uploaded.map((f) => f.path));
-    return { data: null, error: error.message };
-  }
-  return { data: nextList, error: null };
+  return { data: lista, error: null };
 }
 
 /** Remove um ficheiro de evidência da ficha (e do Storage). */
 export async function removeTapesEvidencia(
   taskboardId: string,
-  existing: TapesEvidenciaFile[],
   path: string,
 ): Promise<{ data: TapesEvidenciaFile[] | null; error: string | null }> {
-  const nextList = existing.filter((f) => f.path !== path);
-  const { error } = await supabase.rpc('set_tapes_evidencia', {
-    taskboard_id: taskboardId,
-    evidencia: nextList as unknown as never,
+  const { data, error } = await supabase.rpc('remover_evidencia_tapes', {
+    p_taskboard_id: taskboardId,
+    p_path: path,
   });
   if (error) return { data: null, error: error.message };
-
-  await supabase.storage.from(BUCKET).remove([path]);
-  return { data: nextList, error: null };
+  return { data: (data ?? []) as unknown as TapesEvidenciaFile[], error: null };
 }
 
 /** Descarrega o conteúdo de um ficheiro de evidência. */
