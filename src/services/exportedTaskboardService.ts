@@ -185,10 +185,12 @@ export async function checkDuplicateOperations(
   const { data, error } = await supabase
     .from('exported_taskboards')
     .select('form_type, date, table_rows');
-    
+
   if (error || !data) {
     console.error('Error fetching exported taskboards to check duplicates', error);
-    return [];
+    // Nunca falhar "aberto": se não conseguimos verificar duplicados, a
+    // exportação tem de ser bloqueada, não avançar sem aviso.
+    throw new Error('Não foi possível verificar operações duplicadas.');
   }
   
   const existingOps = new Set<string>();
@@ -206,10 +208,15 @@ export async function checkDuplicateOperations(
   });
 
   // Test against actual file_processes database as well
-  const { data: fileProcesses } = await supabase
+  const { data: fileProcesses, error: fpError } = await supabase
     .from('file_processes')
     .select('operation_number, time_registered')
     .in('operation_number', newOperations);
+
+  if (fpError) {
+    console.error('Error fetching file_processes to check duplicates', fpError);
+    throw new Error('Não foi possível verificar operações duplicadas.');
+  }
 
   if (fileProcesses) {
     fileProcesses.forEach((p: any) => {

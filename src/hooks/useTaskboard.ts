@@ -207,8 +207,9 @@ export function useTaskboard(formType: FormType) {
     setTableRows((rows) => [...rows, emptyTableRow(rows.length + 1, currentOperator?.value ?? '')]);
   }, [currentOperator]);
 
-  const removeTableRow = useCallback(() => {
-    setTableRows((rows) => (rows.length > 1 ? rows.slice(0, -1) : rows));
+  /** Remove a linha indicada (nunca a última que sobrar) — nunca a "última da lista" por omissão. */
+  const removeTableRow = useCallback((id: number) => {
+    setTableRows((rows) => (rows.length > 1 ? rows.filter((r) => r.id !== id) : rows));
   }, []);
 
   const handleInputChange = useCallback(
@@ -321,7 +322,14 @@ export function useTaskboard(formType: FormType) {
 
     setBusy(true);
     try {
-      const duplicates = await findDuplicateOps();
+      let duplicates: string[];
+      try {
+        duplicates = await findDuplicateOps();
+      } catch (e) {
+        console.error('Erro ao verificar duplicados:', e);
+        toast.error('Não foi possível verificar operações duplicadas — tenta novamente.');
+        return;
+      }
       if (duplicates.length > 0) {
         toast.error(`A(s) operação(ões) já se encontram no arquivo e não podem ser duplicadas: ${duplicates.join(', ')}`);
         return;
