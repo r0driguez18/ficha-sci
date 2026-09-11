@@ -1,4 +1,5 @@
 import { addDays, isWeekend } from 'date-fns';
+import { ehFeriadoCaboVerde } from './feriadosCaboVerde';
 
 /**
  * Regra de SLA dos retornos de cobrança (F7).
@@ -38,7 +39,7 @@ export function toIsoDate(date: Date): string {
 }
 
 export function isBusinessDay(date: Date): boolean {
-  return !isWeekend(date);
+  return !isWeekend(date) && !ehFeriadoCaboVerde(date);
 }
 
 /** Primeiro dia útil estritamente depois de `date`. */
