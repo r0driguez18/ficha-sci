@@ -11,7 +11,7 @@ interface TableRowsSectionProps {
   tableRows: TaskTableRow[];
   operatorsList: { value: string; label: string }[];
   onAddRow: () => void;
-  onRemoveRow: () => void;
+  onRemoveRow: (id: number) => void;
   onInputChange: (id: number, field: keyof TaskTableRow, value: string) => void;
 }
 
@@ -27,26 +27,15 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-base font-semibold text-foreground">Processamentos</h3>
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={onAddRow}
             title="Adicionar linha"
             className="gap-1.5"
           >
             <PlusCircle className="h-4 w-4" />
             Adicionar
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={onRemoveRow}
-            title="Remover linha"
-            disabled={tableRows.length <= 1}
-            className="gap-1.5"
-          >
-            <Trash2 className="h-4 w-4" />
-            Remover
           </Button>
         </div>
       </div>
@@ -61,6 +50,7 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
               <TableHead className="w-32 font-semibold text-xs uppercase">Nº Operação</TableHead>
               <TableHead className="w-28 font-semibold text-xs uppercase">Tipo</TableHead>
               <TableHead className="w-28 font-semibold text-xs uppercase">Executado</TableHead>
+              <TableHead className="w-10" />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -131,6 +121,18 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
                       ))}
                     </SelectContent>
                   </Select>
+                </TableCell>
+                <TableCell>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 text-muted-foreground hover:text-destructive"
+                    onClick={() => onRemoveRow(row.id)}
+                    disabled={tableRows.length <= 1}
+                    title="Remover esta linha"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}

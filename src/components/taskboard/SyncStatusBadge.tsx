@@ -39,6 +39,11 @@ export function SyncStatusBadge({ status, lastSavedAt }: SyncStatusBadgeProps) {
       icon: <CloudOff className="h-3.5 w-3.5" />,
       className: 'bg-destructive/10 text-destructive',
     },
+    offline: {
+      label: 'Sem sessão — só neste dispositivo',
+      icon: <CloudOff className="h-3.5 w-3.5" />,
+      className: 'bg-destructive/10 text-destructive',
+    },
   };
 
   const { label, icon, className } = config[status];
