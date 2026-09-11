@@ -321,6 +321,7 @@ export function useTaskboard(formType: FormType) {
     let savedCount = 0;
     let duplicateCount = 0;
     let failedCount = 0;
+    let failedReturnCount = 0;
     try {
       for (const row of rowsToSave) {
         const result = await saveFileProcess({
@@ -337,8 +338,13 @@ export function useTaskboard(formType: FormType) {
           if (row.tipo === 'cobrancas' && user?.id) {
             const ficheiroNome = row.nomeAs?.trim() || row.tarefa?.trim() || 'Cobrança sem nome';
             try {
-              await createCobrancaRetorno(user.id, date, ficheiroNome);
+              const retornoResult = await createCobrancaRetorno(user.id, date, ficheiroNome);
+              if (retornoResult.error) {
+                failedReturnCount++;
+                console.error('Erro ao criar retorno de cobrança:', retornoResult.error);
+              }
             } catch (returnErr) {
+              failedReturnCount++;
               console.error('Erro ao criar retorno de cobrança:', returnErr);
             }
           }
@@ -358,6 +364,11 @@ export function useTaskboard(formType: FormType) {
     if (failedCount > 0) {
       toast.error(
         `${failedCount} processamento(s) não foram guardados (erro de gravação) — confirma na Estatística e volta a tentar se faltarem.`,
+      );
+    }
+    if (failedReturnCount > 0) {
+      toast.error(
+        `${failedReturnCount} processamento(s) de cobrança foram guardados, mas o registo de retorno (prazo/SLA) falhou — confirma em Retornos de Cobranças.`,
       );
     }
     return { savedCount, duplicateCount };
