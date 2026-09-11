@@ -140,6 +140,121 @@ export type Database = {
         }
         Relationships: []
       }
+      card_renewal_sessions: {
+        Row: {
+          created_at: string
+          estado: string
+          id: string
+          nome: string
+          proximo_lote: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          estado?: string
+          id?: string
+          nome: string
+          proximo_lote?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          estado?: string
+          id?: string
+          nome?: string
+          proximo_lote?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      card_renewal_cards: {
+        Row: {
+          balcao: string
+          created_at: string
+          dados: Json
+          id: string
+          lote_numero: number | null
+          nome_titular: string | null
+          numero_cartao: string
+          posicao: number
+          session_id: string
+        }
+        Insert: {
+          balcao: string
+          created_at?: string
+          dados?: Json
+          id?: string
+          lote_numero?: number | null
+          nome_titular?: string | null
+          numero_cartao: string
+          posicao?: number
+          session_id: string
+        }
+        Update: {
+          balcao?: string
+          created_at?: string
+          dados?: Json
+          id?: string
+          lote_numero?: number | null
+          nome_titular?: string | null
+          numero_cartao?: string
+          posicao?: number
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_renewal_cards_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "card_renewal_sessions"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      card_renewal_lotes: {
+        Row: {
+          balcoes: string[]
+          created_at: string
+          criado_por: string | null
+          ficheiro_nome: string
+          id: string
+          numero: number
+          session_id: string
+          total_cartoes: number
+        }
+        Insert: {
+          balcoes: string[]
+          created_at?: string
+          criado_por?: string | null
+          ficheiro_nome: string
+          id?: string
+          numero: number
+          session_id: string
+          total_cartoes: number
+        }
+        Update: {
+          balcoes?: string[]
+          created_at?: string
+          criado_por?: string | null
+          ficheiro_nome?: string
+          id?: string
+          numero?: number
+          session_id?: string
+          total_cartoes?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_renewal_lotes_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "card_renewal_sessions"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       daily_alerts: {
         Row: {
           alert_name: string
@@ -393,6 +508,31 @@ export type Database = {
       claim_operator: {
         Args: { operator_value: string }
         Returns: undefined
+      }
+      criar_lote_renovacao: {
+        Args: {
+          p_session_id: string
+          p_balcoes: string[]
+          p_nome_base: string
+          p_limite?: number
+        }
+        Returns: { lote_numero: number; numero_cartao: string; balcao: string }[]
+      }
+      concluir_sessao_renovacao: {
+        Args: { p_session_id: string }
+        Returns: undefined
+      }
+      descartar_sessao_renovacao: {
+        Args: { p_session_id: string }
+        Returns: undefined
+      }
+      reabrir_sessao_renovacao: {
+        Args: { p_session_id: string }
+        Returns: undefined
+      }
+      pendentes_por_balcao_renovacao: {
+        Args: { p_session_id: string }
+        Returns: { balcao: string; pendentes: number }[]
       }
       is_admin: {
         Args: Record<string, never>

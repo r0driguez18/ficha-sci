@@ -13,6 +13,7 @@ import {
   BarChart3,
   Settings,
   Search,
+  CreditCard,
 } from 'lucide-react';
 
 interface Seccao {
@@ -101,6 +102,19 @@ const SECCOES: Seccao[] = [
       'Linhas que não dão um NIB de 21 dígitos ficam "em alerta" para corrigir à mão — o contador "em alerta" filtra a pré-visualização a essas linhas. Pode excluir-se linhas (ex.: a linha "TOTAL GERAL").',
       'O nº de conta da empresa escreve-se com a natureza no fim; é sempre tratado automaticamente.',
       'Descarrega PS2_AAAAMMDD.txt.',
+    ],
+  },
+  {
+    icon: CreditCard,
+    title: 'Renovação de Cartões',
+    intro: 'Divide o export de renovação do banco em lotes de até 490 cartões, por balcão.',
+    points: [
+      'Cola a folha ou carrega o ficheiro do banco (.xls/.xlsx/.csv); as colunas Balcão e Nº de Cartão são detetadas automaticamente.',
+      'Linhas sem balcão ou sem nº de cartão válido ficam assinaladas — nunca são descartadas em silêncio.',
+      'A sessão fica guardada no servidor: recarregar a página, ou continuar noutro computador, retoma exatamente onde ficou — nenhum cartão se perde ou duplica.',
+      'Escolhe os balcões e gera um lote — no máximo 490 cartões (o limite do banco é 500); o que sobra fica pendente para o lote seguinte.',
+      'Cada lote descarrega-se logo como .prn (um nº de cartão por linha, a 7 dígitos) e pode voltar a descarregar-se mais tarde a partir da lista de lotes.',
+      '"Terminar sessão" só fica disponível quando não sobra nenhum cartão pendente.',
     ],
   },
   {

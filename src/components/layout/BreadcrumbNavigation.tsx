@@ -21,6 +21,7 @@ const routeLabels: Record<string, string> = {
   '/sci/retornos-cobrancas': 'Retornos de Cobranças',
   '/sci/passagem-turno': 'Passagem de Turno',
   '/sci/gerador-ps2': 'Gerador PS2',
+  '/sci/renovacao-cartoes': 'Renovação de Cartões',
   '/crc': 'CRC',
   '/crc/tratamento': 'Fecho de Inconsistências',
   '/easyvista': 'Processamentos',
