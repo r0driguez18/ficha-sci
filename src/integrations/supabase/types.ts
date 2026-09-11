@@ -566,6 +566,14 @@ export type Database = {
         Args: { p_form_type: string; p_date: string; p_operacoes: string[] }
         Returns: string[]
       }
+      marcar_retornos_enviados: {
+        Args: { p_ids: string[]; p_observacoes?: string | null }
+        Returns: undefined
+      }
+      alterar_prazo_retorno: {
+        Args: { p_id: string; p_nova_data: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

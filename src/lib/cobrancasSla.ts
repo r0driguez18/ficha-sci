@@ -1,4 +1,5 @@
 import { addDays, isWeekend } from 'date-fns';
+import { ehFeriadoCaboVerde } from './feriadosCaboVerde';
 
 /**
  * Regra de SLA dos retornos de cobrança (F7).
@@ -38,7 +39,7 @@ export function toIsoDate(date: Date): string {
 }
 
 export function isBusinessDay(date: Date): boolean {
-  return !isWeekend(date);
+  return !isWeekend(date) && !ehFeriadoCaboVerde(date);
 }
 
 /** Primeiro dia útil estritamente depois de `date`. */
@@ -55,6 +56,13 @@ export function nextBusinessDay(date: Date): Date {
 export function businessDaysBetween(from: Date, to: Date): number {
   const a = new Date(from.getFullYear(), from.getMonth(), from.getDate());
   const b = new Date(to.getFullYear(), to.getMonth(), to.getDate());
+  // Uma data inválida (ex.: `data_retorno_esperada` corrompida) faz
+  // `getTime()` devolver NaN — NaN nunca é igual a si próprio, por isso o
+  // ciclo abaixo nunca terminaria. Falha de forma controlada em vez de
+  // travar a página.
+  if (Number.isNaN(a.getTime()) || Number.isNaN(b.getTime())) {
+    return 0;
+  }
   if (a.getTime() === b.getTime()) return 0;
   const step = b > a ? 1 : -1;
   let count = 0;
