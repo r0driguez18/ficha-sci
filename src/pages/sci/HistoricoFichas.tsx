@@ -26,6 +26,7 @@ import {
 import { useOperators } from '@/hooks/useOperators';
 import { isSigned } from '@/types/signature';
 import { ehFeriadoCaboVerde } from '@/lib/feriadosCaboVerde';
+import { computeFichaHash } from '@/lib/signatureHash';
 
 import {
   FileDown,
@@ -200,8 +201,41 @@ export default function HistoricoFichas() {
     setFilteredRecords(filtered);
   };
 
+  /**
+   * Recalcula o hash do conteúdo guardado e compara com o que ficou gravado
+   * na assinatura — se um bater diferente do outro, o conteúdo já não é o
+   * mesmo que foi assinado (ver `signatureHash.ts`). Registos antigos, sem
+   * `contentHash` (anteriores ao PIN), não têm nada para comparar.
+   */
+  const verificarIntegridade = async (record: ExportedTaskboard): Promise<boolean> => {
+    const contentHash = (record.pdf_signature as { contentHash?: string } | null)?.contentHash;
+    if (!contentHash) return true;
+
+    const { verificacaoTapes, ...turnDataSemTapes } =
+      (record.turn_data as { verificacaoTapes?: unknown } & Record<string, unknown>) ?? {};
+    const hashAtual = await computeFichaHash({
+      date: record.date,
+      formType: record.form_type,
+      turnData: turnDataSemTapes,
+      tasks: record.tasks,
+      tableRows: record.table_rows,
+      verificacaoTapes,
+    });
+    return hashAtual === contentHash;
+  };
+
   /** Gera o PDF da ficha e, se houver evidência de tapes anexada, junta-a no fim. */
   const buildFichaPdfBlob = async (record: ExportedTaskboard): Promise<Blob> => {
+    const integro = await verificarIntegridade(record);
+    if (!integro) {
+      toast({
+        title: 'Aviso de integridade',
+        description:
+          'O conteúdo desta ficha já não corresponde ao que foi assinado — pode ter sido alterado depois de exportada.',
+        variant: 'destructive',
+      });
+    }
+
     const pdf = generateTaskboardPDF(
       record.date,
       record.turn_data,
