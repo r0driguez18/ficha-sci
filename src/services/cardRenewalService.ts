@@ -78,6 +78,7 @@ export async function inserirCartoes(
       numero_cartao: l.numeroCartao,
       balcao: l.balcao,
       nome_titular: l.nomeTitular || null,
+      dados: l.dados,
     }));
     const { error } = await supabase
       .from('card_renewal_cards')
@@ -139,19 +140,36 @@ export async function listarLotes(
   return { data: data as unknown as CardRenewalLote[], error };
 }
 
-/** Números de cartão de um lote já gerado, pela ordem original — para redescarregar. */
-export async function cartoesDoLote(
+export interface LinhaDeLote {
+  numeroCartao: string;
+  dados: Record<string, string>;
+}
+
+/**
+ * Linhas completas de um lote já gerado, pela ordem original — para
+ * (re)gerar tanto o `.prn` (só os números) como o `.xlsx` ("Resultado",
+ * a linha completa de cada cartão). Sempre reconstruído a partir da BD,
+ * nunca guardado como ficheiro — por isso redescarregar dá sempre o mesmo
+ * resultado.
+ */
+export async function linhasDoLote(
   sessionId: string,
   loteNumero: number,
-): Promise<{ data: string[] | null; error: PostgrestError | null }> {
+): Promise<{ data: LinhaDeLote[] | null; error: PostgrestError | null }> {
   const { data, error } = await supabase
     .from('card_renewal_cards')
-    .select('numero_cartao')
+    .select('numero_cartao, dados')
     .eq('session_id', sessionId)
     .eq('lote_numero', loteNumero)
     .order('posicao');
   if (error) return { data: null, error };
-  return { data: (data ?? []).map((r) => r.numero_cartao), error: null };
+  return {
+    data: (data ?? []).map((r) => ({
+      numeroCartao: r.numero_cartao,
+      dados: (r.dados ?? {}) as Record<string, string>,
+    })),
+    error: null,
+  };
 }
 
 export interface CartaoDeLote {

@@ -174,6 +174,7 @@ export type Database = {
         Row: {
           balcao: string
           created_at: string
+          dados: Json
           id: string
           lote_numero: number | null
           nome_titular: string | null
@@ -184,6 +185,7 @@ export type Database = {
         Insert: {
           balcao: string
           created_at?: string
+          dados?: Json
           id?: string
           lote_numero?: number | null
           nome_titular?: string | null
@@ -194,6 +196,7 @@ export type Database = {
         Update: {
           balcao?: string
           created_at?: string
+          dados?: Json
           id?: string
           lote_numero?: number | null
           nome_titular?: string | null

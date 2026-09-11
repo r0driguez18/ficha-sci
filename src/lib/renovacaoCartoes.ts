@@ -15,6 +15,8 @@ export interface LinhaBrutaCartao {
   balcao: string;
   numeroCartao: string;
   nomeTitular: string;
+  /** Linha completa (todas as colunas do ficheiro do banco), para a folha "Resultado". */
+  dados: Record<string, string>;
 }
 
 export interface LinhaInvalida {
@@ -64,10 +66,19 @@ export function autodetectarColunas(rows: string[][]) {
   };
 }
 
+/** Rótulo de uma coluna para a folha "Resultado": o cabeçalho, se houver, senão "Coluna N". */
+function rotuloColuna(headers: string[] | undefined, i: number): string {
+  const h = (headers?.[i] ?? '').toString().trim();
+  return h || `Coluna ${i + 1}`;
+}
+
 /**
  * Lê as linhas brutas da folha a partir das colunas escolhidas, e separa as
  * válidas das inválidas (sem balcão ou sem nº de cartão) — nunca descarta
  * uma linha sem a mostrar, para nunca "perder" um cartão silenciosamente.
+ * `headers`, se dado, rotula as colunas de `dados` (a linha completa, tal
+ * como a folha "Resultado" do processo manual — todas as colunas do
+ * ficheiro do banco, não só balcão/cartão/nome).
  */
 export function extrairLinhas(
   rows: string[][],
@@ -75,6 +86,7 @@ export function extrairLinhas(
   colCartao: number,
   colNome: number,
   linhaInicial: number,
+  headers?: string[],
 ): { validas: LinhaBrutaCartao[]; invalidas: LinhaInvalida[] } {
   const validas: LinhaBrutaCartao[] = [];
   const invalidas: LinhaInvalida[] = [];
@@ -96,10 +108,19 @@ export function extrairLinhas(
       continue;
     }
 
+    const dados: Record<string, string> = {};
+    const nCols = Math.max(r.length, headers?.length ?? 0);
+    for (let c = 0; c < nCols; c++) {
+      dados[rotuloColuna(headers, c)] = (r[c] ?? '').toString().trim();
+    }
+    // O nº de cartão vai sempre formatado (7 dígitos) na folha "Resultado".
+    dados[rotuloColuna(headers, colCartao)] = numeroCartao;
+
     validas.push({
       balcao,
       numeroCartao,
       nomeTitular: colNome >= 0 ? (r[colNome] ?? '').toString().trim() : '',
+      dados,
     });
   }
 
@@ -119,4 +140,9 @@ const MESES_PT = [
 /** Nome base da sessão / dos ficheiros: "Renovações <Mês>" (mês corrente). */
 export function nomeBaseRenovacao(d: Date = new Date()): string {
   return `Renovações ${MESES_PT[d.getMonth()]}`;
+}
+
+/** Nome do .xlsx de um lote — mesma base e número do .prn, a folha "Resultado". */
+export function nomeFicheiroExcelLote(nomeBase: string, numero: number): string {
+  return `${nomeBase} ${numero}.xlsx`;
 }

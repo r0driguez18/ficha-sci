@@ -27,6 +27,7 @@ import {
   extrairLinhas,
   construirPrn,
   nomeBaseRenovacao,
+  nomeFicheiroExcelLote,
   type LinhaBrutaCartao,
   type LinhaInvalida,
 } from '@/lib/renovacaoCartoes';
@@ -37,13 +38,15 @@ import {
   contarPendentesPorBalcao,
   totaisSessao,
   listarLotes,
-  cartoesDoLote,
+  linhasDoLote,
   criarLoteRenovacao,
   concluirSessaoRenovacao,
   type CardRenewalSession,
   type CardRenewalLote,
   type BalcaoPendente,
 } from '@/services/cardRenewalService';
+
+const CABECALHOS_COLAGEM = ['Balcão', 'Nº de Cartão', 'Nome'];
 
 function parseColagemCartoes(txt: string): string[][] {
   return txt
@@ -56,14 +59,31 @@ function parseColagemCartoes(txt: string): string[][] {
     });
 }
 
-function descarregarPrn(numeros: string[], nomeFicheiro: string) {
-  const blob = new Blob([construirPrn(numeros)], { type: 'text/plain;charset=utf-8' });
+function descarregarBlob(blob: Blob, nomeFicheiro: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
   a.download = nomeFicheiro;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+function descarregarPrn(numeros: string[], nomeFicheiro: string) {
+  descarregarBlob(new Blob([construirPrn(numeros)], { type: 'text/plain;charset=utf-8' }), nomeFicheiro);
+}
+
+/** A folha "Resultado" do processo manual: a linha completa de cada cartão do lote. */
+function descarregarExcel(linhas: Record<string, string>[], nomeFicheiro: string) {
+  if (linhas.length === 0) return;
+  const cabecalhos = Object.keys(linhas[0]);
+  const ws = XLSX.utils.json_to_sheet(linhas, { header: cabecalhos });
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Resultado');
+  const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' }) as ArrayBuffer;
+  descarregarBlob(
+    new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
+    nomeFicheiro,
+  );
 }
 
 export default function RenovacaoCartoes() {
@@ -184,9 +204,12 @@ export default function RenovacaoCartoes() {
   const colCartaoEff = modo === 'colar' ? 1 : colCartao;
   const colNomeEff = modo === 'colar' ? 2 : colNome;
   const linhaInicialEff = modo === 'colar' ? 1 : linhaInicial;
+  const headerRow = sheetRows[Math.max(0, linhaInicial - 2)] ?? [];
+  const headersEff = modo === 'colar' ? CABECALHOS_COLAGEM : headerRow.map((h) => String(h ?? ''));
 
   const { validas, invalidas }: { validas: LinhaBrutaCartao[]; invalidas: LinhaInvalida[] } = useMemo(
-    () => extrairLinhas(rowsAtuais, colBalcaoEff, colCartaoEff, colNomeEff, linhaInicialEff),
+    () => extrairLinhas(rowsAtuais, colBalcaoEff, colCartaoEff, colNomeEff, linhaInicialEff, headersEff),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [rowsAtuais, colBalcaoEff, colCartaoEff, colNomeEff, linhaInicialEff],
   );
 
@@ -196,7 +219,6 @@ export default function RenovacaoCartoes() {
   }, [validas]);
 
   const colOpts = Array.from({ length: Math.max(nColunas, 2) }, (_, i) => i);
-  const headerRow = sheetRows[Math.max(0, linhaInicial - 2)] ?? [];
   const nomeCol = (i: number) => {
     const h = String(headerRow[i] ?? '').trim();
     return h ? `${XLSX.utils.encode_col(i)} — ${h.slice(0, 22)}` : XLSX.utils.encode_col(i);
@@ -250,27 +272,34 @@ export default function RenovacaoCartoes() {
       sessaoAtiva.nome,
       LIMITE_LOTE,
     );
-    setGerandoLote(false);
     if (error || !data || data.length === 0) {
+      setGerandoLote(false);
       toast.error(error?.message ?? 'Não foi possível gerar o lote.');
       return;
     }
-    const numeros = data.map((d) => d.numeroCartao);
-    const nomeFicheiro = `${sessaoAtiva.nome} ${data[0].loteNumero}.prn`;
-    descarregarPrn(numeros, nomeFicheiro);
-    toast.success(`Lote ${data[0].loteNumero} gerado — ${numeros.length} cartão(ões).`);
+    const loteNumero = data[0].loteNumero;
+    const { data: linhas, error: errLinhas } = await linhasDoLote(sessaoAtiva.id, loteNumero);
+    setGerandoLote(false);
+    if (errLinhas || !linhas) {
+      toast.error('Lote gerado, mas não foi possível montar os ficheiros — usa "Descarregar" na lista de lotes.');
+    } else {
+      descarregarPrn(linhas.map((l) => l.numeroCartao), `${sessaoAtiva.nome} ${loteNumero}.prn`);
+      descarregarExcel(linhas.map((l) => l.dados), nomeFicheiroExcelLote(sessaoAtiva.nome, loteNumero));
+    }
+    toast.success(`Lote ${loteNumero} gerado — ${data.length} cartão(ões).`);
     setBalcoesSelecionados(new Set());
     await carregarSessaoAtual(sessaoAtiva);
   };
 
   const redescarregarLote = async (lote: CardRenewalLote) => {
     if (!sessaoAtiva) return;
-    const { data, error } = await cartoesDoLote(sessaoAtiva.id, lote.numero);
-    if (error || !data) {
+    const { data: linhas, error } = await linhasDoLote(sessaoAtiva.id, lote.numero);
+    if (error || !linhas) {
       toast.error('Não foi possível obter os cartões deste lote.');
       return;
     }
-    descarregarPrn(data, lote.ficheiro_nome);
+    descarregarPrn(linhas.map((l) => l.numeroCartao), lote.ficheiro_nome);
+    descarregarExcel(linhas.map((l) => l.dados), nomeFicheiroExcelLote(sessaoAtiva.nome, lote.numero));
   };
 
   const concluirSessao = async () => {
@@ -463,12 +492,31 @@ export default function RenovacaoCartoes() {
               </Button>
             )}
 
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                e.target.value = '';
+                if (f) carregarFicheiro(f);
+              }}
+            />
+
             <div className="flex gap-2">
               <Button size="sm" variant={modo === 'colar' ? 'default' : 'outline'} onClick={() => setModo('colar')}>
                 <ClipboardPaste className="h-4 w-4 mr-1" /> Colar
               </Button>
-              <Button size="sm" variant={modo === 'ficheiro' ? 'default' : 'outline'} onClick={() => setModo('ficheiro')}>
-                <Upload className="h-4 w-4 mr-1" /> Carregar ficheiro
+              <Button
+                size="sm"
+                variant={modo === 'ficheiro' ? 'default' : 'outline'}
+                onClick={() => {
+                  setModo('ficheiro');
+                  fileRef.current?.click();
+                }}
+              >
+                <Upload className="h-4 w-4 mr-1" /> Carregar ficheiro (.xls / .xlsx / .csv)
               </Button>
             </div>
 
@@ -481,21 +529,6 @@ export default function RenovacaoCartoes() {
               />
             ) : (
               <div className="space-y-4">
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept=".xlsx,.xls,.csv"
-                  className="hidden"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    e.target.value = '';
-                    if (f) carregarFicheiro(f);
-                  }}
-                />
-                <Button variant="secondary" onClick={() => fileRef.current?.click()}>
-                  <Upload className="h-4 w-4 mr-1" /> Escolher ficheiro (.xls / .xlsx / .csv)
-                </Button>
-
                 {sheetRows.length > 0 && (
                   <div className="grid gap-3 sm:grid-cols-3">
                     {(
