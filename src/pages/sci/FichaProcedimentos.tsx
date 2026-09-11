@@ -18,17 +18,13 @@ import { FormActions } from '@/components/taskboard/FormActions';
 import { SignatureSection } from '@/components/taskboard/SignatureSection';
 import { SyncStatusBadge } from '@/components/taskboard/SyncStatusBadge';
 import { useTaskboard } from '@/hooks/useTaskboard';
+import { isoDateOffset } from '@/lib/taskboardDefaults';
 import type { FormType } from '@/services/taskboardService';
 import type { TurnKey } from '@/types/taskboard';
 
 const TURN_LABELS: Record<TurnKey, string> = { turno1: 'Turno 1', turno2: 'Turno 2', turno3: 'Turno 3' };
 
 /** Limites razoáveis para a data da ficha — evita escolhas absurdas (2019, 2099…) sem bloquear correções antigas. */
-function isoDateOffset(days: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() + days);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
 const dateMinBound = isoDateOffset(-365);
 const dateMaxBound = isoDateOffset(7);
 
