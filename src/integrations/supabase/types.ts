@@ -526,6 +526,10 @@ export type Database = {
         Args: { p_session_id: string }
         Returns: undefined
       }
+      reabrir_sessao_renovacao: {
+        Args: { p_session_id: string }
+        Returns: undefined
+      }
       is_admin: {
         Args: Record<string, never>
         Returns: boolean

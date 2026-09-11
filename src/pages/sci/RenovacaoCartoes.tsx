@@ -34,6 +34,7 @@ import {
 } from '@/lib/renovacaoCartoes';
 import {
   listarSessoesEmCurso,
+  listarSessoesConcluidas,
   criarSessaoRenovacao,
   inserirCartoes,
   contarPendentesPorBalcao,
@@ -43,6 +44,7 @@ import {
   criarLoteRenovacao,
   concluirSessaoRenovacao,
   descartarSessaoRenovacao,
+  reabrirSessaoRenovacao,
   type CardRenewalSession,
   type CardRenewalLote,
   type BalcaoPendente,
@@ -91,8 +93,10 @@ function descarregarExcel(linhas: Record<string, string>[], nomeFicheiro: string
 export default function RenovacaoCartoes() {
   const [carregando, setCarregando] = useState(true);
   const [sessoes, setSessoes] = useState<CardRenewalSession[]>([]);
+  const [sessoesConcluidas, setSessoesConcluidas] = useState<CardRenewalSession[]>([]);
   const [sessaoAtiva, setSessaoAtiva] = useState<CardRenewalSession | null>(null);
   const [mostrarUpload, setMostrarUpload] = useState(false);
+  const [aReabrir, setAReabrir] = useState<string | null>(null);
 
   const [pendentes, setPendentes] = useState<BalcaoPendente[]>([]);
   const [lotes, setLotes] = useState<CardRenewalLote[]>([]);
@@ -148,8 +152,12 @@ export default function RenovacaoCartoes() {
 
   const carregarSessoes = useCallback(async () => {
     setCarregando(true);
-    const { data, error } = await listarSessoesEmCurso();
+    const [{ data, error }, { data: concluidas }] = await Promise.all([
+      listarSessoesEmCurso(),
+      listarSessoesConcluidas(),
+    ]);
     setCarregando(false);
+    setSessoesConcluidas(concluidas ?? []);
     if (error) {
       toast.error('Não foi possível carregar as sessões de renovação.');
       return;
@@ -163,6 +171,18 @@ export default function RenovacaoCartoes() {
       await selecionarSessao(lista[0]);
     }
   }, [selecionarSessao]);
+
+  const reabrirSessao = async (sessao: CardRenewalSession) => {
+    setAReabrir(sessao.id);
+    const { error } = await reabrirSessaoRenovacao(sessao.id);
+    setAReabrir(null);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(`"${sessao.nome}" reaberta.`);
+    await carregarSessoes();
+  };
 
   useEffect(() => {
     carregarSessoes();
@@ -380,6 +400,33 @@ export default function RenovacaoCartoes() {
         </Card>
       )}
 
+      {sessoesConcluidas.length > 0 && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-base">Sessões terminadas</CardTitle>
+            <CardDescription>Os dados ficam guardados — reabre para continuar.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-2">
+            {sessoesConcluidas.map((s) => (
+              <Button
+                key={s.id}
+                variant="outline"
+                size="sm"
+                disabled={aReabrir === s.id}
+                onClick={() => reabrirSessao(s)}
+              >
+                {aReabrir === s.id ? (
+                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                ) : (
+                  <RotateCcw className="h-4 w-4 mr-1" />
+                )}
+                {s.nome}
+              </Button>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
       {sessaoAtiva && !mostrarUpload && (
         <div className="space-y-6">
           <Card>
@@ -403,9 +450,8 @@ export default function RenovacaoCartoes() {
               <Button
                 variant="outline"
                 size="sm"
-                disabled={totais.pendentes > 0 || aConcluir}
+                disabled={aConcluir}
                 onClick={() => setConfirmarConcluir(true)}
-                title={totais.pendentes > 0 ? 'Ainda há cartões pendentes' : undefined}
               >
                 {aConcluir ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-1" />}
                 Terminar sessão
@@ -654,7 +700,11 @@ export default function RenovacaoCartoes() {
         open={confirmarConcluir}
         onOpenChange={setConfirmarConcluir}
         title="Terminar esta sessão?"
-        description="Todos os cartões já têm lote atribuído. Depois de terminada, a sessão deixa de aparecer para continuar."
+        description={
+          totais.pendentes > 0
+            ? `Ainda há ${totais.pendentes} cartão(ões) pendente(s) — ficam guardados, nada se perde. A sessão só deixa de aparecer como "em curso"; pode ser reaberta a qualquer momento em "Sessões terminadas".`
+            : 'A sessão deixa de aparecer como "em curso" — pode ser reaberta a qualquer momento em "Sessões terminadas".'
+        }
         confirmLabel="Terminar sessão"
         cancelLabel="Cancelar"
         onConfirm={concluirSessao}

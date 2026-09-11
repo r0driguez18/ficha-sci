@@ -41,6 +41,20 @@ export async function listarSessoesEmCurso(): Promise<{
   return { data: data as unknown as CardRenewalSession[], error };
 }
 
+/** Sessões já terminadas — os dados ficam guardados, e podem ser reabertas. */
+export async function listarSessoesConcluidas(): Promise<{
+  data: CardRenewalSession[] | null;
+  error: PostgrestError | null;
+}> {
+  const { data, error } = await supabase
+    .from('card_renewal_sessions')
+    .select('*')
+    .eq('estado', 'concluida')
+    .order('updated_at', { ascending: false })
+    .limit(20);
+  return { data: data as unknown as CardRenewalSession[], error };
+}
+
 export async function criarSessaoRenovacao(
   nome: string,
 ): Promise<{ data: CardRenewalSession | null; error: PostgrestError | null }> {
@@ -216,5 +230,13 @@ export async function descartarSessaoRenovacao(
   sessionId: string,
 ): Promise<{ error: PostgrestError | null }> {
   const { error } = await supabase.rpc('descartar_sessao_renovacao', { p_session_id: sessionId });
+  return { error };
+}
+
+/** Reabre uma sessão terminada — volta a aparecer como em curso, com os dados intactos. */
+export async function reabrirSessaoRenovacao(
+  sessionId: string,
+): Promise<{ error: PostgrestError | null }> {
+  const { error } = await supabase.rpc('reabrir_sessao_renovacao', { p_session_id: sessionId });
   return { error };
 }
