@@ -103,24 +103,23 @@ export async function inserirCartoes(
   return { inseridos, error: null };
 }
 
-/** Contagem de cartões ainda pendentes (sem lote), por balcão. */
+/**
+ * Contagem de cartões ainda pendentes (sem lote), por balcão — agregada na
+ * BD (RPC), não linha a linha: este Supabase tem `PGRST_DB_MAX_ROWS=1000`,
+ * e uma sessão pode ter milhares de cartões pendentes — pedir uma linha por
+ * cartão para somar no browser cortava a meio e fazia balcões inteiros
+ * desaparecerem da lista.
+ */
 export async function contarPendentesPorBalcao(
   sessionId: string,
 ): Promise<{ data: BalcaoPendente[] | null; error: PostgrestError | null }> {
-  const { data, error } = await supabase
-    .from('card_renewal_cards')
-    .select('balcao')
-    .eq('session_id', sessionId)
-    .is('lote_numero', null);
+  const { data, error } = await supabase.rpc('pendentes_por_balcao_renovacao', {
+    p_session_id: sessionId,
+  });
   if (error) return { data: null, error };
-
-  const contagem = new Map<string, number>();
-  for (const row of data ?? []) {
-    contagem.set(row.balcao, (contagem.get(row.balcao) ?? 0) + 1);
-  }
-  const lista = Array.from(contagem.entries())
-    .map(([balcao, pendentes]) => ({ balcao, pendentes }))
-    .sort((a, b) => a.balcao.localeCompare(b.balcao, 'pt'));
+  const lista = ((data ?? []) as { balcao: string; pendentes: number }[])
+    .map((r) => ({ balcao: r.balcao, pendentes: Number(r.pendentes) }))
+    .sort((a, b) => Number(a.balcao) - Number(b.balcao));
   return { data: lista, error: null };
 }
 
