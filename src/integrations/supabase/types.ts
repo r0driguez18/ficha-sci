@@ -546,9 +546,13 @@ export type Database = {
         Args: { new_pin: string }
         Returns: undefined
       }
-      set_tapes_evidencia: {
-        Args: { taskboard_id: string; evidencia: Json }
-        Returns: undefined
+      adicionar_evidencia_tapes: {
+        Args: { p_taskboard_id: string; p_path: string; p_name: string; p_size: number; p_type: string }
+        Returns: Json
+      }
+      remover_evidencia_tapes: {
+        Args: { p_taskboard_id: string; p_path: string }
+        Returns: Json
       }
       change_operator_pin: {
         Args: { current_pin: string; new_pin: string }
