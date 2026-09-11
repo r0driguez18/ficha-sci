@@ -11,7 +11,7 @@ import { Json } from '@/integrations/supabase/types';
 export type FormType = 'dia-util' | 'dia-nao-util';
 
 /** Estado da gravação automática do rascunho da ficha (RF-03.3). */
-export type SyncStatus = 'idle' | 'saving' | 'saved' | 'error';
+export type SyncStatus = 'idle' | 'saving' | 'saved' | 'error' | 'offline';
 
 /** Prefixo das chaves de localStorage do rascunho, por tipo de ficha. */
 export function taskboardLocalPrefix(formType: FormType): string {
@@ -203,15 +203,22 @@ export const useTaskboardSync = (
   // Grava o rascunho no localStorage (resistência a fecho do browser) e no
   // servidor, e reporta o estado da gravação para o indicador visível (RF-03.3).
   const syncData = async () => {
-    if (!user) return;
-
-    // O localStorage é a rede de segurança — grava sempre, mesmo que o servidor falhe.
+    // O localStorage é a rede de segurança — grava sempre, mesmo sem sessão
+    // (ver `status === 'offline'`) ou se o servidor falhar a seguir.
     localStorage.setItem(`${localStoragePrefix}-date`, date);
     localStorage.setItem(`${localStoragePrefix}-turnData`, JSON.stringify(turnData));
     localStorage.setItem(`${localStoragePrefix}-tasks`, JSON.stringify(tasks));
     localStorage.setItem(`${localStoragePrefix}-tableRows`, JSON.stringify(tableRows));
     if (activeTab) {
       localStorage.setItem(`${localStoragePrefix}-activeTab`, activeTab);
+    }
+
+    if (!user) {
+      // Sem sessão (ex.: janela de arranque da autenticação) — os dados
+      // ficam só neste dispositivo. Diz-se isso claramente em vez de
+      // ficar silenciosamente sem indicador nenhum.
+      setStatus('offline');
+      return;
     }
 
     setStatus('saving');
