@@ -149,7 +149,7 @@ export default function FichaProcedimentos({ formType }: FichaProcedimentosProps
               <CardTitle className="text-xl font-bold text-foreground">{config.title}</CardTitle>
               <CardDescription className="mt-1">{config.description}</CardDescription>
             </div>
-            {tb.user && <SyncStatusBadge status={tb.syncStatus} lastSavedAt={tb.lastSavedAt} />}
+            <SyncStatusBadge status={tb.syncStatus} lastSavedAt={tb.lastSavedAt} />
           </div>
         </CardHeader>
         <CardContent className="pt-6">
