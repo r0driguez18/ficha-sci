@@ -530,6 +530,10 @@ export type Database = {
         Args: { p_session_id: string }
         Returns: undefined
       }
+      pendentes_por_balcao_renovacao: {
+        Args: { p_session_id: string }
+        Returns: { balcao: string; pendentes: number }[]
+      }
       is_admin: {
         Args: Record<string, never>
         Returns: boolean
