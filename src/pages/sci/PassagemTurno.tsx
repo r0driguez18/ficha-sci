@@ -11,8 +11,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { CheckCircle2, Loader2, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/components/auth/AuthProvider';
-import { useOperators, useCurrentOperator } from '@/hooks/useOperators';
-import { todayIso } from '@/lib/taskboardDefaults';
+import { useOperators } from '@/hooks/useOperators';
+import { todayIso, isoDateOffset } from '@/lib/taskboardDefaults';
 import type { TurnKey } from '@/types/taskboard';
 import {
   getHandoverNotes,
@@ -39,8 +39,6 @@ const fmt = (iso?: string | null) => {
 export default function PassagemTurno() {
   const { user } = useAuth();
   const { labelOf } = useOperators();
-  const currentOperator = useCurrentOperator();
-  const nomeOperador = currentOperator?.label ?? user?.email ?? 'Operador';
 
   const [date, setDate] = useState<string>(todayIso());
   const [notes, setNotes] = useState<Record<string, HandoverNote>>({});
@@ -73,13 +71,7 @@ export default function PassagemTurno() {
     if (!user?.id) return;
     setBusy(turno);
     try {
-      const { data, error } = await saveHandoverNote(
-        date,
-        turno,
-        drafts[turno] ?? '',
-        user.id,
-        nomeOperador,
-      );
+      const { data, error } = await saveHandoverNote(date, turno, drafts[turno] ?? '');
       if (error || !data) {
         toast.error(error?.message ?? 'Não foi possível guardar a nota.');
         return;
@@ -96,7 +88,7 @@ export default function PassagemTurno() {
     if (!note || !user?.id) return;
     setBusy(`${turno}-leitura`);
     try {
-      const { error } = await confirmarLeituraHandover(note.id, user.id, nomeOperador);
+      const { error } = await confirmarLeituraHandover(note.id);
       if (error) {
         toast.error('Não foi possível registar a leitura.');
         return;
@@ -126,6 +118,8 @@ export default function PassagemTurno() {
           type="date"
           value={date}
           onChange={(e) => setDate(e.target.value || todayIso())}
+          min={isoDateOffset(-365)}
+          max={isoDateOffset(7)}
           className="mt-1.5"
         />
         {!isToday && <p className="mt-1 text-xs text-muted-foreground">A ver um dia diferente de hoje.</p>}
@@ -158,6 +152,7 @@ export default function PassagemTurno() {
                     value={draft}
                     onChange={(e) => setDrafts((prev) => ({ ...prev, [key]: e.target.value }))}
                     placeholder="Resumo do turno para quem entra: ocorrências, pendências a acompanhar, avisos…"
+                    maxLength={4000}
                     className="min-h-[110px]"
                   />
                   <div className="flex flex-wrap items-center gap-2">
