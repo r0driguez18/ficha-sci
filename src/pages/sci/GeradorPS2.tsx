@@ -463,7 +463,14 @@ export default function GeradorPS2() {
                 <Button size="sm" variant={modo === 'colar' ? 'default' : 'outline'} onClick={() => setModo('colar')}>
                   <ClipboardPaste className="h-4 w-4 mr-1" /> Colar
                 </Button>
-                <Button size="sm" variant={modo === 'ficheiro' ? 'default' : 'outline'} onClick={() => setModo('ficheiro')}>
+                <Button
+                  size="sm"
+                  variant={modo === 'ficheiro' ? 'default' : 'outline'}
+                  onClick={() => {
+                    setModo('ficheiro');
+                    fileRef.current?.click();
+                  }}
+                >
                   <Upload className="h-4 w-4 mr-1" /> Carregar ficheiro
                 </Button>
               </div>
@@ -486,6 +493,18 @@ export default function GeradorPS2() {
             </div>
           </div>
 
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".xlsx,.xls,.csv"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              e.target.value = '';
+              if (f) carregarFicheiro(f);
+            }}
+          />
+
           {modo === 'colar' ? (
             <Textarea
               value={colagem}
@@ -498,21 +517,6 @@ export default function GeradorPS2() {
             />
           ) : (
             <div className="space-y-4">
-              <input
-                ref={fileRef}
-                type="file"
-                accept=".xlsx,.xls,.csv"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  e.target.value = '';
-                  if (f) carregarFicheiro(f);
-                }}
-              />
-              <Button variant="secondary" onClick={() => fileRef.current?.click()}>
-                <Upload className="h-4 w-4 mr-1" /> Escolher ficheiro (.xlsx / .csv)
-              </Button>
-
               {sheetRows.length > 0 && (
                 <div className="space-y-3">
                   <div className="overflow-x-auto rounded-md border">
