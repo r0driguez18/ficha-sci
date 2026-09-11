@@ -24,9 +24,11 @@ import {
 import { toast } from 'sonner';
 import {
   LIMITE_LOTE,
+  COLUNAS_RESULTADO,
   autodetectarColunas,
   extrairLinhas,
   construirPrn,
+  filtrarColunasResultado,
   nomeBaseRenovacao,
   nomeFicheiroExcelLote,
   type LinhaBrutaCartao,
@@ -50,7 +52,7 @@ import {
   type BalcaoPendente,
 } from '@/services/cardRenewalService';
 
-const CABECALHOS_COLAGEM = ['Balcão', 'Nº de Cartão', 'Nome'];
+const CABECALHOS_COLAGEM = ['Balcão', 'Nº de Cartão', 'Nome no Cartão'];
 
 function parseColagemCartoes(txt: string): string[][] {
   return txt
@@ -80,11 +82,11 @@ function descarregarPrn(numeros: string[], nomeFicheiro: string) {
   descarregarBlob(new Blob([construirPrn(numeros)], { type: 'text/plain;charset=utf-8' }), nomeFicheiro);
 }
 
-/** A folha "Resultado" do processo manual: a linha completa de cada cartão do lote. */
+/** A folha "Resultado" do processo manual: só COLUNAS_RESULTADO, nessa ordem. */
 function descarregarExcel(linhas: Record<string, string>[], nomeFicheiro: string) {
   if (linhas.length === 0) return;
-  const cabecalhos = Object.keys(linhas[0]);
-  const ws = XLSX.utils.json_to_sheet(linhas, { header: cabecalhos });
+  const filtradas = linhas.map(filtrarColunasResultado);
+  const ws = XLSX.utils.json_to_sheet(filtradas, { header: [...COLUNAS_RESULTADO] });
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Resultado');
   const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' }) as ArrayBuffer;

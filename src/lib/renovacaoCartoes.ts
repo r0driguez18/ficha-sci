@@ -146,3 +146,45 @@ export function nomeBaseRenovacao(d: Date = new Date()): string {
 export function nomeFicheiroExcelLote(nomeBase: string, numero: number): string {
   return `${nomeBase} ${numero}.xlsx`;
 }
+
+/**
+ * Colunas (e ordem) da folha "Resultado" final — confirmado contra um
+ * ficheiro real do processo atual. As restantes colunas do export do banco
+ * (Situação do Cartão, Ano/Mês de Expiração, Nº Vezes Utilizado, Data
+ * Última Utilização, Código de Componente, Número da 1ª conta DO
+ * associada) não entram no ficheiro.
+ */
+export const COLUNAS_RESULTADO = [
+  'Nº da entidade',
+  'Data de Emissão',
+  'Balcão',
+  'Nº de Cartão',
+  'Cliente de Subscrição',
+  'Nome no Cartão',
+] as const;
+
+function normalizarChaveColuna(s: string): string {
+  return s
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+/**
+ * Reduz a linha completa (`dados`) só às colunas de `COLUNAS_RESULTADO`, na
+ * ordem certa — a folha "Resultado" nunca leva as restantes colunas do
+ * export do banco. A comparação ignora acentos/maiúsculas, para tolerar
+ * pequenas variações no cabeçalho do ficheiro carregado.
+ */
+export function filtrarColunasResultado(dados: Record<string, string>): Record<string, string> {
+  const porChave = new Map<string, string>();
+  for (const [k, v] of Object.entries(dados)) {
+    porChave.set(normalizarChaveColuna(k), v);
+  }
+  const saida: Record<string, string> = {};
+  for (const col of COLUNAS_RESULTADO) {
+    saida[col] = porChave.get(normalizarChaveColuna(col)) ?? '';
+  }
+  return saida;
+}
