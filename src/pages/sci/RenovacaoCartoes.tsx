@@ -63,6 +63,10 @@ function parseColagemCartoes(txt: string): string[][] {
     });
 }
 
+function esperar(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function descarregarBlob(blob: Blob, nomeFicheiro: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -88,6 +92,28 @@ function descarregarExcel(linhas: Record<string, string>[], nomeFicheiro: string
     new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
     nomeFicheiro,
   );
+}
+
+/**
+ * Descarrega o .prn e o .xlsx de um lote. Com um pequeno intervalo entre os
+ * dois — disparar dois downloads no mesmo instante leva o Chrome a bloquear
+ * o segundo (só avisa com um ícone discreto na barra de endereço).
+ */
+async function descarregarFicheirosDoLote(
+  linhas: { numeroCartao: string; dados: Record<string, string> }[],
+  nomeBase: string,
+  numero: number,
+) {
+  try {
+    descarregarPrn(linhas.map((l) => l.numeroCartao), `${nomeBase} ${numero}.prn`);
+    await esperar(400);
+    descarregarExcel(linhas.map((l) => l.dados), nomeFicheiroExcelLote(nomeBase, numero));
+  } catch (e) {
+    console.error(e);
+    toast.error(
+      'Não foi possível montar um dos ficheiros. Se o download do .xlsx não apareceu, verifica se o browser bloqueou downloads múltiplos (ícone na barra de endereço).',
+    );
+  }
 }
 
 export default function RenovacaoCartoes() {
@@ -307,8 +333,7 @@ export default function RenovacaoCartoes() {
     if (errLinhas || !linhas) {
       toast.error('Lote gerado, mas não foi possível montar os ficheiros — usa "Descarregar" na lista de lotes.');
     } else {
-      descarregarPrn(linhas.map((l) => l.numeroCartao), `${sessaoAtiva.nome} ${loteNumero}.prn`);
-      descarregarExcel(linhas.map((l) => l.dados), nomeFicheiroExcelLote(sessaoAtiva.nome, loteNumero));
+      await descarregarFicheirosDoLote(linhas, sessaoAtiva.nome, loteNumero);
     }
     toast.success(`Lote ${loteNumero} gerado — ${data.length} cartão(ões).`);
     setBalcoesSelecionados(new Set());
@@ -322,8 +347,7 @@ export default function RenovacaoCartoes() {
       toast.error('Não foi possível obter os cartões deste lote.');
       return;
     }
-    descarregarPrn(linhas.map((l) => l.numeroCartao), lote.ficheiro_nome);
-    descarregarExcel(linhas.map((l) => l.dados), nomeFicheiroExcelLote(sessaoAtiva.nome, lote.numero));
+    await descarregarFicheirosDoLote(linhas, sessaoAtiva.nome, lote.numero);
   };
 
   const concluirSessao = async () => {
