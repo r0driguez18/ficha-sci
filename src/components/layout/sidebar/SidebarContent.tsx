@@ -23,6 +23,7 @@ import {
   Settings,
   BookOpen,
   Search,
+  CreditCard,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { getPendingReturns } from '@/services/cobrancasRetornoService';
@@ -95,6 +96,7 @@ export const SidebarContent = () => {
     { label: 'Passagem de Turno', path: '/sci/passagem-turno', group: 'SCI', keywords: ['passagem', 'turno', 'notas', 'handover'] },
     { label: 'CRC — Inconsistências', path: '/crc/tratamento', group: 'Ferramentas', keywords: ['inconsistências', 'fecho', 'validar', 'crc'] },
     { label: 'Gerador PS2', path: '/sci/gerador-ps2', group: 'Ferramentas', keywords: ['ps2', 'salários', 'pagamentos', 'ficheiro', 'banco', 'nib'] },
+    { label: 'Renovação de Cartões', path: '/sci/renovacao-cartoes', group: 'Ferramentas', keywords: ['cartões', 'renovação', 'prn', 'balcão', 'lote'] },
     { label: 'Estatísticas', path: '/easyvista/estatisticas', group: 'Ferramentas', keywords: ['estatísticas', 'gráficos', 'processamentos', 'charts'] },
     { label: 'Configurações', path: '/settings', group: 'Sistema', keywords: ['settings', 'configurações', 'tema', 'senha'] },
     { label: 'Documentação', path: '/docs', group: 'Sistema', keywords: ['docs', 'documentação', 'ajuda', 'help'] },
@@ -150,6 +152,7 @@ export const SidebarContent = () => {
           <SidebarMenu>
             <SidebarItem icon={ShieldCheck} label="CRC — Inconsistências" to="/crc/tratamento" />
             <SidebarItem icon={Banknote} label="Gerador PS2" to="/sci/gerador-ps2" />
+            <SidebarItem icon={CreditCard} label="Renovação de Cartões" to="/sci/renovacao-cartoes" />
             <SidebarItem icon={BarChart3} label="Estatísticas" to="/easyvista/estatisticas" />
           </SidebarMenu>
         </SidebarGroupContent>
