@@ -32,25 +32,18 @@ export interface TaskboardData {
 }
 
 /**
- * Save taskboard data to Supabase
+ * Save taskboard data to Supabase.
+ *
+ * Usa `upsert` (não "select para ver se existe, depois insert/update"): o
+ * autosave não tem debounce, por isso é normal haver várias gravações em
+ * paralelo (várias teclas/checkboxes em sequência rápida) — um
+ * select-depois-escreve deixa uma janela onde duas chamadas veem "não
+ * existe" e tentam ambas `insert`, uma delas a colidir com o
+ * `UNIQUE(user_id, form_type, date)`. O `upsert` resolve o conflito
+ * atomicamente no Postgres, sem essa janela.
  */
 export const saveTaskboardData = async (data: TaskboardData): Promise<{ data: any; error: any }> => {
   try {
-    // Check if there's already an entry for this user, form type and date
-    const { data: existingData, error: fetchError } = await supabase
-      .from('taskboard_data')
-      .select('id')
-      .eq('user_id', data.user_id)
-      .eq('form_type', data.form_type)
-      .eq('date', data.date)
-      .maybeSingle();
-    
-    if (fetchError) {
-      console.error('Error checking for existing data:', fetchError);
-      return { data: null, error: fetchError };
-    }
-    
-    // Prepare data for Supabase by ensuring it conforms to Json type
     const supabaseData = {
       user_id: data.user_id,
       form_type: data.form_type,
@@ -60,38 +53,19 @@ export const saveTaskboardData = async (data: TaskboardData): Promise<{ data: an
       table_rows: data.table_rows as unknown as Json,
       active_tab: data.active_tab || null
     };
-    
-    if (existingData) {
-      // Update existing record
-      const { data: updatedData, error: updateError } = await supabase
-        .from('taskboard_data')
-        .update({
-          turn_data: supabaseData.turn_data,
-          tasks: supabaseData.tasks,
-          table_rows: supabaseData.table_rows,
-          active_tab: supabaseData.active_tab
-        })
-        .eq('id', existingData.id);
-      
-      if (updateError) {
-        console.error('Error updating taskboard data:', updateError);
-        return { data: null, error: updateError };
-      }
 
-      return { data: updatedData, error: null };
-    } else {
-      // Insert new record
-      const { data: insertedData, error: insertError } = await supabase
-        .from('taskboard_data')
-        .insert(supabaseData);
-      
-      if (insertError) {
-        console.error('Error inserting taskboard data:', insertError);
-        return { data: null, error: insertError };
-      }
+    const { data: upsertedData, error } = await supabase
+      .from('taskboard_data')
+      .upsert(supabaseData, { onConflict: 'user_id,form_type,date' })
+      .select()
+      .maybeSingle();
 
-      return { data: insertedData, error: null };
+    if (error) {
+      console.error('Error saving taskboard data:', error);
+      return { data: null, error };
     }
+
+    return { data: upsertedData, error: null };
   } catch (error) {
     console.error('Error saving taskboard data:', error);
     return { data: null, error };

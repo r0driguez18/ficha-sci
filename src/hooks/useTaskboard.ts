@@ -177,6 +177,20 @@ export function useTaskboard(formType: FormType) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [date, turnData, tasks, tableRows, verificacaoTapes, activeTab, isLoading]);
 
+  // A assinatura vale para o conteúdo tal como estava no momento de
+  // assinar — qualquer edição depois disso invalida-a (o token de
+  // assinatura, de uso único, ainda nem chegou a ser gasto, e expira
+  // sozinho em 10 min), exigindo assinar de novo antes de exportar.
+  useEffect(() => {
+    if (signatureDataUrl || signingToken) {
+      setSignerName('');
+      setSignatureDataUrl(null);
+      setSigningToken(null);
+      toast.info('A ficha foi alterada depois de assinada — assina novamente antes de exportar.');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [turnData, tasks, tableRows, verificacaoTapes]);
+
   // ---------- Pré-preencher "Executado por" na 1.ª linha intacta ----------
   useEffect(() => {
     if (!currentOperator) return;
@@ -189,12 +203,23 @@ export function useTaskboard(formType: FormType) {
   }, [currentOperator]);
 
   // ---------- Handlers de edição ----------
+  // Saldo da conta: negativo/positivo são mutuamente exclusivos — marcar um
+  // desmarca o outro, nunca os dois ao mesmo tempo.
+  const SALDO_OPOSTO: Record<string, string> = {
+    saldoNegativo: 'saldoPositivo',
+    saldoPositivo: 'saldoNegativo',
+  };
+
   const handleTaskChange = useCallback(
     (turnKey: TurnKey, task: string, checked: boolean | string) => {
-      setTasks((prev) => ({
-        ...prev,
-        [turnKey]: { ...prev[turnKey], [task]: checked },
-      }));
+      setTasks((prev) => {
+        const turnTasks = { ...prev[turnKey], [task]: checked };
+        const oposto = SALDO_OPOSTO[task];
+        if (oposto && checked === true) {
+          (turnTasks as Record<string, unknown>)[oposto] = false;
+        }
+        return { ...prev, [turnKey]: turnTasks };
+      });
     },
     [],
   );
@@ -250,6 +275,21 @@ export function useTaskboard(formType: FormType) {
     return null;
   };
 
+  /**
+   * Entrada igual à saída é sempre um erro (turno de duração zero) — mas
+   * entrada > saída é válido (turnos que atravessam a meia-noite), por
+   * isso não se pode validar isso de forma genérica.
+   */
+  const turnoComHorarioInvalido = () => {
+    for (const key of config.turns) {
+      const td = turnData[key];
+      if (td.entrada && td.saida && td.entrada === td.saida) {
+        return key;
+      }
+    }
+    return null;
+  };
+
   // Exige também o token: sem ele, "assinado" é só estado local (ver
   // SignatureSection / operatorPinService) e não passa em
   // consumir_token_assinatura no momento de exportar.
@@ -280,6 +320,7 @@ export function useTaskboard(formType: FormType) {
 
     let savedCount = 0;
     let duplicateCount = 0;
+    let failedCount = 0;
     try {
       for (const row of rowsToSave) {
         const result = await saveFileProcess({
@@ -303,10 +344,21 @@ export function useTaskboard(formType: FormType) {
           }
         } else if (result.error.message?.includes('já existe')) {
           duplicateCount++;
+        } else {
+          // Não é "silencioso": uma linha que falha a meio do lote (rede,
+          // erro do servidor) tem de ser dita ao operador, não só ao console
+          // — sem isto a ficha parecia gravada por completo quando não foi.
+          failedCount++;
+          console.error('Erro ao guardar processamento da linha:', row, result.error);
         }
       }
     } catch (error) {
       console.error('Erro ao guardar processamentos:', error);
+    }
+    if (failedCount > 0) {
+      toast.error(
+        `${failedCount} processamento(s) não foram guardados (erro de gravação) — confirma na Estatística e volta a tentar se faltarem.`,
+      );
     }
     return { savedCount, duplicateCount };
   };
@@ -323,6 +375,12 @@ export function useTaskboard(formType: FormType) {
     }
     if (invalidOpFormat()) {
       toast.error('O(s) número(s) de operação devem conter exatamente 9 dígitos. Verifique a tabela.');
+      return;
+    }
+    const horarioInvalido = turnoComHorarioInvalido();
+    if (horarioInvalido) {
+      const labels: Record<TurnKey, string> = { turno1: 'Turno 1', turno2: 'Turno 2', turno3: 'Turno 3' };
+      toast.error(`Entrada e saída do ${labels[horarioInvalido]} não podem ser a mesma hora.`);
       return;
     }
 

@@ -174,58 +174,32 @@ export async function deleteExportedTaskboard(id: string): Promise<{ error: any 
  * Check if given operation numbers already exist in previous boards
  * Ignores operations in the currently edited form (same date and form type).
  */
+/**
+ * Verifica operações duplicadas (mesma regra de sempre: qualquer nº já
+ * usado em qualquer data bloqueia, exceto a própria ficha em edição) — a
+ * agregação corre no Postgres (`operacoes_duplicadas_ficha`), não busca a
+ * tabela inteira para o browser a cada clique em exportar.
+ */
 export async function checkDuplicateOperations(
   formType: string,
   date: string,
   newOperations: string[]
 ): Promise<string[]> {
   if (!newOperations || newOperations.length === 0) return [];
-  
-  // Since operations should be globally unique, we don't filter by user
-  const { data, error } = await supabase
-    .from('exported_taskboards')
-    .select('form_type, date, table_rows');
 
-  if (error || !data) {
-    console.error('Error fetching exported taskboards to check duplicates', error);
+  const ops = newOperations.map((op) => op.trim()).filter(Boolean);
+  const { data, error } = await supabase.rpc('operacoes_duplicadas_ficha', {
+    p_form_type: formType,
+    p_date: date,
+    p_operacoes: ops,
+  });
+
+  if (error) {
+    console.error('Error checking duplicate operations', error);
     // Nunca falhar "aberto": se não conseguimos verificar duplicados, a
     // exportação tem de ser bloqueada, não avançar sem aviso.
     throw new Error('Não foi possível verificar operações duplicadas.');
   }
-  
-  const existingOps = new Set<string>();
-  data.forEach((board: any) => {
-    // skip the form we are currently editing (so they can edit the same form multiple times today)
-    if (board.form_type === formType && board.date === date) return;
-    
-    if (Array.isArray(board.table_rows)) {
-      board.table_rows.forEach((row: any) => {
-        if (row.operacao && typeof row.operacao === 'string' && row.operacao.trim()) {
-          existingOps.add(row.operacao.trim());
-        }
-      });
-    }
-  });
 
-  // Test against actual file_processes database as well
-  const { data: fileProcesses, error: fpError } = await supabase
-    .from('file_processes')
-    .select('operation_number, time_registered')
-    .in('operation_number', newOperations);
-
-  if (fpError) {
-    console.error('Error fetching file_processes to check duplicates', fpError);
-    throw new Error('Não foi possível verificar operações duplicadas.');
-  }
-
-  if (fileProcesses) {
-    fileProcesses.forEach((p: any) => {
-      // Regra ativada: Qualquer número de operação que já conste no sistema bloqueia a ficha inteira
-      if (p.operation_number && typeof p.operation_number === 'string') {
-        existingOps.add(p.operation_number.trim());
-      }
-    });
-  }
-  
-  return newOperations.filter(op => existingOps.has(op.trim()));
+  return data ?? [];
 }
