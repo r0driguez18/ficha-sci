@@ -456,17 +456,15 @@ export default function RenovacaoCartoes() {
                 {aConcluir ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-1" />}
                 Terminar sessão
               </Button>
-              {lotes.length === 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-muted-foreground hover:text-destructive"
-                  disabled={aDescartar}
-                  onClick={() => setSessaoADescartar(sessaoAtiva)}
-                >
-                  <Trash2 className="h-4 w-4 mr-1" /> Descartar sessão
-                </Button>
-              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground hover:text-destructive"
+                disabled={aDescartar}
+                onClick={() => setSessaoADescartar(sessaoAtiva)}
+              >
+                <Trash2 className="h-4 w-4 mr-1" /> Descartar sessão
+              </Button>
             </CardContent>
           </Card>
 
@@ -716,7 +714,7 @@ export default function RenovacaoCartoes() {
           if (!open) setSessaoADescartar(null);
         }}
         title={`Descartar "${sessaoADescartar?.nome}"?`}
-        description="Apaga a sessão e todos os cartões carregados nela. Só é possível porque ainda não foi gerado nenhum lote — nada foi entregue ao banco. Esta ação não pode ser anulada."
+        description="Apaga a sessão inteira — todos os cartões carregados e, se já existirem, os lotes gerados (o histórico de quais cartões foram entregues ao banco nesses lotes perde-se). Esta ação não pode ser anulada."
         confirmLabel="Descartar sessão"
         cancelLabel="Cancelar"
         variant="destructive"
