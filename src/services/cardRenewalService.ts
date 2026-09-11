@@ -210,3 +210,11 @@ export async function concluirSessaoRenovacao(
   const { error } = await supabase.rpc('concluir_sessao_renovacao', { p_session_id: sessionId });
   return { error };
 }
+
+/** Descarta uma sessão criada por engano — só funciona sem nenhum lote gerado. */
+export async function descartarSessaoRenovacao(
+  sessionId: string,
+): Promise<{ error: PostgrestError | null }> {
+  const { error } = await supabase.rpc('descartar_sessao_renovacao', { p_session_id: sessionId });
+  return { error };
+}

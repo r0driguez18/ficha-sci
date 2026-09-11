@@ -19,6 +19,7 @@ import {
   Loader2,
   Plus,
   RotateCcw,
+  Trash2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -41,6 +42,7 @@ import {
   linhasDoLote,
   criarLoteRenovacao,
   concluirSessaoRenovacao,
+  descartarSessaoRenovacao,
   type CardRenewalSession,
   type CardRenewalLote,
   type BalcaoPendente,
@@ -100,8 +102,10 @@ export default function RenovacaoCartoes() {
   const [balcoesSelecionados, setBalcoesSelecionados] = useState<Set<string>>(new Set());
   const [gerandoLote, setGerandoLote] = useState(false);
   const [aConcluir, setAConcluir] = useState(false);
+  const [aDescartar, setADescartar] = useState(false);
   const [confirmarNovaSessao, setConfirmarNovaSessao] = useState(false);
   const [confirmarConcluir, setConfirmarConcluir] = useState(false);
+  const [sessaoADescartar, setSessaoADescartar] = useState<CardRenewalSession | null>(null);
 
   // -- upload de um novo ficheiro --
   const [modo, setModo] = useState<'colar' | 'ficheiro'>('ficheiro');
@@ -315,6 +319,21 @@ export default function RenovacaoCartoes() {
     await carregarSessoes();
   };
 
+  const descartarSessao = async () => {
+    if (!sessaoADescartar) return;
+    setADescartar(true);
+    const { error } = await descartarSessaoRenovacao(sessaoADescartar.id);
+    setADescartar(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success('Sessão descartada.');
+    setSessaoADescartar(null);
+    if (sessaoAtiva?.id === sessaoADescartar.id) setSessaoAtiva(null);
+    await carregarSessoes();
+  };
+
   if (carregando) {
     return (
       <PageContainer size="default">
@@ -339,13 +358,23 @@ export default function RenovacaoCartoes() {
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
             {sessoes.map((s) => (
-              <Button
-                key={s.id}
-                variant={sessaoAtiva?.id === s.id ? 'default' : 'outline'}
-                onClick={() => selecionarSessao(s)}
-              >
-                {s.nome}
-              </Button>
+              <div key={s.id} className="flex items-center gap-1">
+                <Button
+                  variant={sessaoAtiva?.id === s.id ? 'default' : 'outline'}
+                  onClick={() => selecionarSessao(s)}
+                >
+                  {s.nome}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 text-muted-foreground hover:text-destructive"
+                  title="Descartar esta sessão"
+                  onClick={() => setSessaoADescartar(s)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             ))}
           </CardContent>
         </Card>
@@ -381,6 +410,17 @@ export default function RenovacaoCartoes() {
                 {aConcluir ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-1" />}
                 Terminar sessão
               </Button>
+              {lotes.length === 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground hover:text-destructive"
+                  disabled={aDescartar}
+                  onClick={() => setSessaoADescartar(sessaoAtiva)}
+                >
+                  <Trash2 className="h-4 w-4 mr-1" /> Descartar sessão
+                </Button>
+              )}
             </CardContent>
           </Card>
 
@@ -618,6 +658,19 @@ export default function RenovacaoCartoes() {
         confirmLabel="Terminar sessão"
         cancelLabel="Cancelar"
         onConfirm={concluirSessao}
+      />
+
+      <ConfirmDialog
+        open={sessaoADescartar !== null}
+        onOpenChange={(open) => {
+          if (!open) setSessaoADescartar(null);
+        }}
+        title={`Descartar "${sessaoADescartar?.nome}"?`}
+        description="Apaga a sessão e todos os cartões carregados nela. Só é possível porque ainda não foi gerado nenhum lote — nada foi entregue ao banco. Esta ação não pode ser anulada."
+        confirmLabel="Descartar sessão"
+        cancelLabel="Cancelar"
+        variant="destructive"
+        onConfirm={descartarSessao}
       />
     </PageContainer>
   );
