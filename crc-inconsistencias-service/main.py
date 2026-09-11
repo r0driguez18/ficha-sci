@@ -40,6 +40,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
+from starlette.middleware.base import BaseHTTPMiddleware
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -342,6 +343,24 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+class PrivateNetworkAccessMiddleware(BaseHTTPMiddleware):
+    """Responde aos pedidos "Private Network Access" do Chrome.
+
+    A app corre num endereço privado (o servidor) e este serviço em
+    `localhost` do operador — o Chrome classifica isso como uma travessia
+    privado -> local e exige este cabeçalho no preflight, senão bloqueia
+    o pedido silenciosamente (nem chega a "erro" no ecrã)."""
+
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        if request.headers.get("access-control-request-private-network") == "true":
+            response.headers["Access-Control-Allow-Private-Network"] = "true"
+        return response
+
+
+app.add_middleware(PrivateNetworkAccessMiddleware)
 
 
 def _snapshot() -> dict[str, Any]:
