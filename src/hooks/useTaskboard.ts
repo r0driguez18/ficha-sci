@@ -11,6 +11,7 @@ import {
 import { saveFileProcess } from '@/services/fileProcessService';
 import { createCobrancaRetorno } from '@/services/cobrancasRetornoService';
 import { saveExportedTaskboard, checkDuplicateOperations } from '@/services/exportedTaskboardService';
+import { consumirTokenAssinatura } from '@/services/operatorPinService';
 import { generateTaskboardPDF } from '@/utils/pdfGenerator';
 import { computeFichaHash } from '@/lib/signatureHash';
 import { fichaFileName } from '@/lib/fichaFileName';
@@ -71,6 +72,8 @@ export function useTaskboard(formType: FormType) {
   const [verificacaoTapes, setVerificacaoTapes] = useState<VerificacaoTapes>(emptyVerificacaoTapes());
   const [signerName, setSignerName] = useState('');
   const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
+  /** Token de assinatura devolvido pelo servidor ao validar o PIN — ver operatorPinService. */
+  const [signingToken, setSigningToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   /** Bloqueia "Guardar" / "Exportar PDF" durante a operação (evita duplo-clique). */
   const [busy, setBusy] = useState(false);
@@ -174,6 +177,20 @@ export function useTaskboard(formType: FormType) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [date, turnData, tasks, tableRows, verificacaoTapes, activeTab, isLoading]);
 
+  // A assinatura vale para o conteúdo tal como estava no momento de
+  // assinar — qualquer edição depois disso invalida-a (o token de
+  // assinatura, de uso único, ainda nem chegou a ser gasto, e expira
+  // sozinho em 10 min), exigindo assinar de novo antes de exportar.
+  useEffect(() => {
+    if (signatureDataUrl || signingToken) {
+      setSignerName('');
+      setSignatureDataUrl(null);
+      setSigningToken(null);
+      toast.info('A ficha foi alterada depois de assinada — assina novamente antes de exportar.');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [turnData, tasks, tableRows, verificacaoTapes]);
+
   // ---------- Pré-preencher "Executado por" na 1.ª linha intacta ----------
   useEffect(() => {
     if (!currentOperator) return;
@@ -186,12 +203,23 @@ export function useTaskboard(formType: FormType) {
   }, [currentOperator]);
 
   // ---------- Handlers de edição ----------
+  // Saldo da conta: negativo/positivo são mutuamente exclusivos — marcar um
+  // desmarca o outro, nunca os dois ao mesmo tempo.
+  const SALDO_OPOSTO: Record<string, string> = {
+    saldoNegativo: 'saldoPositivo',
+    saldoPositivo: 'saldoNegativo',
+  };
+
   const handleTaskChange = useCallback(
     (turnKey: TurnKey, task: string, checked: boolean | string) => {
-      setTasks((prev) => ({
-        ...prev,
-        [turnKey]: { ...prev[turnKey], [task]: checked },
-      }));
+      setTasks((prev) => {
+        const turnTasks = { ...prev[turnKey], [task]: checked };
+        const oposto = SALDO_OPOSTO[task];
+        if (oposto && checked === true) {
+          (turnTasks as Record<string, unknown>)[oposto] = false;
+        }
+        return { ...prev, [turnKey]: turnTasks };
+      });
     },
     [],
   );
@@ -207,8 +235,9 @@ export function useTaskboard(formType: FormType) {
     setTableRows((rows) => [...rows, emptyTableRow(rows.length + 1, currentOperator?.value ?? '')]);
   }, [currentOperator]);
 
-  const removeTableRow = useCallback(() => {
-    setTableRows((rows) => (rows.length > 1 ? rows.slice(0, -1) : rows));
+  /** Remove a linha indicada (nunca a última que sobrar) — nunca a "última da lista" por omissão. */
+  const removeTableRow = useCallback((id: number) => {
+    setTableRows((rows) => (rows.length > 1 ? rows.filter((r) => r.id !== id) : rows));
   }, []);
 
   const handleInputChange = useCallback(
@@ -246,7 +275,25 @@ export function useTaskboard(formType: FormType) {
     return null;
   };
 
-  const isSigned = signatureDataUrl === 'pin' && !!signerName;
+  /**
+   * Entrada igual à saída é sempre um erro (turno de duração zero) — mas
+   * entrada > saída é válido (turnos que atravessam a meia-noite), por
+   * isso não se pode validar isso de forma genérica.
+   */
+  const turnoComHorarioInvalido = () => {
+    for (const key of config.turns) {
+      const td = turnData[key];
+      if (td.entrada && td.saida && td.entrada === td.saida) {
+        return key;
+      }
+    }
+    return null;
+  };
+
+  // Exige também o token: sem ele, "assinado" é só estado local (ver
+  // SignatureSection / operatorPinService) e não passa em
+  // consumir_token_assinatura no momento de exportar.
+  const isSigned = signatureDataUrl === 'pin' && !!signerName && !!signingToken;
 
   /** Uma linha da tabela conta como processamento a registar? */
   const isSavableRow = (row: (typeof tableRows)[number]) => {
@@ -273,6 +320,7 @@ export function useTaskboard(formType: FormType) {
 
     let savedCount = 0;
     let duplicateCount = 0;
+    let failedCount = 0;
     try {
       for (const row of rowsToSave) {
         const result = await saveFileProcess({
@@ -296,10 +344,21 @@ export function useTaskboard(formType: FormType) {
           }
         } else if (result.error.message?.includes('já existe')) {
           duplicateCount++;
+        } else {
+          // Não é "silencioso": uma linha que falha a meio do lote (rede,
+          // erro do servidor) tem de ser dita ao operador, não só ao console
+          // — sem isto a ficha parecia gravada por completo quando não foi.
+          failedCount++;
+          console.error('Erro ao guardar processamento da linha:', row, result.error);
         }
       }
     } catch (error) {
       console.error('Erro ao guardar processamentos:', error);
+    }
+    if (failedCount > 0) {
+      toast.error(
+        `${failedCount} processamento(s) não foram guardados (erro de gravação) — confirma na Estatística e volta a tentar se faltarem.`,
+      );
     }
     return { savedCount, duplicateCount };
   };
@@ -318,10 +377,23 @@ export function useTaskboard(formType: FormType) {
       toast.error('O(s) número(s) de operação devem conter exatamente 9 dígitos. Verifique a tabela.');
       return;
     }
+    const horarioInvalido = turnoComHorarioInvalido();
+    if (horarioInvalido) {
+      const labels: Record<TurnKey, string> = { turno1: 'Turno 1', turno2: 'Turno 2', turno3: 'Turno 3' };
+      toast.error(`Entrada e saída do ${labels[horarioInvalido]} não podem ser a mesma hora.`);
+      return;
+    }
 
     setBusy(true);
     try {
-      const duplicates = await findDuplicateOps();
+      let duplicates: string[];
+      try {
+        duplicates = await findDuplicateOps();
+      } catch (e) {
+        console.error('Erro ao verificar duplicados:', e);
+        toast.error('Não foi possível verificar operações duplicadas — tenta novamente.');
+        return;
+      }
       if (duplicates.length > 0) {
         toast.error(`A(s) operação(ões) já se encontram no arquivo e não podem ser duplicadas: ${duplicates.join(', ')}`);
         return;
@@ -337,6 +409,24 @@ export function useTaskboard(formType: FormType) {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) {
         toast.error('Utilizador não autenticado');
+        return;
+      }
+
+      // Gasta o token de assinatura no servidor — é a única coisa que prova
+      // que a verificação de PIN aconteceu mesmo (ver operatorPinService).
+      // Um token forjado/expirado/já usado falha aqui, mesmo que o estado
+      // local pareça "assinado".
+      if (!signingToken) {
+        toast.error("A ficha não pode ser gerada sem ser assinada. Use 'Assinar ficha' e introduza o seu PIN.");
+        return;
+      }
+      const { error: tokenError } = await consumirTokenAssinatura(signingToken);
+      if (tokenError) {
+        console.error('Token de assinatura inválido:', tokenError);
+        toast.error('A assinatura expirou ou já foi usada — assina a ficha novamente.');
+        setSignerName('');
+        setSignatureDataUrl(null);
+        setSigningToken(null);
         return;
       }
 
@@ -416,6 +506,7 @@ export function useTaskboard(formType: FormType) {
       // reautenticar com o PIN (a data avança para a ficha do próximo dia).
       setSignerName('');
       setSignatureDataUrl(null);
+      setSigningToken(null);
 
       const [ny, nm, nd] = date.split('-').map(Number);
       const next = new Date(ny, nm - 1, nd + 1);
@@ -440,6 +531,7 @@ export function useTaskboard(formType: FormType) {
     setActiveTab(config.turns[0]);
     setSignerName('');
     setSignatureDataUrl(null);
+    setSigningToken(null);
     await resetData();
     toast.success('Formulário reiniciado com sucesso!');
   };
@@ -462,6 +554,8 @@ export function useTaskboard(formType: FormType) {
     setSignerName,
     signatureDataUrl,
     setSignatureDataUrl,
+    signingToken,
+    setSigningToken,
     isLoading,
     busy,
     syncStatus,

@@ -23,6 +23,15 @@ import type { TurnKey } from '@/types/taskboard';
 
 const TURN_LABELS: Record<TurnKey, string> = { turno1: 'Turno 1', turno2: 'Turno 2', turno3: 'Turno 3' };
 
+/** Limites razoáveis para a data da ficha — evita escolhas absurdas (2019, 2099…) sem bloquear correções antigas. */
+function isoDateOffset(days: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+const dateMinBound = isoDateOffset(-365);
+const dateMaxBound = isoDateOffset(7);
+
 interface FichaProcedimentosProps {
   formType: FormType;
 }
@@ -140,7 +149,7 @@ export default function FichaProcedimentos({ formType }: FichaProcedimentosProps
               <CardTitle className="text-xl font-bold text-foreground">{config.title}</CardTitle>
               <CardDescription className="mt-1">{config.description}</CardDescription>
             </div>
-            {tb.user && <SyncStatusBadge status={tb.syncStatus} lastSavedAt={tb.lastSavedAt} />}
+            <SyncStatusBadge status={tb.syncStatus} lastSavedAt={tb.lastSavedAt} />
           </div>
         </CardHeader>
         <CardContent className="pt-6">
@@ -156,6 +165,8 @@ export default function FichaProcedimentos({ formType }: FichaProcedimentosProps
               type="date"
               value={tb.date}
               onChange={(e) => tb.setDate(e.target.value)}
+              min={dateMinBound}
+              max={dateMaxBound}
               className="max-w-xs mt-1.5"
             />
           </div>
@@ -215,6 +226,8 @@ export default function FichaProcedimentos({ formType }: FichaProcedimentosProps
             onSignerNameChange={tb.setSignerName}
             signatureDataUrl={tb.signatureDataUrl}
             onSignatureChange={tb.setSignatureDataUrl}
+            signingToken={tb.signingToken}
+            onSigningTokenChange={tb.setSigningToken}
           />
 
           <FormActions
