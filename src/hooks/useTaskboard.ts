@@ -11,6 +11,7 @@ import {
 import { saveFileProcess } from '@/services/fileProcessService';
 import { createCobrancaRetorno } from '@/services/cobrancasRetornoService';
 import { saveExportedTaskboard, checkDuplicateOperations } from '@/services/exportedTaskboardService';
+import { consumirTokenAssinatura } from '@/services/operatorPinService';
 import { generateTaskboardPDF } from '@/utils/pdfGenerator';
 import { computeFichaHash } from '@/lib/signatureHash';
 import { fichaFileName } from '@/lib/fichaFileName';
@@ -71,6 +72,8 @@ export function useTaskboard(formType: FormType) {
   const [verificacaoTapes, setVerificacaoTapes] = useState<VerificacaoTapes>(emptyVerificacaoTapes());
   const [signerName, setSignerName] = useState('');
   const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
+  /** Token de assinatura devolvido pelo servidor ao validar o PIN — ver operatorPinService. */
+  const [signingToken, setSigningToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   /** Bloqueia "Guardar" / "Exportar PDF" durante a operação (evita duplo-clique). */
   const [busy, setBusy] = useState(false);
@@ -247,7 +250,10 @@ export function useTaskboard(formType: FormType) {
     return null;
   };
 
-  const isSigned = signatureDataUrl === 'pin' && !!signerName;
+  // Exige também o token: sem ele, "assinado" é só estado local (ver
+  // SignatureSection / operatorPinService) e não passa em
+  // consumir_token_assinatura no momento de exportar.
+  const isSigned = signatureDataUrl === 'pin' && !!signerName && !!signingToken;
 
   /** Uma linha da tabela conta como processamento a registar? */
   const isSavableRow = (row: (typeof tableRows)[number]) => {
@@ -348,6 +354,24 @@ export function useTaskboard(formType: FormType) {
         return;
       }
 
+      // Gasta o token de assinatura no servidor — é a única coisa que prova
+      // que a verificação de PIN aconteceu mesmo (ver operatorPinService).
+      // Um token forjado/expirado/já usado falha aqui, mesmo que o estado
+      // local pareça "assinado".
+      if (!signingToken) {
+        toast.error("A ficha não pode ser gerada sem ser assinada. Use 'Assinar ficha' e introduza o seu PIN.");
+        return;
+      }
+      const { error: tokenError } = await consumirTokenAssinatura(signingToken);
+      if (tokenError) {
+        console.error('Token de assinatura inválido:', tokenError);
+        toast.error('A assinatura expirou ou já foi usada — assina a ficha novamente.');
+        setSignerName('');
+        setSignatureDataUrl(null);
+        setSigningToken(null);
+        return;
+      }
+
       // Regista os processamentos da tabela (alimenta a Estatística). Só há
       // toast quando há linhas — uma ficha pode legitimamente não ter nenhuma.
       const temProcessamentos = tableRows.some(isSavableRow);
@@ -424,6 +448,7 @@ export function useTaskboard(formType: FormType) {
       // reautenticar com o PIN (a data avança para a ficha do próximo dia).
       setSignerName('');
       setSignatureDataUrl(null);
+      setSigningToken(null);
 
       const [ny, nm, nd] = date.split('-').map(Number);
       const next = new Date(ny, nm - 1, nd + 1);
@@ -448,6 +473,7 @@ export function useTaskboard(formType: FormType) {
     setActiveTab(config.turns[0]);
     setSignerName('');
     setSignatureDataUrl(null);
+    setSigningToken(null);
     await resetData();
     toast.success('Formulário reiniciado com sucesso!');
   };
@@ -470,6 +496,8 @@ export function useTaskboard(formType: FormType) {
     setSignerName,
     signatureDataUrl,
     setSignatureDataUrl,
+    signingToken,
+    setSigningToken,
     isLoading,
     busy,
     syncStatus,

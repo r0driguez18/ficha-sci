@@ -32,11 +32,27 @@ export async function changeOperatorPin(
   return { ok: data === true, error: data === true ? null : 'PIN atual incorreto' };
 }
 
-export async function verifyOperatorPin(pin: string): Promise<boolean> {
+/**
+ * Verifica o PIN. Em caso de sucesso o servidor devolve um token de
+ * assinatura de uso único (válido 10 min) — é o que prova, mais tarde,
+ * que esta verificação aconteceu mesmo; a própria devolução de um token
+ * não pode ser forjada no cliente. `error` só vem preenchido em casos
+ * excecionais (ex. bloqueio temporário por demasiadas tentativas); um
+ * PIN simplesmente errado só devolve `token: null`.
+ */
+export async function verifyOperatorPin(
+  pin: string,
+): Promise<{ token: string | null; error: string | null }> {
   const { data, error } = await supabase.rpc('verify_operator_pin', { pin });
   if (error) {
     console.error('Erro ao verificar PIN:', error);
-    return false;
+    return { token: null, error: error.message };
   }
-  return data === true;
+  return { token: data ?? null, error: null };
+}
+
+/** Gasta o token de assinatura — obrigatório antes de gravar a ficha assinada. */
+export async function consumirTokenAssinatura(token: string): Promise<{ error: string | null }> {
+  const { error } = await supabase.rpc('consumir_token_assinatura', { p_token: token });
+  return { error: error ? error.message : null };
 }

@@ -215,6 +215,8 @@ export default function FichaProcedimentos({ formType }: FichaProcedimentosProps
             onSignerNameChange={tb.setSignerName}
             signatureDataUrl={tb.signatureDataUrl}
             onSignatureChange={tb.setSignatureDataUrl}
+            signingToken={tb.signingToken}
+            onSigningTokenChange={tb.setSigningToken}
           />
 
           <FormActions

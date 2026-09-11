@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { CheckCircle2, PenLine, RefreshCw, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -19,6 +19,12 @@ interface SignatureSectionProps {
   onSignerNameChange: (v: string) => void;
   signatureDataUrl?: string | null;
   onSignatureChange?: (dataUrl: string | null) => void;
+  /**
+   * Token de assinatura devolvido pelo servidor ao validar o PIN — a prova
+   * verificável de que a verificação aconteceu mesmo (ver `useTaskboard`).
+   */
+  signingToken?: string | null;
+  onSigningTokenChange?: (token: string | null) => void;
 }
 
 export const SignatureSection: React.FC<SignatureSectionProps> = ({
@@ -26,6 +32,8 @@ export const SignatureSection: React.FC<SignatureSectionProps> = ({
   onSignerNameChange,
   signatureDataUrl,
   onSignatureChange,
+  signingToken,
+  onSigningTokenChange,
 }) => {
   const { user } = useAuth();
   const operator = useCurrentOperator();
@@ -34,7 +42,8 @@ export const SignatureSection: React.FC<SignatureSectionProps> = ({
   const meta = user?.user_metadata as { name?: string } | undefined;
   const operatorName = operator?.label || meta?.name || user?.email || 'Operador';
   const operatorLinked = !!operator;
-  const signed = signatureDataUrl === PIN_SENTINEL && !!signerName;
+  const signed = signatureDataUrl === PIN_SENTINEL && !!signerName && !!signingToken;
+  const pendingTokenRef = useRef<string | null>(null);
 
   const [hasPin, setHasPin] = useState<boolean | null>(null);
   const [pinCheckFailed, setPinCheckFailed] = useState(false);
@@ -65,23 +74,34 @@ export const SignatureSection: React.FC<SignatureSectionProps> = ({
 
   const handleConfirm = async (pin: string) => {
     if (hasPin) {
-      const ok = await verifyOperatorPin(pin);
-      return { ok, error: ok ? null : 'PIN incorreto.' };
+      const { token, error } = await verifyOperatorPin(pin);
+      pendingTokenRef.current = token;
+      return { ok: !!token, error: error ?? (token ? null : 'PIN incorreto.') };
     }
     const { error } = await setOperatorPin(pin);
     if (error) return { ok: false, error };
     setHasPin(true);
+    // Definir o PIN pela primeira vez já é o momento de assinar — verifica
+    // logo com o PIN acabado de definir, para obter o token de assinatura.
+    const { token, error: verifyError } = await verifyOperatorPin(pin);
+    pendingTokenRef.current = token;
+    if (!token) {
+      return { ok: false, error: verifyError ?? 'Não foi possível assinar. Tenta novamente.' };
+    }
     return { ok: true };
   };
 
   const handleSuccess = () => {
     onSignerNameChange(operatorName);
     onSignatureChange?.(PIN_SENTINEL);
+    onSigningTokenChange?.(pendingTokenRef.current);
+    pendingTokenRef.current = null;
   };
 
   const clearSignature = () => {
     onSignerNameChange('');
     onSignatureChange?.(null);
+    onSigningTokenChange?.(null);
   };
 
   return (
