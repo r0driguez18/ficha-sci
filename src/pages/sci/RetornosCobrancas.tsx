@@ -30,10 +30,13 @@ const fmt = (iso?: string | null) => {
   return `${d}/${m}/${y}`;
 };
 
+// "Urgente" e "atrasado" não se distinguem só pela cor (WCAG 1.4.1) — o
+// primeiro usa o vermelho sólido mais forte, o segundo um tom mais claro
+// com contorno, para além do ícone e do texto já serem diferentes.
 const SEVERITY_BADGE: Record<ReturnSeverity, { cls: string; icon: typeof Clock }> = {
   enviado: { cls: 'bg-success text-success-foreground', icon: CheckCircle },
   urgente: { cls: 'bg-destructive text-destructive-foreground', icon: Flame },
-  atrasado: { cls: 'bg-destructive text-destructive-foreground', icon: AlertTriangle },
+  atrasado: { cls: 'border border-destructive/50 bg-destructive/10 text-destructive', icon: AlertTriangle },
   due: { cls: 'bg-warning text-warning-foreground', icon: Clock },
   pendente: { cls: 'border border-input text-foreground', icon: Clock },
 };
@@ -107,7 +110,7 @@ export default function RetornosCobrancas() {
   const changeExpectedDate = async (retorno: CobrancaRetorno, novaData: string) => {
     if (!user?.id || !novaData || novaData === retorno.data_retorno_esperada.split('T')[0]) return;
     try {
-      const { error } = await updateReturnExpectedDate(retorno.id, novaData, user.id);
+      const { error } = await updateReturnExpectedDate(retorno.id, novaData);
       if (error) throw error;
       toast({ title: 'Data atualizada', description: `Novo prazo: ${fmt(novaData)}` });
       await fetchReturns();
