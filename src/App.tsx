@@ -25,6 +25,7 @@ import HistoricoFichas from './pages/sci/HistoricoFichas';
 import RetornosCobrancas from './pages/sci/RetornosCobrancas';
 import PassagemTurno from './pages/sci/PassagemTurno';
 import GeradorPS2 from './pages/sci/GeradorPS2';
+import RenovacaoCartoes from './pages/sci/RenovacaoCartoes';
 
 const queryClient = new QueryClient();
 
@@ -56,6 +57,7 @@ const App = () => (
               <Route path="/sci/retornos-cobrancas" element={<PrivateRoute><DashboardLayout><RetornosCobrancas /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/passagem-turno" element={<PrivateRoute><DashboardLayout><PassagemTurno /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/gerador-ps2" element={<PrivateRoute><DashboardLayout><GeradorPS2 /></DashboardLayout></PrivateRoute>} />
+              <Route path="/sci/renovacao-cartoes" element={<PrivateRoute><DashboardLayout><RenovacaoCartoes /></DashboardLayout></PrivateRoute>} />
 
               {/* CRC Routes */}
               <Route path="/crc" element={<Navigate to="/crc/tratamento" replace />} />
