@@ -20,6 +20,11 @@ export interface CobrancaRetorno {
 /**
  * Cria um registo de retorno de cobrança. O prazo é sempre o dia útil
  * seguinte ao da aplicação (ver `src/lib/cobrancasSla.ts`).
+ *
+ * Idempotente: `UNIQUE (ficheiro_nome, data_aplicacao)` impede duas linhas
+ * para o mesmo ficheiro na mesma data (ex.: guardar a mesma linha
+ * "Cobranças" duas vezes) — um conflito é tratado como sucesso silencioso
+ * (o registo já existe), não como erro.
  */
 export async function createCobrancaRetorno(
   userId: string,
@@ -41,6 +46,10 @@ export async function createCobrancaRetorno(
     .maybeSingle();
 
   if (error) {
+    if (error.code === '23505') {
+      // Já existe um retorno para este ficheiro nesta data — não é um erro.
+      return { data: null, error: null };
+    }
     console.error('Erro ao criar retorno de cobrança:', error);
   }
 
@@ -66,7 +75,9 @@ export async function getPendingReturns(): Promise<{
 }
 
 /**
- * Marca um ou mais retornos como enviados numa só operação.
+ * Marca um ou mais retornos como enviados numa só operação — via RPC, para
+ * que `data_retorno_enviado` venha sempre da data do servidor (CURRENT_DATE),
+ * não do relógio do dispositivo do operador.
  */
 export async function markReturnsAsSent(
   retornoIds: string[],
@@ -74,18 +85,10 @@ export async function markReturnsAsSent(
 ): Promise<{ error: PostgrestError | null }> {
   if (retornoIds.length === 0) return { error: null };
 
-  const patch: Record<string, unknown> = {
-    retorno_enviado: true,
-    data_retorno_enviado: toIsoDate(new Date()),
-  };
-  if (observacoes && observacoes.trim() !== '') {
-    patch.observacoes = observacoes.trim();
-  }
-
-  const { error } = await supabase
-    .from('cobrancas_retornos')
-    .update(patch)
-    .in('id', retornoIds);
+  const { error } = await supabase.rpc('marcar_retornos_enviados', {
+    p_ids: retornoIds,
+    p_observacoes: observacoes && observacoes.trim() !== '' ? observacoes.trim() : null,
+  });
 
   return { error };
 }
@@ -99,22 +102,18 @@ export async function markReturnAsSent(
 }
 
 /**
- * Altera manualmente a data de retorno esperada de um registo, guardando
- * quem alterou e quando.
+ * Altera manualmente a data de retorno esperada de um registo — via RPC,
+ * para que `data_retorno_alterada_por` venha sempre de auth.uid() no
+ * servidor (nunca de um parâmetro do cliente, que podia ser forjado).
  */
 export async function updateReturnExpectedDate(
   retornoId: string,
   novaDataIso: string,
-  userId: string
 ): Promise<{ error: PostgrestError | null }> {
-  const { error } = await supabase
-    .from('cobrancas_retornos')
-    .update({
-      data_retorno_esperada: novaDataIso,
-      data_retorno_alterada_por: userId,
-      data_retorno_alterada_em: new Date().toISOString(),
-    })
-    .eq('id', retornoId);
+  const { error } = await supabase.rpc('alterar_prazo_retorno', {
+    p_id: retornoId,
+    p_nova_data: novaDataIso,
+  });
 
   return { error };
 }

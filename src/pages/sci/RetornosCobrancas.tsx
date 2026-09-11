@@ -107,7 +107,7 @@ export default function RetornosCobrancas() {
   const changeExpectedDate = async (retorno: CobrancaRetorno, novaData: string) => {
     if (!user?.id || !novaData || novaData === retorno.data_retorno_esperada.split('T')[0]) return;
     try {
-      const { error } = await updateReturnExpectedDate(retorno.id, novaData, user.id);
+      const { error } = await updateReturnExpectedDate(retorno.id, novaData);
       if (error) throw error;
       toast({ title: 'Data atualizada', description: `Novo prazo: ${fmt(novaData)}` });
       await fetchReturns();
