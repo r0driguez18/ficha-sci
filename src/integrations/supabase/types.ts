@@ -566,6 +566,42 @@ export type Database = {
         Args: { p_token: string }
         Returns: undefined
       }
+      nome_operador_atual: {
+        Args: Record<string, never>
+        Returns: string
+      }
+      guardar_nota_passagem_turno: {
+        Args: { p_date: string; p_turno: string; p_nota: string }
+        Returns: {
+          id: string
+          date: string
+          turno: string
+          nota: string
+          autor_user_id: string | null
+          autor_nome: string | null
+          lida_por: string | null
+          lida_por_nome: string | null
+          lida_em: string | null
+          created_at: string
+          updated_at: string
+        }
+      }
+      confirmar_leitura_passagem_turno: {
+        Args: { p_note_id: string }
+        Returns: {
+          id: string
+          date: string
+          turno: string
+          nota: string
+          autor_user_id: string | null
+          autor_nome: string | null
+          lida_por: string | null
+          lida_por_nome: string | null
+          lida_em: string | null
+          created_at: string
+          updated_at: string
+        }
+      }
       operacoes_duplicadas_ficha: {
         Args: { p_form_type: string; p_date: string; p_operacoes: string[] }
         Returns: string[]

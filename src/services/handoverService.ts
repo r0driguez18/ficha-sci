@@ -28,44 +28,36 @@ export async function getHandoverNotes(
   return { data: data as unknown as HandoverNote[], error };
 }
 
-/** Cria ou atualiza a nota de um turno para uma data (única por date+turno). */
+/**
+ * Cria ou atualiza a nota de um turno para uma data (única por date+turno)
+ * — via RPC, para que `autor_user_id`/`autor_nome` venham sempre de
+ * auth.uid() no servidor (nunca de um parâmetro do cliente, que podia ser
+ * forjado). Editar uma nota já lida limpa o selo de leitura no servidor —
+ * a confirmação anterior já não descreve o conteúdo novo.
+ */
 export async function saveHandoverNote(
   date: string,
   turno: TurnKey,
   nota: string,
-  autorUserId: string,
-  autorNome: string,
 ): Promise<{ data: HandoverNote | null; error: PostgrestError | null }> {
-  const { data, error } = await supabase
-    .from('handover_notes')
-    .upsert(
-      {
-        date,
-        turno,
-        nota,
-        autor_user_id: autorUserId,
-        autor_nome: autorNome,
-      },
-      { onConflict: 'date,turno' },
-    )
-    .select()
-    .single();
+  const { data, error } = await supabase.rpc('guardar_nota_passagem_turno', {
+    p_date: date,
+    p_turno: turno,
+    p_nota: nota,
+  });
   return { data: data as unknown as HandoverNote, error };
 }
 
-/** Regista a confirmação de leitura com o operador em sessão e a hora. */
+/**
+ * Regista a confirmação de leitura — via RPC, para que `lida_por`/
+ * `lida_por_nome` venham sempre do operador autenticado que chama, nunca
+ * de um parâmetro do cliente.
+ */
 export async function confirmarLeituraHandover(
   noteId: string,
-  userId: string,
-  nome: string,
 ): Promise<{ error: PostgrestError | null }> {
-  const { error } = await supabase
-    .from('handover_notes')
-    .update({
-      lida_por: userId,
-      lida_por_nome: nome,
-      lida_em: new Date().toISOString(),
-    })
-    .eq('id', noteId);
+  const { error } = await supabase.rpc('confirmar_leitura_passagem_turno', {
+    p_note_id: noteId,
+  });
   return { error };
 }
