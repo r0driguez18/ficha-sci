@@ -422,6 +422,10 @@ export type Database = {
         Args: { p_token: string }
         Returns: undefined
       }
+      operacoes_duplicadas_ficha: {
+        Args: { p_form_type: string; p_date: string; p_operacoes: string[] }
+        Returns: string[]
+      }
     }
     Enums: {
       [_ in never]: never
