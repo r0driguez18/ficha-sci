@@ -33,6 +33,16 @@ function toRow(p: FileProcess, resolveOperator: ResolveOperator): string[] {
   ];
 }
 
+/**
+ * Neutraliza injeção de fórmula: um valor que comece por `=`, `+`, `-`, `@`
+ * ou tab/carriage-return é interpretado como fórmula pelo Excel ao abrir o
+ * ficheiro — um apóstrofo à frente força-o a texto. `task`/`as400_name`
+ * vêm de texto livre preenchido na Ficha, por isso são a origem a proteger.
+ */
+function neutralizarFormula(v: string): string {
+  return /^[=+\-@\t\r]/.test(v) ? `'${v}` : v;
+}
+
 function fileStem(title: string): string {
   const slug = title
     .toLowerCase()
@@ -48,7 +58,10 @@ export function exportProcessesXlsx(
   title: string,
   resolveOperator: ResolveOperator = operatorLabel,
 ): void {
-  const rows = [HEADERS, ...processes.map((p) => toRow(p, resolveOperator))];
+  const rows = [
+    HEADERS,
+    ...processes.map((p) => toRow(p, resolveOperator).map(neutralizarFormula)),
+  ];
   const ws = XLSX.utils.aoa_to_sheet(rows);
   ws['!cols'] = [{ wch: 12 }, { wch: 8 }, { wch: 32 }, { wch: 18 }, { wch: 12 }, { wch: 18 }, { wch: 14 }];
   const wb = XLSX.utils.book_new();
