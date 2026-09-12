@@ -119,24 +119,36 @@ export const fetchFileProcesses = async (timeframe = 'week') => {
 };
 
 // Get all file processes
-export const getFileProcesses = async () => {
-  try {
+//
+// Pagina em blocos (o PostgREST self-hosted corta silenciosamente qualquer
+// select a mais de 1000 linhas — PGRST_DB_MAX_ROWS). O tiebreaker por `id`
+// garante uma ordem totalmente determinística entre páginas (sem isto,
+// registos com o mesmo date_registered+time_registered podiam ficar
+// duplicados ou saltados na fronteira de duas páginas). Lança o erro em vez
+// de o engolir, para quem chama poder distinguir "falhou" de "sem dados".
+export const getFileProcesses = async (): Promise<FileProcess[]> => {
+  const PAGE = 1000;
+  const all: FileProcess[] = [];
+  let offset = 0;
+  for (;;) {
     const { data, error } = await supabase
       .from('file_processes')
       .select('*')
       .order('date_registered', { ascending: false })
-      .order('time_registered', { ascending: false });
-    
+      .order('time_registered', { ascending: false })
+      .order('id', { ascending: false })
+      .range(offset, offset + PAGE - 1);
+
     if (error) {
       console.error('Erro ao buscar processos:', error);
-      return [];
+      throw error;
     }
-    
-    return data || [];
-  } catch (error) {
-    console.error('Erro ao buscar processos:', error);
-    return [];
+
+    all.push(...((data as FileProcess[] | null) ?? []));
+    if (!data || data.length < PAGE) break;
+    offset += PAGE;
   }
+  return all;
 };
 
 // Get salary processes

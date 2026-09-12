@@ -64,6 +64,24 @@ export function buildMonthlyStats(
   return Array.from(byMonth.values()).sort((a, b) => a.key.localeCompare(b.key));
 }
 
+/** Filtra linhas cujo `date_registered` cai no intervalo [from, to] (inclusive). */
+export function filterByRange<T extends { date_registered?: string | null }>(
+  rows: T[],
+  from?: string,
+  to?: string,
+): T[] {
+  const fromD = from ? localDate(from) : null;
+  const toD = to ? localDate(to) : null;
+  if (!fromD && !toD) return rows;
+  return rows.filter((row) => {
+    const date = localDate(row.date_registered);
+    if (!date) return false;
+    if (fromD && date < fromD) return false;
+    if (toD && date > toD) return false;
+    return true;
+  });
+}
+
 /** Intervalo por omissão: primeiro dia de há N meses até hoje (datas locais 'AAAA-MM-DD'). */
 export function defaultRange(months = 6): { from: string; to: string } {
   const now = new Date();
