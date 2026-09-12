@@ -99,11 +99,23 @@ export function extrairLinhas(
 
     const numeroCartao = normalizarNumeroCartao(cartaoRaw);
     const balcao = normalizarBalcao(balcaoRaw);
+    const digitosCartao = cartaoRaw.replace(/\D/g, '');
 
-    if (!balcao || !numeroCartao || !/^\d+$/.test(cartaoRaw.replace(/\s/g, ''))) {
+    if (
+      !balcao ||
+      !numeroCartao ||
+      !/^\d+$/.test(cartaoRaw.replace(/\s/g, '')) ||
+      digitosCartao.length > 7
+    ) {
       invalidas.push({
         linha: i + 1,
-        motivo: !balcao ? 'sem balcão' : !numeroCartao ? 'sem nº de cartão' : 'nº de cartão inválido',
+        motivo: !balcao
+          ? 'sem balcão'
+          : !numeroCartao
+            ? 'sem nº de cartão'
+            : digitosCartao.length > 7
+              ? 'nº de cartão com mais de 7 dígitos'
+              : 'nº de cartão inválido',
       });
       continue;
     }
@@ -172,6 +184,17 @@ function normalizarChaveColuna(s: string): string {
 }
 
 /**
+ * Neutraliza injeção de fórmula: um valor que comece por `=`, `+`, `-`,
+ * `@` ou tab/carriage-return é interpretado como fórmula pelo Excel ao
+ * abrir o ficheiro — um apóstrofo à frente força-o a texto. O export do
+ * banco não devia ter isto, mas mais vale prevenir do que remediar numa
+ * folha que pode conter nomes/texto livre de terceiros.
+ */
+function neutralizarFormula(v: string): string {
+  return /^[=+\-@\t\r]/.test(v) ? `'${v}` : v;
+}
+
+/**
  * Reduz a linha completa (`dados`) só às colunas de `COLUNAS_RESULTADO`, na
  * ordem certa — a folha "Resultado" nunca leva as restantes colunas do
  * export do banco. A comparação ignora acentos/maiúsculas, para tolerar
@@ -184,7 +207,7 @@ export function filtrarColunasResultado(dados: Record<string, string>): Record<s
   }
   const saida: Record<string, string> = {};
   for (const col of COLUNAS_RESULTADO) {
-    saida[col] = porChave.get(normalizarChaveColuna(col)) ?? '';
+    saida[col] = neutralizarFormula(porChave.get(normalizarChaveColuna(col)) ?? '');
   }
   return saida;
 }
