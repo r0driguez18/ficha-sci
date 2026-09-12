@@ -11,7 +11,7 @@ import { LoadingState } from '@/components/ui/loading-state';
 import { EmptyState } from '@/components/ui/empty-state';
 import { toast } from 'sonner';
 import { getFileProcesses, type FileProcess } from '@/services/fileProcessService';
-import { buildMonthlyStats, defaultRange } from '@/lib/processStats';
+import { buildMonthlyStats, defaultRange, filterByRange } from '@/lib/processStats';
 import { useOperators } from '@/hooks/useOperators';
 import ProcessesTable from '@/components/charts/ProcessesTable';
 import ProcessesBarChart from '@/components/charts/ProcessesBarChart';
@@ -40,8 +40,8 @@ const EasyVistaEstatisticas = () => {
     }
   }, []);
 
-  const loadData = async () => {
-    setLoading(true);
+  const loadData = async (opts: { silent?: boolean } = {}) => {
+    if (!opts.silent) setLoading(true);
     try {
       const processes = await getFileProcesses();
       setAllProcesses(processes as FileProcess[]);
@@ -60,7 +60,7 @@ const EasyVistaEstatisticas = () => {
 
   const handleRefresh = () => {
     setRefreshing(true);
-    loadData();
+    loadData({ silent: true });
   };
 
   const handleTabChange = (value: string) => {
@@ -72,8 +72,10 @@ const EasyVistaEstatisticas = () => {
   const handleExport = async (kind: 'xlsx' | 'pdf') => {
     try {
       const mod = await import('@/lib/exportProcesses');
-      if (kind === 'xlsx') mod.exportProcessesXlsx(currentList, currentTitle, labelOf);
-      else mod.exportProcessesPdf(currentList, currentTitle, labelOf);
+      // A exportação respeita o intervalo escolhido (está no mesmo cartão do
+      // filtro) — a lista completa fica na tabela de detalhe.
+      if (kind === 'xlsx') mod.exportProcessesXlsx(exportList, currentTitle, labelOf);
+      else mod.exportProcessesPdf(exportList, currentTitle, labelOf);
     } catch (error) {
       console.error('Erro ao exportar:', error);
       toast.error('Não foi possível gerar o ficheiro.');
@@ -112,6 +114,10 @@ const EasyVistaEstatisticas = () => {
   };
   const currentList = tabData[activeTab];
   const currentTitle = TAB_TITLES[activeTab];
+  const exportList = useMemo(
+    () => filterByRange(currentList, range.from, range.to),
+    [currentList, range.from, range.to],
+  );
 
   return (
     <PageContainer size="wide" className="space-y-6">
@@ -146,7 +152,12 @@ const EasyVistaEstatisticas = () => {
                   type="date"
                   value={range.from}
                   max={range.to}
-                  onChange={(e) => setRange((r) => ({ ...r, from: e.target.value }))}
+                  onChange={(e) =>
+                    setRange((r) => {
+                      const from = e.target.value;
+                      return { from, to: r.to && from > r.to ? from : r.to };
+                    })
+                  }
                   className="w-[10rem]"
                 />
               </div>
@@ -157,7 +168,12 @@ const EasyVistaEstatisticas = () => {
                   type="date"
                   value={range.to}
                   min={range.from}
-                  onChange={(e) => setRange((r) => ({ ...r, to: e.target.value }))}
+                  onChange={(e) =>
+                    setRange((r) => {
+                      const to = e.target.value;
+                      return { from: r.from && to < r.from ? to : r.from, to };
+                    })
+                  }
                   className="w-[10rem]"
                 />
               </div>
@@ -170,7 +186,7 @@ const EasyVistaEstatisticas = () => {
                   variant="outline"
                   className="gap-2"
                   onClick={() => handleExport('xlsx')}
-                  disabled={currentList.length === 0}
+                  disabled={exportList.length === 0}
                 >
                   <FileSpreadsheet className="h-4 w-4" />
                   XLSX
@@ -179,7 +195,7 @@ const EasyVistaEstatisticas = () => {
                   variant="outline"
                   className="gap-2"
                   onClick={() => handleExport('pdf')}
-                  disabled={currentList.length === 0}
+                  disabled={exportList.length === 0}
                 >
                   <FileText className="h-4 w-4" />
                   PDF
