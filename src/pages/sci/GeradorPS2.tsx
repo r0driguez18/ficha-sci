@@ -41,6 +41,8 @@ interface LinhaTratada extends LinhaBruta {
   trat: NibTratado;
   nibFinal: string;
   estado: NibTratado['estado'] | 'excluido';
+  /** Alerta causado só pela falta de nome/prefixo (NIB em si está ok). */
+  soDescritivo: boolean;
 }
 
 const todayIso = () => {
@@ -50,13 +52,15 @@ const todayIso = () => {
 
 /**
  * Valor do Excel → escudos inteiros (o PS2 e o VBA só usam a parte inteira).
- * Um `.` ou `,` com **exatamente 2 dígitos a seguir** são cêntimos e caem;
- * os restantes separadores são milhares. Ex.: "6,860"→6860 · "108,800.00"→108800.
+ * Um `.` ou `,` com 1 ou 2 dígitos a seguir são decimais/cêntimos e caem;
+ * os restantes separadores são milhares. Ex.: "6,860"→6860 · "108,800.00"→108800
+ * · "1.234,5"→1234 (decimal com 1 dígito, não milhares).
  */
 function limparValor(s: string): string {
   let t = String(s ?? '').replace(/[^\d.,-]/g, '').trim();
   if (!t) return '';
   if (/[.,]\d{2}$/.test(t)) t = t.slice(0, -3); // cêntimos
+  else if (/[.,]\d$/.test(t)) t = t.slice(0, -2); // decimal com 1 dígito
   return t.replace(/[.,]/g, '');
 }
 
@@ -226,14 +230,32 @@ export default function GeradorPS2() {
     () =>
       comDados.map((l) => {
         const trat = tratarNib(l.recebido, NATUREZA_PADRAO, modoConta);
-        if (excluidos.has(l.idx)) return { ...l, trat, nibFinal: '', estado: 'excluido' };
+        const semDescritivo = `${prefixo} ${l.nome}`.trim() === '';
+        if (excluidos.has(l.idx)) {
+          return { ...l, trat, nibFinal: '', estado: 'excluido', soDescritivo: false };
+        }
         const ov = (overrides[l.idx] ?? '').replace(/\D/g, '');
         if (ov) {
-          return { ...l, trat, nibFinal: ov, estado: /^\d{21}$/.test(ov) ? 'ok' : 'alerta' };
+          // NIB do BCA: 21 dígitos a começar por 0003 — só assim gerarPS2 o aceita.
+          const nibOk = /^0003\d{17}$/.test(ov);
+          return {
+            ...l,
+            trat,
+            nibFinal: ov,
+            estado: nibOk && !semDescritivo ? 'ok' : 'alerta',
+            soDescritivo: nibOk && semDescritivo,
+          };
         }
-        return { ...l, trat, nibFinal: trat.nib, estado: trat.estado };
+        const nibOk = trat.estado === 'ok';
+        return {
+          ...l,
+          trat,
+          nibFinal: trat.nib,
+          estado: nibOk && semDescritivo ? 'alerta' : trat.estado,
+          soDescritivo: nibOk && semDescritivo,
+        };
       }),
-    [comDados, overrides, excluidos, modoConta],
+    [comDados, overrides, excluidos, modoConta, prefixo],
   );
 
   // O nº de conta da empresa é sempre escrito à mão com a natureza no fim
@@ -573,7 +595,23 @@ export default function GeradorPS2() {
                     ))}
                     <div className="space-y-1">
                       <Label className="text-xs" htmlFor="li">Dados começam na linha</Label>
-                      <Input id="li" type="number" min={1} value={linhaInicial} onChange={(e) => setLinhaInicial(Math.max(1, Number(e.target.value) || 1))} />
+                      <Input
+                        id="li"
+                        type="number"
+                        min={1}
+                        max={sheetRows.length || undefined}
+                        value={linhaInicial}
+                        onChange={(e) =>
+                          setLinhaInicial(
+                            Math.max(1, Math.min(sheetRows.length || 1, Number(e.target.value) || 1)),
+                          )
+                        }
+                      />
+                      {sheetRows.length > 0 && linhaInicial > sheetRows.length && (
+                        <p className="text-[11px] text-destructive">
+                          Fora do intervalo — o ficheiro só tem {sheetRows.length} linha(s).
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -642,13 +680,18 @@ export default function GeradorPS2() {
                         <td className="px-2 py-1.5 font-mono text-[11px]">
                           {t.estado === 'nao-bca' ? (
                             <span className="text-muted-foreground">{t.trat.motivo}</span>
+                          ) : t.estado === 'alerta' && t.soDescritivo ? (
+                            <div className="flex items-center gap-1 text-destructive">
+                              <AlertTriangle className="h-3 w-3 shrink-0" />
+                              <span>Sem nome/prefixo — falta o descritivo</span>
+                            </div>
                           ) : t.estado === 'alerta' ? (
                             <div className="flex items-center gap-1">
                               <AlertTriangle className="h-3 w-3 text-destructive shrink-0" />
                               <Input
                                 value={overrides[t.idx] ?? ''}
                                 onChange={(e) => setOverrides((p) => ({ ...p, [t.idx]: e.target.value }))}
-                                placeholder="NIB (21 díg.)"
+                                placeholder="NIB do BCA (21 díg.)"
                                 className="h-7 font-mono text-[11px]"
                                 title={`Recebido: ${t.recebido}`}
                               />
