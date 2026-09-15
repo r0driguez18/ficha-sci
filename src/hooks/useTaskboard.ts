@@ -479,7 +479,13 @@ export function useTaskboard(formType: FormType) {
         tapesForExport,
       );
       const fileName = fichaFileName(date);
-      doc.save(fileName);
+      // Ficha com verificação de tapes: o display do AS/400 só existe no dia
+      // seguinte, por isso o PDF descarregado agora estaria sempre incompleto.
+      // Só se descarrega mais tarde, pelo Histórico, depois do display anexado
+      // — evita duas versões diferentes do mesmo PDF em circulação.
+      if (!showTapeVerification) {
+        doc.save(fileName);
+      }
 
       const turnDataToPersist = tapesForExport
         ? ({ ...turnData, verificacaoTapes: tapesForExport } as TurnDataType)
@@ -502,7 +508,13 @@ export function useTaskboard(formType: FormType) {
         return;
       }
 
-      toast.success(`PDF gerado e guardado no histórico: ${fileName}`);
+      if (showTapeVerification) {
+        toast.success('Ficha guardada — falta anexar o display de tapes.', {
+          description: 'O PDF fica disponível no Histórico de Fichas depois de anexares o display.',
+        });
+      } else {
+        toast.success(`PDF gerado e guardado no histórico: ${fileName}`);
+      }
       if (savedCount > 0) {
         toast.success(`${savedCount} processamento(s) registado(s) na Estatística.`);
         toast.message('Dados guardados.', {
