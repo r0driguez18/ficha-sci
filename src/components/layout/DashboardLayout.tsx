@@ -16,6 +16,7 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { useCurrentOperator } from '@/hooks/useOperators';
 import { useSyncStatus } from '@/hooks/useSyncStatus';
 import { supabase } from '@/integrations/supabase/client';
+import { clearAllTaskboardLocalDrafts } from '@/services/taskboardService';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -52,6 +53,9 @@ function HeaderBar() {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+      // Posto partilhado: não deixar o rascunho da ficha do turno anterior
+      // visível ao próximo operador que abrir a app.
+      clearAllTaskboardLocalDrafts();
       navigate('/auth/login');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Erro ao sair');
