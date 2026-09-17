@@ -37,6 +37,7 @@ import requests
 import urllib3
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -361,6 +362,30 @@ class PrivateNetworkAccessMiddleware(BaseHTTPMiddleware):
 
 
 app.add_middleware(PrivateNetworkAccessMiddleware)
+
+
+class VerificarOrigemMiddleware(BaseHTTPMiddleware):
+    """CORS só impede o JavaScript de LER a resposta de origens não
+    permitidas — não impede o envio de um "simple request" (ex.: POST com
+    Content-Type: text/plain, sem preflight). Qualquer site aberto no mesmo
+    browser do operador podia assim disparar `POST /runs` às cegas. Como
+    defesa adicional, pedidos que mudam estado (POST/DELETE) têm de trazer
+    um cabeçalho Origin que esteja em ALLOW_ORIGINS — um pedido "simple"
+    forjado por outra página não controla esse cabeçalho (o browser define-o
+    sempre com a origem real da página que fez o pedido)."""
+
+    async def dispatch(self, request, call_next):
+        if request.method in ("POST", "PUT", "PATCH", "DELETE"):
+            origin = request.headers.get("origin")
+            if origin is not None and origin not in ALLOW_ORIGINS:
+                return JSONResponse(
+                    status_code=403,
+                    content={"detail": "Origem não permitida."},
+                )
+        return await call_next(request)
+
+
+app.add_middleware(VerificarOrigemMiddleware)
 
 
 def _snapshot() -> dict[str, Any]:
