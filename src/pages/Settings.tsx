@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { supabase } from '@/integrations/supabase/client';
+import { clearAllTaskboardLocalDrafts } from '@/services/taskboardService';
 import { toast } from 'sonner';
 import { PinManagerCard } from '@/components/settings/PinManagerCard';
 import { OperatorLinkCard } from '@/components/settings/OperatorLinkCard';
@@ -20,6 +21,7 @@ const Settings = () => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+      clearAllTaskboardLocalDrafts();
       toast.success('Logout bem-sucedido');
       navigate('/auth/login');
     } catch (error) {

@@ -54,6 +54,17 @@ import {
 
 const CABECALHOS_COLAGEM = ['Balcão', 'Nº de Cartão', 'Nome no Cartão'];
 
+/**
+ * As funções de sessão (RPC) lançam RAISE EXCEPTION com mensagens escritas
+ * para o utilizador (código Postgres P0001) — essas mostram-se tal e qual.
+ * Qualquer outro código é um erro interno (RLS, ligação, etc.) que não deve
+ * aparecer em bruto no ecrã.
+ */
+function mensagemErroSessao(error: { code?: string; message: string } | null): string {
+  if (error?.code === 'P0001' && error.message) return error.message;
+  return 'Não foi possível concluir a operação. Tenta novamente.';
+}
+
 function parseColagemCartoes(txt: string): string[][] {
   return txt
     .split(/\r?\n/)
@@ -205,7 +216,7 @@ export default function RenovacaoCartoes() {
     const { error } = await reabrirSessaoRenovacao(sessao.id);
     setAReabrir(null);
     if (error) {
-      toast.error(error.message);
+      toast.error(mensagemErroSessao(error));
       return;
     }
     toast.success(`"${sessao.nome}" reaberta.`);
@@ -358,7 +369,7 @@ export default function RenovacaoCartoes() {
     const { error } = await concluirSessaoRenovacao(sessaoAtiva.id);
     setAConcluir(false);
     if (error) {
-      toast.error(error.message);
+      toast.error(mensagemErroSessao(error));
       return;
     }
     toast.success('Sessão concluída.');
@@ -371,7 +382,7 @@ export default function RenovacaoCartoes() {
     const { error } = await descartarSessaoRenovacao(sessaoADescartar.id);
     setADescartar(false);
     if (error) {
-      toast.error(error.message);
+      toast.error(mensagemErroSessao(error));
       return;
     }
     toast.success('Sessão descartada.');
