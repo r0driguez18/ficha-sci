@@ -18,6 +18,22 @@ export function taskboardLocalPrefix(formType: FormType): string {
   return formType === 'dia-util' ? 'taskboard' : 'taskboard-nao-util';
 }
 
+/**
+ * Limpa os rascunhos de ficha (ambos os tipos) do localStorage — chamado no
+ * logout, para não deixar dados operacionais do turno anterior visíveis a
+ * quem usar o browser a seguir num posto partilhado.
+ */
+export function clearAllTaskboardLocalDrafts(): void {
+  (['dia-util', 'dia-nao-util'] as const).forEach((formType) => {
+    const prefix = taskboardLocalPrefix(formType);
+    localStorage.removeItem(`${prefix}-date`);
+    localStorage.removeItem(`${prefix}-turnData`);
+    localStorage.removeItem(`${prefix}-tasks`);
+    localStorage.removeItem(`${prefix}-tableRows`);
+    localStorage.removeItem(`${prefix}-activeTab`);
+  });
+}
+
 export interface TaskboardData {
   id?: string;
   user_id: string;

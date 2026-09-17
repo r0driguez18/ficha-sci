@@ -19,6 +19,8 @@ export default defineConfig(({ mode }) => ({
       workbox: {
         // Precache do shell: JS/CSS/HTML/ícones/fontes locais.
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
+        // O bundle principal já passa dos 2 MiB por omissão do workbox.
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         navigateFallback: "/index.html",
         navigateFallbackDenylist: [/^\/rest\//, /^\/auth\//, /^\/storage\//, /^\/functions\//],
         // Nunca servir respostas do Supabase a partir da cache — são sempre rede.
