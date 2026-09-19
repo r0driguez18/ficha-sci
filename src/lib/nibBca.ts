@@ -9,7 +9,9 @@
  *     0003 (banco) + 0000…0 (filler) + conta (preenchida a 8) + natureza (5)
  *
  * A conta é sempre preenchida à esquerda com zeros até 8 (como o
- * `AjustarNIBEstrutura` do VBA). A natureza recebida é convertida pela
+ * `AjustarNIBEstrutura` do VBA). Regra de ouro: à frente nunca se altera
+ * nada — só se preenchem zeros à esquerda (contas curtas) e se acrescenta ou
+ * converte a natureza atrás. A natureza recebida é convertida pela
  * tabela: índice N (1–9) → `10` + N + (76 − 3·(N−1)).
  *   1→10176 · 2→10273 · 3→10370 · 4→10467 · 5→10564 · 6→10661 · 7→10758 ·
  *   8→10855 · 9→10952
@@ -105,6 +107,9 @@ export function tratarNib(
 
   let conta = '';
   let natRec = '';
+  // Primeiros 16 dígitos de um NIB COMPLETO — ficam exatamente como vieram
+  // (só a natureza, atrás, se converte). Nunca se mexe à frente.
+  let frente = '';
 
   if (modo === 'so-conta') {
     // O que chega é o nº de conta e mais nada.
@@ -116,29 +121,54 @@ export function tratarNib(
     }
     natRec = digitos.slice(-5);
     conta = digitos.slice(8, 16);
+    frente = digitos.slice(0, 16);
+  } else if (digitos.length === 21 && digitos.startsWith(BANCO_BCA)) {
+    // auto, NIB completo: igual ao modo "nib".
+    natRec = digitos.slice(-5);
+    conta = digitos.slice(8, 16);
+    frente = digitos.slice(0, 16);
   } else {
     // auto — tira "0003" + agência (4) do início quando há um NIB completo.
     let resto = digitos;
     if (digitos.startsWith(BANCO_BCA) && digitos.length >= 13) resto = digitos.slice(8);
     else if (digitos.startsWith(BANCO_BCA)) resto = digitos.slice(4);
 
-    // Deteta a natureza no fim (5,4,3,2,1 dígitos; a conta tem de ficar 4–8).
     conta = resto;
-    for (let n = Math.min(5, resto.length - 1); n >= 1; n--) {
-      const cand = resto.slice(-n);
-      const acc = resto.slice(0, -n);
-      if (indiceNatureza(cand) != null && acc.length >= 4 && acc.length <= 8) {
-        conta = acc;
-        natRec = cand;
-        break;
+    // Uma conta do BCA tem 7 ou 8 dígitos: até 8 dígitos é SEMPRE só a conta,
+    // sem natureza no fim — mesmo que acabe em 1, 10, 01… (esses dígitos são
+    // parte do nº de conta, não uma natureza). Só se procura natureza quando
+    // há mais de 8 dígitos.
+    if (resto.length > 8) {
+      // Prefere a divisão em que a conta fica com 8 dígitos: "931558911" é a
+      // conta 93155891 + natureza 1, não 9315589 + "11" (que comia o último
+      // dígito da conta).
+      const nOito = resto.length - 8;
+      if (nOito <= 5 && indiceNatureza(resto.slice(8)) != null) {
+        conta = resto.slice(0, 8);
+        natRec = resto.slice(8);
+      } else {
+        // Senão, natureza no fim de 5,4,3,2,1 dígitos; a conta tem de ficar 4–8.
+        for (let n = Math.min(5, resto.length - 1); n >= 1; n--) {
+          const cand = resto.slice(-n);
+          const acc = resto.slice(0, -n);
+          if (indiceNatureza(cand) != null && acc.length >= 4 && acc.length <= 8) {
+            conta = acc;
+            natRec = cand;
+            break;
+          }
+        }
       }
     }
     if (natRec === '') {
-      if (resto.length <= 8) {
+      const ultimos5 = resto.slice(-5);
+      const jaTemNaturezaFinal = tabela.some((r) => r.final === ultimos5);
+      if (resto.length <= 8 || (resto.length <= 12 && !jaTemNaturezaFinal)) {
+        // Só a conta (mesmo com 9–12 dígitos, sem natureza reconhecível):
+        // acrescenta-se a natureza por omissão atrás, a conta fica intacta.
         conta = resto;
         natRec = '1';
       } else {
-        natRec = resto.slice(-5);
+        natRec = ultimos5;
         conta = resto.slice(0, -5);
       }
     }
@@ -147,7 +177,7 @@ export function tratarNib(
   const natFin = naturezaFinal(natRec, tabela) ?? natRec ?? NAT_POR_OMISSAO;
   const contaPad = conta.padStart(8, '0');
   const filler = '0'.repeat(Math.max(0, 12 - contaPad.length));
-  const nib = BANCO_BCA + filler + contaPad + natFin;
+  const nib = frente ? frente + natFin : BANCO_BCA + filler + contaPad + natFin;
 
   if (!/^\d{21}$/.test(nib)) {
     return {

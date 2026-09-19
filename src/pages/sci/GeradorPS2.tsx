@@ -25,7 +25,11 @@ import { gerarPS2, nomeFicheiroPS2, TIPOS_OPERACAO, type PS2Resultado } from '@/
 import { tratarNib, NATUREZA_PADRAO, type NibTratado, type ModoConta } from '@/lib/nibBca';
 
 const MODOS: { valor: ModoConta; label: string; hint: string }[] = [
-  { valor: 'auto', label: 'Detetar automaticamente', hint: 'tenta perceber se há natureza no fim' },
+  {
+    valor: 'auto',
+    label: 'Detetar automaticamente',
+    hint: 'até 8 dígitos = só a conta (acrescenta 10176); acima disso tenta perceber se há natureza no fim',
+  },
   { valor: 'so-conta', label: 'Só o nº de conta', hint: 'concatena 0003…10176, não mexe no fim' },
   { valor: 'nib', label: 'NIB completo (21 díg.)', hint: 'só limpa e converte a natureza' },
 ];
@@ -148,7 +152,12 @@ const fmtNum = (v: string) => {
   return Number.isNaN(n) ? v : n.toLocaleString('pt-PT');
 };
 
-export default function GeradorPS2() {
+/** Raiz da página — dentro do separador de "Geradores" não leva PageContainer. */
+function Raiz({ embedded, children }: { embedded: boolean; children: React.ReactNode }) {
+  return embedded ? <div>{children}</div> : <PageContainer size="default">{children}</PageContainer>;
+}
+
+export default function GeradorPS2({ embedded = false }: { embedded?: boolean } = {}) {
   const [contaEmpresa, setContaEmpresa] = useState('');
   const [data, setData] = useState(todayIso());
   const [referencia, setReferencia] = useState('');
@@ -369,16 +378,24 @@ export default function GeradorPS2() {
     ].join('\r\n');
   }, [resultado]);
 
+  const botaoRecomecar = (
+    <Button variant="outline" size="sm" onClick={recomecar}>
+      <Undo2 className="h-4 w-4 mr-1" /> Recomeçar
+    </Button>
+  );
+
   return (
-    <PageContainer size="default">
-      <PageHeader
-        title="Gerador PS2"
-        subtitle="Trata a folha de salários (contas → NIB) e gera o ficheiro PS2"
-      >
-        <Button variant="outline" size="sm" onClick={recomecar}>
-          <Undo2 className="h-4 w-4 mr-1" /> Recomeçar
-        </Button>
-      </PageHeader>
+    <Raiz embedded={embedded}>
+      {embedded ? (
+        <div className="mb-4 flex justify-end">{botaoRecomecar}</div>
+      ) : (
+        <PageHeader
+          title="Gerador PS2"
+          subtitle="Trata a folha de salários (contas → NIB) e gera o ficheiro PS2"
+        >
+          {botaoRecomecar}
+        </PageHeader>
+      )}
 
       {/* Cabeçalho */}
       <Card className="mb-6">
@@ -792,6 +809,6 @@ export default function GeradorPS2() {
         variant="destructive"
         onConfirm={limparTudo}
       />
-    </PageContainer>
+    </Raiz>
   );
 }
