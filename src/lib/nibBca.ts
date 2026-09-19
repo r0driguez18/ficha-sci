@@ -122,15 +122,30 @@ export function tratarNib(
     if (digitos.startsWith(BANCO_BCA) && digitos.length >= 13) resto = digitos.slice(8);
     else if (digitos.startsWith(BANCO_BCA)) resto = digitos.slice(4);
 
-    // Deteta a natureza no fim (5,4,3,2,1 dígitos; a conta tem de ficar 4–8).
     conta = resto;
-    for (let n = Math.min(5, resto.length - 1); n >= 1; n--) {
-      const cand = resto.slice(-n);
-      const acc = resto.slice(0, -n);
-      if (indiceNatureza(cand) != null && acc.length >= 4 && acc.length <= 8) {
-        conta = acc;
-        natRec = cand;
-        break;
+    // Uma conta do BCA tem 7 ou 8 dígitos: até 8 dígitos é SEMPRE só a conta,
+    // sem natureza no fim — mesmo que acabe em 1, 10, 01… (esses dígitos são
+    // parte do nº de conta, não uma natureza). Só se procura natureza quando
+    // há mais de 8 dígitos.
+    if (resto.length > 8) {
+      // Prefere a divisão em que a conta fica com 8 dígitos: "931558911" é a
+      // conta 93155891 + natureza 1, não 9315589 + "11" (que comia o último
+      // dígito da conta).
+      const nOito = resto.length - 8;
+      if (nOito <= 5 && indiceNatureza(resto.slice(8)) != null) {
+        conta = resto.slice(0, 8);
+        natRec = resto.slice(8);
+      } else {
+        // Senão, natureza no fim de 5,4,3,2,1 dígitos; a conta tem de ficar 4–8.
+        for (let n = Math.min(5, resto.length - 1); n >= 1; n--) {
+          const cand = resto.slice(-n);
+          const acc = resto.slice(0, -n);
+          if (indiceNatureza(cand) != null && acc.length >= 4 && acc.length <= 8) {
+            conta = acc;
+            natRec = cand;
+            break;
+          }
+        }
       }
     }
     if (natRec === '') {

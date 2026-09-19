@@ -93,11 +93,12 @@ const SECCOES: Seccao[] = [
   },
   {
     icon: Banknote,
-    title: 'Gerador PS2',
-    intro: 'Transforma a folha de salários em ficheiro PS2 para o banco.',
+    title: 'Geradores',
+    intro: 'Um separador por gerador: PS2 (folha de salários → ficheiro PS2 para o banco) e OIC (em preparação).',
     points: [
-      'Cola a folha do Excel ou carrega o .xlsx; as colunas (NIB, valor, nome) são detetadas e podem ajustar-se.',
+      'Separador PS2 — cola a folha do Excel ou carrega o .xlsx; as colunas (NIB, valor, nome) são detetadas e podem ajustar-se.',
       'As contas são convertidas para NIB do BCA. O formato das contas recebidas escolhe-se no seletor: detetar automaticamente, só o nº de conta, ou NIB completo.',
+      'Contas até 8 dígitos são sempre tratadas como só o nº de conta (mesmo a acabar em 1): só se acrescenta a natureza 10176. A natureza no fim só é detetada quando há mais de 8 dígitos.',
       'A natureza no fim do NIB é convertida pela tabela (1 → 10176, 2 → 10273, …). Contas de outros bancos ficam de fora do ficheiro.',
       'Linhas que não dão um NIB de 21 dígitos ficam "em alerta" para corrigir à mão — o contador "em alerta" filtra a pré-visualização a essas linhas. Pode excluir-se linhas (ex.: a linha "TOTAL GERAL").',
       'O nº de conta da empresa escreve-se com a natureza no fim; é sempre tratado automaticamente.',
