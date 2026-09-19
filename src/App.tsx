@@ -24,7 +24,7 @@ import Documentation from "./pages/Documentation";
 import HistoricoFichas from './pages/sci/HistoricoFichas';
 import RetornosCobrancas from './pages/sci/RetornosCobrancas';
 import PassagemTurno from './pages/sci/PassagemTurno';
-import GeradorPS2 from './pages/sci/GeradorPS2';
+import Geradores from './pages/sci/Geradores';
 import RenovacaoCartoes from './pages/sci/RenovacaoCartoes';
 
 const queryClient = new QueryClient();
@@ -39,8 +39,7 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
-              <Route path="/auth/login" element={<Login />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/auth/login" element={<Login />} />              <Route path="/reset-password" element={<ResetPassword />} />
 
               {/* Protected Routes */}
               <Route path="/dashboard" element={<PrivateRoute><DashboardLayout><Dashboard /></DashboardLayout></PrivateRoute>} />
@@ -56,7 +55,9 @@ const App = () => (
               <Route path="/sci/historico-fichas" element={<PrivateRoute><DashboardLayout><HistoricoFichas /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/retornos-cobrancas" element={<PrivateRoute><DashboardLayout><RetornosCobrancas /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/passagem-turno" element={<PrivateRoute><DashboardLayout><PassagemTurno /></DashboardLayout></PrivateRoute>} />
-              <Route path="/sci/gerador-ps2" element={<PrivateRoute><DashboardLayout><GeradorPS2 /></DashboardLayout></PrivateRoute>} />
+              <Route path="/sci/geradores" element={<PrivateRoute><DashboardLayout><Geradores /></DashboardLayout></PrivateRoute>} />
+              {/* Rota antiga do Gerador PS2 — agora é um separador da página "Geradores" */}
+              <Route path="/sci/gerador-ps2" element={<Navigate to="/sci/geradores#ps2" replace />} />
               <Route path="/sci/renovacao-cartoes" element={<PrivateRoute><DashboardLayout><RenovacaoCartoes /></DashboardLayout></PrivateRoute>} />
 
               {/* CRC Routes */}
