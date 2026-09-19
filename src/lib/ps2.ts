@@ -74,9 +74,16 @@ export function obterCodigoTipo(tipo: string): string {
   }
 }
 
-/** AjustarNIBEstrutura — porte fiel (prefixo 4 + filler + conta≥8 + natureza 5, total 21). */
+/**
+ * AjustarNIBEstrutura — porte do VBA (prefixo 4 + filler + conta≥8 + natureza 5,
+ * total 21). Desvio deliberado: um NIB que já tem 21 dígitos NÃO se mexe. O VBA
+ * reescrevia as posições 5–8 para "0000", o que estragava um dígito da conta
+ * (conta de 9+ dígitos: `109…` virava `009…`) ou a agência de um NIB completo.
+ * À frente nunca se altera nada.
+ */
 export function ajustarNibEstrutura(nibRaw: string): string {
   const nib = (nibRaw || '').replace(/ /g, '');
+  if (/^\d{21}$/.test(nib)) return nib;
   const prefixo = nib.slice(0, 4);
   const natureza = nib.slice(-5);
   // VBA: Mid(nib, 9, Len(nib) - 13)  → índice 9 (base 1) = 8 (base 0)
