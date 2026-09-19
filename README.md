@@ -90,13 +90,13 @@ O menu é plano, agrupado por:
   - Histórico de Fichas (visão de equipa, filtros, anexar display de tapes)
   - Retornos de Cobranças (SLA em dias úteis; > 2 dias úteis de atraso = urgente)
   - Passagem de Turno (nota por turno + confirmação de leitura)
-  - Gerador PS2 (folha de salários → NIB → `PS2_AAAAMMDD.txt`)
 - **Ferramentas**
   - CRC — Inconsistências (fecho em massa via serviço local que abre o Chrome)
+  - Geradores (um separador por gerador: PS2 — folha de salários → NIB → `PS2_AAAAMMDD.txt`; OIC — em preparação)
   - Estatísticas (evolução mensal dos processamentos; exportar XLSX/PDF)
 - **Sistema**: Configurações, Documentação
 
-Nota: o **Gerador PS2** está no grupo *Ferramentas* mas a rota é `/sci/gerador-ps2`.
+Nota: os **Geradores** estão no grupo *Ferramentas* mas a rota é `/sci/geradores` (a antiga `/sci/gerador-ps2` redireciona para o separador PS2).
 
 ## Estrutura do Projeto
 
