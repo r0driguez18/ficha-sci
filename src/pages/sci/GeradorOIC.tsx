@@ -97,7 +97,7 @@ export default function GeradorOIC() {
     }
   };
 
-  const nColunas = useMemo(() => Math.max(4, rows.reduce((m, r) => Math.max(m, r.length), 0)), [rows]);
+  const nColunas = useMemo(() => Math.max(4, cols.colNib + 1, cols.colMontante + 1, cols.colNome + 1, cols.colDesc + 1, rows.reduce((m, r) => Math.max(m, r.length), 0)), [rows, cols]);
 
   const tratadas = useMemo<LinhaOICComRef[]>(() => {
     const out: LinhaOICComRef[] = [];

@@ -330,59 +330,110 @@ export interface ColunasOIC {
 
 const texto = (v: unknown) => (typeof v === 'string' ? v.toLowerCase().trim() : '');
 
+const pareceNibCelula = (v: unknown) => (typeof v === 'number' ? Math.abs(v) >= 1e15 : limparNib(v).nib.length >= 15);
+
+const pareceMontanteCelula = (v: unknown) => {
+  if (pareceNibCelula(v)) return false;
+  const m = parseMontante(v);
+  return m !== null && !Number.isNaN(m) && m > 0;
+};
+
+const pareceNomeCelula = (v: unknown) =>
+  typeof v === 'string' && (v.match(/\p{L}/gu)?.length ?? 0) >= 2 && Number.isNaN(parseMontante(v));
+
 /**
- * Adivinha as colunas pelo cabeçalho ("NIB", "Montante", "Nome", "Descritivo",
- * como no modelo Gerador OIC.xlsm — linha 13). Sem cabeçalho, a coluna com
- * mais NIBs manda e as outras seguem-na por esta ordem.
+ * Adivinha as colunas — como no PS2: primeiro pelo cabeçalho (NIB/IBAN/Conta,
+ * Montante/Valor/Líquido, Nome/Beneficiário, Descritivo/Motivo, como no modelo
+ * Gerador OIC.xlsm, linha 13) e, no que faltar ou se não houver cabeçalho, pelo
+ * conteúdo: NIB = a coluna com mais NIBs; Montante = a coluna (de números) que
+ * sobra; Nome = a coluna com mais texto; Descritivo = a outra coluna de texto.
  */
 export function autodetectarColunasOIC(rows: unknown[][]): ColunasOIC {
+  const nCols = rows.reduce((m, r) => Math.max(m, r.length), 0);
+
+  // cabeçalho: a 1.ª linha (das primeiras 40) com pelo menos 2 títulos conhecidos
+  const chaves = {
+    nib: /^(nib|iban|n\.?º?\s*conta|conta|n[uú]mero da conta)/,
+    montante: /^(montante|valor|l[ií]quido|a pagar|total)/,
+    nome: /^(nome|benefici|funcion|colaborad|titular)/,
+    desc: /^(descri|motivo|refer|observ)/,
+  };
+  let cab = -1;
+  let cNib = -1;
+  let cMontante = -1;
+  let cNome = -1;
+  let cDesc = -1;
   for (let i = 0; i < Math.min(rows.length, 40); i++) {
     const r = rows[i] ?? [];
     const acha = (re: RegExp) => r.findIndex((c) => re.test(texto(c)));
-    const cNib = acha(/^(nib|iban)\b/);
-    const cMontante = acha(/^(montante|valor)/);
-    if (cNib >= 0 && cMontante >= 0) {
-      const cNome = acha(/^(nome|benefici)/);
-      const cDesc = acha(/^(descri|motivo|refer)/);
-      return {
-        colNib: cNib,
-        colMontante: cMontante,
-        colNome: cNome >= 0 ? cNome : cNib + 2,
-        colDesc: cDesc >= 0 ? cDesc : cNib + 3,
-        linhaInicial: i + 2,
-        temCabecalho: true,
-      };
-    }
-  }
-
-  const nCols = rows.reduce((m, r) => Math.max(m, r.length), 0);
-  let melhor = 0;
-  let melhorN = -1;
-  for (let c = 0; c < nCols; c++) {
-    let n = 0;
-    for (const r of rows) {
-      const v = r?.[c];
-      if (typeof v === 'number' ? Math.abs(v) >= 1e15 : limparNib(v).nib.length >= 15) n++;
-    }
-    if (n > melhorN) {
-      melhorN = n;
-      melhor = c;
-    }
-  }
-  let inicio = 0;
-  for (let i = 0; i < rows.length; i++) {
-    const v = rows[i]?.[melhor];
-    if (typeof v === 'number' ? Math.abs(v) >= 1e15 : limparNib(v).nib.length >= 15) {
-      inicio = i;
+    const a = acha(chaves.nib);
+    const b = acha(chaves.montante);
+    const c = acha(chaves.nome);
+    if ([a, b, c].filter((x) => x >= 0).length >= 2) {
+      cab = i;
+      cNib = a;
+      cMontante = b;
+      cNome = c;
+      cDesc = acha(chaves.desc);
       break;
     }
   }
+
+  const inicio = cab + 1;
+  const usadas = () => [cNib, cMontante, cNome, cDesc];
+  const pontua = (c: number, f: (v: unknown) => boolean) => {
+    let n = 0;
+    for (let i = inicio; i < rows.length; i++) if (f(rows[i]?.[c])) n++;
+    return n;
+  };
+  const melhorColuna = (f: (v: unknown) => boolean) => {
+    let melhor = -1;
+    let melhorN = 0;
+    for (let c = 0; c < nCols; c++) {
+      if (usadas().includes(c)) continue;
+      const n = pontua(c, f);
+      if (n > melhorN) {
+        melhorN = n;
+        melhor = c;
+      }
+    }
+    return melhor;
+  };
+
+  if (cNib < 0) cNib = melhorColuna(pareceNibCelula);
+  if (cMontante < 0) cMontante = melhorColuna(pareceMontanteCelula);
+  if (cNome < 0) cNome = melhorColuna(pareceNomeCelula);
+  if (cDesc < 0) cDesc = melhorColuna(pareceNomeCelula);
+
+  // o que continuar sem coluna: a 1.ª ainda livre (fica vazia se não existir)
+  for (const k of ['nib', 'montante', 'nome', 'desc'] as const) {
+    const livre = () => {
+      let c = 0;
+      while (usadas().includes(c)) c++;
+      return c;
+    };
+    if (k === 'nib' && cNib < 0) cNib = livre();
+    if (k === 'montante' && cMontante < 0) cMontante = livre();
+    if (k === 'nome' && cNome < 0) cNome = livre();
+    if (k === 'desc' && cDesc < 0) cDesc = livre();
+  }
+
+  // 1.ª linha de dados: a seguir ao cabeçalho; sem cabeçalho, a 1.ª com NIB
+  let linha = inicio;
+  if (cab < 0) {
+    for (let i = 0; i < rows.length; i++) {
+      if (pareceNibCelula(rows[i]?.[cNib])) {
+        linha = i;
+        break;
+      }
+    }
+  }
   return {
-    colNib: melhor,
-    colMontante: melhor + 1,
-    colNome: melhor + 2,
-    colDesc: melhor + 3,
-    linhaInicial: inicio + 1,
-    temCabecalho: false,
+    colNib: cNib,
+    colMontante: cMontante,
+    colNome: cNome,
+    colDesc: cDesc,
+    linhaInicial: linha + 1,
+    temCabecalho: cab >= 0,
   };
 }
