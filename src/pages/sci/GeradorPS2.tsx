@@ -293,7 +293,10 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
     try {
       const buf = await file.arrayBuffer();
       const wb = XLSX.read(buf, { type: 'array' });
-      const ws = wb.Sheets[wb.SheetNames[0]];
+      // Folhas de pagamento com várias abas: a "Interbancaria" é para o gerador OIC; aqui a do BCA.
+      const nomeFolha =
+        wb.SheetNames.find((n) => /bca/i.test(n)) ?? wb.SheetNames.find((n) => !/interbanc/i.test(n)) ?? wb.SheetNames[0];
+      const ws = wb.Sheets[nomeFolha];
       const rows = XLSX.utils.sheet_to_json<string[]>(ws, { header: 1, blankrows: false, defval: '' });
       const norm = rows.map((r) => (Array.isArray(r) ? r.map((c) => (c ?? '').toString()) : []));
       setSheetRows(norm);
@@ -320,6 +323,10 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
     });
 
   const gerar = () => {
+    if (contagem.naoBca > 0) {
+      toast.error(`${contagem.naoBca} linha(s) com NIB que não é do BCA (não começa por 0003) — o PS2 é só para contas BCA. Exclui-as (o OIC é para outros bancos).`);
+      return;
+    }
     if (contagem.alerta > 0) {
       toast.error(`${contagem.alerta} linha(s) em alerta — corrige ou exclui antes de gerar.`);
       return;
@@ -652,7 +659,7 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
                     mostrar todas
                   </button>
                 )}
-                {contagem.naoBca > 0 && <Badge variant="outline">{contagem.naoBca} não-BCA (fora)</Badge>}
+                {contagem.naoBca > 0 && <Badge variant="destructive">{contagem.naoBca} com NIB que não é do BCA — erro</Badge>}
                 {contagem.excluidas > 0 && <Badge variant="outline">{contagem.excluidas} excluídas</Badge>}
               </div>
 
@@ -684,7 +691,7 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
                           t.estado === 'excluido'
                             ? 'line-through opacity-40'
                             : t.estado === 'nao-bca'
-                              ? 'opacity-50'
+                              ? 'bg-destructive/5'
                               : t.estado === 'alerta'
                                 ? 'bg-destructive/5'
                                 : ''
@@ -696,7 +703,10 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
                         </td>
                         <td className="px-2 py-1.5 font-mono text-[11px]">
                           {t.estado === 'nao-bca' ? (
-                            <span className="text-muted-foreground">{t.trat.motivo}</span>
+                            <div className="flex items-center gap-1 text-destructive">
+                              <AlertTriangle className="h-3 w-3 shrink-0" />
+                              <span>{t.trat.motivo}</span>
+                            </div>
                           ) : t.estado === 'alerta' && t.soDescritivo ? (
                             <div className="flex items-center gap-1 text-destructive">
                               <AlertTriangle className="h-3 w-3 shrink-0" />
@@ -754,7 +764,7 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
       </Card>
 
       <div className="flex flex-wrap gap-2">
-        <Button onClick={gerar} disabled={contagem.ok === 0 || contagem.alerta > 0}>
+        <Button onClick={gerar} disabled={contagem.ok === 0 || contagem.alerta > 0 || contagem.naoBca > 0}>
           Gerar ficheiro PS2
         </Button>
         <Button variant="outline" onClick={descarregar} disabled={!resultado || resultado.erros.length > 0}>
