@@ -96,7 +96,10 @@ export interface NibLimpo {
   perdeuDigitos: boolean;
 }
 
-/** NIB de uma célula: fica só com os dígitos, e avisa se já chegou estragado. */
+/**
+ * NIB de uma célula: fica só com os dígitos — letras incluídas (as folhas trazem o
+ * banco à frente: "BI 0005…", "CECV 0002…") — e avisa se já chegou estragado.
+ */
 export function limparNib(raw: unknown): NibLimpo {
   if (raw === null || raw === undefined) return { nib: '', temLetras: false, perdeuDigitos: false };
 
@@ -204,7 +207,10 @@ export function tratarLinhaOIC(l: LinhaBrutaOIC, descritivoPadrao = ''): LinhaTr
   // Um descritivo sozinho não é uma linha: o modelo traz "Pagamento Ordenado"
   // pré-preenchido em linhas sem dados (a macro ignora-as porque só vai até à
   // última linha com NIB).
-  const vazia = n.nib === '' && !n.temLetras && !n.perdeuDigitos && nomeLimpo === '' && montante === null;
+  let vazia = n.nib === '' && !n.temLetras && !n.perdeuDigitos && nomeLimpo === '' && montante === null;
+  // Linhas de totais das folhas de pagamento ("Total Vencimento", ou só um valor solto no fim):
+  // sem NIB e sem nome, ou com nome a começar por "Total", não são pagamentos.
+  if (n.nib === '' && !n.temLetras && !n.perdeuDigitos && (nomeLimpo === '' || /^total/i.test(nomeLimpo))) vazia = true;
 
   if (descLimpa === '') descLimpa = limparTexto(descritivoPadrao);
   const nome = paraAnsi(nomeLimpo);
@@ -222,7 +228,6 @@ export function tratarLinhaOIC(l: LinhaBrutaOIC, descritivoPadrao = ''): LinhaTr
   };
   if (vazia) return base;
 
-  if (n.temLetras) return { ...base, erro: 'NIB deve ser numérico.' };
   if (n.perdeuDigitos) {
     return { ...base, erro: 'NIB guardado como número no Excel (perdeu dígitos) — formata a coluna como Texto.' };
   }
@@ -322,7 +327,6 @@ export interface ColunasOIC {
   colNib: number;
   colMontante: number;
   colNome: number;
-  colDesc: number;
   /** 1.ª linha de dados (1 = primeira linha da folha). */
   linhaInicial: number;
   temCabecalho: boolean;
@@ -343,10 +347,9 @@ const pareceNomeCelula = (v: unknown) =>
 
 /**
  * Adivinha as colunas — como no PS2: primeiro pelo cabeçalho (NIB/IBAN/Conta,
- * Montante/Valor/Líquido, Nome/Beneficiário, Descritivo/Motivo, como no modelo
- * Gerador OIC.xlsm, linha 13) e, no que faltar ou se não houver cabeçalho, pelo
+ * Montante/Valor/V. Líquido, Nome/Beneficiário) e, no que faltar ou se não houver cabeçalho, pelo
  * conteúdo: NIB = a coluna com mais NIBs; Montante = a coluna (de números) que
- * sobra; Nome = a coluna com mais texto; Descritivo = a outra coluna de texto.
+ * sobra; Nome = a coluna com mais texto. O descritivo é escrito uma vez para todas as linhas.
  */
 export function autodetectarColunasOIC(rows: unknown[][]): ColunasOIC {
   const nCols = rows.reduce((m, r) => Math.max(m, r.length), 0);
@@ -354,15 +357,13 @@ export function autodetectarColunasOIC(rows: unknown[][]): ColunasOIC {
   // cabeçalho: a 1.ª linha (das primeiras 40) com pelo menos 2 títulos conhecidos
   const chaves = {
     nib: /^(nib|iban|n\.?º?\s*conta|conta|n[uú]mero da conta)/,
-    montante: /^(montante|valor|l[ií]quido|a pagar|total)/,
+    montante: /^(montante|valor|v.?s*l[ií]quido|l[ií]quido|a pagar|total)/,
     nome: /^(nome|benefici|funcion|colaborad|titular)/,
-    desc: /^(descri|motivo|refer|observ)/,
   };
   let cab = -1;
   let cNib = -1;
   let cMontante = -1;
   let cNome = -1;
-  let cDesc = -1;
   for (let i = 0; i < Math.min(rows.length, 40); i++) {
     const r = rows[i] ?? [];
     const acha = (re: RegExp) => r.findIndex((c) => re.test(texto(c)));
@@ -374,13 +375,12 @@ export function autodetectarColunasOIC(rows: unknown[][]): ColunasOIC {
       cNib = a;
       cMontante = b;
       cNome = c;
-      cDesc = acha(chaves.desc);
       break;
     }
   }
 
   const inicio = cab + 1;
-  const usadas = () => [cNib, cMontante, cNome, cDesc];
+  const usadas = () => [cNib, cMontante, cNome];
   const pontua = (c: number, f: (v: unknown) => boolean) => {
     let n = 0;
     for (let i = inicio; i < rows.length; i++) if (f(rows[i]?.[c])) n++;
@@ -403,10 +403,9 @@ export function autodetectarColunasOIC(rows: unknown[][]): ColunasOIC {
   if (cNib < 0) cNib = melhorColuna(pareceNibCelula);
   if (cMontante < 0) cMontante = melhorColuna(pareceMontanteCelula);
   if (cNome < 0) cNome = melhorColuna(pareceNomeCelula);
-  if (cDesc < 0) cDesc = melhorColuna(pareceNomeCelula);
 
   // o que continuar sem coluna: a 1.ª ainda livre (fica vazia se não existir)
-  for (const k of ['nib', 'montante', 'nome', 'desc'] as const) {
+  for (const k of ['nib', 'montante', 'nome'] as const) {
     const livre = () => {
       let c = 0;
       while (usadas().includes(c)) c++;
@@ -415,7 +414,6 @@ export function autodetectarColunasOIC(rows: unknown[][]): ColunasOIC {
     if (k === 'nib' && cNib < 0) cNib = livre();
     if (k === 'montante' && cMontante < 0) cMontante = livre();
     if (k === 'nome' && cNome < 0) cNome = livre();
-    if (k === 'desc' && cDesc < 0) cDesc = livre();
   }
 
   // 1.ª linha de dados: a seguir ao cabeçalho; sem cabeçalho, a 1.ª com NIB
@@ -432,7 +430,6 @@ export function autodetectarColunasOIC(rows: unknown[][]): ColunasOIC {
     colNib: cNib,
     colMontante: cMontante,
     colNome: cNome,
-    colDesc: cDesc,
     linhaInicial: linha + 1,
     temCabecalho: cab >= 0,
   };
