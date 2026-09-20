@@ -13,7 +13,6 @@ import { toast } from 'sonner';
 import {
   TAMANHO_LINHA,
   autodetectarColunasOIC,
-  limparNib,
   codificarAnsi,
   formatarCentimos,
   gerarOIC,
@@ -48,8 +47,6 @@ export default function GeradorOIC() {
   const [origem, setOrigem] = useState('');
   const [cols, setCols] = useState(COLUNAS_VAZIAS);
   const [descritivo, setDescritivo] = useState(DESCRITIVO_INICIAL);
-  const [livro, setLivro] = useState<XLSX.WorkBook | null>(null);
-  const [folha, setFolha] = useState('');
   const [excluidos, setExcluidos] = useState<Set<number>>(new Set());
   const [resultado, setResultado] = useState<ResultadoOIC | null>(null);
   const [confirmarReset, setConfirmarReset] = useState(false);
@@ -84,38 +81,24 @@ export default function GeradorOIC() {
       const buf = await f.arrayBuffer();
       // raw: números ficam números, para se detetar um NIB que o Excel guardou como número.
       const wb = XLSX.read(buf, { type: 'array', raw: true });
-      // Com várias folhas (ex.: "BCA" e "Interbancaria") escolhe a que tem mais NIBs de outros bancos.
-      let melhor = wb.SheetNames[0];
-      let melhorN = -1;
-      for (const nome of wb.SheetNames) {
-        const ln = wb.Sheets[nome] ? linhasDaFolha(wb.Sheets[nome]) : [];
-        const n = ln.filter((r) => r.some((c) => {
-          const d = limparNib(c).nib;
-          return d.length === 21 && !d.startsWith('0003');
-        })).length;
-        if (n > melhorN) {
-          melhorN = n;
-          melhor = nome;
-        }
+      // Nas folhas de pagamento com várias abas, a do BCA é para o PS2: aqui só a "Interbancaria".
+      const nomeFolha =
+        wb.SheetNames.find((n) => /interbanc/i.test(n)) ??
+        (wb.SheetNames.length === 1 ? wb.SheetNames[0] : undefined);
+      if (!nomeFolha) {
+        toast.error('Não encontrei a aba "Interbancaria" neste ficheiro.');
+        return;
       }
-      const linhas = linhasDaFolha(wb.Sheets[melhor]);
+      const linhas = linhasDaFolha(wb.Sheets[nomeFolha]);
       if (linhas.length === 0) {
         toast.error('A folha está vazia.');
         return;
       }
-      setLivro(wb);
-      setFolha(melhor);
       carregar(linhas, f.name);
-      toast.success(`${f.name}: folha "${melhor}", ${linhas.length} linhas lidas`);
+      toast.success(wb.SheetNames.length > 1 ? `${f.name}: aba "${nomeFolha}", ${linhas.length} linhas lidas` : `${f.name}: ${linhas.length} linhas lidas`);
     } catch {
       toast.error('Não foi possível ler o ficheiro. Usa .xlsx, .xlsm, .xls ou .csv.');
     }
-  };
-
-  const mudarFolha = (nome: string) => {
-    if (!livro?.Sheets[nome]) return;
-    setFolha(nome);
-    carregar(linhasDaFolha(livro.Sheets[nome]), origem);
   };
 
   const nColunas = useMemo(() => Math.max(4, cols.colNib + 1, cols.colMontante + 1, cols.colNome + 1, rows.reduce((m, r) => Math.max(m, r.length), 0)), [rows, cols]);
@@ -173,8 +156,6 @@ export default function GeradorOIC() {
     setOrigem('');
     setCols(COLUNAS_VAZIAS);
     setDescritivo(DESCRITIVO_INICIAL);
-    setLivro(null);
-    setFolha('');
     setExcluidos(new Set());
     setResultado(null);
   };
@@ -242,23 +223,6 @@ export default function GeradorOIC() {
             <span className="text-sm text-muted-foreground">
               {origem && origem !== 'texto colado' ? origem : '.xlsx, .xlsm, .xls ou .csv — ou cola em baixo'}
             </span>
-            {livro && livro.SheetNames.length > 1 && (
-              <div className="flex items-center gap-2">
-                <Label>Folha</Label>
-                <Select value={folha} onValueChange={mudarFolha}>
-                  <SelectTrigger className="w-44">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {livro.SheetNames.map((n) => (
-                      <SelectItem key={n} value={n}>
-                        {n}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
           </div>
 
           <Textarea
