@@ -93,7 +93,7 @@ const SECCOES: Seccao[] = [
   },
   {
     icon: Banknote,
-    title: 'Geradores',
+    title: 'Geradores PS2 / OIC',
     intro: 'Um separador por gerador: PS2 (folha de salários → ficheiro PS2 para o banco) e OIC (pagamentos interbancários → Interbancario_AAAAMMDD.txt, linhas de 135 caracteres em ANSI, como a macro do Gerador OIC.xlsm; limpa espaços, hífenes e apóstrofos dos NIBs).',
     points: [
       'Separador PS2 — cola a folha do Excel ou carrega o .xlsx; as colunas (NIB, valor, nome) são detetadas e podem ajustar-se.',
