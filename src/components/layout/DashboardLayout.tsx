@@ -5,6 +5,7 @@ import { Sidebar } from './Sidebar';
 import { BreadcrumbNavigation } from './BreadcrumbNavigation';
 import { ServerStatusBanner } from './ServerStatusBanner';
 import { Toaster } from "@/components/ui/toaster";
+import { AlertasHoraCerta } from "@/components/alerts/AlertasHoraCerta";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
@@ -124,6 +125,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </main>
         </div>
       </div>
+      <AlertasHoraCerta />
       <Toaster />
       <Sonner position="top-right" richColors />
     </SidebarProvider>

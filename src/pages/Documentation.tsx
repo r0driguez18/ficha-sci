@@ -31,6 +31,7 @@ const SECCOES: Seccao[] = [
     points: [
       'Cartão "Ficha de hoje" — abre já a variante certa (dia útil / dia não útil) para a data de hoje e diz se já foi exportada uma ficha.',
       'Próximo alerta de hora certa, com a contagem decrescente.',
+      'À hora de cada alerta aparece um aviso no ecrã (em qualquer página) até escolheres "Já feito" ou "Adiar 10 min"; o "já feito" guarda-se neste posto, por dia. Só em dias úteis.',
       'Atalhos para os módulos e a lista de retornos a vencer.',
     ],
   },
