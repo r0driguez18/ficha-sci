@@ -8,11 +8,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-import { FileDown, AlertTriangle, Upload, ClipboardPaste, CheckCircle2, Trash2, Undo2 } from 'lucide-react';
+import { FileDown, AlertTriangle, Upload, CheckCircle2, Trash2, Undo2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   TAMANHO_LINHA,
   autodetectarColunasOIC,
+  limparNib,
   codificarAnsi,
   formatarCentimos,
   gerarOIC,
@@ -23,8 +24,6 @@ import {
   type ResultadoOIC,
 } from '@/lib/oic';
 import { linhasDaFolha } from '@/lib/oicFolha';
-
-type Modo = 'colar' | 'ficheiro';
 
 const letraColuna = (i: number) => {
   let s = '';
@@ -40,15 +39,17 @@ function paraMatriz(texto: string): unknown[][] {
   return linhas.map((l) => l.split(sep));
 }
 
-const COLUNAS_VAZIAS = { colNib: 0, colMontante: 1, colNome: 2, colDesc: 3, linhaInicial: 1 };
+const COLUNAS_VAZIAS = { colNib: 0, colMontante: 1, colNome: 2, linhaInicial: 1 };
+const DESCRITIVO_INICIAL = 'Pagamento Ordenado';
 
 export default function GeradorOIC() {
-  const [modo, setModo] = useState<Modo>('colar');
   const [textoColado, setTextoColado] = useState('');
   const [rows, setRows] = useState<unknown[][]>([]);
   const [origem, setOrigem] = useState('');
   const [cols, setCols] = useState(COLUNAS_VAZIAS);
-  const [descPadrao, setDescPadrao] = useState('');
+  const [descritivo, setDescritivo] = useState(DESCRITIVO_INICIAL);
+  const [livro, setLivro] = useState<XLSX.WorkBook | null>(null);
+  const [folha, setFolha] = useState('');
   const [excluidos, setExcluidos] = useState<Set<number>>(new Set());
   const [resultado, setResultado] = useState<ResultadoOIC | null>(null);
   const [confirmarReset, setConfirmarReset] = useState(false);
@@ -65,7 +66,6 @@ export default function GeradorOIC() {
         colNib: d.colNib,
         colMontante: d.colMontante,
         colNome: d.colNome,
-        colDesc: d.colDesc,
         linhaInicial: d.linhaInicial,
       });
     }
@@ -84,33 +84,54 @@ export default function GeradorOIC() {
       const buf = await f.arrayBuffer();
       // raw: números ficam números, para se detetar um NIB que o Excel guardou como número.
       const wb = XLSX.read(buf, { type: 'array', raw: true });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const linhas = ws ? linhasDaFolha(ws) : [];
+      // Com várias folhas (ex.: "BCA" e "Interbancaria") escolhe a que tem mais NIBs de outros bancos.
+      let melhor = wb.SheetNames[0];
+      let melhorN = -1;
+      for (const nome of wb.SheetNames) {
+        const ln = wb.Sheets[nome] ? linhasDaFolha(wb.Sheets[nome]) : [];
+        const n = ln.filter((r) => r.some((c) => {
+          const d = limparNib(c).nib;
+          return d.length === 21 && !d.startsWith('0003');
+        })).length;
+        if (n > melhorN) {
+          melhorN = n;
+          melhor = nome;
+        }
+      }
+      const linhas = linhasDaFolha(wb.Sheets[melhor]);
       if (linhas.length === 0) {
         toast.error('A folha está vazia.');
         return;
       }
+      setLivro(wb);
+      setFolha(melhor);
       carregar(linhas, f.name);
-      toast.success(`${f.name}: ${linhas.length} linhas lidas`);
+      toast.success(`${f.name}: folha "${melhor}", ${linhas.length} linhas lidas`);
     } catch {
       toast.error('Não foi possível ler o ficheiro. Usa .xlsx, .xlsm, .xls ou .csv.');
     }
   };
 
-  const nColunas = useMemo(() => Math.max(4, cols.colNib + 1, cols.colMontante + 1, cols.colNome + 1, cols.colDesc + 1, rows.reduce((m, r) => Math.max(m, r.length), 0)), [rows, cols]);
+  const mudarFolha = (nome: string) => {
+    if (!livro?.Sheets[nome]) return;
+    setFolha(nome);
+    carregar(linhasDaFolha(livro.Sheets[nome]), origem);
+  };
+
+  const nColunas = useMemo(() => Math.max(4, cols.colNib + 1, cols.colMontante + 1, cols.colNome + 1, rows.reduce((m, r) => Math.max(m, r.length), 0)), [rows, cols]);
 
   const tratadas = useMemo<LinhaOICComRef[]>(() => {
     const out: LinhaOICComRef[] = [];
     for (let i = Math.max(0, cols.linhaInicial - 1); i < rows.length; i++) {
       const r = rows[i] ?? [];
       const t = tratarLinhaOIC(
-        { nib: r[cols.colNib], montante: r[cols.colMontante], nome: r[cols.colNome], descritivo: r[cols.colDesc] },
-        descPadrao,
+        { nib: r[cols.colNib], montante: r[cols.colMontante], nome: r[cols.colNome], descritivo: '' },
+        descritivo,
       );
       if (!t.vazia) out.push({ ...t, ref: i + 1 });
     }
     return out;
-  }, [rows, cols, descPadrao]);
+  }, [rows, cols, descritivo]);
 
   const ativas = useMemo(() => tratadas.filter((t) => !excluidos.has(t.ref)), [tratadas, excluidos]);
   const nErros = ativas.filter((t) => t.erro).length;
@@ -151,7 +172,9 @@ export default function GeradorOIC() {
     setRows([]);
     setOrigem('');
     setCols(COLUNAS_VAZIAS);
-    setDescPadrao('');
+    setDescritivo(DESCRITIVO_INICIAL);
+    setLivro(null);
+    setFolha('');
     setExcluidos(new Set());
     setResultado(null);
   };
@@ -164,7 +187,7 @@ export default function GeradorOIC() {
     return mostra.join('\n');
   }, [resultado]);
 
-  const seletorColuna = (rotulo: string, chave: 'colNib' | 'colMontante' | 'colNome' | 'colDesc') => (
+  const seletorColuna = (rotulo: string, chave: 'colNib' | 'colMontante' | 'colNome') => (
     <div className="space-y-1">
       <Label>{rotulo}</Label>
       <Select
@@ -200,55 +223,56 @@ export default function GeradorOIC() {
         <CardHeader>
           <CardTitle>1. Folha de pagamentos</CardTitle>
           <CardDescription>
-            Cola as colunas do Excel (NIB, Montante, Nome, Descritivo) ou carrega o ficheiro. Espaços, hífenes,
-            apóstrofos e caracteres invisíveis nos NIBs são removidos automaticamente.
+            Cola as colunas do Excel ou carrega o ficheiro — o NIB, o montante e o nome são detetados sozinhos.
+            Nos NIBs são removidos espaços, hífenes, apóstrofos, caracteres invisíveis e as letras do banco (BI, CECV…).
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex gap-2">
-            <Button variant={modo === 'colar' ? 'default' : 'outline'} size="sm" onClick={() => setModo('colar')}>
-              <ClipboardPaste className="h-4 w-4 mr-1" /> Colar
-            </Button>
-            <Button
-              variant={modo === 'ficheiro' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setModo('ficheiro')}
-            >
+          <div className="flex flex-wrap items-center gap-3">
+            <input
+              ref={inputFicheiro}
+              type="file"
+              accept=".xlsx,.xlsm,.xls,.csv"
+              className="hidden"
+              onChange={aoEscolherFicheiro}
+            />
+            <Button variant="outline" onClick={() => inputFicheiro.current?.click()}>
               <Upload className="h-4 w-4 mr-1" /> Carregar ficheiro
             </Button>
+            <span className="text-sm text-muted-foreground">
+              {origem && origem !== 'texto colado' ? origem : '.xlsx, .xlsm, .xls ou .csv — ou cola em baixo'}
+            </span>
+            {livro && livro.SheetNames.length > 1 && (
+              <div className="flex items-center gap-2">
+                <Label>Folha</Label>
+                <Select value={folha} onValueChange={mudarFolha}>
+                  <SelectTrigger className="w-44">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {livro.SheetNames.map((n) => (
+                      <SelectItem key={n} value={n}>
+                        {n}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
 
-          {modo === 'colar' ? (
-            <Textarea
-              value={textoColado}
-              onChange={(e) => aoColar(e.target.value)}
-              placeholder="Cola aqui as linhas copiadas do Excel (com ou sem cabeçalho)…"
-              className="min-h-[140px] font-mono text-xs"
-            />
-          ) : (
-            <div className="flex items-center gap-3">
-              <input
-                ref={inputFicheiro}
-                type="file"
-                accept=".xlsx,.xlsm,.xls,.csv"
-                className="hidden"
-                onChange={aoEscolherFicheiro}
-              />
-              <Button variant="outline" onClick={() => inputFicheiro.current?.click()}>
-                <Upload className="h-4 w-4 mr-1" /> Escolher ficheiro
-              </Button>
-              <span className="text-sm text-muted-foreground">
-                {origem && origem !== 'texto colado' ? origem : '.xlsx, .xlsm, .xls ou .csv (1.ª folha)'}
-              </span>
-            </div>
-          )}
+          <Textarea
+            value={textoColado}
+            onChange={(e) => aoColar(e.target.value)}
+            placeholder="Cola aqui as linhas copiadas do Excel (com ou sem cabeçalho)…"
+            className="min-h-[120px] font-mono text-xs"
+          />
 
           {rows.length > 0 && (
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
               {seletorColuna('NIB', 'colNib')}
               {seletorColuna('Montante', 'colMontante')}
               {seletorColuna('Nome', 'colNome')}
-              {seletorColuna('Descritivo', 'colDesc')}
               <div className="space-y-1">
                 <Label>Dados começam na linha</Label>
                 <Input
@@ -265,18 +289,18 @@ export default function GeradorOIC() {
           )}
 
           <div className="max-w-sm space-y-1">
-            <Label htmlFor="oic-desc">Descritivo por omissão (opcional)</Label>
+            <Label htmlFor="oic-desc">Descritivo (igual para todas as linhas)</Label>
             <Input
               id="oic-desc"
               maxLength={40}
-              value={descPadrao}
+              value={descritivo}
               onChange={(e) => {
                 setResultado(null);
-                setDescPadrao(e.target.value);
+                setDescritivo(e.target.value);
               }}
-              placeholder="ex.: Pagamento Ordenado"
+              placeholder="Pagamento Ordenado"
             />
-            <p className="text-xs text-muted-foreground">Usado nas linhas cujo descritivo está vazio (máx. 40).</p>
+            <p className="text-xs text-muted-foreground">Escreve-se uma vez; vai em todas as linhas (máx. 40 caracteres).</p>
           </div>
         </CardContent>
       </Card>
