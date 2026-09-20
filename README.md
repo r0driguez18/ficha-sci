@@ -92,7 +92,7 @@ O menu é plano, agrupado por:
   - Passagem de Turno (nota por turno + confirmação de leitura)
 - **Ferramentas**
   - CRC — Inconsistências (fecho em massa via serviço local que abre o Chrome)
-  - Geradores (um separador por gerador: PS2 — folha de salários → NIB → `PS2_AAAAMMDD.txt`; OIC — em preparação)
+  - Geradores (um separador por gerador: PS2 — folha de salários → NIB → `PS2_AAAAMMDD.txt`; OIC — pagamentos interbancários → `Interbancario_AAAAMMDD.txt`, 135 caracteres/linha, ANSI)
   - Estatísticas (evolução mensal dos processamentos; exportar XLSX/PDF)
 - **Sistema**: Configurações, Documentação
 
