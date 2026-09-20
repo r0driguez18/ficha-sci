@@ -82,6 +82,36 @@ export async function getHandoverHistorico(
 
 
 
+/**
+ * Deixa uma nota nova — via RPC, para que o autor venha sempre de auth.uid()
+ * no servidor (nunca de um parâmetro do cliente, que podia ser forjado).
+ */
+export async function adicionarEntradaHandover(
+  date: string,
+  turno: TurnKey,
+  texto: string,
+): Promise<{ error: PostgrestError | null }> {
+  const { error } = await supabase.rpc('adicionar_entrada_passagem_turno', {
+    p_date: date,
+    p_turno: turno,
+    p_texto: texto,
+  });
+  return { error };
+}
+
+/**
+ * Regista que quem está autenticado leu esta nota — via RPC (identidade do
+ * servidor). Repetir não altera a hora da primeira leitura.
+ */
+export async function confirmarLeituraEntradaHandover(
+  entryId: string,
+): Promise<{ error: PostgrestError | null }> {
+  const { error } = await supabase.rpc('confirmar_leitura_entrada_passagem_turno', {
+    p_entry_id: entryId,
+  });
+  return { error };
+}
+
 /** Tira as notas da vista atual (ficam no histórico, com quem arquivou e quando). */
 export async function arquivarEntradasHandover(
   ids: string[],
