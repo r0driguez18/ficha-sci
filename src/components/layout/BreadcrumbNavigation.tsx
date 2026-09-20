@@ -20,7 +20,7 @@ const routeLabels: Record<string, string> = {
   '/sci/historico-fichas': 'Histórico de Fichas',
   '/sci/retornos-cobrancas': 'Retornos de Cobranças',
   '/sci/passagem-turno': 'Passagem de Turno',
-  '/sci/geradores': 'Geradores',
+  '/sci/geradores': 'Geradores PS2 / OIC',
   '/sci/renovacao-cartoes': 'Renovação de Cartões',
   '/crc': 'CRC',
   '/crc/tratamento': 'Fecho de Inconsistências',

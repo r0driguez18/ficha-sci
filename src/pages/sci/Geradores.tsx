@@ -24,7 +24,7 @@ export default function Geradores() {
   return (
     <PageContainer size="default">
       <PageHeader
-        title="Geradores"
+        title="Geradores PS2 / OIC"
         subtitle="Gera os ficheiros para o banco a partir das folhas de trabalho"
       />
 

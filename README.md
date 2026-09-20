@@ -92,11 +92,11 @@ O menu é plano, agrupado por:
   - Passagem de Turno (nota por turno + confirmação de leitura)
 - **Ferramentas**
   - CRC — Inconsistências (fecho em massa via serviço local que abre o Chrome)
-  - Geradores (um separador por gerador: PS2 — folha de salários → NIB → `PS2_AAAAMMDD.txt`; OIC — pagamentos interbancários → `Interbancario_AAAAMMDD.txt`, 135 caracteres/linha, ANSI)
+  - Geradores PS2 / OIC (um separador por gerador: PS2 — folha de salários → NIB → `PS2_AAAAMMDD.txt`; OIC — pagamentos interbancários → `Interbancario_AAAAMMDD.txt`, 135 caracteres/linha, ANSI)
   - Estatísticas (evolução mensal dos processamentos; exportar XLSX/PDF)
 - **Sistema**: Configurações, Documentação
 
-Nota: os **Geradores** estão no grupo *Ferramentas* mas a rota é `/sci/geradores` (a antiga `/sci/gerador-ps2` redireciona para o separador PS2).
+Nota: os **Geradores PS2 / OIC** estão no grupo *Ferramentas* mas a rota é `/sci/geradores` (a antiga `/sci/gerador-ps2` redireciona para o separador PS2).
 
 ## Estrutura do Projeto
 
