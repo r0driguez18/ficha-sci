@@ -290,6 +290,9 @@ export type Database = {
       }
       handover_entries: {
         Row: {
+          arquivada_em: string | null
+          arquivada_por: string | null
+          arquivada_por_nome: string | null
           autor_nome: string | null
           autor_user_id: string | null
           created_at: string
@@ -299,6 +302,9 @@ export type Database = {
           turno: string
         }
         Insert: {
+          arquivada_em?: string | null
+          arquivada_por?: string | null
+          arquivada_por_nome?: string | null
           autor_nome?: string | null
           autor_user_id?: string | null
           created_at?: string
@@ -308,6 +314,9 @@ export type Database = {
           turno: string
         }
         Update: {
+          arquivada_em?: string | null
+          arquivada_por?: string | null
+          arquivada_por_nome?: string | null
           autor_nome?: string | null
           autor_user_id?: string | null
           created_at?: string
@@ -631,6 +640,10 @@ export type Database = {
       nome_operador_atual: {
         Args: Record<string, never>
         Returns: string
+      }
+      arquivar_entradas_passagem_turno: {
+        Args: { p_ids: string[] }
+        Returns: number
       }
       adicionar_entrada_passagem_turno: {
         Args: { p_date: string; p_turno: string; p_texto: string }
