@@ -293,7 +293,10 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
     try {
       const buf = await file.arrayBuffer();
       const wb = XLSX.read(buf, { type: 'array' });
-      const ws = wb.Sheets[wb.SheetNames[0]];
+      // Folhas de pagamento com várias abas: a "Interbancaria" é para o gerador OIC; aqui a do BCA.
+      const nomeFolha =
+        wb.SheetNames.find((n) => /bca/i.test(n)) ?? wb.SheetNames.find((n) => !/interbanc/i.test(n)) ?? wb.SheetNames[0];
+      const ws = wb.Sheets[nomeFolha];
       const rows = XLSX.utils.sheet_to_json<string[]>(ws, { header: 1, blankrows: false, defval: '' });
       const norm = rows.map((r) => (Array.isArray(r) ? r.map((c) => (c ?? '').toString()) : []));
       setSheetRows(norm);

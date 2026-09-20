@@ -233,7 +233,7 @@ export function tratarLinhaOIC(l: LinhaBrutaOIC, descritivoPadrao = ''): LinhaTr
   }
   if (n.nib === '') return { ...base, erro: 'NIB obrigatório.' };
   if (n.nib.length !== 21) return { ...base, erro: `NIB deve ter 21 dígitos (tem ${n.nib.length}).` };
-  if (n.nib.startsWith('0003')) return { ...base, erro: 'NIB do BCA não permitido em interbancário.' };
+  if (n.nib.startsWith('0003')) return { ...base, erro: 'NIB do BCA (começa por 0003), não de outro banco — este gerador é só para outros bancos; usa o PS2.' };
 
   if (nome.texto === '') return { ...base, erro: 'Nome obrigatório.' };
 
