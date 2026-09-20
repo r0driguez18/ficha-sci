@@ -77,7 +77,9 @@ const SECCOES: Seccao[] = [
     points: [
       'Cada nota deixada (ocorrências, pendências a acompanhar, avisos) fica como entrada nova no turno e na data — nada se reescreve.',
       'Cada pessoa confirma a leitura de cada nota — fica registado quem leu e a que horas; o dia mostra quantas notas estão por ler.',
-      'As notas não se editam nem se apagam: para corrigir, deixa uma nova. O histórico consulta-se mudando a data.',
+      'Separador Atual: as notas ativas. "Arquivar" (uma a uma, ou "Arquivar tudo" para limpar) tira-as da lista sem as perder.',
+      'Separador Histórico: todas as notas, arquivadas incluídas, com filtros por data, turno e texto, paginado.',
+      'As notas não se editam nem se apagam: para corrigir, deixa uma nova.',
     ],
   },
   {
