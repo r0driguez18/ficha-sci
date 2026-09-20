@@ -29,6 +29,7 @@ export const renderTurno2Tasks = (
     {key: 'processarTef', text: "Processar Ficheiros TEF – RTR/RCT/ERR"},
     {key: 'processarTelecomp', text: "Processar Ficheiros Telecompensação – RCB/RTC/FCT/IMR"},
     {key: 'rececaoFicheirosVisaVss', text: "Verificar envio ficheiro VISA (VSS)"},
+    {key: 'enviarEnvIma', text: "Enviar Ficheiro ENV/IMA (até às 15:00)"},
     {key: 'enviarEciEdv', text: "Enviar Ficheiro ECI/EDV"},
     {key: 'confirmarAtualizacaoFicheiros', text: "Confirmar Atualização Ficheiros Enviados à SISP (ECI * ENV/IMA)"},
     {key: 'verificarPendentes', text: "Verificar Pendentes dos Balcões abertos"},
