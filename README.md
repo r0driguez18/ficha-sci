@@ -10,7 +10,7 @@ em turno noturno. Cobre:
 - Ficha de procedimentos do turno (com assinatura eletrónica e exportação em PDF)
 - Histórico de fichas e verificação de tapes / display
 - Retornos de cobranças, com prazo (SLA) em dias úteis
-- Passagem de turno (nota + confirmação de leitura)
+- Passagem de turno (histórico de notas + confirmação de leitura por pessoa)
 - Fecho de inconsistências no CRC Front Office (via serviço local)
 - Gerador de ficheiro PS2 a partir da folha de salários
 - Estatísticas dos processamentos de ficheiros
@@ -89,7 +89,7 @@ O menu é plano, agrupado por:
   - Ficha de Procedimentos (por turno; assinatura por PIN; verificação de tapes nos dias não úteis e no fim do mês)
   - Histórico de Fichas (visão de equipa, filtros, anexar display de tapes)
   - Retornos de Cobranças (SLA em dias úteis; > 2 dias úteis de atraso = urgente)
-  - Passagem de Turno (nota por turno + confirmação de leitura)
+  - Passagem de Turno (histórico de notas por turno; cada pessoa confirma a leitura de cada nota)
 - **Ferramentas**
   - CRC — Inconsistências (fecho em massa via serviço local que abre o Chrome)
   - Geradores PS2 / OIC (um separador por gerador: PS2 — folha de salários → NIB → `PS2_AAAAMMDD.txt`; OIC — pagamentos interbancários → `Interbancario_AAAAMMDD.txt`, 135 caracteres/linha, ANSI)

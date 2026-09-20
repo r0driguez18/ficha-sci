@@ -288,6 +288,68 @@ export type Database = {
         }
         Relationships: []
       }
+      handover_entries: {
+        Row: {
+          autor_nome: string | null
+          autor_user_id: string | null
+          created_at: string
+          date: string
+          id: string
+          texto: string
+          turno: string
+        }
+        Insert: {
+          autor_nome?: string | null
+          autor_user_id?: string | null
+          created_at?: string
+          date: string
+          id?: string
+          texto: string
+          turno: string
+        }
+        Update: {
+          autor_nome?: string | null
+          autor_user_id?: string | null
+          created_at?: string
+          date?: string
+          id?: string
+          texto?: string
+          turno?: string
+        }
+        Relationships: []
+      }
+      handover_reads: {
+        Row: {
+          entry_id: string
+          id: string
+          lida_em: string
+          user_id: string
+          user_nome: string | null
+        }
+        Insert: {
+          entry_id: string
+          id?: string
+          lida_em?: string
+          user_id: string
+          user_nome?: string | null
+        }
+        Update: {
+          entry_id?: string
+          id?: string
+          lida_em?: string
+          user_id?: string
+          user_nome?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "handover_reads_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "handover_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       handover_notes: {
         Row: {
           autor_nome: string | null
@@ -569,6 +631,28 @@ export type Database = {
       nome_operador_atual: {
         Args: Record<string, never>
         Returns: string
+      }
+      adicionar_entrada_passagem_turno: {
+        Args: { p_date: string; p_turno: string; p_texto: string }
+        Returns: {
+          id: string
+          date: string
+          turno: string
+          texto: string
+          autor_user_id: string | null
+          autor_nome: string | null
+          created_at: string
+        }
+      }
+      confirmar_leitura_entrada_passagem_turno: {
+        Args: { p_entry_id: string }
+        Returns: {
+          id: string
+          entry_id: string
+          user_id: string
+          user_nome: string | null
+          lida_em: string
+        }
       }
       guardar_nota_passagem_turno: {
         Args: { p_date: string; p_turno: string; p_nota: string }
