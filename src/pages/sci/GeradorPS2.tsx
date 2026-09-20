@@ -231,7 +231,12 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
   }, [modo, colagem, sheetRows, colConta, colValor, colNome, linhaInicial]);
 
   const comDados = useMemo(
-    () => linhas.map((l, i) => ({ ...l, idx: i })).filter((l) => l.recebido !== '' || l.valor !== ''),
+    () =>
+      linhas
+        .map((l, i) => ({ ...l, idx: i }))
+        .filter((l) => l.recebido !== '' || l.valor !== '')
+        // Linhas de totais ("Total Vencimento", ou só um valor solto): sem conta, não são beneficiários.
+        .filter((l) => !(l.recebido === '' && (l.nome === '' || /^total/i.test(l.nome)))),
     [linhas],
   );
 
