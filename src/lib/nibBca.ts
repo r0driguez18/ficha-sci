@@ -100,9 +100,20 @@ export function tratarNib(
 
   if (digitos === '') return { ...vazio, motivo: 'Sem dígitos' };
 
-  // Outro banco (começa com 000x, x ≠ 3) → fora do ficheiro.
-  if (/^000[124-9]/.test(digitos)) {
-    return { ...vazio, estado: 'nao-bca', motivo: `Banco ${digitos.slice(0, 4)} — não BCA` };
+  // O PS2 é só para o BCA (NIB 0003…). Um NIB de outro banco — 000x com x ≠ 3, ou qualquer
+  // sequência longa (≥ 14 dígitos: mais do que conta + natureza) que não comece por 0003 —
+  // é um ERRO da linha e nunca se "arranja" (senão o início do NIB era ignorado). "0000…" é uma
+  // conta BCA com zeros à frente e segue o caminho normal.
+  const outroBanco = /^000[124-9]/.test(digitos);
+  const longoNaoBca = digitos.length >= 14 && !digitos.startsWith(BANCO_BCA) && !digitos.startsWith('0000');
+  if (outroBanco || longoNaoBca) {
+    return {
+      ...vazio,
+      estado: 'nao-bca',
+      motivo: outroBanco || digitos.startsWith('000')
+        ? `NIB de outro banco (${digitos.slice(0, 4)}…) — o PS2 é só para o BCA (0003…)`
+        : `NIB com ${digitos.length} dígitos que não começa por 0003 — não é do BCA`,
+    };
   }
 
   let conta = '';

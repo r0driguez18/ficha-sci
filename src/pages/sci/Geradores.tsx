@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { EmptyState } from '@/components/ui/empty-state';
 import { FileText } from 'lucide-react';
 import GeradorPS2 from './GeradorPS2';
+import GeradorOIC from './GeradorOIC';
 
 type TabKey = 'ps2' | 'oic';
 
@@ -38,12 +39,8 @@ export default function Geradores() {
           <GeradorPS2 embedded />
         </TabsContent>
 
-        <TabsContent value="oic">
-          <EmptyState
-            icon={FileText}
-            title="Gerador OIC"
-            hint="Em preparação — fica disponível aqui assim que for adicionado."
-          />
+        <TabsContent value="oic" forceMount className="data-[state=inactive]:hidden">
+          <GeradorOIC />
         </TabsContent>
       </Tabs>
     </PageContainer>
