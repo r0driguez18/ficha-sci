@@ -30,6 +30,7 @@ function useNow(intervalMs = 30000) {
 const Dashboard = () => {
   const now = useNow();
   const { dailyAlerts, loading: alertsLoading } = useAlerts();
+  const [, setPermissaoTick] = useState(0);
   const fd = useMemo(() => fichaDoDia(now), [now]);
   const hoje = todayIso();
 
@@ -113,6 +114,19 @@ const Dashboard = () => {
             <p className="text-sm text-muted-foreground flex items-center gap-2">
               <Bell className="h-4 w-4" /> Sem mais alertas de hora certa para hoje.
             </p>
+          )}
+          <p className="mt-3 text-xs text-muted-foreground">
+            À hora de cada alerta aparece um aviso no ecrã até escolheres “Já feito” ou “Adiar 10 min”.
+          </p>
+          {typeof Notification !== 'undefined' && Notification.permission === 'default' && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="mt-2"
+              onClick={() => void Notification.requestPermission().then(() => setPermissaoTick((t) => t + 1))}
+            >
+              <Bell className="h-4 w-4 mr-1.5" /> Ativar também avisos do sistema (com a app em segundo plano)
+            </Button>
           )}
         </CardContent>
       </Card>

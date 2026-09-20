@@ -56,6 +56,7 @@ export interface Turno2Tasks {
   processarTef: boolean;
   processarTelecomp: boolean;
   rececaoFicheirosVisaVss: boolean;
+  enviarEnvIma: boolean;
   enviarEciEdv: boolean;
   confirmarAtualizacaoFicheiros: boolean;
   envioFicheirosVisaPafCaf: boolean;
