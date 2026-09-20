@@ -2,62 +2,73 @@ import type { PostgrestError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import type { TurnKey } from '@/types/taskboard';
 
-/** Nota de passagem de turno (F13). */
-export interface HandoverNote {
+/** Uma leitura: quem confirmou que leu a nota, e quando. */
+export interface HandoverLeitura {
+  id: string;
+  entry_id: string;
+  user_id: string;
+  user_nome: string | null;
+  lida_em: string;
+}
+
+/**
+ * Uma nota deixada na passagem de turno. Só cresce: nunca se reescreve nem
+ * se apaga — deixar outra nota acrescenta uma entrada nova.
+ */
+export interface HandoverEntrada {
   id: string;
   date: string;
   turno: TurnKey;
-  nota: string;
+  texto: string;
   autor_user_id: string | null;
   autor_nome: string | null;
-  lida_por: string | null;
-  lida_por_nome: string | null;
-  lida_em: string | null;
   created_at: string;
-  updated_at: string;
+  leituras: HandoverLeitura[];
 }
 
-export async function getHandoverNotes(
+/** Todas as notas de um dia (por ordem de criação), cada uma com as suas leituras. */
+export async function getHandoverEntradas(
   date: string,
-): Promise<{ data: HandoverNote[] | null; error: PostgrestError | null }> {
+): Promise<{ data: HandoverEntrada[] | null; error: PostgrestError | null }> {
   const { data, error } = await supabase
-    .from('handover_notes')
-    .select('*')
+    .from('handover_entries')
+    .select('*, handover_reads(*)')
     .eq('date', date)
-    .order('turno');
-  return { data: data as unknown as HandoverNote[], error };
+    .order('created_at', { ascending: true });
+  if (error || !data) return { data: null, error };
+  const entradas = data.map(({ handover_reads, ...e }) => ({
+    ...e,
+    leituras: [...(handover_reads ?? [])].sort((a, b) => a.lida_em.localeCompare(b.lida_em)),
+  }));
+  return { data: entradas as unknown as HandoverEntrada[], error: null };
 }
 
 /**
- * Cria ou atualiza a nota de um turno para uma data (única por date+turno)
- * — via RPC, para que `autor_user_id`/`autor_nome` venham sempre de
- * auth.uid() no servidor (nunca de um parâmetro do cliente, que podia ser
- * forjado). Editar uma nota já lida limpa o selo de leitura no servidor —
- * a confirmação anterior já não descreve o conteúdo novo.
+ * Deixa uma nota nova — via RPC, para que o autor venha sempre de auth.uid()
+ * no servidor (nunca de um parâmetro do cliente, que podia ser forjado).
  */
-export async function saveHandoverNote(
+export async function adicionarEntradaHandover(
   date: string,
   turno: TurnKey,
-  nota: string,
-): Promise<{ data: HandoverNote | null; error: PostgrestError | null }> {
-  const { data, error } = await supabase.rpc('guardar_nota_passagem_turno', {
+  texto: string,
+): Promise<{ error: PostgrestError | null }> {
+  const { error } = await supabase.rpc('adicionar_entrada_passagem_turno', {
     p_date: date,
     p_turno: turno,
-    p_nota: nota,
+    p_texto: texto,
   });
-  return { data: data as unknown as HandoverNote, error };
+  return { error };
 }
 
 /**
- * Regista a confirmação de leitura — via RPC, para que `lida_por`/
- * `lida_por_nome` venham sempre do operador autenticado que chama, nunca
- * de um parâmetro do cliente.
+ * Regista que quem está autenticado leu esta nota — via RPC (identidade do
+ * servidor). Repetir não altera a hora da primeira leitura.
  */
-export async function confirmarLeituraHandover(
-  noteId: string,
+export async function confirmarLeituraEntradaHandover(
+  entryId: string,
 ): Promise<{ error: PostgrestError | null }> {
-  const { error } = await supabase.rpc('confirmar_leitura_passagem_turno', {
-    p_note_id: noteId,
+  const { error } = await supabase.rpc('confirmar_leitura_entrada_passagem_turno', {
+    p_entry_id: entryId,
   });
   return { error };
 }
