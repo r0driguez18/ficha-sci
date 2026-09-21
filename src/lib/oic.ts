@@ -15,6 +15,7 @@
  * fazia):
  *  - limpa o que chega nas folhas (espaços, apóstrofos e símbolos nos NIBs,
  *    caracteres invisíveis nos nomes, separadores de milhares nos montantes);
+ *  - nomes e descritivo saem sem acentos ("João" → "Joao"): a letra fica;
  *  - lista todos os erros de uma vez (a macro pára no primeiro);
  *  - os cêntimos saem certos: `Fix(valor * 100)` em vírgula flutuante perde 1
  *    cêntimo em ~5% dos montantes (0,29 dava 28). Continua a truncar casas a
@@ -22,6 +23,8 @@
  *  - um NIB guardado como número no Excel (que só guarda 15 dígitos exatos)
  *    dá erro em vez de gerar uma conta errada.
  */
+
+import { semAcentos } from './texto';
 
 export const TAMANHO_LINHA = 135;
 const TAM_NOME = 27;
@@ -213,8 +216,9 @@ export function tratarLinhaOIC(l: LinhaBrutaOIC, descritivoPadrao = ''): LinhaTr
   if (n.nib === '' && !n.temLetras && !n.perdeuDigitos && (nomeLimpo === '' || /^total/i.test(nomeLimpo))) vazia = true;
 
   if (descLimpa === '') descLimpa = limparTexto(descritivoPadrao);
-  const nome = paraAnsi(nomeLimpo);
-  const desc = paraAnsi(descLimpa);
+  // Nomes e descritivo sem acentos ("João" → "Joao"): a letra fica, o acento sai.
+  const nome = paraAnsi(semAcentos(nomeLimpo));
+  const desc = paraAnsi(semAcentos(descLimpa));
 
   const base: LinhaTratadaOIC = {
     vazia,
