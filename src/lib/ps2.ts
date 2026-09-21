@@ -12,6 +12,8 @@
  *   PS29  rodapé     — "PS2"+"9"+tipo(2)+"00"+"0"+"000000"+nRegistos(14)+total(11)          -> 80, completa com "0"
  */
 
+import { semAcentos } from './texto';
+
 export interface PS2Linha {
   /** NIB do beneficiário (já montado, ex.: "00030000" + conta + "10176"). */
   nib: string;
@@ -159,7 +161,8 @@ export function gerarPS2(input: PS2Input): PS2Resultado {
       erros.push(`Erro na linha ${numLinha}: o NIB não pode ter mais de 21 dígitos.`);
       return;
     }
-    const descritivo = String(l.descritivo ?? '').trim();
+    // Sem acentos ("João" → "Joao"): a letra fica, o acento sai — 1 carácter = 1 byte, colunas alinhadas.
+    const descritivo = semAcentos(String(l.descritivo ?? '')).trim();
     if (descritivo.length === 0) {
       erros.push(
         `Erro na linha ${numLinha}: o campo DESCRITIVO é obrigatório quando há NIB e valor.`,
