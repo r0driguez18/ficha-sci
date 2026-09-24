@@ -82,9 +82,10 @@ export default function GeradorOIC() {
       // raw: números ficam números, para se detetar um NIB que o Excel guardou como número.
       const wb = XLSX.read(buf, { type: 'array', raw: true });
       // Nas folhas de pagamento com várias abas, a do BCA é para o PS2: aqui só a "Interbancaria".
+      // As folhas ocultas nunca entram.
+      const visiveis = wb.SheetNames.filter((_, i) => !wb.Workbook?.Sheets?.[i]?.Hidden);
       const nomeFolha =
-        wb.SheetNames.find((n) => /interbanc/i.test(n)) ??
-        (wb.SheetNames.length === 1 ? wb.SheetNames[0] : undefined);
+        visiveis.find((n) => /interbanc/i.test(n)) ?? (visiveis.length === 1 ? visiveis[0] : undefined);
       if (!nomeFolha) {
         toast.error('Não encontrei a aba "Interbancaria" neste ficheiro.');
         return;
@@ -95,7 +96,7 @@ export default function GeradorOIC() {
         return;
       }
       carregar(linhas, f.name);
-      toast.success(wb.SheetNames.length > 1 ? `${f.name}: aba "${nomeFolha}", ${linhas.length} linhas lidas` : `${f.name}: ${linhas.length} linhas lidas`);
+      toast.success(visiveis.length > 1 ? `${f.name}: aba "${nomeFolha}", ${linhas.length} linhas lidas` : `${f.name}: ${linhas.length} linhas lidas`);
     } catch {
       toast.error('Não foi possível ler o ficheiro. Usa .xlsx, .xlsm, .xls ou .csv.');
     }
