@@ -13,6 +13,7 @@
  */
 
 import { semAcentos } from './texto';
+import { parseMontante } from './oic';
 
 export interface PS2Linha {
   /** NIB do beneficiário (já montado, ex.: "00030000" + conta + "10176"). */
@@ -105,6 +106,25 @@ export function montarNib(contaCurta: string): string {
 const zeros = (n: number) => '0'.repeat(Math.max(0, n));
 const espacos = (n: number) => ' '.repeat(Math.max(0, n));
 const fix = (v: number) => Math.trunc(v);
+
+/**
+ * Valor de uma célula em escudos inteiros, arredondado como o ARRED(célula; 0)
+ * do Excel (0,5 sobe): "19893.333333333332" → 19893 · "17331,5" → 17332 ·
+ * "6,860" → 6860 · "108,800.00" → 108800. Números do Excel entram como número.
+ * NaN se não for um valor; null se estiver vazio.
+ */
+export function valorEmEscudos(raw: unknown): number | null {
+  const v = parseMontante(raw);
+  if (v === null || Number.isNaN(v)) return v;
+  const pre = Math.round(Math.abs(v) * 1e6) / 1e6; // tira o ruído da vírgula flutuante
+  return Math.sign(v) * Math.round(pre);
+}
+
+/** O valor tinha casas decimais que o arredondamento a 0 fez desaparecer? */
+export function foiArredondado(raw: unknown): boolean {
+  const v = parseMontante(raw);
+  return v !== null && !Number.isNaN(v) && Math.abs(v - Math.round(v)) > 1e-6;
+}
 const padZeros = (s: string, n: number) => (s.length >= n ? s : zeros(n - s.length) + s);
 
 function formatarData(d: Date | string): string | null {
@@ -169,8 +189,8 @@ export function gerarPS2(input: PS2Input): PS2Resultado {
       );
       return;
     }
-    const valor = Number(valorTxt.replace(',', '.'));
-    if (Number.isNaN(valor)) {
+    const valor = valorEmEscudos(valorTxt);
+    if (valor === null || Number.isNaN(valor)) {
       erros.push(`Erro na linha ${numLinha}: o montante não é um número.`);
       return;
     }
