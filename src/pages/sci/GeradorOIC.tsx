@@ -22,7 +22,7 @@ import {
   type LinhaOICComRef,
   type ResultadoOIC,
 } from '@/lib/oic';
-import { linhasDaFolha } from '@/lib/oicFolha';
+import { COLUNAS_JUNTA, lerFolhasOIC, type FolhaIgnorada, type FolhaUsada } from '@/lib/oicFolhas';
 
 const letraColuna = (i: number) => {
   let s = '';
@@ -50,14 +50,18 @@ export default function GeradorOIC() {
   const [excluidos, setExcluidos] = useState<Set<number>>(new Set());
   const [resultado, setResultado] = useState<ResultadoOIC | null>(null);
   const [confirmarReset, setConfirmarReset] = useState(false);
+  /** Folhas do ficheiro carregado: as usadas, as ignoradas, e se foram juntadas. */
+  const [folhas, setFolhas] = useState<{ usadas: FolhaUsada[]; ignoradas: FolhaIgnorada[]; junta: boolean } | null>(null);
   const inputFicheiro = useRef<HTMLInputElement>(null);
 
-  const carregar = (novas: unknown[][], nomeOrigem: string) => {
+  const carregar = (novas: unknown[][], nomeOrigem: string, fixas?: typeof COLUNAS_VAZIAS) => {
     setRows(novas);
     setOrigem(nomeOrigem);
     setExcluidos(new Set());
     setResultado(null);
-    if (novas.length > 0) {
+    if (fixas) {
+      setCols(fixas);
+    } else if (novas.length > 0) {
       const d = autodetectarColunasOIC(novas);
       setCols({
         colNib: d.colNib,
@@ -70,6 +74,7 @@ export default function GeradorOIC() {
 
   const aoColar = (valor: string) => {
     setTextoColado(valor);
+    setFolhas(null);
     carregar(valor.trim() === '' ? [] : paraMatriz(valor), 'texto colado');
   };
 
@@ -81,22 +86,22 @@ export default function GeradorOIC() {
       const buf = await f.arrayBuffer();
       // raw: números ficam números, para se detetar um NIB que o Excel guardou como número.
       const wb = XLSX.read(buf, { type: 'array', raw: true });
-      // Nas folhas de pagamento com várias abas, a do BCA é para o PS2: aqui só a "Interbancaria".
-      // As folhas ocultas nunca entram.
-      const visiveis = wb.SheetNames.filter((_, i) => !wb.Workbook?.Sheets?.[i]?.Hidden);
-      const nomeFolha =
-        visiveis.find((n) => /interbanc/i.test(n)) ?? (visiveis.length === 1 ? visiveis[0] : undefined);
-      if (!nomeFolha) {
-        toast.error('Não encontrei a aba "Interbancaria" neste ficheiro.');
+      // O nome das abas não conta: entram as abas (visíveis) com NIBs de outros bancos, e se
+      // houver várias (BAI, BCN, CECV…) juntam-se numa lista só.
+      const lidas = lerFolhasOIC(wb);
+      if (lidas.modo === 'nenhuma') {
+        setFolhas(null);
+        toast.error('Não encontrei NIBs de outros bancos neste ficheiro (nas folhas visíveis).');
         return;
       }
-      const linhas = linhasDaFolha(wb.Sheets[nomeFolha]);
-      if (linhas.length === 0) {
-        toast.error('A folha está vazia.');
-        return;
-      }
-      carregar(linhas, f.name);
-      toast.success(visiveis.length > 1 ? `${f.name}: aba "${nomeFolha}", ${linhas.length} linhas lidas` : `${f.name}: ${linhas.length} linhas lidas`);
+      setFolhas({ usadas: lidas.usadas, ignoradas: lidas.ignoradas, junta: lidas.modo === 'junta' });
+      if (lidas.modo === 'junta') carregar(lidas.rows, f.name, COLUNAS_JUNTA);
+      else carregar(lidas.rows, f.name);
+      toast.success(
+        lidas.modo === 'junta'
+          ? `${f.name}: ${lidas.usadas.length} folhas juntas (${lidas.rows.length} linhas)`
+          : `${f.name}: ${lidas.rows.length} linhas lidas`,
+      );
     } catch {
       toast.error('Não foi possível ler o ficheiro. Usa .xlsx, .xlsm, .xls ou .csv.');
     }
@@ -112,10 +117,10 @@ export default function GeradorOIC() {
         { nib: r[cols.colNib], montante: r[cols.colMontante], nome: r[cols.colNome], descritivo: '' },
         descritivo,
       );
-      if (!t.vazia) out.push({ ...t, ref: i + 1 });
+      if (!t.vazia) out.push({ ...t, ref: i + 1, rotulo: folhas?.junta ? `${String(r[3])} · linha ${String(r[4])}` : undefined });
     }
     return out;
-  }, [rows, cols, descritivo]);
+  }, [rows, cols, descritivo, folhas]);
 
   const ativas = useMemo(() => tratadas.filter((t) => !excluidos.has(t.ref)), [tratadas, excluidos]);
   const nErros = ativas.filter((t) => t.erro).length;
@@ -153,6 +158,7 @@ export default function GeradorOIC() {
 
   const limparTudo = () => {
     setTextoColado('');
+    setFolhas(null);
     setRows([]);
     setOrigem('');
     setCols(COLUNAS_VAZIAS);
@@ -233,7 +239,22 @@ export default function GeradorOIC() {
             className="min-h-[120px] font-mono text-xs"
           />
 
-          {rows.length > 0 && (
+          {folhas && (
+            <div className="rounded-md border bg-muted/40 p-3 text-sm space-y-1">
+              <p>
+                <strong>{folhas.junta ? 'Folhas juntas:' : 'Folha usada:'}</strong>{' '}
+                {folhas.usadas.map((u) => (folhas.junta ? `${u.folha} (${u.linhas})` : u.folha)).join(' · ')}
+              </p>
+              {folhas.ignoradas.length > 0 && (
+                <p className="text-muted-foreground">
+                  <strong>Ignoradas:</strong>{' '}
+                  {folhas.ignoradas.map((i) => `${i.folha} — ${i.motivo}`).join(' · ')}
+                </p>
+              )}
+            </div>
+          )}
+
+          {rows.length > 0 && !folhas?.junta && (
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
               {seletorColuna('NIB', 'colNib')}
               {seletorColuna('Montante', 'colMontante')}
@@ -308,7 +329,7 @@ export default function GeradorOIC() {
                     const excl = excluidos.has(t.ref);
                     return (
                       <tr key={t.ref} className={`border-t ${excl ? 'opacity-50' : ''}`}>
-                        <td className="p-2 tabular-nums">{t.ref}</td>
+                        <td className="p-2 tabular-nums whitespace-nowrap">{t.rotulo ?? t.ref}</td>
                         <td className="p-2">
                           {t.nome}
                           {t.nome.length > 27 && (
@@ -318,6 +339,11 @@ export default function GeradorOIC() {
                         <td className="p-2 font-mono text-xs">{t.nib ? nibEmGrupos(t.nib) : '—'}</td>
                         <td className="p-2 text-right tabular-nums">
                           {t.cents > 0 ? formatarCentimos(t.cents) : '—'}
+                          {t.arredondado && (
+                            <span className="ml-1 text-[10px] text-muted-foreground" title="Tinha casas decimais — arredondado a 0 casas (como o ARRED do Excel)">
+                              ≈
+                            </span>
+                          )}
                         </td>
                         <td className="p-2">{t.descritivo}</td>
                         <td className="p-2">
