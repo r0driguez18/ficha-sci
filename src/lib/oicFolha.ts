@@ -22,6 +22,7 @@ export function linhasDaFolha(ws: XLSX.WorkSheet): unknown[][] {
   }
   if (maxR < 0) return [];
 
-  ws['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: maxR, c: maxC } });
-  return XLSX.utils.sheet_to_json<unknown[]>(ws, { header: 1, blankrows: true, defval: '', raw: true });
+  // Cópia com o intervalo limitado: não se mexe na folha original (outros leitores usam-na).
+  const limitada: XLSX.WorkSheet = { ...ws, '!ref': XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: maxR, c: maxC } }) };
+  return XLSX.utils.sheet_to_json<unknown[]>(limitada, { header: 1, blankrows: true, defval: '', raw: true });
 }
