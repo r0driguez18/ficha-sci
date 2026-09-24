@@ -315,6 +315,10 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
       setLinhaInicial(det.linhaInicial);
       resetLinhas();
       toast.success(`${norm.length} linha(s) lidas — colunas detetadas.`);
+      const outras = visiveis.filter((n) => n !== nomeFolha);
+      if (outras.length > 0) {
+        toast.info(`Folha "${nomeFolha}" carregada. Não lidas: ${outras.join(', ')} (as de outros bancos são para o gerador OIC).`);
+      }
     } catch (e) {
       console.error(e);
       toast.error('Não foi possível ler o ficheiro.');
