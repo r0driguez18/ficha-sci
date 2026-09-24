@@ -16,6 +16,8 @@
  *  - limpa o que chega nas folhas (espaços, apóstrofos e símbolos nos NIBs,
  *    caracteres invisíveis nos nomes, separadores de milhares nos montantes);
  *  - nomes e descritivo saem sem acentos ("João" → "Joao"): a letra fica;
+ *  - o montante arredonda-se a escudos inteiros (0 casas, como o ARRED(célula; 0)
+ *    do Excel) — ver ARREDONDAR_A_ESCUDOS;
  *  - lista todos os erros de uma vez (a macro pára no primeiro);
  *  - os cêntimos saem certos: `Fix(valor * 100)` em vírgula flutuante perde 1
  *    cêntimo em ~5% dos montantes (0,29 dava 28). Continua a truncar casas a
@@ -30,6 +32,17 @@ export const TAMANHO_LINHA = 135;
 const TAM_NOME = 27;
 const TAM_DESC = 40;
 const MAX_INTEIRO = 99_999_999; // campo do valor inteiro: 8 caracteres
+
+/**
+ * Os montantes entram em escudos inteiros, arredondados a 0 casas como o
+ * ARRED(célula; 0) do Excel (0,5 sobe). Pôr a false volta a manter os cêntimos.
+ */
+export const ARREDONDAR_A_ESCUDOS = true;
+
+export function arredondarEscudos(v: number): number {
+  const pre = Math.round(Math.abs(v) * 1e6) / 1e6; // tira o ruído da vírgula flutuante
+  return Math.sign(v) * Math.round(pre);
+}
 
 // ---------------------------------------------------------------- ANSI (Windows-1252)
 
@@ -195,6 +208,8 @@ export interface LinhaTratadaOIC {
   descritivo: string;
   montante: number | null;
   cents: number;
+  /** O montante tinha casas decimais que o arredondamento a 0 fez desaparecer. */
+  arredondado: boolean;
   erro: string | null;
   /** Carateres que o ANSI não tem e que vão sair como "?". */
   substituidos: number;
@@ -227,6 +242,7 @@ export function tratarLinhaOIC(l: LinhaBrutaOIC, descritivoPadrao = ''): LinhaTr
     descritivo: desc.texto,
     montante,
     cents: 0,
+    arredondado: false,
     erro: null,
     substituidos: nome.substituidos + desc.substituidos,
   };
@@ -250,11 +266,14 @@ export function tratarLinhaOIC(l: LinhaBrutaOIC, descritivoPadrao = ''): LinhaTr
   if (Number.isNaN(montante) || !Number.isFinite(montante)) return { ...base, erro: 'Montante deve ser numérico.' };
   if (montante <= 0) return { ...base, erro: 'Montante deve ser maior que 0.' };
 
-  const cents = centimos(montante);
+  const valor = ARREDONDAR_A_ESCUDOS ? arredondarEscudos(montante) : montante;
+  if (valor <= 0) return { ...base, erro: 'Montante arredondado a 0 casas dá 0.' };
+  const arredondado = ARREDONDAR_A_ESCUDOS && Math.abs(montante - valor) > 1e-6;
+  const cents = centimos(valor);
   if (Math.trunc(cents / 100) > MAX_INTEIRO) {
     return { ...base, erro: 'Montante demasiado grande para o ficheiro (máximo 99 999 999).' };
   }
-  return { ...base, cents };
+  return { ...base, cents, arredondado };
 }
 
 /** Uma linha do ficheiro (135 caracteres), como a macro monta. */
@@ -270,6 +289,8 @@ export function formatarLinhaOIC(l: Pick<LinhaTratadaOIC, 'nib' | 'nome' | 'desc
 export interface LinhaOICComRef extends LinhaTratadaOIC {
   /** Nº da linha na folha (para as mensagens de erro). */
   ref: number;
+  /** Origem legível quando há várias folhas juntas ("BAI · linha 14"). */
+  rotulo?: string;
 }
 
 export interface ResultadoOIC {
@@ -290,7 +311,7 @@ export function gerarOIC(linhas: LinhaOICComRef[]): ResultadoOIC {
   for (const l of linhas) {
     if (l.vazia) continue;
     if (l.erro) {
-      erros.push(`Erro na linha ${l.ref}: ${l.erro}`);
+      erros.push(l.rotulo ? `Erro em ${l.rotulo}: ${l.erro}` : `Erro na linha ${l.ref}: ${l.erro}`);
       continue;
     }
     saida.push(formatarLinhaOIC(l));
@@ -338,7 +359,8 @@ export interface ColunasOIC {
 
 const texto = (v: unknown) => (typeof v === 'string' ? v.toLowerCase().trim() : '');
 
-const pareceNibCelula = (v: unknown) => (typeof v === 'number' ? Math.abs(v) >= 1e15 : limparNib(v).nib.length >= 15);
+/** A célula parece um NIB (15 ou mais dígitos, ou um número enorme do Excel)? */
+export const pareceNibCelula = (v: unknown) => (typeof v === 'number' ? Math.abs(v) >= 1e15 : limparNib(v).nib.length >= 15);
 
 const pareceMontanteCelula = (v: unknown) => {
   if (pareceNibCelula(v)) return false;

@@ -108,6 +108,8 @@ const SECCOES: Seccao[] = [
       'Os valores entram em escudos inteiros, arredondados a 0 casas como o ARRED(célula; 0) do Excel (19893,33 → 19893; 17331,5 → 17332). As linhas arredondadas levam um ≈ na coluna do valor.',
       'Folhas ocultas do Excel nunca são lidas. Referência do ordenante e descritivo vêm por omissão com "Ordenado". Nomes e descritivos saem sem acentos.',
       'Descarrega PS2_AAAAMMDD.txt.',
+      'Separador OIC — o nome das folhas não conta: entram as folhas visíveis com NIBs de outros bancos e, havendo várias (BAI, BCN, BIA, CECV…), juntam-se numa lista só, com a origem (folha · linha) em cada registo. Folhas só com contas/NIBs do BCA ou sem NIBs (ex.: RESUME) ficam de fora, com a razão indicada.',
+      'OIC — nomes e descritivo sem acentos; montantes arredondados a escudos inteiros (como o ARRED do Excel), com ≈ nas linhas arredondadas; o descritivo escreve-se uma vez para todas.',
     ],
   },
   {
