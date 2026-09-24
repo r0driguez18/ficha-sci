@@ -105,6 +105,8 @@ const SECCOES: Seccao[] = [
       'A natureza no fim do NIB é convertida pela tabela (1 → 10176, 2 → 10273, …). Contas de outros bancos ficam de fora do ficheiro.',
       'Linhas que não dão um NIB de 21 dígitos ficam "em alerta" para corrigir à mão — o contador "em alerta" filtra a pré-visualização a essas linhas. Pode excluir-se linhas (ex.: a linha "TOTAL GERAL").',
       'O nº de conta da empresa escreve-se com a natureza no fim; é sempre tratado automaticamente.',
+      'Os valores entram em escudos inteiros, arredondados a 0 casas como o ARRED(célula; 0) do Excel (19893,33 → 19893; 17331,5 → 17332). As linhas arredondadas levam um ≈ na coluna do valor.',
+      'Folhas ocultas do Excel nunca são lidas. Referência do ordenante e descritivo vêm por omissão com "Ordenado". Nomes e descritivos saem sem acentos.',
       'Descarrega PS2_AAAAMMDD.txt.',
     ],
   },

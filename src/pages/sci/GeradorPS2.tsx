@@ -21,7 +21,7 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { gerarPS2, nomeFicheiroPS2, TIPOS_OPERACAO, type PS2Resultado } from '@/lib/ps2';
+import { gerarPS2, nomeFicheiroPS2, valorEmEscudos, foiArredondado, TIPOS_OPERACAO, type PS2Resultado } from '@/lib/ps2';
 import { tratarNib, NATUREZA_PADRAO, type NibTratado, type ModoConta } from '@/lib/nibBca';
 
 const MODOS: { valor: ModoConta; label: string; hint: string }[] = [
@@ -55,17 +55,13 @@ const todayIso = () => {
 };
 
 /**
- * Valor do Excel → escudos inteiros (o PS2 e o VBA só usam a parte inteira).
- * Um `.` ou `,` com 1 ou 2 dígitos a seguir são decimais/cêntimos e caem;
- * os restantes separadores são milhares. Ex.: "6,860"→6860 · "108,800.00"→108800
- * · "1.234,5"→1234 (decimal com 1 dígito, não milhares).
+ * Valor do Excel → escudos inteiros, arredondado a 0 casas como o ARRED(célula; 0)
+ * do Excel (o PS2 só usa a parte inteira). Ex.: "6,860"→6860 · "108,800.00"→108800
+ * · "19893.333333333332"→19893 · "17331,5"→17332.
  */
 function limparValor(s: string): string {
-  let t = String(s ?? '').replace(/[^\d.,-]/g, '').trim();
-  if (!t) return '';
-  if (/[.,]\d{2}$/.test(t)) t = t.slice(0, -3); // cêntimos
-  else if (/[.,]\d$/.test(t)) t = t.slice(0, -2); // decimal com 1 dígito
-  return t.replace(/[.,]/g, '');
+  const v = valorEmEscudos(s);
+  return v === null || Number.isNaN(v) ? '' : String(v);
 }
 
 function parseColagem(txt: string): LinhaBruta[] {
@@ -148,8 +144,8 @@ function autodetectar(rows: string[][]) {
 }
 
 const fmtNum = (v: string) => {
-  const n = Math.trunc(Number(limparValor(v)));
-  return Number.isNaN(n) ? v : n.toLocaleString('pt-PT');
+  const n = valorEmEscudos(v);
+  return n === null || Number.isNaN(n) ? v : n.toLocaleString('pt-PT');
 };
 
 /** Raiz da página — dentro do separador de "Geradores" não leva PageContainer. */
@@ -160,8 +156,8 @@ function Raiz({ embedded, children }: { embedded: boolean; children: React.React
 export default function GeradorPS2({ embedded = false }: { embedded?: boolean } = {}) {
   const [contaEmpresa, setContaEmpresa] = useState('');
   const [data, setData] = useState(todayIso());
-  const [referencia, setReferencia] = useState('');
-  const [prefixo, setPrefixo] = useState('');
+  const [referencia, setReferencia] = useState('Ordenado');
+  const [prefixo, setPrefixo] = useState('Ordenado');
   const [tipo, setTipo] = useState<string>(TIPOS_OPERACAO[0]);
 
   const [modo, setModo] = useState<'colar' | 'ficheiro'>('colar');
@@ -193,8 +189,8 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
   const limparTudo = () => {
     setContaEmpresa('');
     setData(todayIso());
-    setReferencia('');
-    setPrefixo('');
+    setReferencia('Ordenado');
+    setPrefixo('Ordenado');
     setTipo(TIPOS_OPERACAO[0]);
     setModo('colar');
     setColagem('');
@@ -299,8 +295,14 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
       const buf = await file.arrayBuffer();
       const wb = XLSX.read(buf, { type: 'array' });
       // Folhas de pagamento com várias abas: a "Interbancaria" é para o gerador OIC; aqui a do BCA.
+      // As folhas ocultas nunca entram (o Excel guarda-as no ficheiro, mas ninguém as vê).
+      const visiveis = wb.SheetNames.filter((_, i) => !wb.Workbook?.Sheets?.[i]?.Hidden);
+      if (visiveis.length === 0) {
+        toast.error('O ficheiro não tem nenhuma folha visível.');
+        return;
+      }
       const nomeFolha =
-        wb.SheetNames.find((n) => /bca/i.test(n)) ?? wb.SheetNames.find((n) => !/interbanc/i.test(n)) ?? wb.SheetNames[0];
+        visiveis.find((n) => /bca/i.test(n)) ?? visiveis.find((n) => !/interbanc/i.test(n)) ?? visiveis[0];
       const ws = wb.Sheets[nomeFolha];
       const rows = XLSX.utils.sheet_to_json<string[]>(ws, { header: 1, blankrows: false, defval: '' });
       const norm = rows.map((r) => (Array.isArray(r) ? r.map((c) => (c ?? '').toString()) : []));
@@ -423,7 +425,7 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
               id="contaEmpresa"
               value={contaEmpresa}
               onChange={(e) => setContaEmpresa(e.target.value)}
-              placeholder="ex.: 9315589110002 (com a natureza no fim)"
+              placeholder="ex.: 1234567810002 (com a natureza no fim)"
               className="font-mono max-w-sm bg-background"
             />
             <div className="flex items-baseline gap-2 text-xs">
@@ -563,7 +565,7 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
                 setColagem(e.target.value);
                 resetLinhas();
               }}
-              placeholder={'NIB/conta [tab] valor [tab] nome\n000300006757980410176\t108800,00\tJOÃO SILVA\n67579804\t142500\tMARIA COSTA'}
+              placeholder={'NIB/conta [tab] valor [tab] nome\n000300001234567810176\t108800,00\tJOÃO SILVA\n87654321\t142500\tMARIA COSTA'}
               className="min-h-[150px] font-mono text-xs"
             />
           ) : (
@@ -732,7 +734,16 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
                             t.nibFinal || '—'
                           )}
                         </td>
-                        <td className="px-2 py-1.5 text-right tabular-nums">{fmtNum(t.valor)}</td>
+                        <td className="px-2 py-1.5 text-right tabular-nums">{fmtNum(t.valor)}
+                          {foiArredondado(t.valor) && (
+                            <span
+                              className="ml-1 text-[10px] text-muted-foreground"
+                              title={`Valor original: ${t.valor} — arredondado a 0 casas (como o ARRED do Excel)`}
+                            >
+                              ≈
+                            </span>
+                          )}
+                        </td>
                         <td className="px-2 py-1.5 text-xs text-muted-foreground">
                           {t.trat.naturezaRecebida && t.trat.naturezaRecebida !== t.trat.naturezaFinal
                             ? `${t.trat.naturezaRecebida} → ${t.trat.naturezaFinal}`
