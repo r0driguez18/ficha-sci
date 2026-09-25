@@ -173,6 +173,16 @@ download depois de o display de tapes estar anexado, quando aplicável.
 - `npm run build` - Compila o projeto para produção
 - `npm run preview` - Visualiza a build de produção localmente
 
+## Deploy para produção
+
+O servidor de produção é Ubuntu + nginx + Supabase em Docker, numa rede sem Internet: o build faz-se numa máquina que alcança o servidor e envia-se por SSH. Um só comando faz tudo (a partir da pasta do projeto, em PowerShell):
+
+```powershell
+.\production\deploy\deploy-sci.ps1
+```
+
+Faz `git pull` da `main`, build, confirma que o build aponta para o servidor (e não para `localhost:8000`), envia o `dist` e as migrações e corre no servidor o `aplicar-no-servidor.sh` (backup, migrações, publicar, recarregar o nginx, confirmar). Pede confirmação antes de mexer no servidor. `-SoVerificar` só faz o build e as verificações. Requisitos: `.env.production.local` na pasta (não vai para o git), utilizador de SSH `dis` no servidor e a lista `$MigracoesPendentes` do script revista antes de cada deploy. Os scripts antigos em `production/scripts/` são de outro setup e não se aplicam.
+
 ## Configuração de Base de Dados
 
 Para alterar a configuração da base de dados Supabase:

@@ -1,0 +1,2 @@
+# Scripts de shell têm de ter fins de linha do Linux mesmo quando o git corre no Windows
+*.sh text eol=lf
