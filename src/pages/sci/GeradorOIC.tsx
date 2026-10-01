@@ -23,6 +23,8 @@ import {
   type ResultadoOIC,
 } from '@/lib/oic';
 import { COLUNAS_JUNTA, lerFolhasOIC, type FolhaIgnorada, type FolhaUsada } from '@/lib/oicFolhas';
+import { guardarFicheiro } from '@/lib/guardarFicheiro';
+import { comExtensao, semExtensao } from '@/lib/nomeFicheiro';
 
 const letraColuna = (i: number) => {
   let s = '';
@@ -52,6 +54,8 @@ export default function GeradorOIC() {
   const [confirmarReset, setConfirmarReset] = useState(false);
   /** Folhas do ficheiro carregado: as usadas, as ignoradas, e se foram juntadas. */
   const [folhas, setFolhas] = useState<{ usadas: FolhaUsada[]; ignoradas: FolhaIgnorada[]; junta: boolean } | null>(null);
+  /** Nome do ficheiro a gravar, sem a extensão (a ".txt" é sempre acrescentada, nunca se edita). */
+  const [nomeBase, setNomeBase] = useState(() => semExtensao(nomeFicheiroOIC()));
   const inputFicheiro = useRef<HTMLInputElement>(null);
 
   const carregar = (novas: unknown[][], nomeOrigem: string, fixas?: typeof COLUNAS_VAZIAS) => {
@@ -144,16 +148,15 @@ export default function GeradorOIC() {
     else toast.success(`Ficheiro gerado: ${r.totalRegistos} registos`);
   };
 
-  const descarregar = () => {
+  const descarregar = async () => {
     if (!resultado || resultado.erros.length > 0) return;
     // ANSI (Windows-1252), como o ficheiro que a macro gera: cada carácter = 1 byte, linhas de 135.
     const blob = new Blob([codificarAnsi(resultado.conteudo)], { type: 'text/plain;charset=windows-1252' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = nomeFicheiroOIC();
-    a.click();
-    URL.revokeObjectURL(url);
+    await guardarFicheiro(blob, {
+      sugestaoNome: comExtensao(nomeBase, '.txt'),
+      extensao: '.txt',
+      descricaoTipo: 'Ficheiro OIC',
+    });
   };
 
   const limparTudo = () => {
@@ -163,6 +166,7 @@ export default function GeradorOIC() {
     setOrigem('');
     setCols(COLUNAS_VAZIAS);
     setDescritivo(DESCRITIVO_INICIAL);
+    setNomeBase(semExtensao(nomeFicheiroOIC()));
     setExcluidos(new Set());
     setResultado(null);
   };
@@ -417,9 +421,28 @@ export default function GeradorOIC() {
                 {resultado.substituidos} carácter(es) que o ANSI não tem (ex.: emojis) foram trocados por “?”.
               </p>
             )}
-            <Button onClick={descarregar}>
-              <FileDown className="h-4 w-4 mr-1" /> Descarregar {nomeFicheiroOIC()}
-            </Button>
+            <div className="flex flex-wrap items-end gap-2">
+              <div className="space-y-1">
+                <Label htmlFor="oic-nome-ficheiro" className="text-xs text-muted-foreground">
+                  Nome do ficheiro
+                </Label>
+                <div className="flex items-center gap-1">
+                  <Input
+                    id="oic-nome-ficheiro"
+                    value={nomeBase}
+                    onChange={(e) => setNomeBase(e.target.value)}
+                    className="w-56 font-mono text-xs"
+                  />
+                  <span className="text-xs text-muted-foreground">.txt</span>
+                </div>
+              </div>
+              <Button onClick={descarregar}>
+                <FileDown className="h-4 w-4 mr-1" /> Guardar ficheiro
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              A extensão é sempre .txt (não se muda). "Guardar ficheiro" abre o diálogo "Guardar como" do browser — escolhe a pasta aí.
+            </p>
             <pre className="overflow-x-auto rounded-md bg-muted p-3 text-xs leading-relaxed">{previewConteudo}</pre>
           </CardContent>
         </Card>
