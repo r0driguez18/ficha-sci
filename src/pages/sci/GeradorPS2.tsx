@@ -27,6 +27,7 @@ import { tratarNib, NATUREZA_PADRAO, type NibTratado, type ModoConta } from '@/l
 import { montanteComFator } from '@/lib/oic';
 import { adivinharFolhaDoMes } from '@/lib/planilhaMeses';
 import { guardarFicheiro } from '@/lib/guardarFicheiro';
+import { comExtensao, semExtensao } from '@/lib/nomeFicheiro';
 
 const MODOS: { valor: ModoConta; label: string; hint: string }[] = [
   {
@@ -183,7 +184,8 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
   const [linhaInicial, setLinhaInicial] = useState(1);
   /** Ficheiros em que o montante vem ×10 (ex.: 173850 = 17385,00). */
   const [dividirPor10, setDividirPor10] = useState(false);
-  const [nomeFicheiro, setNomeFicheiro] = useState(() => nomeFicheiroPS2());
+  /** Nome do ficheiro a gravar, sem a extensão (a ".txt" é sempre acrescentada, nunca se edita). */
+  const [nomeBase, setNomeBase] = useState(() => semExtensao(nomeFicheiroPS2()));
 
   const [verNatureza, setVerNatureza] = useState(false);
   const [overrides, setOverrides] = useState<Record<number, string>>({});
@@ -217,7 +219,7 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
     setColNome(2);
     setLinhaInicial(1);
     setDividirPor10(false);
-    setNomeFicheiro(nomeFicheiroPS2());
+    setNomeBase(semExtensao(nomeFicheiroPS2()));
     resetLinhas();
     toast.success('Dados limpos.');
   };
@@ -404,7 +406,7 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
     if (!resultado || resultado.erros.length > 0) return;
     const blob = new Blob([resultado.conteudo], { type: 'text/plain;charset=utf-8' });
     await guardarFicheiro(blob, {
-      sugestaoNome: nomeFicheiro.trim() || nomeFicheiroPS2(),
+      sugestaoNome: comExtensao(nomeBase, '.txt'),
       extensao: '.txt',
       descricaoTipo: 'Ficheiro PS2',
     });
@@ -861,12 +863,15 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
             <Label htmlFor="ps2-nome-ficheiro" className="text-xs text-muted-foreground">
               Nome do ficheiro
             </Label>
-            <Input
-              id="ps2-nome-ficheiro"
-              value={nomeFicheiro}
-              onChange={(e) => setNomeFicheiro(e.target.value)}
-              className="w-56 font-mono text-xs"
-            />
+            <div className="flex items-center gap-1">
+              <Input
+                id="ps2-nome-ficheiro"
+                value={nomeBase}
+                onChange={(e) => setNomeBase(e.target.value)}
+                className="w-48 font-mono text-xs"
+              />
+              <span className="text-xs text-muted-foreground">.txt</span>
+            </div>
           </div>
         )}
         <Button variant="outline" onClick={descarregar} disabled={!resultado || resultado.erros.length > 0}>
@@ -878,7 +883,7 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
       </div>
       {resultado && resultado.erros.length === 0 && (
         <p className="mt-1 text-xs text-muted-foreground">
-          "Guardar ficheiro" abre o diálogo "Guardar como" do browser — escolhe a pasta aí (ou muda o nome acima antes).
+          A extensão é sempre .txt (não se muda). "Guardar ficheiro" abre o diálogo "Guardar como" do browser — escolhe a pasta aí.
         </p>
       )}
 

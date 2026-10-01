@@ -108,10 +108,10 @@ const SECCOES: Seccao[] = [
       'Os valores entram em escudos inteiros, arredondados a 0 casas como o ARRED(célula; 0) do Excel (19893,33 → 19893; 17331,5 → 17332). As linhas arredondadas levam um ≈ na coluna do valor.',
       'Folhas ocultas do Excel nunca são lidas. Referência do ordenante e descritivo vêm por omissão com "Ordenado". Nomes e descritivos saem sem acentos.',
       'Ficheiros com um separador por mês (ex.: "Setembro 26"): tenta adivinhar o mês corrente, mas o seletor "Folha" deixa sempre trocar para a certa.',
-      '"Dividir o valor por 10" — para folhas em que a coluna vem multiplicada (ex.: 173850 = 17385,00 CVE).',
-      'Antes de gravar dá para mudar o nome do ficheiro; "Guardar ficheiro" abre o diálogo nativo do browser para escolher a pasta (lembra-se da última usada).',
+      '"Dividir o valor por 10" (só no PS2) — para folhas em que a coluna vem multiplicada (ex.: 173850 = 17385,00 CVE).',
+      'Antes de gravar dá para mudar o nome do ficheiro (a extensão .txt fica sempre fixa, não se edita); "Guardar ficheiro" abre o diálogo nativo do browser para escolher a pasta (lembra-se da última usada).',
       'Separador OIC — o nome das folhas não conta: entram as folhas visíveis com NIBs de outros bancos e, havendo várias (BAI, BCN, BIA, CECV…), juntam-se numa lista só, com a origem (folha · linha) em cada registo. Folhas só com contas/NIBs do BCA ou sem NIBs (ex.: RESUME) ficam de fora, com a razão indicada.',
-      'OIC — nomes e descritivo sem acentos; montantes arredondados a escudos inteiros (como o ARRED do Excel), com ≈ nas linhas arredondadas; o descritivo escreve-se uma vez para todas. Também tem "Dividir o montante por 10" e o nome do ficheiro editável antes de gravar.',
+      'OIC — nomes e descritivo sem acentos; montantes arredondados a escudos inteiros (como o ARRED do Excel), com ≈ nas linhas arredondadas; o descritivo escreve-se uma vez para todas. O nome do ficheiro também é editável antes de gravar (extensão fixa).',
     ],
   },
   {
