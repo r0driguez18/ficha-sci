@@ -2,10 +2,15 @@
 Serviço local — Fecho de inconsistências do CRC.
 
 Faz o que o script de terminal fazia, mas exposto por HTTP para a página
-"CRC" da aplicação SCI: abre o Chrome para o login manual, sincroniza os
-cookies e corre o ciclo de confirmação paginado, publicando o progresso.
+"CRC" da aplicação SCI, e corre o ciclo de confirmação paginado, publicando
+o progresso. O login no CRC pode ser de duas formas:
 
-Fluxo:
+  - Manual (omissão): abre o Chrome, o operador faz login à vista e escolhe
+    o código; os cookies sincronizam-se a partir desse browser.
+  - Automático (CRC_USERNAME + CRC_PASSWORD definidos): login por HTTP, sem
+    abrir nenhum browser — ver `_login_http`.
+
+Fluxo (manual):
     POST /runs                  -> abre só o Chrome, fica em "aguarda_login"
     (o operador faz login no CRC, escolhe o código e abre a pesquisa)
     POST /runs/{id}/login-feito -> recebe os params (com o código), sincroniza
@@ -14,6 +19,9 @@ Fluxo:
     POST /runs/{id}/parar       -> cancela a passagem (Chrome fica aberto)
     POST /runs/{id}/repetir     -> nova passagem (novo código, se quiser)
     POST /runs/{id}/terminar    -> fecha o Chrome
+
+Fluxo (automático): POST /runs já faz o login e arranca logo a 1ª passagem —
+não há "aguarda_login" nem é preciso chamar /login-feito. O resto é igual.
 
 Só existe uma sessão de cada vez (um operador, uma sessão do CRC).
 Cada passagem escreve logs/bcv_<codigo>_<ts>.log e, se houver IDs
@@ -26,6 +34,7 @@ from __future__ import annotations
 import json
 import math
 import os
+import re
 import threading
 import time
 import uuid
@@ -66,6 +75,12 @@ LOGIN_URL = f"{BASE}/CCR/Login/Login"
 LOG_DIR = os.getenv("CRC_LOG_DIR", "logs")
 PAUSA_PAGINA = float(os.getenv("CRC_PAUSA_PAGINA", "1"))
 
+# Login automático (sem Chrome): se as duas estiverem definidas, /runs faz o
+# login por HTTP sozinho em vez de abrir o Chrome para login manual. Vazias
+# (omissão) mantém o fluxo antigo, com login manual no Chrome.
+CRC_USERNAME = os.getenv("CRC_USERNAME", "")
+CRC_PASSWORD = os.getenv("CRC_PASSWORD", "")
+
 # Parâmetros da pesquisa que não mudam (mantidos do script). O código e o
 # estado da inconsistência vêm em cada execução (RunParams), para se poder
 # "mudar de código" sem editar nada.
@@ -87,6 +102,9 @@ _lock = threading.Lock()
 _cookie_lock = threading.Lock()
 _driver: Optional[webdriver.Chrome] = None
 _run: Optional[dict[str, Any]] = None  # execução atual (ou None)
+# Sessão HTTP autenticada quando o login é automático (CRC_USERNAME/PASSWORD
+# definidos) — substitui o Chrome; None enquanto se usar o login manual.
+_sessao_auto: Optional[requests.Session] = None
 
 
 class RunParams(BaseModel):
@@ -128,6 +146,47 @@ def _fechar_chrome() -> None:
         _driver = None
 
 
+# Campos escondidos de um formulário HTML (<input type="hidden" name=".."
+# value="..">) — é assim que se apanha o __RequestVerificationToken (e
+# qualquer outro campo de estado do formulário) sem precisar de um parser de
+# HTML à parte. Lê os atributos de cada <input> um a um, por isso não importa
+# a ordem em que type/name/value aparecem na tag.
+_INPUT_TAG = re.compile(r"<input\b[^>]*>", re.IGNORECASE)
+_ATTR = re.compile(r'([\w-]+)\s*=\s*["\']([^"\']*)["\']')
+
+
+def _campos_escondidos(html: str) -> dict[str, str]:
+    campos: dict[str, str] = {}
+    for tag_m in _INPUT_TAG.finditer(html):
+        attrs = {m.group(1).lower(): m.group(2) for m in _ATTR.finditer(tag_m.group(0))}
+        if attrs.get("type", "").lower() == "hidden" and "name" in attrs:
+            campos[attrs["name"]] = attrs.get("value", "")
+    return campos
+
+
+def _login_http(sessao: requests.Session) -> None:
+    """Login automático por HTTP, sem Chrome — usa CRC_USERNAME/CRC_PASSWORD.
+
+    Pede a página de login (GET) para apanhar o __RequestVerificationToken e
+    quaisquer outros campos escondidos do formulário, e submete-os junto com
+    as credenciais (POST), exatamente como o browser faria. Os cookies de
+    sessão ficam na própria `sessao` (requests.Session), para os pedidos de
+    pesquisa/confirmação a seguir.
+    """
+    pagina = sessao.get(LOGIN_URL, timeout=30, verify=False)
+    pagina.raise_for_status()
+    campos = _campos_escondidos(pagina.text)
+    campos["Email"] = CRC_USERNAME
+    campos["Password"] = CRC_PASSWORD
+    resp = sessao.post(LOGIN_URL, data=campos, timeout=30, verify=False, allow_redirects=True)
+    # Login aceite -> redireciona para fora da página de login. Credenciais
+    # rejeitadas (ou o formulário mudou) -> volta a mostrar o login.
+    if "/Login/Login" in resp.url:
+        raise RuntimeError(
+            "credenciais rejeitadas pelo CRC (ou a página de login mudou) — verifica CRC_USERNAME/CRC_PASSWORD"
+        )
+
+
 def _nova_sessao() -> requests.Session:
     s = requests.Session()
     s.headers.update(
@@ -149,6 +208,19 @@ def _sincronizar_cookies(sessao: requests.Session) -> None:
             sessao.cookies.set(cookie["name"], cookie["value"])
 
 
+def _renovar_sessao(sessao: requests.Session) -> None:
+    """Tenta renovar a sessão depois de um 401 — a partir do Chrome aberto
+    (login manual) ou repetindo o login automático (login por credenciais).
+    Qualquer falha aqui fica para a chamada seguinte dar 401 de novo."""
+    if _sessao_auto is not None:
+        try:
+            _login_http(sessao)
+        except Exception:  # noqa: BLE001
+            pass
+    else:
+        _sincronizar_cookies(sessao)
+
+
 def _buscar_pagina(sessao: requests.Session, page_num: int, rp: "RunParams") -> Optional[dict]:
     """Devolve os dados da página, ou `None` se o CRC não respondeu OK (200).
     Num 401 tenta uma vez renovar os cookies a partir do browser aberto."""
@@ -162,7 +234,7 @@ def _buscar_pagina(sessao: requests.Session, page_num: int, rp: "RunParams") -> 
     try:
         r = sessao.get(SEARCH_URL, params=params, timeout=30, verify=False)
         if r.status_code == 401:
-            _sincronizar_cookies(sessao)
+            _renovar_sessao(sessao)
             r = sessao.get(SEARCH_URL, params=params, timeout=30, verify=False)
         if r.status_code != 200:
             return None
@@ -177,7 +249,7 @@ def _confirmar(sessao: requests.Session, inconsistency_id: Any, motivo: str) -> 
     params = {"confirmationReason": motivo, "inconsistencyId": inconsistency_id}
     r = sessao.post(CONFIRM_URL, params=params, timeout=30, verify=False)
     if r.status_code == 401:
-        _sincronizar_cookies(sessao)
+        _renovar_sessao(sessao)
         r = sessao.post(CONFIRM_URL, params=params, timeout=30, verify=False)
     if r.status_code != 200:
         raise RuntimeError(f"HTTP {r.status_code}")
@@ -219,8 +291,9 @@ def _log(f: Optional[TextIO], msg: str, tipo: str = "INFO") -> None:
 
 def _worker(params: RunParams) -> None:
     """Corre uma passagem completa. NÃO fecha o Chrome no fim — a janela fica
-    aberta para o operador poder Repetir (mesmo código ou outro) ou Terminar."""
-    sessao = _nova_sessao()
+    aberta para o operador poder Repetir (mesmo código ou outro) ou Terminar.
+    Em login automático usa a sessão já autenticada (sem Chrome nenhum)."""
+    sessao = _sessao_auto if _sessao_auto is not None else _nova_sessao()
     processados = 0
     falhas = 0
     paginas_saltadas = 0
@@ -408,16 +481,31 @@ def health() -> dict[str, Any]:
 
 @app.post("/runs")
 def criar_run(params: RunParams) -> dict[str, Any]:
-    global _driver, _run
+    global _driver, _run, _sessao_auto
     with _lock:
         if _run is not None:
             raise HTTPException(
                 409, "Já existe uma sessão aberta. Use Repetir ou Terminar."
             )
-    try:
-        _driver = _abrir_chrome()
-    except Exception as exc:  # noqa: BLE001
-        raise HTTPException(500, f"Não foi possível abrir o Chrome: {exc}") from exc
+
+    auto = bool(CRC_USERNAME and CRC_PASSWORD)
+    if auto:
+        # Login automático (sem Chrome): autentica já aqui por HTTP, antes de
+        # criar a execução — se as credenciais estiverem erradas, falha logo,
+        # em vez de só se saber ao fim de arrancar o worker.
+        sessao = _nova_sessao()
+        try:
+            _login_http(sessao)
+        except Exception as exc:  # noqa: BLE001
+            raise HTTPException(401, f"Login automático falhou: {exc}") from exc
+        _sessao_auto = sessao
+        _driver = None
+    else:
+        _sessao_auto = None
+        try:
+            _driver = _abrir_chrome()
+        except Exception as exc:  # noqa: BLE001
+            raise HTTPException(500, f"Não foi possível abrir o Chrome: {exc}") from exc
 
     run = {
         "id": uuid.uuid4().hex,
@@ -438,6 +526,10 @@ def criar_run(params: RunParams) -> dict[str, Any]:
     }
     with _lock:
         _run = run
+    if auto:
+        # Já autenticado — não há login manual a aguardar, arranca já.
+        _arrancar_worker(params)
+        return _snapshot()
     return run
 
 
@@ -483,8 +575,8 @@ def repetir_run(run_id: str, params: RunParams) -> dict[str, Any]:
             raise HTTPException(404, "Execução não encontrada.")
         if _run["estado"] not in ("concluido", "parado", "erro"):
             raise HTTPException(409, f"Estado inválido: {_run['estado']}")
-        if _driver is None:
-            raise HTTPException(409, "A janela do Chrome já foi fechada. Inicie de novo.")
+        if _driver is None and _sessao_auto is None:
+            raise HTTPException(409, "A sessão já foi fechada. Inicie de novo.")
     _arrancar_worker(params)
     return _snapshot()
 
@@ -512,13 +604,14 @@ def parar_run(run_id: str) -> dict[str, Any]:
 
 @app.post("/runs/{run_id}/terminar")
 def terminar_run(run_id: str) -> dict[str, Any]:
-    """Fecha o Chrome e limpa a sessão."""
-    global _run
+    """Fecha o Chrome (ou a sessão automática) e limpa a execução."""
+    global _run, _sessao_auto
     with _lock:
         if _run is None or _run["id"] != run_id:
             raise HTTPException(404, "Execução não encontrada.")
         _run["cancelar"] = True
     _fechar_chrome()
+    _sessao_auto = None
     with _lock:
         _run = None
     return {"ok": True}
