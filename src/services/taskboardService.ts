@@ -129,6 +129,54 @@ export const loadTaskboardData = async (
 };
 
 /**
+ * Carrega o rascunho mais recente deste operador para este tipo de ficha —
+ * não necessariamente o de hoje.
+ *
+ * Usa-se ao abrir a app: se a última ficha ainda não foi exportada (ex.: o
+ * Turno 3 começou o fecho num posto às 23h e vai terminar noutro, já depois
+ * da meia-noite), é essa ficha que continua, onde quer que se abra a app —
+ * a app nunca decide sozinha que "hoje" é um dia novo só porque o relógio
+ * virou, enquanto houver uma ficha anterior por fechar. Exportar com
+ * sucesso apaga o rascunho (ver `resetData`), por isso uma ficha já fechada
+ * nunca aparece aqui a bloquear o dia seguinte.
+ */
+export const loadMostRecentTaskboardData = async (
+  userId: string,
+  formType: FormType
+): Promise<{ data: TaskboardData | null; error: any }> => {
+  try {
+    const { data, error } = await supabase
+      .from('taskboard_data')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('form_type', formType)
+      .order('date', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error fetching most recent taskboard data:', error);
+      return { data: null, error };
+    }
+
+    if (data) {
+      const typedData: TaskboardData = {
+        ...data,
+        form_type: data.form_type as FormType,
+        turn_data: data.turn_data as Record<string, any>,
+        tasks: data.tasks as Record<string, any>,
+        table_rows: data.table_rows as unknown as TaskTableRow[]
+      };
+      return { data: typedData, error: null };
+    }
+    return { data: null, error: null };
+  } catch (error) {
+    console.error('Error fetching most recent taskboard data:', error);
+    return { data: null, error };
+  }
+};
+
+/**
  * Delete taskboard data from Supabase
  */
 export const deleteTaskboardData = async (
@@ -265,8 +313,10 @@ export const useTaskboardSync = (
     if (!user) return null;
 
     try {
-      // Try to load from Supabase first
-      const { data, error } = await loadTaskboardData(user.id, formType, date);
+      // Vai buscar o rascunho mais recente (não necessariamente o de hoje):
+      // se ficou uma ficha por fechar de um dia anterior, é com essa que se
+      // continua, independentemente do computador onde a app é aberta.
+      const { data, error } = await loadMostRecentTaskboardData(user.id, formType);
 
       if (error) {
         throw error;
