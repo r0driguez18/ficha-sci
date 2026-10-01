@@ -70,9 +70,13 @@ export const saveTaskboardData = async (data: TaskboardData): Promise<{ data: an
       active_tab: data.active_tab || null
     };
 
+    // A ficha é partilhada pela equipa (não por operador): a identidade do
+    // registo é (form_type, date), não (user_id, form_type, date). Dois
+    // operadores diferentes a gravar no mesmo dia atualizam o MESMO registo
+    // — user_id fica só a indicar quem escreveu por último.
     const { data: upsertedData, error } = await supabase
       .from('taskboard_data')
-      .upsert(supabaseData, { onConflict: 'user_id,form_type,date' })
+      .upsert(supabaseData, { onConflict: 'form_type,date' })
       .select()
       .maybeSingle();
 
@@ -89,10 +93,10 @@ export const saveTaskboardData = async (data: TaskboardData): Promise<{ data: an
 };
 
 /**
- * Load taskboard data from Supabase
+ * Load taskboard data from Supabase — ficha de um dia específico, partilhada
+ * pela equipa (não filtra por operador: é a mesma ficha para quem entrar).
  */
 export const loadTaskboardData = async (
-  userId: string,
   formType: FormType,
   date: string
 ): Promise<{ data: TaskboardData | null; error: any }> => {
@@ -100,7 +104,6 @@ export const loadTaskboardData = async (
     const { data, error } = await supabase
       .from('taskboard_data')
       .select('*')
-      .eq('user_id', userId)
       .eq('form_type', formType)
       .eq('date', date)
       .maybeSingle();
@@ -129,10 +132,59 @@ export const loadTaskboardData = async (
 };
 
 /**
- * Delete taskboard data from Supabase
+ * Carrega o rascunho mais recente deste tipo de ficha — não necessariamente
+ * o de hoje, e não filtrado por operador: a ficha é da equipa, não de quem
+ * a abriu (quem entra de manhã tem de ver o que o turno anterior já
+ * preencheu, mesmo que tenha sido outra pessoa a entrar com a conta dela).
+ *
+ * Usa-se ao abrir a app: se a última ficha ainda não foi exportada (ex.: o
+ * Turno 3 começou o fecho num posto às 23h e vai terminar noutro, já depois
+ * da meia-noite, ou passa para outro operador a meio), é essa ficha que
+ * continua, onde quer que se abra a app — a app nunca decide sozinha que
+ * "hoje" é um dia novo só porque o relógio virou, enquanto houver uma ficha
+ * anterior por fechar. Exportar com sucesso apaga o rascunho (ver
+ * `resetData`), por isso uma ficha já fechada nunca aparece aqui a bloquear
+ * o dia seguinte.
+ */
+export const loadMostRecentTaskboardData = async (
+  formType: FormType
+): Promise<{ data: TaskboardData | null; error: any }> => {
+  try {
+    const { data, error } = await supabase
+      .from('taskboard_data')
+      .select('*')
+      .eq('form_type', formType)
+      .order('date', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error fetching most recent taskboard data:', error);
+      return { data: null, error };
+    }
+
+    if (data) {
+      const typedData: TaskboardData = {
+        ...data,
+        form_type: data.form_type as FormType,
+        turn_data: data.turn_data as Record<string, any>,
+        tasks: data.tasks as Record<string, any>,
+        table_rows: data.table_rows as unknown as TaskTableRow[]
+      };
+      return { data: typedData, error: null };
+    }
+    return { data: null, error: null };
+  } catch (error) {
+    console.error('Error fetching most recent taskboard data:', error);
+    return { data: null, error };
+  }
+};
+
+/**
+ * Delete taskboard data from Supabase — por (form_type, date), não por
+ * operador: a ficha é da equipa, pode ter sido escrita por outra pessoa.
  */
 export const deleteTaskboardData = async (
-  userId: string,
   formType: FormType,
   date: string
 ): Promise<{ success: boolean; error: any }> => {
@@ -140,7 +192,6 @@ export const deleteTaskboardData = async (
     const { error } = await supabase
       .from('taskboard_data')
       .delete()
-      .eq('user_id', userId)
       .eq('form_type', formType)
       .eq('date', date);
     
@@ -265,8 +316,11 @@ export const useTaskboardSync = (
     if (!user) return null;
 
     try {
-      // Try to load from Supabase first
-      const { data, error } = await loadTaskboardData(user.id, formType, date);
+      // Vai buscar o rascunho mais recente da EQUIPA (não necessariamente o
+      // de hoje, nem necessariamente escrito por este operador): se ficou
+      // uma ficha por fechar de um dia anterior, é com essa que se continua,
+      // independentemente de quem ou em que computador abre a app.
+      const { data, error } = await loadMostRecentTaskboardData(formType);
 
       if (error) {
         throw error;
@@ -317,7 +371,7 @@ export const useTaskboardSync = (
 
     try {
       // Clear data from Supabase
-      await deleteTaskboardData(user.id, formType, date);
+      await deleteTaskboardData(formType, date);
 
       // Clear data from localStorage
       localStorage.removeItem(`${localStoragePrefix}-date`);

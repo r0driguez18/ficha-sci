@@ -43,6 +43,7 @@ const SECCOES: Seccao[] = [
       'Uma aba por turno (1, 2, 3). O contador na aba e a barra mostram o progresso; "Próxima por marcar" salta para a primeira tarefa por fazer.',
       'Nenhuma tarefa é obrigatória — marca-se o que se fez.',
       'Grava sozinha enquanto se preenche (não há botão de "guardar" à parte) — o cabeçalho mostra "Guardado às HH:MM".',
+      'A ficha é da equipa, não de quem a abriu: quem entrar vê sempre a mesma, com o que os turnos anteriores já preencheram, em qualquer computador — enquanto não for exportada.',
       'Assinatura eletrónica com o PIN do operador (Configurações → PIN). Fica com o nome, a hora e um selo de integridade no PDF.',
       'Nos dias não úteis e no último dia do mês aparece o "Procedimento Verificação de Tapes". O display (PDF ou TXT) anexa-se depois — a ficha só pode ser descarregada depois de o display estar anexado.',
       '"Exportar e guardar" faz tudo num passo: valida, regista os processamentos da tabela na Estatística, gera o PDF (FD DD.MM.AA.pdf), arquiva a ficha no Histórico e avança a data para o dia seguinte.',
