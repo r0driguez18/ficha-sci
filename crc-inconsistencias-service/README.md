@@ -15,9 +15,14 @@ mesmo código de inconsistência ou outro — o código é um campo na página) 
 ## Requisitos
 
 - Python 3.10+
-- Google Chrome + `chromedriver` compatível
-  - por omissão procura em `C:\WebDriver\chromedriver-win64\chromedriver.exe`
-    e `C:\Program Files\Google\Chrome\Application\chrome.exe`
+- Google Chrome instalado (por omissão em
+  `C:\Program Files\Google\Chrome\Application\chrome.exe`)
+- `chromedriver` — por omissão **não é preciso instalar nem atualizar à mão**:
+  o Selenium (4.6+) resolve e guarda em cache sozinho a versão certa para o
+  Chrome instalado, da primeira vez que o serviço arranca depois de cada
+  atualização do Chrome (precisa de internet nessa máquina nesse momento).
+  Numa máquina sem internet, define `CRC_CHROMEDRIVER` com um caminho fixo
+  (ver tabela de configuração) e atualiza-o à mão quando o Chrome mudar.
 
 ## Correr em desenvolvimento
 
@@ -49,7 +54,7 @@ operador; basta fazer duplo-clique (mantém a janela aberta).
 | `CRC_SERVICE_PORT` | `8765` | Porta local |
 | `CRC_ALLOW_ORIGINS` | `http://localhost:8080,http://localhost:5173,http://localhost:4173` | Origens da SCI autorizadas (CORS). **Acrescentar aqui o endereço de produção da SCI.** |
 | `CRC_BASE` | `https://bcvnet/CRCFRONTOFFICE` | Base do CRC |
-| `CRC_CHROMEDRIVER` | `C:\WebDriver\chromedriver-win64\chromedriver.exe` | Caminho do chromedriver |
+| `CRC_CHROMEDRIVER` | *(vazio — Selenium escolhe sozinho)* | Opcional: fixa um chromedriver específico, só precisa numa máquina sem internet |
 | `CRC_CHROME` | `C:\Program Files\Google\Chrome\Application\chrome.exe` | Caminho do Chrome |
 | `CRC_INCONSISTENCY_CODE` | `51269` | Valor **por omissão** do código (editável na página a cada passagem) |
 | `CRC_INCONSISTENCY_STATE` | `225` | Valor **por omissão** do estado (editável na página) |

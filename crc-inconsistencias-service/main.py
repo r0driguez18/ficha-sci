@@ -46,7 +46,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # ---------------------------------------------------------------- configuração
-CAMINHO_DRIVER = os.getenv("CRC_CHROMEDRIVER", r"C:\WebDriver\chromedriver-win64\chromedriver.exe")
+CAMINHO_DRIVER = os.getenv("CRC_CHROMEDRIVER", "")
 CAMINHO_CHROME = os.getenv("CRC_CHROME", r"C:\Program Files\Google\Chrome\Application\chrome.exe")
 BASE = os.getenv("CRC_BASE", "https://bcvnet/CRCFRONTOFFICE").rstrip("/")
 PORT = int(os.getenv("CRC_SERVICE_PORT", "8765"))
@@ -106,7 +106,14 @@ def _abrir_chrome() -> webdriver.Chrome:
     options.add_argument("--disable-gpu")
     options.add_argument("--window-size=1920,1080")
     options.add_argument("--remote-allow-origins=*")
-    driver = webdriver.Chrome(service=Service(CAMINHO_DRIVER), options=options)
+    # Sem CRC_CHROMEDRIVER definido, o Selenium (4.6+ tem "Selenium Manager"
+    # embutido) resolve e guarda em cache sozinho o chromedriver certo para o
+    # Chrome que estiver instalado — nunca mais é preciso ir trocar o
+    # executável à mão sempre que o Chrome atualiza. Só é preciso internet
+    # nessa máquina para o download (uma vez por versão nova do Chrome); numa
+    # máquina sem internet, define CRC_CHROMEDRIVER com um caminho fixo.
+    service = Service(CAMINHO_DRIVER) if CAMINHO_DRIVER else Service()
+    driver = webdriver.Chrome(service=service, options=options)
     driver.get(LOGIN_URL)
     return driver
 
