@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { PageContainer } from '@/components/layout/PageContainer';
 import {
@@ -23,6 +24,9 @@ import {
 import { toast } from 'sonner';
 import { gerarPS2, nomeFicheiroPS2, valorEmEscudos, foiArredondado, TIPOS_OPERACAO, type PS2Resultado } from '@/lib/ps2';
 import { tratarNib, NATUREZA_PADRAO, type NibTratado, type ModoConta } from '@/lib/nibBca';
+import { montanteComFator } from '@/lib/oic';
+import { adivinharFolhaDoMes } from '@/lib/planilhaMeses';
+import { guardarFicheiro } from '@/lib/guardarFicheiro';
 
 const MODOS: { valor: ModoConta; label: string; hint: string }[] = [
   {
@@ -47,6 +51,8 @@ interface LinhaTratada extends LinhaBruta {
   estado: NibTratado['estado'] | 'excluido';
   /** Alerta causado só pela falta de nome/prefixo (NIB em si está ok). */
   soDescritivo: boolean;
+  /** `valor`, já com o fator de divisão aplicado (ver "Dividir o valor por 10"). */
+  valorAjustado: string;
 }
 
 const todayIso = () => {
@@ -166,12 +172,18 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
   const [soAlertas, setSoAlertas] = useState(false);
 
   const fileRef = useRef<HTMLInputElement>(null);
+  const [workbook, setWorkbook] = useState<XLSX.WorkBook | null>(null);
+  const [folhasVisiveis, setFolhasVisiveis] = useState<string[]>([]);
+  const [folhaAtual, setFolhaAtual] = useState('');
   const [sheetRows, setSheetRows] = useState<string[][]>([]);
   const [nColunas, setNColunas] = useState(0);
   const [colConta, setColConta] = useState(0);
   const [colValor, setColValor] = useState(1);
   const [colNome, setColNome] = useState(2);
   const [linhaInicial, setLinhaInicial] = useState(1);
+  /** Ficheiros em que o montante vem ×10 (ex.: 173850 = 17385,00). */
+  const [dividirPor10, setDividirPor10] = useState(false);
+  const [nomeFicheiro, setNomeFicheiro] = useState(() => nomeFicheiroPS2());
 
   const [verNatureza, setVerNatureza] = useState(false);
   const [overrides, setOverrides] = useState<Record<number, string>>({});
@@ -195,12 +207,17 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
     setModo('colar');
     setColagem('');
     setModoConta('auto');
+    setWorkbook(null);
+    setFolhasVisiveis([]);
+    setFolhaAtual('');
     setSheetRows([]);
     setNColunas(0);
     setColConta(0);
     setColValor(1);
     setColNome(2);
     setLinhaInicial(1);
+    setDividirPor10(false);
+    setNomeFicheiro(nomeFicheiroPS2());
     resetLinhas();
     toast.success('Dados limpos.');
   };
@@ -236,13 +253,17 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
     [linhas],
   );
 
+  const fator = dividirPor10 ? 10 : 1;
+
   const tratadas: LinhaTratada[] = useMemo(
     () =>
       comDados.map((l) => {
         const trat = tratarNib(l.recebido, NATUREZA_PADRAO, modoConta);
         const semDescritivo = `${prefixo} ${l.nome}`.trim() === '';
+        const vAjustado = montanteComFator(l.valor, fator);
+        const valorAjustado = vAjustado === null || vAjustado === undefined ? l.valor : String(vAjustado);
         if (excluidos.has(l.idx)) {
-          return { ...l, trat, nibFinal: '', estado: 'excluido', soDescritivo: false };
+          return { ...l, trat, nibFinal: '', estado: 'excluido', soDescritivo: false, valorAjustado };
         }
         const ov = (overrides[l.idx] ?? '').replace(/\D/g, '');
         if (ov) {
@@ -254,6 +275,7 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
             nibFinal: ov,
             estado: nibOk && !semDescritivo ? 'ok' : 'alerta',
             soDescritivo: nibOk && semDescritivo,
+            valorAjustado,
           };
         }
         const nibOk = trat.estado === 'ok';
@@ -263,9 +285,10 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
           nibFinal: trat.nib,
           estado: nibOk && semDescritivo ? 'alerta' : trat.estado,
           soDescritivo: nibOk && semDescritivo,
+          valorAjustado,
         };
       }),
-    [comDados, overrides, excluidos, modoConta, prefixo],
+    [comDados, overrides, excluidos, modoConta, prefixo, fator],
   );
 
   // O nº de conta da empresa é sempre escrito à mão com a natureza no fim
@@ -290,11 +313,30 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
     return { ok, naoBca, alerta, excluidas };
   }, [tratadas]);
 
+  /** Lê uma folha do workbook já carregado (chamada ao abrir o ficheiro e ao trocar de folha no seletor). */
+  const carregarFolha = (wb: XLSX.WorkBook, nomeFolha: string) => {
+    const ws = wb.Sheets[nomeFolha];
+    const rows = XLSX.utils.sheet_to_json<string[]>(ws, { header: 1, blankrows: false, defval: '' });
+    const norm = rows.map((r) => (Array.isArray(r) ? r.map((c) => (c ?? '').toString()) : []));
+    setFolhaAtual(nomeFolha);
+    setSheetRows(norm);
+    setNColunas(norm.reduce((m, r) => Math.max(m, r.length), 0));
+    const det = autodetectar(norm);
+    setColConta(det.colConta);
+    setColValor(det.colValor);
+    setColNome(det.colNome);
+    setLinhaInicial(det.linhaInicial);
+    resetLinhas();
+    toast.success(`Folha "${nomeFolha}": ${norm.length} linha(s) lidas — colunas detetadas.`);
+  };
+
   const carregarFicheiro = async (file: File) => {
     try {
       const buf = await file.arrayBuffer();
       const wb = XLSX.read(buf, { type: 'array' });
       // Folhas de pagamento com várias abas: a "Interbancaria" é para o gerador OIC; aqui a do BCA.
+      // Também há folhas de pagamento com um separador por mês (ex.: "Setembro 26") — nesse caso
+      // tenta adivinhar o mês corrente, mas o seletor "Folha" em baixo deixa sempre trocar.
       // As folhas ocultas nunca entram (o Excel guarda-as no ficheiro, mas ninguém as vê).
       const visiveis = wb.SheetNames.filter((_, i) => !wb.Workbook?.Sheets?.[i]?.Hidden);
       if (visiveis.length === 0) {
@@ -302,22 +344,16 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
         return;
       }
       const nomeFolha =
-        visiveis.find((n) => /bca/i.test(n)) ?? visiveis.find((n) => !/interbanc/i.test(n)) ?? visiveis[0];
-      const ws = wb.Sheets[nomeFolha];
-      const rows = XLSX.utils.sheet_to_json<string[]>(ws, { header: 1, blankrows: false, defval: '' });
-      const norm = rows.map((r) => (Array.isArray(r) ? r.map((c) => (c ?? '').toString()) : []));
-      setSheetRows(norm);
-      setNColunas(norm.reduce((m, r) => Math.max(m, r.length), 0));
-      const det = autodetectar(norm);
-      setColConta(det.colConta);
-      setColValor(det.colValor);
-      setColNome(det.colNome);
-      setLinhaInicial(det.linhaInicial);
-      resetLinhas();
-      toast.success(`${norm.length} linha(s) lidas — colunas detetadas.`);
+        adivinharFolhaDoMes(visiveis) ??
+        visiveis.find((n) => /bca/i.test(n)) ??
+        visiveis.find((n) => !/interbanc/i.test(n)) ??
+        visiveis[0];
+      setWorkbook(wb);
+      setFolhasVisiveis(visiveis);
+      carregarFolha(wb, nomeFolha);
       const outras = visiveis.filter((n) => n !== nomeFolha);
       if (outras.length > 0) {
-        toast.info(`Folha "${nomeFolha}" carregada. Não lidas: ${outras.join(', ')} (as de outros bancos são para o gerador OIC).`);
+        toast.info(`Não lidas: ${outras.join(', ')}. Usa o seletor "Folha" se não for esta a certa.`);
       }
     } catch (e) {
       console.error(e);
@@ -355,7 +391,7 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
         .filter((t) => t.estado === 'ok')
         .map((t) => ({
           nib: t.nibFinal,
-          valor: limparValor(t.valor),
+          valor: limparValor(t.valorAjustado),
           descritivo: `${prefixo} ${t.nome}`.trim(),
         })),
     });
@@ -364,15 +400,14 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
     else toast.error(`${res.erros.length} erro(s) — corrige e gera de novo.`);
   };
 
-  const descarregar = () => {
+  const descarregar = async () => {
     if (!resultado || resultado.erros.length > 0) return;
     const blob = new Blob([resultado.conteudo], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = nomeFicheiroPS2();
-    a.click();
-    URL.revokeObjectURL(url);
+    await guardarFicheiro(blob, {
+      sugestaoNome: nomeFicheiro.trim() || nomeFicheiroPS2(),
+      extensao: '.txt',
+      descricaoTipo: 'Ficheiro PS2',
+    });
   };
 
   const previewFonte = soAlertas ? tratadas.filter((t) => t.estado === 'alerta') : tratadas;
@@ -550,6 +585,20 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
             </div>
           </div>
 
+          <div className="flex items-start gap-2">
+            <Checkbox
+              id="ps2-fator10"
+              checked={dividirPor10}
+              onCheckedChange={(c) => setDividirPor10(!!c)}
+            />
+            <Label htmlFor="ps2-fator10" className="cursor-pointer font-normal text-sm">
+              Dividir o valor por 10
+              <span className="block text-xs text-muted-foreground">
+                Para ficheiros em que a coluna vem multiplicada (ex.: 173850 na folha = 17385,00 CVE).
+              </span>
+            </Label>
+          </div>
+
           <input
             ref={fileRef}
             type="file"
@@ -574,6 +623,26 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
             />
           ) : (
             <div className="space-y-4">
+              {folhasVisiveis.length > 1 && (
+                <div className="max-w-xs space-y-1">
+                  <Label className="text-xs">Folha</Label>
+                  <Select
+                    value={folhaAtual}
+                    onValueChange={(v) => workbook && carregarFolha(workbook, v)}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {folhasVisiveis.map((n) => (
+                        <SelectItem key={n} value={n}>{n}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[11px] text-muted-foreground">
+                    O ficheiro tem {folhasVisiveis.length} folhas — confirma que é esta.
+                  </p>
+                </div>
+              )}
+
               {sheetRows.length > 0 && (
                 <div className="space-y-3">
                   <div className="overflow-x-auto rounded-md border">
@@ -738,11 +807,11 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
                             t.nibFinal || '—'
                           )}
                         </td>
-                        <td className="px-2 py-1.5 text-right tabular-nums">{fmtNum(t.valor)}
-                          {foiArredondado(t.valor) && (
+                        <td className="px-2 py-1.5 text-right tabular-nums">{fmtNum(t.valorAjustado)}
+                          {foiArredondado(t.valorAjustado) && (
                             <span
                               className="ml-1 text-[10px] text-muted-foreground"
-                              title={`Valor original: ${t.valor} — arredondado a 0 casas (como o ARRED do Excel)`}
+                              title={`Valor na folha: ${t.valor}${dividirPor10 ? ' (÷10)' : ''} — arredondado a 0 casas (como o ARRED do Excel)`}
                             >
                               ≈
                             </span>
@@ -783,17 +852,35 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
         </CardContent>
       </Card>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-end gap-2">
         <Button onClick={gerar} disabled={contagem.ok === 0 || contagem.alerta > 0 || contagem.naoBca > 0}>
           Gerar ficheiro PS2
         </Button>
+        {resultado && resultado.erros.length === 0 && (
+          <div className="space-y-1">
+            <Label htmlFor="ps2-nome-ficheiro" className="text-xs text-muted-foreground">
+              Nome do ficheiro
+            </Label>
+            <Input
+              id="ps2-nome-ficheiro"
+              value={nomeFicheiro}
+              onChange={(e) => setNomeFicheiro(e.target.value)}
+              className="w-56 font-mono text-xs"
+            />
+          </div>
+        )}
         <Button variant="outline" onClick={descarregar} disabled={!resultado || resultado.erros.length > 0}>
-          <FileDown className="h-4 w-4 mr-1" /> Descarregar {nomeFicheiroPS2()}
+          <FileDown className="h-4 w-4 mr-1" /> Guardar ficheiro
         </Button>
         <Button variant="ghost" onClick={recomecar} className="ml-auto text-muted-foreground">
           <Undo2 className="h-4 w-4 mr-1" /> Recomeçar
         </Button>
       </div>
+      {resultado && resultado.erros.length === 0 && (
+        <p className="mt-1 text-xs text-muted-foreground">
+          "Guardar ficheiro" abre o diálogo "Guardar como" do browser — escolhe a pasta aí (ou muda o nome acima antes).
+        </p>
+      )}
 
       {resultado && resultado.erros.length > 0 && (
         <Card className="mt-6 border-destructive/40">

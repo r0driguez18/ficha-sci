@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 import { FileDown, AlertTriangle, Upload, CheckCircle2, Trash2, Undo2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -16,6 +17,7 @@ import {
   codificarAnsi,
   formatarCentimos,
   gerarOIC,
+  montanteComFator,
   nibEmGrupos,
   nomeFicheiroOIC,
   tratarLinhaOIC,
@@ -23,6 +25,7 @@ import {
   type ResultadoOIC,
 } from '@/lib/oic';
 import { COLUNAS_JUNTA, lerFolhasOIC, type FolhaIgnorada, type FolhaUsada } from '@/lib/oicFolhas';
+import { guardarFicheiro } from '@/lib/guardarFicheiro';
 
 const letraColuna = (i: number) => {
   let s = '';
@@ -52,6 +55,9 @@ export default function GeradorOIC() {
   const [confirmarReset, setConfirmarReset] = useState(false);
   /** Folhas do ficheiro carregado: as usadas, as ignoradas, e se foram juntadas. */
   const [folhas, setFolhas] = useState<{ usadas: FolhaUsada[]; ignoradas: FolhaIgnorada[]; junta: boolean } | null>(null);
+  /** Ficheiros em que o montante vem ×10 (ex.: 173850 = 17385,00). */
+  const [dividirPor10, setDividirPor10] = useState(false);
+  const [nomeFicheiro, setNomeFicheiro] = useState(() => nomeFicheiroOIC());
   const inputFicheiro = useRef<HTMLInputElement>(null);
 
   const carregar = (novas: unknown[][], nomeOrigem: string, fixas?: typeof COLUNAS_VAZIAS) => {
@@ -109,18 +115,20 @@ export default function GeradorOIC() {
 
   const nColunas = useMemo(() => Math.max(4, cols.colNib + 1, cols.colMontante + 1, cols.colNome + 1, rows.reduce((m, r) => Math.max(m, r.length), 0)), [rows, cols]);
 
+  const fator = dividirPor10 ? 10 : 1;
+
   const tratadas = useMemo<LinhaOICComRef[]>(() => {
     const out: LinhaOICComRef[] = [];
     for (let i = Math.max(0, cols.linhaInicial - 1); i < rows.length; i++) {
       const r = rows[i] ?? [];
       const t = tratarLinhaOIC(
-        { nib: r[cols.colNib], montante: r[cols.colMontante], nome: r[cols.colNome], descritivo: '' },
+        { nib: r[cols.colNib], montante: montanteComFator(r[cols.colMontante], fator), nome: r[cols.colNome], descritivo: '' },
         descritivo,
       );
       if (!t.vazia) out.push({ ...t, ref: i + 1, rotulo: folhas?.junta ? `${String(r[3])} · linha ${String(r[4])}` : undefined });
     }
     return out;
-  }, [rows, cols, descritivo, folhas]);
+  }, [rows, cols, descritivo, folhas, fator]);
 
   const ativas = useMemo(() => tratadas.filter((t) => !excluidos.has(t.ref)), [tratadas, excluidos]);
   const nErros = ativas.filter((t) => t.erro).length;
@@ -144,16 +152,15 @@ export default function GeradorOIC() {
     else toast.success(`Ficheiro gerado: ${r.totalRegistos} registos`);
   };
 
-  const descarregar = () => {
+  const descarregar = async () => {
     if (!resultado || resultado.erros.length > 0) return;
     // ANSI (Windows-1252), como o ficheiro que a macro gera: cada carácter = 1 byte, linhas de 135.
     const blob = new Blob([codificarAnsi(resultado.conteudo)], { type: 'text/plain;charset=windows-1252' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = nomeFicheiroOIC();
-    a.click();
-    URL.revokeObjectURL(url);
+    await guardarFicheiro(blob, {
+      sugestaoNome: nomeFicheiro.trim() || nomeFicheiroOIC(),
+      extensao: '.txt',
+      descricaoTipo: 'Ficheiro OIC',
+    });
   };
 
   const limparTudo = () => {
@@ -163,6 +170,8 @@ export default function GeradorOIC() {
     setOrigem('');
     setCols(COLUNAS_VAZIAS);
     setDescritivo(DESCRITIVO_INICIAL);
+    setDividirPor10(false);
+    setNomeFicheiro(nomeFicheiroOIC());
     setExcluidos(new Set());
     setResultado(null);
   };
@@ -287,6 +296,23 @@ export default function GeradorOIC() {
               placeholder="Pagamento Ordenado"
             />
             <p className="text-xs text-muted-foreground">Escreve-se uma vez; vai em todas as linhas (máx. 40 caracteres).</p>
+          </div>
+
+          <div className="flex items-start gap-2">
+            <Checkbox
+              id="oic-fator10"
+              checked={dividirPor10}
+              onCheckedChange={(c) => {
+                setResultado(null);
+                setDividirPor10(!!c);
+              }}
+            />
+            <Label htmlFor="oic-fator10" className="cursor-pointer font-normal text-sm">
+              Dividir o montante por 10
+              <span className="block text-xs text-muted-foreground">
+                Para ficheiros em que a coluna vem multiplicada (ex.: 173850 na folha = 17385,00 CVE).
+              </span>
+            </Label>
           </div>
         </CardContent>
       </Card>
@@ -417,9 +443,25 @@ export default function GeradorOIC() {
                 {resultado.substituidos} carácter(es) que o ANSI não tem (ex.: emojis) foram trocados por “?”.
               </p>
             )}
-            <Button onClick={descarregar}>
-              <FileDown className="h-4 w-4 mr-1" /> Descarregar {nomeFicheiroOIC()}
-            </Button>
+            <div className="flex flex-wrap items-end gap-2">
+              <div className="space-y-1">
+                <Label htmlFor="oic-nome-ficheiro" className="text-xs text-muted-foreground">
+                  Nome do ficheiro
+                </Label>
+                <Input
+                  id="oic-nome-ficheiro"
+                  value={nomeFicheiro}
+                  onChange={(e) => setNomeFicheiro(e.target.value)}
+                  className="w-64 font-mono text-xs"
+                />
+              </div>
+              <Button onClick={descarregar}>
+                <FileDown className="h-4 w-4 mr-1" /> Guardar ficheiro
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Abre o diálogo "Guardar como" do browser — escolhe a pasta e o nome aí (ou edita-o acima antes).
+            </p>
             <pre className="overflow-x-auto rounded-md bg-muted p-3 text-xs leading-relaxed">{previewConteudo}</pre>
           </CardContent>
         </Card>

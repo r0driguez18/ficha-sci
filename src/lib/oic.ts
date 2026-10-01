@@ -191,6 +191,20 @@ export function centimos(valor: number): number {
   return Math.trunc(Math.round(valor * 1e6) / 1e4);
 }
 
+/**
+ * Para ficheiros em que a coluna do montante vem multiplicada (normalmente
+ * por 10, quando no Excel original a célula tinha ARRED(valor;0)*10 ou
+ * perdeu a vírgula): divide pelo fator antes de tudo o resto. `fator = 1`
+ * devolve a célula tal como veio (nem tenta interpretá-la), para um valor já
+ * inválido continuar a dar o erro original em vez de "NaN/10".
+ */
+export function montanteComFator(raw: unknown, fator: number): unknown {
+  if (fator === 1) return raw;
+  const v = parseMontante(raw);
+  if (v === null || Number.isNaN(v)) return raw;
+  return v / fator;
+}
+
 // ---------------------------------------------------------------- linhas
 
 export interface LinhaBrutaOIC {
