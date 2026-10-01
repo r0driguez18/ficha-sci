@@ -531,6 +531,14 @@ export function useTaskboard(formType: FormType) {
       setSignatureDataUrl(null);
       setSigningToken(null);
 
+      // Apaga o rascunho desta data (servidor + localStorage) agora que já está
+      // arquivada em exported_taskboards. Sem isto, o rascunho ficava para
+      // sempre em taskboard_data, e ao abrir a app depois da meia-noite
+      // noutro computador (ex.: o Turno 3 inicia o fecho num posto às 23h e
+      // termina noutro) o "rascunho mais recente" voltava a apontar sempre
+      // para esta ficha já fechada, em vez de deixar começar uma nova.
+      await resetData();
+
       const [ny, nm, nd] = date.split('-').map(Number);
       const next = new Date(ny, nm - 1, nd + 1);
       const nextIso = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-${String(next.getDate()).padStart(2, '0')}`;
