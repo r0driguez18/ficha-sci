@@ -17,7 +17,6 @@ import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 import FichaProcedimentos from "./pages/sci/FichaProcedimentos";
 import Procedimentos from "./pages/sci/Procedimentos";
-import CrcTratamento from "./pages/crc/Tratamento";
 import EasyVistaEstatisticas from "./pages/easyvista/Estatisticas";
 import Settings from "./pages/Settings";
 import Documentation from "./pages/Documentation";
@@ -56,14 +55,11 @@ const App = () => (
               <Route path="/sci/retornos-cobrancas" element={<PrivateRoute><DashboardLayout><RetornosCobrancas /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/passagem-turno" element={<PrivateRoute><DashboardLayout><PassagemTurno /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/geradores" element={<PrivateRoute><DashboardLayout><Geradores /></DashboardLayout></PrivateRoute>} />
+
               {/* Rota antiga do Gerador PS2 — agora é um separador da página "Geradores" */}
               <Route path="/sci/gerador-ps2" element={<Navigate to="/sci/geradores#ps2" replace />} />
               <Route path="/sci/renovacao-cartoes" element={<PrivateRoute><DashboardLayout><RenovacaoCartoes /></DashboardLayout></PrivateRoute>} />
 
-              {/* CRC Routes */}
-              <Route path="/crc" element={<Navigate to="/crc/tratamento" replace />} />
-              <Route path="/crc/tratamento" element={<PrivateRoute><DashboardLayout><CrcTratamento /></DashboardLayout></PrivateRoute>} />
-              
               {/* Processamentos Routes */}
               <Route path="/easyvista" element={<Navigate to="/easyvista/estatisticas" replace />} />
               <Route path="/easyvista/estatisticas" element={<PrivateRoute><DashboardLayout><EasyVistaEstatisticas /></DashboardLayout></PrivateRoute>} />

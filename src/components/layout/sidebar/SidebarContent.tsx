@@ -18,7 +18,6 @@ import {
   Undo2,
   ArrowRightLeft,
   Banknote,
-  ShieldCheck,
   BarChart3,
   Settings,
   BookOpen,
@@ -94,7 +93,6 @@ export const SidebarContent = () => {
     { label: 'Histórico de Fichas', path: '/sci/historico-fichas', group: 'SCI', keywords: ['histórico', 'fichas', 'guardadas', 'arquivo'] },
     { label: 'Retornos de Cobranças', path: '/sci/retornos-cobrancas', group: 'SCI', keywords: ['retornos', 'cobranças', 'ficheiros', 'sla'] },
     { label: 'Passagem de Turno', path: '/sci/passagem-turno', group: 'SCI', keywords: ['passagem', 'turno', 'notas', 'handover'] },
-    { label: 'CRC — Inconsistências', path: '/crc/tratamento', group: 'Ferramentas', keywords: ['inconsistências', 'fecho', 'validar', 'crc'] },
     { label: 'Geradores PS2 / OIC', path: '/sci/geradores', group: 'Ferramentas', keywords: ['geradores', 'ps2', 'oic', 'salários', 'pagamentos', 'ficheiro', 'banco', 'nib'] },
     { label: 'Renovação de Cartões', path: '/sci/renovacao-cartoes', group: 'Ferramentas', keywords: ['cartões', 'renovação', 'prn', 'balcão', 'lote'] },
     { label: 'Estatísticas', path: '/easyvista/estatisticas', group: 'Ferramentas', keywords: ['estatísticas', 'gráficos', 'processamentos', 'charts'] },
@@ -150,7 +148,6 @@ export const SidebarContent = () => {
         <SidebarGroupLabel>Ferramentas</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
-            <SidebarItem icon={ShieldCheck} label="CRC — Inconsistências" to="/crc/tratamento" />
             <SidebarItem icon={Banknote} label="Geradores PS2 / OIC" to="/sci/geradores" />
             <SidebarItem icon={CreditCard} label="Renovação de Cartões" to="/sci/renovacao-cartoes" />
             <SidebarItem icon={BarChart3} label="Estatísticas" to="/easyvista/estatisticas" />

@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 type Size = 'narrow' | 'default' | 'wide';
 
 const MAX_WIDTH: Record<Size, string> = {
-  /** Formulários de coluna única (ex.: CRC). */
+  /** Formulários de coluna única. */
   narrow: 'max-w-3xl',
   /** Formulários e listas normais (ex.: Gerador PS2, Passagem de Turno). */
   default: 'max-w-5xl',
