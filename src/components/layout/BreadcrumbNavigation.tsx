@@ -22,8 +22,6 @@ const routeLabels: Record<string, string> = {
   '/sci/passagem-turno': 'Passagem de Turno',
   '/sci/geradores': 'Geradores PS2 / OIC',
   '/sci/renovacao-cartoes': 'Renovação de Cartões',
-  '/crc': 'CRC',
-  '/crc/tratamento': 'Fecho de Inconsistências',
   '/easyvista': 'Processamentos',
   '/easyvista/estatisticas': 'Estatísticas',
   '/settings': 'Configurações',
