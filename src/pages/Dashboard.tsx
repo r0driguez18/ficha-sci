@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PageContainer } from '@/components/layout/PageContainer';
-import { ClipboardCheck, PieChart, ArrowRight, LayoutDashboard, CalendarClock, FileCheck2, Bell } from 'lucide-react';
+import { ClipboardCheck, PieChart, ArrowRight, CalendarClock, FileCheck2, Bell } from 'lucide-react';
 import { Link as RouterLink } from 'react-router-dom';
 import { DailyAlertsWidget } from '@/components/alerts/DailyAlertsWidget';
 import { useAlerts } from '@/hooks/useAlerts';
@@ -14,7 +14,6 @@ import { existeExportadaNaData } from '@/services/exportedTaskboardService';
 
 const MODULES = [
   { title: 'SCI', description: 'Sistema de Controlo Interno', icon: ClipboardCheck, path: '/sci/procedimentos' },
-  { title: 'CRC', description: 'Fecho de inconsistências', icon: LayoutDashboard, path: '/crc/tratamento' },
   { title: 'Processamentos', description: 'Estatísticas dos processamentos', icon: PieChart, path: '/easyvista/estatisticas' },
 ];
 

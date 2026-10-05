@@ -11,7 +11,6 @@ em turno noturno. Cobre:
 - Histórico de fichas e verificação de tapes / display
 - Retornos de cobranças, com prazo (SLA) em dias úteis
 - Passagem de turno (histórico de notas + confirmação de leitura por pessoa)
-- Fecho de inconsistências no CRC Front Office (via serviço local)
 - Gerador de ficheiro PS2 a partir da folha de salários
 - Estatísticas dos processamentos de ficheiros
 
@@ -91,7 +90,6 @@ O menu é plano, agrupado por:
   - Retornos de Cobranças (SLA em dias úteis; > 2 dias úteis de atraso = urgente)
   - Passagem de Turno (histórico de notas por turno; cada pessoa confirma a leitura de cada nota)
 - **Ferramentas**
-  - CRC — Inconsistências (fecho em massa via serviço local que abre o Chrome)
   - Geradores PS2 / OIC (um separador por gerador: PS2 — folha de salários → NIB → `PS2_AAAAMMDD.txt`; OIC — pagamentos interbancários → `Interbancario_AAAAMMDD.txt`, 135 caracteres/linha, ANSI)
   - Estatísticas (evolução mensal dos processamentos; exportar XLSX/PDF)
 - **Sistema**: Configurações, Documentação
@@ -115,7 +113,6 @@ Nota: os **Geradores PS2 / OIC** estão no grupo *Ferramentas* mas a rota é `/s
 │   ├── lib/                      # Utilidades e funções auxiliares
 │   ├── pages/                    # Páginas principais da aplicação
 │   │   ├── auth/                 # Páginas de autenticação
-│   │   ├── crc/                  # Páginas do módulo CRC
 │   │   ├── easyvista/            # Páginas de processamentos e estatísticas
 │   │   └── sci/                  # Páginas do Sistema de Controle Interno
 │   ├── routes/                   # Configurações de rotas
@@ -157,7 +154,6 @@ download depois de o display de tapes estar anexado, quando aplicável.
 
 ### Ferramentas de apoio
 - `node scripts/contrast-audit.mjs` — auditoria de contraste WCAG dos temas (ver `docs/contraste.md`).
-- `crc-inconsistencias-service/` — serviço local (Python/FastAPI) para o fecho de inconsistências no CRC.
 
 
 ## Boas Práticas de Desenvolvimento

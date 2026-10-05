@@ -9,7 +9,6 @@ import {
   Undo2,
   ArrowRightLeft,
   Banknote,
-  ShieldCheck,
   BarChart3,
   Settings,
   Search,
@@ -82,17 +81,6 @@ const SECCOES: Seccao[] = [
       'Separador Atual: as notas ativas. "Arquivar" (uma a uma, ou "Arquivar tudo" para limpar) tira-as da lista sem as perder.',
       'Separador Histórico: todas as notas, arquivadas incluídas, com filtros por data, turno e texto, paginado.',
       'As notas não se editam nem se apagam: para corrigir, deixa uma nova.',
-    ],
-  },
-  {
-    icon: ShieldCheck,
-    title: 'CRC — Inconsistências',
-    intro: 'Fecho em massa das inconsistências pendentes no CRC Front Office.',
-    points: [
-      'Corre através de um serviço local que abre o Chrome. Fluxo: Iniciar (abre o Chrome) → fazer login e escolher o código de inconsistência no CRC → "Já fiz login" arranca a passagem.',
-      'No fim o Chrome fica aberto: Repetir (mesmo código ou outro) ou Terminar.',
-      'Cada passagem fica registada no histórico com os processados, as falhas e um resumo. Só respostas 200 contam como sucesso.',
-      'Se uma página falhar a meio, salta-a e continua; se for a primeira, marca "erro".',
     ],
   },
   {
