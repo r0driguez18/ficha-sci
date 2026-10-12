@@ -20,6 +20,9 @@ import {
   Trash2,
   Undo2,
   ChevronDown,
+  Pencil,
+  Check,
+  X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { gerarPS2, nomeFicheiroPS2, valorEmEscudos, foiArredondado, TIPOS_OPERACAO, type PS2Resultado } from '@/lib/ps2';
@@ -104,7 +107,7 @@ function autodetectar(rows: string[][]) {
   }
   const heads = (header >= 0 ? rows[header] ?? [] : []).map((c) => String(c ?? '').toLowerCase());
   const acha = (...keys: string[]) => heads.findIndex((h) => keys.some((k) => h.includes(k)));
-  let cConta = acha('nib', 'iban', 'conta');
+  let cConta = acha('nib', 'conta');
   let cValor = acha('valor', 'montante', 'líquido', 'liquido', 'a pagar', 'total');
   let cNome = acha('nome', 'benefici', 'deputado', 'funcion', 'colaborad');
 
@@ -190,12 +193,18 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
   const [verNatureza, setVerNatureza] = useState(false);
   const [overrides, setOverrides] = useState<Record<number, string>>({});
   const [excluidos, setExcluidos] = useState<Set<number>>(new Set());
+  /** Linhas corrigidas à mão (só valem para este ficheiro gerado — o Excel de origem não muda). */
+  const [edicoes, setEdicoes] = useState<Record<number, { recebido: string; nome: string; valor: string }>>({});
+  const [editando, setEditando] = useState<number | null>(null);
+  const [rascunho, setRascunho] = useState({ recebido: '', nome: '', valor: '' });
   const [resultado, setResultado] = useState<PS2Resultado | null>(null);
   const [confirmarReset, setConfirmarReset] = useState(false);
 
   const resetLinhas = () => {
     setOverrides({});
     setExcluidos(new Set());
+    setEdicoes({});
+    setEditando(null);
     setResultado(null);
     setSoAlertas(false);
   };
@@ -259,11 +268,14 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
 
   const tratadas: LinhaTratada[] = useMemo(
     () =>
-      comDados.map((l) => {
+      comDados.map((l0) => {
+        const ed = edicoes[l0.idx];
+        const l = ed ? { ...l0, recebido: ed.recebido, nome: ed.nome, valor: ed.valor } : l0;
         const trat = tratarNib(l.recebido, NATUREZA_PADRAO, modoConta);
         const semDescritivo = `${prefixo} ${l.nome}`.trim() === '';
         const vAjustado = montanteComFator(l.valor, fator);
-        const valorAjustado = vAjustado === null || vAjustado === undefined ? l.valor : String(vAjustado);
+        // O valor editado já é o final (o que se vê na coluna "Valor"): não volta a dividir por 10.
+        const valorAjustado = ed ? ed.valor : vAjustado === null || vAjustado === undefined ? l.valor : String(vAjustado);
         if (excluidos.has(l.idx)) {
           return { ...l, trat, nibFinal: '', estado: 'excluido', soDescritivo: false, valorAjustado };
         }
@@ -290,7 +302,7 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
           valorAjustado,
         };
       }),
-    [comDados, overrides, excluidos, modoConta, prefixo, fator],
+    [comDados, overrides, excluidos, edicoes, modoConta, prefixo, fator],
   );
 
   // O nº de conta da empresa é sempre escrito à mão com a natureza no fim
@@ -370,6 +382,35 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
       else next.add(idx);
       return next;
     });
+
+  const abrirEdicao = (t: LinhaTratada) => {
+    setRascunho({ recebido: t.recebido, nome: t.nome, valor: String(t.valorAjustado ?? '') });
+    setEditando(t.idx);
+  };
+
+  const guardarEdicao = () => {
+    if (editando === null) return;
+    const idx = editando;
+    setResultado(null);
+    setEdicoes((p) => ({ ...p, [idx]: { ...rascunho } }));
+    // A conta editada substitui o NIB final que se tinha escrito à mão numa linha em alerta.
+    setOverrides((p) => {
+      const resto = { ...p };
+      delete resto[idx];
+      return resto;
+    });
+    setEditando(null);
+  };
+
+  const reporOriginal = (idx: number) => {
+    setResultado(null);
+    setEdicoes((p) => {
+      const resto = { ...p };
+      delete resto[idx];
+      return resto;
+    });
+    setEditando(null);
+  };
 
   const gerar = () => {
     if (contagem.naoBca > 0) {
@@ -742,6 +783,11 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
                   </button>
                 )}
                 {contagem.naoBca > 0 && <Badge variant="destructive">{contagem.naoBca} com NIB que não é do BCA — erro</Badge>}
+                {Object.keys(edicoes).length > 0 && (
+                  <Badge variant="outline" title="Corrigidas aqui; o Excel de origem não foi alterado">
+                    {Object.keys(edicoes).length} editadas
+                  </Badge>
+                )}
                 {contagem.excluidas > 0 && <Badge variant="outline">{contagem.excluidas} excluídas</Badge>}
               </div>
 
@@ -753,7 +799,7 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
                     <col className="w-[13.5rem]" />
                     <col className="w-24" />
                     <col className="w-28" />
-                    <col className="w-10" />
+                    <col className="w-28" />
                   </colgroup>
                   <thead className="sticky top-0 bg-background">
                     <tr className="border-b text-left text-xs text-muted-foreground">
@@ -766,7 +812,65 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
                     </tr>
                   </thead>
                   <tbody>
-                    {previewLinhas.map((t) => (
+                    {previewLinhas.map((t) => t.idx === editando ? (
+                      <tr key={t.idx} className="border-b bg-muted/40">
+                        <td className="px-2 py-1.5 text-muted-foreground">{t.idx + 1}</td>
+                        <td className="px-2 py-1.5">
+                          <Input
+                            autoFocus
+                            value={rascunho.nome}
+                            onChange={(e) => setRascunho((d) => ({ ...d, nome: e.target.value }))}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') guardarEdicao();
+                              if (e.key === 'Escape') setEditando(null);
+                            }}
+                            aria-label="Nome"
+                            className="h-7 text-xs"
+                          />
+                        </td>
+                        <td className="px-2 py-1.5">
+                          <Input
+                            value={rascunho.recebido}
+                            onChange={(e) => setRascunho((d) => ({ ...d, recebido: e.target.value }))}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') guardarEdicao();
+                              if (e.key === 'Escape') setEditando(null);
+                            }}
+                            aria-label="Conta ou NIB"
+                            placeholder="Conta ou NIB"
+                            inputMode="numeric"
+                            className="h-7 font-mono text-[11px]"
+                          />
+                        </td>
+                        <td className="px-2 py-1.5">
+                          <Input
+                            value={rascunho.valor}
+                            onChange={(e) => setRascunho((d) => ({ ...d, valor: e.target.value }))}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') guardarEdicao();
+                              if (e.key === 'Escape') setEditando(null);
+                            }}
+                            aria-label="Valor"
+                            inputMode="decimal"
+                            className="h-7 text-right text-xs tabular-nums"
+                          />
+                        </td>
+                        <td className="px-2 py-1.5 text-[10px] text-muted-foreground">Enter guarda · Esc cancela</td>
+                        <td className="px-2 py-1.5 whitespace-nowrap">
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={guardarEdicao} title="Guardar a correção">
+                            <Check className="h-4 w-4 text-green-600" />
+                          </Button>
+                          {t.idx in edicoes && (
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => reporOriginal(t.idx)} title="Repor o valor do ficheiro">
+                              <Undo2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditando(null)} title="Cancelar">
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </td>
+                      </tr>
+                    ) : (
                       <tr
                         key={t.idx}
                         className={`border-b last:border-0 ${
@@ -782,6 +886,11 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
                         <td className="px-2 py-1.5 text-muted-foreground">{t.idx + 1}</td>
                         <td className="px-2 py-1.5 truncate" title={t.nome}>
                           {t.nome || <span className="text-muted-foreground">(sem nome)</span>}
+                          {t.idx in edicoes && t.estado !== 'excluido' && (
+                            <span className="ml-1 text-[10px] text-primary" title="Corrigida aqui; o Excel de origem não foi alterado">
+                              editada
+                            </span>
+                          )}
                         </td>
                         <td className="px-2 py-1.5 font-mono text-[11px]">
                           {t.estado === 'nao-bca' ? (
@@ -824,7 +933,18 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
                             ? `${t.trat.naturezaRecebida} → ${t.trat.naturezaFinal}`
                             : '—'}
                         </td>
-                        <td className="px-2 py-1.5">
+                        <td className="px-2 py-1.5 whitespace-nowrap">
+                          {t.estado !== 'excluido' && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => abrirEdicao(t)}
+                              title={t.idx in edicoes ? 'Editada — editar de novo' : 'Corrigir nome, conta/NIB ou valor'}
+                            >
+                              <Pencil className={`h-4 w-4 ${t.idx in edicoes ? 'text-primary' : ''}`} />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="icon"

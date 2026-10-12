@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-import { FileDown, AlertTriangle, Upload, CheckCircle2, Trash2, Undo2 } from 'lucide-react';
+import { FileDown, AlertTriangle, Upload, CheckCircle2, Trash2, Undo2, Pencil, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   TAMANHO_LINHA,
@@ -40,6 +40,13 @@ function paraMatriz(texto: string): unknown[][] {
   return linhas.map((l) => l.split(sep));
 }
 
+/** Correção feita à mão numa linha (só vale para este ficheiro gerado — o Excel de origem não muda). */
+interface EdicaoLinha {
+  nib: string;
+  nome: string;
+  montante: string;
+}
+
 const COLUNAS_VAZIAS = { colNib: 0, colMontante: 1, colNome: 2, linhaInicial: 1 };
 const DESCRITIVO_INICIAL = 'Pagamento Ordenado';
 
@@ -50,6 +57,10 @@ export default function GeradorOIC() {
   const [cols, setCols] = useState(COLUNAS_VAZIAS);
   const [descritivo, setDescritivo] = useState(DESCRITIVO_INICIAL);
   const [excluidos, setExcluidos] = useState<Set<number>>(new Set());
+  /** Linhas corrigidas à mão, por nº de linha da folha. */
+  const [edicoes, setEdicoes] = useState<Record<number, EdicaoLinha>>({});
+  const [editando, setEditando] = useState<number | null>(null);
+  const [rascunho, setRascunho] = useState<EdicaoLinha>({ nib: '', nome: '', montante: '' });
   const [resultado, setResultado] = useState<ResultadoOIC | null>(null);
   const [confirmarReset, setConfirmarReset] = useState(false);
   /** Folhas do ficheiro carregado: as usadas, as ignoradas, e se foram juntadas. */
@@ -62,6 +73,8 @@ export default function GeradorOIC() {
     setRows(novas);
     setOrigem(nomeOrigem);
     setExcluidos(new Set());
+    setEdicoes({});
+    setEditando(null);
     setResultado(null);
     if (fixas) {
       setCols(fixas);
@@ -117,19 +130,59 @@ export default function GeradorOIC() {
     const out: LinhaOICComRef[] = [];
     for (let i = Math.max(0, cols.linhaInicial - 1); i < rows.length; i++) {
       const r = rows[i] ?? [];
+      const ed = edicoes[i + 1];
       const t = tratarLinhaOIC(
-        { nib: r[cols.colNib], montante: r[cols.colMontante], nome: r[cols.colNome], descritivo: '' },
+        {
+          nib: ed ? ed.nib : r[cols.colNib],
+          montante: ed ? ed.montante : r[cols.colMontante],
+          nome: ed ? ed.nome : r[cols.colNome],
+          descritivo: '',
+        },
         descritivo,
       );
       if (!t.vazia) out.push({ ...t, ref: i + 1, rotulo: folhas?.junta ? `${String(r[3])} · linha ${String(r[4])}` : undefined });
     }
     return out;
-  }, [rows, cols, descritivo, folhas]);
+  }, [rows, cols, descritivo, folhas, edicoes]);
 
   const ativas = useMemo(() => tratadas.filter((t) => !excluidos.has(t.ref)), [tratadas, excluidos]);
   const nErros = ativas.filter((t) => t.erro).length;
-  const nProntas = ativas.length - nErros;
-  const totalPronto = ativas.reduce((s, t) => s + (t.erro ? 0 : t.cents), 0);
+  // NIBs do BCA (0003…) ficam fora do ficheiro: não são erro nem contam para o total.
+  const nBca = ativas.filter((t) => t.foraDoFicheiro).length;
+  const nProntas = ativas.length - nErros - nBca;
+  const totalPronto = ativas.reduce((s, t) => s + (t.erro || t.foraDoFicheiro ? 0 : t.cents), 0);
+
+  const celulaTexto = (v: unknown) => (v === null || v === undefined ? '' : String(v));
+
+  const abrirEdicao = (ref: number) => {
+    const r = rows[ref - 1] ?? [];
+    setRascunho(
+      edicoes[ref] ?? {
+        nib: celulaTexto(r[cols.colNib]),
+        nome: celulaTexto(r[cols.colNome]),
+        montante: celulaTexto(r[cols.colMontante]),
+      },
+    );
+    setEditando(ref);
+  };
+
+  const guardarEdicao = () => {
+    if (editando === null) return;
+    const ref = editando;
+    setResultado(null);
+    setEdicoes((p) => ({ ...p, [ref]: { ...rascunho } }));
+    setEditando(null);
+  };
+
+  const reporOriginal = (ref: number) => {
+    setResultado(null);
+    setEdicoes((p) => {
+      const resto = { ...p };
+      delete resto[ref];
+      return resto;
+    });
+    setEditando(null);
+  };
 
   const alternarExcluida = (ref: number) => {
     setResultado(null);
@@ -168,6 +221,8 @@ export default function GeradorOIC() {
     setDescritivo(DESCRITIVO_INICIAL);
     setNomeBase(semExtensao(nomeFicheiroOIC()));
     setExcluidos(new Set());
+    setEdicoes({});
+    setEditando(null);
     setResultado(null);
   };
 
@@ -309,6 +364,16 @@ export default function GeradorOIC() {
                     <AlertTriangle className="h-3 w-3 mr-1" /> {nErros} com erro
                   </Badge>
                 )}
+                {nBca > 0 && (
+                  <Badge variant="outline" title="NIBs do BCA (0003…) não vão no ficheiro OIC — usa o gerador PS2">
+                    {nBca} do BCA fora do ficheiro
+                  </Badge>
+                )}
+                {Object.keys(edicoes).length > 0 && (
+                  <Badge variant="outline" title="Corrigidas aqui; o Excel de origem não foi alterado">
+                    {Object.keys(edicoes).length} editadas
+                  </Badge>
+                )}
                 {excluidos.size > 0 && <Badge variant="outline">{excluidos.size} excluídas</Badge>}
                 <span className="text-sm">Total: {formatarCentimos(totalPronto)} CVE</span>
               </span>
@@ -331,6 +396,70 @@ export default function GeradorOIC() {
                 <tbody>
                   {tratadas.map((t) => {
                     const excl = excluidos.has(t.ref);
+                    const emEdicao = editando === t.ref;
+                    const editada = t.ref in edicoes;
+                    if (emEdicao) {
+                      const aoTecla = (e: React.KeyboardEvent) => {
+                        if (e.key === 'Enter') guardarEdicao();
+                        if (e.key === 'Escape') setEditando(null);
+                      };
+                      return (
+                        <tr key={t.ref} className="border-t bg-muted/40">
+                          <td className="p-2 tabular-nums whitespace-nowrap">{t.rotulo ?? t.ref}</td>
+                          <td className="p-2">
+                            <Input
+                              autoFocus
+                              value={rascunho.nome}
+                              onChange={(e) => setRascunho((d) => ({ ...d, nome: e.target.value }))}
+                              onKeyDown={aoTecla}
+                              aria-label="Nome"
+                              className="h-8"
+                            />
+                          </td>
+                          <td className="p-2">
+                            <Input
+                              value={rascunho.nib}
+                              onChange={(e) => setRascunho((d) => ({ ...d, nib: e.target.value }))}
+                              onKeyDown={aoTecla}
+                              aria-label="NIB"
+                              inputMode="numeric"
+                              className="h-8 font-mono text-xs"
+                            />
+                          </td>
+                          <td className="p-2">
+                            <Input
+                              value={rascunho.montante}
+                              onChange={(e) => setRascunho((d) => ({ ...d, montante: e.target.value }))}
+                              onKeyDown={aoTecla}
+                              aria-label="Montante"
+                              inputMode="decimal"
+                              className="h-8 text-right tabular-nums"
+                            />
+                          </td>
+                          <td className="p-2 text-xs text-muted-foreground" />
+                          <td className="p-2 text-xs text-muted-foreground">Enter guarda · Esc cancela</td>
+                          <td className="p-2 text-right whitespace-nowrap">
+                            <Button variant="ghost" size="icon" aria-label="Guardar a correção" onClick={guardarEdicao}>
+                              <Check className="h-4 w-4 text-green-600" />
+                            </Button>
+                            {editada && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                aria-label="Repor o valor do ficheiro"
+                                title="Repor o valor do ficheiro"
+                                onClick={() => reporOriginal(t.ref)}
+                              >
+                                <Undo2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                            <Button variant="ghost" size="icon" aria-label="Cancelar" onClick={() => setEditando(null)}>
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </td>
+                        </tr>
+                      );
+                    }
                     return (
                       <tr key={t.ref} className={`border-t ${excl ? 'opacity-50' : ''}`}>
                         <td className="p-2 tabular-nums whitespace-nowrap">{t.rotulo ?? t.ref}</td>
@@ -355,11 +484,29 @@ export default function GeradorOIC() {
                             <span className="text-muted-foreground">excluída</span>
                           ) : t.erro ? (
                             <span className="text-destructive">{t.erro}</span>
+                          ) : t.foraDoFicheiro ? (
+                            <span className="text-muted-foreground">BCA — fora do ficheiro (vai pelo PS2)</span>
                           ) : (
                             <span className="text-green-600">ok</span>
                           )}
+                          {editada && !excl && (
+                            <span className="ml-2 text-xs text-primary" title="Corrigida aqui; o Excel de origem não foi alterado">
+                              editada
+                            </span>
+                          )}
                         </td>
-                        <td className="p-2 text-right">
+                        <td className="p-2 text-right whitespace-nowrap">
+                          {!excl && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label="Editar a linha"
+                              title={editada ? 'Editada — editar de novo' : 'Corrigir nome, NIB ou montante'}
+                              onClick={() => abrirEdicao(t.ref)}
+                            >
+                              <Pencil className={`h-4 w-4 ${editada ? 'text-primary' : ''}`} />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="icon"
