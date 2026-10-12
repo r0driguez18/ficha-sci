@@ -225,6 +225,11 @@ export interface LinhaTratadaOIC {
   /** O montante tinha casas decimais que o arredondamento a 0 fez desaparecer. */
   arredondado: boolean;
   erro: string | null;
+  /**
+   * NIB do BCA (0003…): não é um pagamento interbancário, fica fora do ficheiro
+   * sem ser um erro (as folhas misturam BCA com outros bancos; os do BCA vão pelo PS2).
+   */
+  foraDoFicheiro: boolean;
   /** Carateres que o ANSI não tem e que vão sair como "?". */
   substituidos: number;
 }
@@ -258,6 +263,7 @@ export function tratarLinhaOIC(l: LinhaBrutaOIC, descritivoPadrao = ''): LinhaTr
     cents: 0,
     arredondado: false,
     erro: null,
+    foraDoFicheiro: false,
     substituidos: nome.substituidos + desc.substituidos,
   };
   if (vazia) return base;
@@ -267,7 +273,8 @@ export function tratarLinhaOIC(l: LinhaBrutaOIC, descritivoPadrao = ''): LinhaTr
   }
   if (n.nib === '') return { ...base, erro: 'NIB obrigatório.' };
   if (n.nib.length !== 21) return { ...base, erro: `NIB deve ter 21 dígitos (tem ${n.nib.length}).` };
-  if (n.nib.startsWith('0003')) return { ...base, erro: 'NIB do BCA (começa por 0003), não de outro banco — este gerador é só para outros bancos; usa o PS2.' };
+  // NIB do BCA: este gerador é só para outros bancos — a linha fica de fora (os do BCA vão pelo PS2).
+  if (n.nib.startsWith('0003')) return { ...base, foraDoFicheiro: true };
 
   if (nome.texto === '') return { ...base, erro: 'Nome obrigatório.' };
 
@@ -323,7 +330,7 @@ export function gerarOIC(linhas: LinhaOICComRef[]): ResultadoOIC {
   let substituidos = 0;
 
   for (const l of linhas) {
-    if (l.vazia) continue;
+    if (l.vazia || l.foraDoFicheiro) continue;
     if (l.erro) {
       erros.push(l.rotulo ? `Erro em ${l.rotulo}: ${l.erro}` : `Erro na linha ${l.ref}: ${l.erro}`);
       continue;
@@ -386,7 +393,7 @@ const pareceNomeCelula = (v: unknown) =>
   typeof v === 'string' && (v.match(/\p{L}/gu)?.length ?? 0) >= 2 && Number.isNaN(parseMontante(v));
 
 /**
- * Adivinha as colunas — como no PS2: primeiro pelo cabeçalho (NIB/IBAN/Conta,
+ * Adivinha as colunas — como no PS2: primeiro pelo cabeçalho (NIB/Conta,
  * Montante/Valor/V. Líquido, Nome/Beneficiário) e, no que faltar ou se não houver cabeçalho, pelo
  * conteúdo: NIB = a coluna com mais NIBs; Montante = a coluna (de números) que
  * sobra; Nome = a coluna com mais texto. O descritivo é escrito uma vez para todas as linhas.
@@ -395,8 +402,12 @@ export function autodetectarColunasOIC(rows: unknown[][]): ColunasOIC {
   const nCols = rows.reduce((m, r) => Math.max(m, r.length), 0);
 
   // cabeçalho: a 1.ª linha (das primeiras 40) com pelo menos 2 títulos conhecidos
+  // "NIB" tem prioridade sobre "Nº Conta": muitas folhas trazem as duas colunas e o número
+  // de conta (10–14 dígitos) não é o que vai no ficheiro. IBAN não se usa (tem letras, e
+  // limpar só os dígitos dava um NIB errado).
   const chaves = {
-    nib: /^(nib|iban|n\.?º?\s*conta|conta|n[uú]mero da conta)/,
+    nib: /^nib/,
+    nibConta: /^(n\.?º?\s*conta|conta|n[uú]mero da conta)/,
     montante: /^(montante|valor|v.?s*l[ií]quido|l[ií]quido|a pagar|total)/,
     nome: /^(nome|benefici|funcion|colaborad|titular)/,
   };
@@ -407,7 +418,8 @@ export function autodetectarColunasOIC(rows: unknown[][]): ColunasOIC {
   for (let i = 0; i < Math.min(rows.length, 40); i++) {
     const r = rows[i] ?? [];
     const acha = (re: RegExp) => r.findIndex((c) => re.test(texto(c)));
-    const a = acha(chaves.nib);
+    const aNib = acha(chaves.nib);
+    const a = aNib >= 0 ? aNib : acha(chaves.nibConta);
     const b = acha(chaves.montante);
     const c = acha(chaves.nome);
     if ([a, b, c].filter((x) => x >= 0).length >= 2) {
@@ -440,6 +452,14 @@ export function autodetectarColunasOIC(rows: unknown[][]): ColunasOIC {
     return melhor;
   };
 
+  // O título pode enganar (ou só haver "Conta"): se a coluna escolhida não tem nenhum NIB
+  // mas outra tem, vale o conteúdo.
+  if (cNib >= 0 && pontua(cNib, pareceNibCelula) === 0) {
+    const titulo = cNib;
+    cNib = -1;
+    cNib = melhorColuna(pareceNibCelula);
+    if (cNib < 0) cNib = titulo;
+  }
   if (cNib < 0) cNib = melhorColuna(pareceNibCelula);
   if (cMontante < 0) cMontante = melhorColuna(pareceMontanteCelula);
   if (cNome < 0) cNome = melhorColuna(pareceNomeCelula);
