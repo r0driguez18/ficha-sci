@@ -393,7 +393,7 @@ const pareceNomeCelula = (v: unknown) =>
   typeof v === 'string' && (v.match(/\p{L}/gu)?.length ?? 0) >= 2 && Number.isNaN(parseMontante(v));
 
 /**
- * Adivinha as colunas — como no PS2: primeiro pelo cabeçalho (NIB/IBAN/Conta,
+ * Adivinha as colunas — como no PS2: primeiro pelo cabeçalho (NIB/Conta,
  * Montante/Valor/V. Líquido, Nome/Beneficiário) e, no que faltar ou se não houver cabeçalho, pelo
  * conteúdo: NIB = a coluna com mais NIBs; Montante = a coluna (de números) que
  * sobra; Nome = a coluna com mais texto. O descritivo é escrito uma vez para todas as linhas.
@@ -402,10 +402,11 @@ export function autodetectarColunasOIC(rows: unknown[][]): ColunasOIC {
   const nCols = rows.reduce((m, r) => Math.max(m, r.length), 0);
 
   // cabeçalho: a 1.ª linha (das primeiras 40) com pelo menos 2 títulos conhecidos
-  // "NIB"/"IBAN" têm prioridade sobre "Nº Conta": muitas folhas trazem as duas colunas
-  // e o número de conta (10–14 dígitos) não é o que vai no ficheiro.
+  // "NIB" tem prioridade sobre "Nº Conta": muitas folhas trazem as duas colunas e o número
+  // de conta (10–14 dígitos) não é o que vai no ficheiro. IBAN não se usa (tem letras, e
+  // limpar só os dígitos dava um NIB errado).
   const chaves = {
-    nib: /^(nib|iban)/,
+    nib: /^nib/,
     nibConta: /^(n\.?º?\s*conta|conta|n[uú]mero da conta)/,
     montante: /^(montante|valor|v.?s*l[ií]quido|l[ií]quido|a pagar|total)/,
     nome: /^(nome|benefici|funcion|colaborad|titular)/,

@@ -98,6 +98,7 @@ const SECCOES: Seccao[] = [
       'Folhas ocultas do Excel nunca são lidas. Referência do ordenante e descritivo vêm por omissão com "Ordenado". Nomes e descritivos saem sem acentos.',
       'Ficheiros com um separador por mês (ex.: "Setembro 26"): tenta adivinhar o mês corrente, mas o seletor "Folha" deixa sempre trocar para a certa.',
       '"Dividir o valor por 10" (só no PS2) — para folhas em que a coluna vem multiplicada (ex.: 173850 = 17385,00 CVE).',
+      'Qualquer linha da pré-visualização (PS2 e OIC) pode ser corrigida ali mesmo com o lápis: nome, conta/NIB e valor. Enter guarda, Esc cancela. A linha fica marcada "editada", há um contador por cima da tabela e dá para repor o valor do ficheiro. A correção só vale para o ficheiro que se gera — o Excel de origem não muda.',
       'Antes de gravar dá para mudar o nome do ficheiro (a extensão .txt fica sempre fixa, não se edita); "Guardar ficheiro" abre o diálogo nativo do browser para escolher a pasta (lembra-se da última usada).',
       'Separador OIC — o nome das folhas não conta: entram as folhas visíveis com NIBs de outros bancos e, havendo várias (BAI, BCN, BIA, CECV…), juntam-se numa lista só, com a origem (folha · linha) em cada registo. Folhas só com contas/NIBs do BCA ou sem NIBs (ex.: RESUME) ficam de fora, com a razão indicada.',
       'OIC — só conta o NIB: se a folha tiver também uma coluna "Nº Conta", é ignorada. Linhas com NIB do BCA (0003…) ficam de fora do ficheiro (vão pelo PS2), sem bloquear a geração — aparecem como "BCA — fora do ficheiro" e não entram no total.',
