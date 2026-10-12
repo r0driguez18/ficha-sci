@@ -128,8 +128,10 @@ export default function GeradorOIC() {
 
   const ativas = useMemo(() => tratadas.filter((t) => !excluidos.has(t.ref)), [tratadas, excluidos]);
   const nErros = ativas.filter((t) => t.erro).length;
-  const nProntas = ativas.length - nErros;
-  const totalPronto = ativas.reduce((s, t) => s + (t.erro ? 0 : t.cents), 0);
+  // NIBs do BCA (0003…) ficam fora do ficheiro: não são erro nem contam para o total.
+  const nBca = ativas.filter((t) => t.foraDoFicheiro).length;
+  const nProntas = ativas.length - nErros - nBca;
+  const totalPronto = ativas.reduce((s, t) => s + (t.erro || t.foraDoFicheiro ? 0 : t.cents), 0);
 
   const alternarExcluida = (ref: number) => {
     setResultado(null);
@@ -309,6 +311,11 @@ export default function GeradorOIC() {
                     <AlertTriangle className="h-3 w-3 mr-1" /> {nErros} com erro
                   </Badge>
                 )}
+                {nBca > 0 && (
+                  <Badge variant="outline" title="NIBs do BCA (0003…) não vão no ficheiro OIC — usa o gerador PS2">
+                    {nBca} do BCA fora do ficheiro
+                  </Badge>
+                )}
                 {excluidos.size > 0 && <Badge variant="outline">{excluidos.size} excluídas</Badge>}
                 <span className="text-sm">Total: {formatarCentimos(totalPronto)} CVE</span>
               </span>
@@ -355,6 +362,8 @@ export default function GeradorOIC() {
                             <span className="text-muted-foreground">excluída</span>
                           ) : t.erro ? (
                             <span className="text-destructive">{t.erro}</span>
+                          ) : t.foraDoFicheiro ? (
+                            <span className="text-muted-foreground">BCA — fora do ficheiro (vai pelo PS2)</span>
                           ) : (
                             <span className="text-green-600">ok</span>
                           )}
