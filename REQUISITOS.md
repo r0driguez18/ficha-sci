@@ -276,7 +276,7 @@ O coração do sistema. Reproduz digitalmente a ficha em papel usada no Centro I
 | `nalves` | Nelson Alves |
 | `etavares` | Evandro Tavares |
 | `edelgado` | Emanuel Delgado |
-| `ebrito` | Elvis Brito |
+| `elvisb` | Elvis Brito |
 | `lspencer` | Louis Spencer |
 
 ---
