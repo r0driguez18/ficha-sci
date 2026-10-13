@@ -89,6 +89,76 @@ else
 fi
 
 echo
+echo "== 2b. Administracao de utilizadores (funcao no servidor + administrador)"
+# Nada daqui para o deploy: se algo falhar, avisa e o front-end publica-se na mesma.
+
+# --- a funcao admin-utilizadores (so se veio no deploy)
+if [ -f "$PASTA/functions/admin-utilizadores/index.ts" ]; then
+  if sudo docker inspect supabase-edge-functions >/dev/null 2>&1; then
+    DESTINO_FN="$(sudo docker inspect supabase-edge-functions \
+      --format '{{range .Mounts}}{{if eq .Destination "/home/deno/functions"}}{{.Source}}{{end}}{{end}}' 2>/dev/null)"
+    if [ -n "$DESTINO_FN" ] && [ -d "$DESTINO_FN" ]; then
+      sudo mkdir -p "$DESTINO_FN/admin-utilizadores" \
+        && sudo cp "$PASTA/functions/admin-utilizadores/index.ts" "$DESTINO_FN/admin-utilizadores/index.ts" \
+        && echo "Funcao instalada em $DESTINO_FN/admin-utilizadores" \
+        || echo "AVISO: nao consegui copiar a funcao para $DESTINO_FN"
+    else
+      echo "AVISO: nao encontrei a pasta de funcoes do contentor supabase-edge-functions (montagem em /home/deno/functions)."
+    fi
+  else
+    echo "AVISO: nao existe o contentor supabase-edge-functions - a administracao de utilizadores nao vai funcionar."
+  fi
+
+  # A rota tem de chegar ao Kong: se o nginx devolver a pagina da app (HTML) ou 404, nao encaminha /functions/v1/.
+  RESP="$(curl -sk --max-time 10 -o - -w '\n%{http_code}' -X POST -H 'Content-Type: application/json' -d '{}' \
+            https://127.0.0.1:8443/functions/v1/admin-utilizadores 2>/dev/null || true)"
+  CODIGO_HTTP="$(printf '%s' "$RESP" | tail -n1)"
+  if printf '%s' "$RESP" | grep -qi '<html\|<!doctype' || [ "$CODIGO_HTTP" = "404" ] || [ -z "$CODIGO_HTTP" ]; then
+    echo "AVISO: o nginx NAO encaminha /functions/v1/ para o Supabase (resposta $CODIGO_HTTP)."
+    echo "       No vhost do SCI (/etc/nginx/sites-available/sci), junto das outras rotas /auth/v1/ e /rest/v1/,"
+    echo "       acrescenta o mesmo proxy_pass para /functions/v1/ e faz: sudo nginx -t && sudo systemctl reload nginx"
+  else
+    echo "Rota /functions/v1/ OK (resposta $CODIGO_HTTP)."
+  fi
+fi
+
+# --- primeiro administrador (so se ainda nao houver nenhum)
+if [ -n "${ADMIN_EMAIL:-}" ]; then
+  # So valores simples: vao dentro de SQL.
+  [[ "$ADMIN_EMAIL" =~ ^[A-Za-z0-9._%+@-]+$ ]] || fim "ADMIN_EMAIL com caracteres invalidos"
+  AC="${ADMIN_CODIGO:-nalves}"
+  [[ "$AC" =~ ^[a-z][a-z0-9_]{2,19}$ ]] || fim "ADMIN_CODIGO invalido"
+  RES="$(psql_db -tA -v ON_ERROR_STOP=1 <<SQL
+UPDATE public.operators
+   SET papel = 'administrador',
+       user_id = (SELECT id FROM auth.users WHERE lower(email) = lower('$ADMIN_EMAIL') LIMIT 1)
+ WHERE value = '$AC'
+   AND EXISTS (SELECT 1 FROM auth.users WHERE lower(email) = lower('$ADMIN_EMAIL'))
+RETURNING value;
+SQL
+)" || fim "nao consegui definir o administrador"
+  if [ -n "$RES" ]; then echo "Administrador: operador $RES ligado a $ADMIN_EMAIL."; else echo "AVISO: nao existe a conta $ADMIN_EMAIL (ou o operador $AC)."; fi
+else
+  TEM_ADMIN="$(psql_db -tA -c "select count(*) from public.operators where papel='administrador' and ativo and user_id is not null" </dev/null | tr -d '[:space:]')"
+  if [ "$TEM_ADMIN" = "0" ]; then
+    RES="$(psql_db -tA -v ON_ERROR_STOP=1 <<'SQL'
+UPDATE public.operators SET papel = 'administrador'
+ WHERE value = 'nalves' AND user_id IS NOT NULL
+RETURNING value;
+SQL
+)" || fim "nao consegui definir o administrador"
+    if [ -n "$RES" ]; then
+      echo "Ainda nao havia administrador: o operador $RES passou a administrador."
+    else
+      echo "AVISO: ainda nao ha administrador e o operador nalves nao tem conta ligada."
+      echo "       Corre o deploy uma vez com: -AdminEmail <o email da tua conta>"
+    fi
+  else
+    echo "Administrador(es) ja definido(s): $TEM_ADMIN."
+  fi
+fi
+
+echo
 echo "== 3. Publicar o front-end (copia por cima, sem apagar o que la esta)"
 sudo cp -r "$PASTA/dist/." "$WEB/" || fim "a copia para $WEB falhou"
 sudo chown -R www-data:www-data "$WEB" || fim "o chown falhou"
