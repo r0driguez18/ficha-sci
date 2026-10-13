@@ -54,6 +54,20 @@ export function normalizarNome(v: unknown): string {
   return n;
 }
 
+/**
+ * O utilizador de login (sem email). O Supabase identifica contas por email, por isso a conta
+ * usa "<utilizador>@sci.local" — mesmo valor que src/lib/utilizador.ts (DOMINIO_INTERNO).
+ */
+export const DOMINIO_INTERNO = 'sci.local';
+
+export function normalizarUtilizador(v: unknown): string {
+  const u = String(v ?? '').trim().toLowerCase();
+  if (!/^[a-z][a-z0-9._-]{2,29}$/.test(u)) {
+    throw new ErroPedido(400, 'O utilizador deve ter 3 a 30 caracteres (letras minúsculas, números, ponto, _ ou -), sem @, e começar por uma letra.');
+  }
+  return u;
+}
+
 export function normalizarCodigo(v: unknown): string {
   const c = String(v ?? '').trim().toLowerCase();
   if (!/^[a-z][a-z0-9_]{2,19}$/.test(c)) {
@@ -144,52 +158,62 @@ async function gerarLink(c: ReturnType<typeof cliente>, email: string, origem: s
 
 // ----------------------------------------------------------------- acoes
 
+/** Todas as contas (ate 500) — o GoTrue nao filtra por email. */
+async function todasAsContas(c: ReturnType<typeof cliente>): Promise<any[]> {
+  const u = await c.pedir('/auth/v1/admin/users?page=1&per_page=500');
+  if (u.estado !== 200) throw new ErroPedido(502, 'Não consegui listar as contas.');
+  return Array.isArray(u.corpo?.users) ? u.corpo.users : [];
+}
+
 async function criar(req: Request, amb: Ambiente, f: FetchFn, corpo: Json): Promise<Json> {
-  const email = normalizarEmail(corpo.email);
+  const email = normalizarEmail(corpo.email); // email verdadeiro da pessoa (contacto)
   const nome = normalizarNome(corpo.nome);
+  const utilizador = normalizarUtilizador(corpo.utilizador);
   const codigo = normalizarCodigo(corpo.codigo);
+  const conta = `${utilizador}@${DOMINIO_INTERNO}`; // identificador da conta no Supabase
   const origem = origemPublica(req, amb);
   const c = cliente(amb, f);
+
+  // O utilizador ja existe? So se retoma se ficou a meio (a pessoa ainda nao definiu a palavra-passe);
+  // se ja tem palavra-passe, e outra pessoa: nao se gera um link que lhe daria acesso a conta.
+  const contas = await todasAsContas(c);
+  const jaExiste = contas.find((x) => String(x.email ?? '').toLowerCase() === conta);
+  if (jaExiste && jaExiste.user_metadata?.must_change_password !== true) {
+    throw new ErroPedido(409, `O utilizador "${utilizador}" já existe e já tem palavra-passe. Para gerar um link novo usa "Novo link" na lista.`);
+  }
 
   // O operador (codigo) tem de estar livre, ou ja ser desta conta.
   const op = await c.pedir(`/rest/v1/operators?select=id,value,nome,user_id&value=eq.${encodeURIComponent(codigo)}&limit=1`);
   if (op.estado !== 200) throw new ErroPedido(502, 'Não consegui consultar os operadores.');
   const existente = Array.isArray(op.corpo) ? op.corpo[0] : null;
+  if (existente?.user_id && existente.user_id !== jaExiste?.id) {
+    throw new ErroPedido(409, `O código "${codigo}" já está associado a outra conta.`);
+  }
 
-  // Recusa antes de criar nada: o codigo ja pertence a uma conta que nao e esta.
-  if (existente?.user_id) {
-    const dono = await c.pedir(`/auth/v1/admin/users/${encodeURIComponent(existente.user_id)}`);
-    if (dono.estado === 200 && String(dono.corpo?.email ?? '').toLowerCase() !== email) {
-      throw new ErroPedido(409, `O código "${codigo}" já está associado a outra conta.`);
+  // 1. Conta (palavra-passe aleatoria que ninguem ve).
+  let uid: string | undefined = jaExiste?.id;
+  if (!jaExiste) {
+    const novo = await c.pedir('/auth/v1/admin/users', {
+      method: 'POST',
+      body: JSON.stringify({
+        email: conta,
+        password: aleatoria(40),
+        email_confirm: true,
+        user_metadata: { name: nome, utilizador, email_contacto: email, must_change_password: true },
+      }),
+    });
+    if (![200, 201].includes(novo.estado) || !novo.corpo?.id) {
+      throw new ErroPedido(502, 'O Supabase recusou a criação da conta.');
     }
+    uid = novo.corpo.id as string;
   }
 
-  // 1. Conta (palavra-passe aleatoria que ninguem ve). Se ja existir, segue para o link.
-  const novo = await c.pedir('/auth/v1/admin/users', {
-    method: 'POST',
-    body: JSON.stringify({
-      email,
-      password: aleatoria(40),
-      email_confirm: true,
-      user_metadata: { name: nome, must_change_password: true },
-    }),
-  });
-  if (![200, 201, 409, 422].includes(novo.estado)) throw new ErroPedido(502, 'O Supabase recusou a criação da conta.');
-  const jaExistia = novo.estado === 409 || novo.estado === 422;
-  if (jaExistia && !/exist|already|registered/i.test(JSON.stringify(novo.corpo))) {
-    throw new ErroPedido(502, 'O Supabase recusou a criação da conta.');
-  }
-
-  // 2. Link para a pessoa definir a palavra-passe (devolve tambem o id da conta).
-  const { link, userId } = await gerarLink(c, email, origem);
-  const uid = (novo.corpo?.id as string | undefined) ?? userId;
+  // 2. Link para a pessoa definir a palavra-passe.
+  const { link } = await gerarLink(c, conta, origem);
   if (!uid) throw new ErroPedido(502, 'Não consegui obter o identificador da conta.');
 
   // 3. Ligar ao operador.
   if (existente) {
-    if (existente.user_id && existente.user_id !== uid) {
-      throw new ErroPedido(409, `O código "${codigo}" já está associado a outra conta.`);
-    }
     const p = await c.pedir(`/rest/v1/operators?id=eq.${existente.id}`, {
       method: 'PATCH',
       headers: { Prefer: 'return=minimal' },
@@ -205,30 +229,36 @@ async function criar(req: Request, amb: Ambiente, f: FetchFn, corpo: Json): Prom
     if (p.estado >= 300) throw new ErroPedido(409, 'Esta conta já está associada a outro operador.');
   }
 
-  return { ok: true, email, nome, codigo, link, jaExistia };
+  return { ok: true, utilizador, email, nome, codigo, conta, link, retomada: !!jaExiste };
 }
 
+/** Novo link para uma conta que ja existe. `conta` e o identificador devolvido por "listar". */
 async function novoLink(req: Request, amb: Ambiente, f: FetchFn, corpo: Json): Promise<Json> {
-  const email = normalizarEmail(corpo.email);
-  const { link } = await gerarLink(cliente(amb, f), email, origemPublica(req, amb));
-  return { ok: true, email, link };
+  const conta = normalizarEmail(corpo.conta);
+  const { link } = await gerarLink(cliente(amb, f), conta, origemPublica(req, amb));
+  return { ok: true, conta, link };
 }
 
 async function listar(amb: Ambiente, f: FetchFn): Promise<Json> {
   const c = cliente(amb, f);
-  const u = await c.pedir('/auth/v1/admin/users?page=1&per_page=500');
-  if (u.estado !== 200) throw new ErroPedido(502, 'Não consegui listar as contas.');
-  const contas: any[] = Array.isArray(u.corpo?.users) ? u.corpo.users : [];
+  const contas = await todasAsContas(c);
 
   const o = await c.pedir('/rest/v1/operators?select=value,nome,papel,ativo,user_id&order=nome');
   const ops: any[] = o.estado === 200 && Array.isArray(o.corpo) ? o.corpo : [];
   const porConta = new Map(ops.filter((x) => x.user_id).map((x) => [x.user_id as string, x]));
+  const sufixo = `@${DOMINIO_INTERNO}`;
 
   const utilizadores = contas
     .map((x) => {
       const op = porConta.get(x.id);
+      const conta = String(x.email ?? '');
+      const interna = conta.toLowerCase().endsWith(sufixo);
       return {
-        email: x.email as string,
+        // `conta` identifica a conta no Supabase (e e o que "novo-link" recebe).
+        conta,
+        // Contas novas entram so com o utilizador; as antigas entram com o email.
+        utilizador: interna ? conta.slice(0, -sufixo.length) : null,
+        email: (x.user_metadata?.email_contacto as string | undefined) ?? (interna ? null : conta),
         nome: (x.user_metadata?.name as string | undefined) ?? op?.nome ?? '',
         codigo: (op?.value as string | undefined) ?? null,
         papel: (op?.papel as string | undefined) ?? null,
@@ -237,7 +267,7 @@ async function listar(amb: Ambiente, f: FetchFn): Promise<Json> {
         criadaEm: x.created_at as string,
       };
     })
-    .sort((a, b) => a.email.localeCompare(b.email));
+    .sort((a, b) => (a.utilizador ?? a.conta).localeCompare(b.utilizador ?? b.conta));
 
   // Operadores sem conta (para escolher o codigo ao criar).
   const semConta = ops.filter((x) => !x.user_id && x.ativo).map((x) => ({ codigo: x.value, nome: x.nome }));

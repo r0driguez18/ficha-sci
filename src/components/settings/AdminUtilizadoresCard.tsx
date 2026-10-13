@@ -23,10 +23,12 @@ import {
   novoLinkUtilizador,
   sugerirCodigo,
 } from '@/services/adminUtilizadoresService';
+import { sugerirUtilizador, validarUtilizador } from '@/lib/utilizador';
 
 interface LinkGerado {
   nome: string;
-  email: string;
+  /** O que a pessoa escreve no login (ou o email, nas contas antigas). */
+  entrada: string;
   link: string;
 }
 
@@ -47,6 +49,8 @@ export function AdminUtilizadoresCard() {
   const queryClient = useQueryClient();
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
+  const [utilizador, setUtilizador] = useState('');
+  const [utilizadorMexido, setUtilizadorMexido] = useState(false);
   const [codigo, setCodigo] = useState('');
   const [codigoMexido, setCodigoMexido] = useState(false);
   const [aCriar, setACriar] = useState(false);
@@ -71,44 +75,59 @@ export function AdminUtilizadoresCard() {
     if (!codigoMexido) setCodigo(sugerirCodigo(v));
   };
 
+  const aoMudarEmail = (v: string) => {
+    setEmail(v);
+    if (!utilizadorMexido) setUtilizador(sugerirUtilizador(v));
+  };
+
   const mensagem = useMemo(() => {
     if (!gerado) return '';
     const primeiro = gerado.nome.split(' ')[0];
     return (
-      `Olá ${primeiro}, já tens conta no SCI. Abre este link para escolheres a tua palavra-passe ` +
+      `Olá ${primeiro}, já tens conta no SCI. O teu utilizador é "${gerado.entrada}". ` +
+      `Abre este link para escolheres a tua palavra-passe ` +
       `(serve uma vez e expira em cerca de 1 hora):\n${gerado.link}`
     );
   }, [gerado]);
 
   const criar = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErro(null);
+    const problema = validarUtilizador(utilizador);
+    setErro(problema);
+    if (problema) return;
     setACriar(true);
-    const r = await criarUtilizador({ email: email.trim(), nome: nome.trim(), codigo: codigo.trim() });
+    const r = await criarUtilizador({
+      email: email.trim(),
+      nome: nome.trim(),
+      utilizador: utilizador.trim().toLowerCase(),
+      codigo: codigo.trim(),
+    });
     setACriar(false);
     if (r.erro) {
       setErro(r.erro);
       return;
     }
-    setGerado({ nome: r.dados.nome, email: r.dados.email, link: r.dados.link });
-    if (r.dados.jaExistia) toast.info('Essa conta já existia — gerei um link novo para ela.');
+    setGerado({ nome: r.dados.nome, entrada: r.dados.utilizador, link: r.dados.link });
+    if (r.dados.retomada) toast.info('A conta já existia, ainda sem palavra-passe — gerei um link novo.');
     setNome('');
     setEmail('');
+    setUtilizador('');
+    setUtilizadorMexido(false);
     setCodigo('');
     setCodigoMexido(false);
     queryClient.invalidateQueries({ queryKey: ['admin-utilizadores'] });
     queryClient.invalidateQueries({ queryKey: ['operators'] });
   };
 
-  const novoLink = async (u: { email: string; nome: string }) => {
-    setAGerarPara(u.email);
-    const r = await novoLinkUtilizador(u.email);
+  const novoLink = async (u: { conta: string; nome: string; utilizador: string | null }) => {
+    setAGerarPara(u.conta);
+    const r = await novoLinkUtilizador(u.conta);
     setAGerarPara(null);
     if (r.erro) {
       toast.error(r.erro);
       return;
     }
-    setGerado({ nome: u.nome || u.email, email: u.email, link: r.dados.link });
+    setGerado({ nome: u.nome || u.conta, entrada: u.utilizador ?? u.conta, link: r.dados.link });
   };
 
   return (
@@ -123,7 +142,7 @@ export function AdminUtilizadoresCard() {
         </CardHeader>
         <CardContent className="space-y-6">
           <form onSubmit={criar} className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-1.5">
                 <Label htmlFor="adm-nome">Nome</Label>
                 <Input
@@ -140,8 +159,22 @@ export function AdminUtilizadoresCard() {
                   id="adm-email"
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => aoMudarEmail(e.target.value)}
                   placeholder="nome@dominio"
+                  required
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="adm-utilizador">Utilizador</Label>
+                <Input
+                  id="adm-utilizador"
+                  value={utilizador}
+                  onChange={(e) => {
+                    setUtilizador(e.target.value.toLowerCase());
+                    setUtilizadorMexido(true);
+                  }}
+                  placeholder="o que escreve no login, sem @"
+                  autoComplete="off"
                   required
                 />
               </div>
@@ -209,6 +242,7 @@ export function AdminUtilizadoresCard() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Nome</TableHead>
+                      <TableHead>Utilizador</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Código</TableHead>
                       <TableHead>Estado</TableHead>
@@ -217,9 +251,10 @@ export function AdminUtilizadoresCard() {
                   </TableHeader>
                   <TableBody>
                     {lista.data.utilizadores.map((u) => (
-                      <TableRow key={u.email}>
+                      <TableRow key={u.conta}>
                         <TableCell>{u.nome || '—'}</TableCell>
-                        <TableCell className="text-xs">{u.email}</TableCell>
+                        <TableCell className="font-mono text-xs">{u.utilizador ?? '—'}</TableCell>
+                        <TableCell className="text-xs">{u.email ?? '—'}</TableCell>
                         <TableCell>
                           {u.codigo ? <span className="font-mono text-xs">{u.codigo}</span> : '—'}
                           {u.papel === 'administrador' && (
@@ -239,11 +274,11 @@ export function AdminUtilizadoresCard() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            disabled={aGerarPara === u.email}
+                            disabled={aGerarPara === u.conta}
                             onClick={() => novoLink(u)}
                             title="Gera um link novo para a pessoa definir a palavra-passe"
                           >
-                            {aGerarPara === u.email ? (
+                            {aGerarPara === u.conta ? (
                               <Loader2 className="mr-1 h-4 w-4 animate-spin" />
                             ) : (
                               <KeyRound className="mr-1 h-4 w-4" />
@@ -266,7 +301,7 @@ export function AdminUtilizadoresCard() {
           <DialogHeader>
             <DialogTitle>Link para {gerado?.nome}</DialogTitle>
             <DialogDescription>
-              Envia à pessoa ({gerado?.email}). Serve uma só vez e expira em cerca de 1 hora. Esta janela é a
+              Envia à pessoa (utilizador: <strong>{gerado?.entrada}</strong>). Serve uma só vez e expira em cerca de 1 hora. Esta janela é a
               única vez que o link aparece — se se perder, gera outro.
             </DialogDescription>
           </DialogHeader>

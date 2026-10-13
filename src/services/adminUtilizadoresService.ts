@@ -1,7 +1,12 @@
 import { supabase } from '@/integrations/supabase/client';
 
 export interface UtilizadorAdmin {
-  email: string;
+  /** Identificador da conta no Supabase (é o que "novo link" recebe). */
+  conta: string;
+  /** O que a pessoa escreve no login. Null nas contas antigas, que entram com o email. */
+  utilizador: string | null;
+  /** Email verdadeiro da pessoa (contacto). */
+  email: string | null;
   nome: string;
   codigo: string | null;
   papel: string | null;
@@ -22,11 +27,14 @@ export interface ListaAdmin {
 }
 
 export interface CriarUtilizadorResultado {
+  utilizador: string;
   email: string;
   nome: string;
   codigo: string;
+  conta: string;
   link: string;
-  jaExistia: boolean;
+  /** A conta já existia sem palavra-passe definida (criação interrompida): foi retomada. */
+  retomada: boolean;
 }
 
 type Resposta<T> = { dados: T; erro: null } | { dados: null; erro: string };
@@ -62,12 +70,12 @@ export function listarUtilizadores() {
   return chamar<ListaAdmin & { ok: boolean }>({ acao: 'listar' });
 }
 
-export function criarUtilizador(dados: { email: string; nome: string; codigo: string }) {
+export function criarUtilizador(dados: { email: string; nome: string; utilizador: string; codigo: string }) {
   return chamar<CriarUtilizadorResultado & { ok: boolean }>({ acao: 'criar', ...dados });
 }
 
-export function novoLinkUtilizador(email: string) {
-  return chamar<{ ok: boolean; email: string; link: string }>({ acao: 'novo-link', email });
+export function novoLinkUtilizador(conta: string) {
+  return chamar<{ ok: boolean; conta: string; link: string }>({ acao: 'novo-link', conta });
 }
 
 /** "Nelson Alves" → "nalves" (inicial do 1.º nome + último apelido, sem acentos). */

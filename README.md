@@ -198,7 +198,9 @@ Requisitos: `.env.production.local` na pasta (não vai para o git) e utilizador 
 
 ## Administração de utilizadores
 
-Em **Configurações → Utilizadores** (só para administradores) cria-se a conta de um colega: nome, email e código de operador. A conta fica ligada ao operador e a app devolve um **link de uso único** (cerca de 1 hora) que se envia à pessoa; é ela quem escolhe a palavra-passe, ninguém a vê. "Novo link" gera outro.
+Em **Configurações → Utilizadores** (só para administradores) cria-se a conta de um colega: nome, email, **utilizador** (o que escreve no login, sem `@`) e código de operador (o utilizador e o código são independentes). A conta fica ligada ao operador e a app devolve um **link de uso único** (cerca de 1 hora) que se envia à pessoa; é ela quem escolhe a palavra-passe, ninguém a vê. "Novo link" gera outro.
+
+No login escreve-se só o utilizador. O Supabase identifica as contas por email, por isso as contas criadas aqui usam `<utilizador>@sci.local` (um endereço interno que não recebe nada; o email verdadeiro fica guardado à parte). Contas antigas continuam a entrar com o email completo.
 
 A chave de administração do Supabase não pode ir para o browser, por isso isto passa por uma **função no servidor** (`supabase/functions/admin-utilizadores`), que volta a verificar em cada pedido que quem chama é administrador.
 
