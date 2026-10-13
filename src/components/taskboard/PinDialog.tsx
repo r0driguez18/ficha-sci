@@ -23,6 +23,9 @@ interface PinDialogProps {
   onConfirm: (pin: string) => Promise<{ ok: boolean; error?: string | null }>;
   /** Chamado depois de um PIN válido; o diálogo já se fechou. */
   onSuccess: () => void;
+  /** Texto do diálogo em modo "enter" (por omissão fala de assinar a ficha). */
+  title?: string;
+  description?: string;
 }
 
 const FOUR_DIGITS = /^[0-9]{4}$/;
@@ -31,7 +34,16 @@ function digitsOnly(v: string) {
   return v.replace(/\D/g, '').slice(0, 4);
 }
 
-export function PinDialog({ open, onOpenChange, mode, operatorName, onConfirm, onSuccess }: PinDialogProps) {
+export function PinDialog({
+  open,
+  onOpenChange,
+  mode,
+  operatorName,
+  onConfirm,
+  onSuccess,
+  title: tituloExterno,
+  description: descricaoExterna,
+}: PinDialogProps) {
   const [pin, setPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -70,11 +82,12 @@ export function PinDialog({ open, onOpenChange, mode, operatorName, onConfirm, o
   };
 
   const asName = operatorName ? ` como ${operatorName}` : '';
-  const title = mode === 'set' ? 'Definir PIN de assinatura' : 'Assinar ficha';
+  const title = tituloExterno ?? (mode === 'set' ? 'Definir PIN de assinatura' : 'Assinar ficha');
   const description =
-    mode === 'set'
+    descricaoExterna ??
+    (mode === 'set'
       ? `Defina um código de 4 dígitos que passará a usar para assinar as fichas${asName}.`
-      : `Introduza o seu PIN de 4 dígitos para assinar esta ficha${asName}.`;
+      : `Introduza o seu PIN de 4 dígitos para assinar esta ficha${asName}.`);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
