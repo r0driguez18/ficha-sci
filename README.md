@@ -181,6 +181,8 @@ O servidor de produção é Ubuntu + nginx + Supabase em Docker, numa rede sem I
 
 Ou, com duplo-clique (a janela fica aberta no fim, mesmo se der erro): `deploy-producao.cmd`, na raiz do projeto. Um `.ps1` aberto com duplo-clique fecha a janela mal termina — por isso não se abre assim.
 
+**Duas redes:** o GitHub só se alcança na rede com Internet (WiFi) e o servidor só na rede interna (cabo). O script aguenta as duas: antes de tudo confirma que o servidor está ao alcance (senão pede para ligar o cabo); tenta o `git pull` com 30 s de limite e, sem GitHub, usa a versão que já está na pasta (e diz qual); só corre `npm install` se as dependências mudaram. Fluxo normal: no WiFi vem a versão nova (`git pull`), depois liga-se o cabo e corre-se o deploy.
+
 Faz `git pull` da `main`, build, confirma que o build aponta para o servidor (e não para `localhost:8000`), envia o `dist` e as migrações e corre no servidor o `aplicar-no-servidor.sh` (backup, migrações em falta, publicar, recarregar o nginx, confirmar). Pede confirmação antes de mexer no servidor. `-SoVerificar` só faz o build e as verificações.
 
 **Migrações:** o servidor guarda quais já aplicou (tabela `deploy.migracoes_aplicadas`, num schema que a API não expõe) e aplica só as que faltam, cada uma numa transação com o seu registo. Não há lista para manter à mão. Na primeira vez neste servidor usa-se `-BaselineAte` (a última migração que já lá estava); já vem por omissão no script, não é preciso escrevê-lo.

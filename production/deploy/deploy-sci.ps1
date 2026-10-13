@@ -5,9 +5,15 @@
 
       .\production\deploy\deploy-sci.ps1
 
+  Duas redes: o GitHub so se alcanca na rede com Internet (WiFi) e o servidor so na rede interna
+  (cabo). O script aguenta as duas: sem acesso ao GitHub usa a versao que ja esta nesta pasta
+  (aviso no ecra) e so o envio precisa do cabo. Para ter a versao mais recente, faz o git pull
+  uma vez no WiFi (ou deixa o script faze-lo la), e depois liga o cabo e corre o deploy.
+
   O que faz (por ordem; pede confirmacao antes de mexer no servidor):
-    1. git pull da main (recusa se houver alteracoes locais por guardar)
-    2. npm install + npm run build
+    0. confirma que o servidor esta ao alcance (senao pede para ligar o cabo)
+    1. git pull da main, se houver acesso ao GitHub (recusa se houver alteracoes locais por guardar)
+    2. npm install (so se for preciso) + npm run build
     3. verifica que o build aponta para o servidor certo (e nao para localhost)
     4. limpa ~/sci-novo no servidor e envia o dist, as migracoes e o script do servidor
     5. corre o script do servidor: backup, migracoes EM FALTA, publica, recarrega o nginx, confirma
@@ -57,12 +63,51 @@ function Correr([string]$desc, [scriptblock]$bloco) {
   if ($LASTEXITCODE -ne 0) { Parar "$desc falhou (codigo $LASTEXITCODE)" }
 }
 
+# Corre um comando externo com tempo limite (segundos); devolve $true se terminou bem a tempo.
+function ComTempoLimite([string]$exe, [string[]]$argumentos, [int]$segundos) {
+  $env:GIT_TERMINAL_PROMPT = '0'   # nunca ficar parado a pedir credenciais
+  $proc = Start-Process -FilePath $exe -ArgumentList $argumentos -NoNewWindow -PassThru
+  $null = $proc.Handle   # sem isto o ExitCode pode vir vazio no PowerShell 5
+  if (-not $proc.WaitForExit($segundos * 1000)) {
+    try { $proc.Kill() } catch { }
+    return $false
+  }
+  $proc.WaitForExit()
+  return ($proc.ExitCode -eq 0)
+}
+
+# O servidor so se alcanca na rede interna (cabo). Falha logo, antes de perder tempo no build.
+if (-not $SoVerificar) {
+  Passo '0. O servidor esta ao alcance?'
+  $tcp = New-Object System.Net.Sockets.TcpClient
+  $alcanca = $false
+  try {
+    $r = $tcp.BeginConnect($Servidor, 22, $null, $null)
+    $alcanca = $r.AsyncWaitHandle.WaitOne(6000, $false) -and $tcp.Connected
+  } catch { $alcanca = $false }
+  finally { $tcp.Close() }
+  if (-not $alcanca) {
+    Parar "nao consigo chegar ao servidor $Servidor (porta 22). Liga o cabo de rede (rede interna) e tenta de novo. No WiFi so se chega ao GitHub, nao ao servidor."
+  }
+  Write-Host "Servidor $Servidor alcancavel." -ForegroundColor Green
+}
+
 # ------------------------------------------------------------------ 1. codigo
 Passo '1. Codigo (git)'
 $sujo = git status --short
 if ($sujo) { Write-Host $sujo; Parar 'ha alteracoes locais por guardar - resolve isso antes (git status).' }
 Correr 'git checkout main' { git checkout main }
-Correr 'git pull origin main' { git pull origin main }
+
+# Atualizar a partir do GitHub so se houver Internet. Na rede do cabo nao ha: usa a versao desta pasta.
+Write-Host ''
+Write-Host '== a ver se ha versao mais recente no GitHub (30 s no maximo)' -ForegroundColor Cyan
+$temGit = ComTempoLimite 'git' @('fetch', 'origin', 'main') 30
+if ($temGit) {
+  & git merge --ff-only origin/main
+  if ($LASTEXITCODE -ne 0) { Parar 'a main desta pasta divergiu do GitHub - resolve com git status / git log.' }
+} else {
+  Write-Host 'Sem acesso ao GitHub (normal na rede do cabo): a usar a versao que ja esta nesta pasta.' -ForegroundColor Yellow
+}
 $versao = (git log --oneline -1)
 Write-Host "Versao: $versao" -ForegroundColor Green
 
@@ -73,7 +118,16 @@ if (-not (Test-Path '.env.production.local')) {
 if (-not (Select-String -Path '.env.production.local' -SimpleMatch $Servidor -Quiet)) {
   Parar ".env.production.local nao tem o endereco $Servidor - o build ficaria a apontar para outro sitio."
 }
-Correr 'npm install' { npm install }
+# npm install precisa de Internet: so se as dependencias mudaram desde a ultima instalacao.
+$precisaInstalar = $true
+if ((Test-Path 'node_modules\.package-lock.json') -and (Test-Path 'package-lock.json')) {
+  $precisaInstalar = (Get-Item 'package-lock.json').LastWriteTime -gt (Get-Item 'node_modules\.package-lock.json').LastWriteTime
+}
+if ($precisaInstalar) {
+  Correr 'npm install (as dependencias mudaram; precisa de Internet)' { npm install --no-audit --no-fund }
+} else {
+  Passo 'npm install: nao e preciso (dependencias iguais as da ultima instalacao)'
+}
 Correr 'npm run build' { npm run build }
 
 # ------------------------------------------------------------------ 3. verificar o build
