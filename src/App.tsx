@@ -26,6 +26,7 @@ import RetornosCobrancas from './pages/sci/RetornosCobrancas';
 import PassagemTurno from './pages/sci/PassagemTurno';
 import Geradores from './pages/sci/Geradores';
 import RenovacaoCartoes from './pages/sci/RenovacaoCartoes';
+import VerificacaoFicheiros from './pages/sci/VerificacaoFicheiros';
 
 const queryClient = new QueryClient();
 
@@ -57,6 +58,7 @@ const App = () => (
               <Route path="/sci/historico-fichas" element={<PrivateRoute><DashboardLayout><HistoricoFichas /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/retornos-cobrancas" element={<PrivateRoute><DashboardLayout><RetornosCobrancas /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/passagem-turno" element={<PrivateRoute><DashboardLayout><PassagemTurno /></DashboardLayout></PrivateRoute>} />
+              <Route path="/sci/verificacao-ficheiros" element={<PrivateRoute><DashboardLayout><VerificacaoFicheiros /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/geradores" element={<PrivateRoute><DashboardLayout><Geradores /></DashboardLayout></PrivateRoute>} />
 
               {/* Rota antiga do Gerador PS2 — agora é um separador da página "Geradores" */}

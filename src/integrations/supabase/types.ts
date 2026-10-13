@@ -536,6 +536,75 @@ export type Database = {
         }
         Relationships: []
       }
+      ps2_lotes: {
+        Row: {
+          id: string
+          created_at: string
+          gerado_por: string | null
+          gerado_por_codigo: string | null
+          nome_ficheiro: string
+          empresa: string
+          conta_empresa: string
+          tipo_operacao: string
+          sentido: string
+          data_processamento: string
+          total: number
+          n_registos: number
+          hash_ficheiro: string
+          estado: string
+          verificado_por: string | null
+          verificado_por_codigo: string | null
+          verificado_em: string | null
+          contagem: number | null
+          mesma_pessoa: boolean | null
+          observacoes: string | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          gerado_por?: string | null
+          gerado_por_codigo?: string | null
+          nome_ficheiro?: string
+          empresa?: string
+          conta_empresa?: string
+          tipo_operacao?: string
+          sentido?: string
+          data_processamento?: string
+          total?: number
+          n_registos?: number
+          hash_ficheiro?: string
+          estado?: string
+          verificado_por?: string | null
+          verificado_por_codigo?: string | null
+          verificado_em?: string | null
+          contagem?: number | null
+          mesma_pessoa?: boolean | null
+          observacoes?: string | null
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          gerado_por?: string | null
+          gerado_por_codigo?: string | null
+          nome_ficheiro?: string
+          empresa?: string
+          conta_empresa?: string
+          tipo_operacao?: string
+          sentido?: string
+          data_processamento?: string
+          total?: number
+          n_registos?: number
+          hash_ficheiro?: string
+          estado?: string
+          verificado_por?: string | null
+          verificado_por_codigo?: string | null
+          verificado_em?: string | null
+          contagem?: number | null
+          mesma_pessoa?: boolean | null
+          observacoes?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       salary_processes: {
@@ -632,6 +701,28 @@ export type Database = {
       verify_operator_pin: {
         Args: { pin: string }
         Returns: string | null
+      }
+      registar_lote_ps2: {
+        Args: {
+          p_nome_ficheiro: string
+          p_empresa: string
+          p_conta_empresa: string
+          p_tipo_operacao: string
+          p_sentido: string
+          p_data: string
+          p_total: number
+          p_n_registos: number
+          p_hash: string
+        }
+        Returns: Json
+      }
+      editar_lote_ps2: {
+        Args: { p_id: string; p_empresa: string; p_sentido: string }
+        Returns: undefined
+      }
+      verificar_lote_ps2: {
+        Args: { p_id: string; p_token: string; p_contagem: number; p_observacoes: string }
+        Returns: undefined
       }
       consumir_token_assinatura: {
         Args: { p_token: string }

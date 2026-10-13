@@ -31,6 +31,8 @@ import { montanteComFator } from '@/lib/oic';
 import { adivinharFolhaDoMes } from '@/lib/planilhaMeses';
 import { guardarFicheiro } from '@/lib/guardarFicheiro';
 import { comExtensao, semExtensao } from '@/lib/nomeFicheiro';
+import { empresaSugerida } from '@/lib/empresaDoFicheiro';
+import { registarLote, sentidoPorTipo, sha256Hex } from '@/services/ps2LotesService';
 
 const MODOS: { valor: ModoConta; label: string; hint: string }[] = [
   {
@@ -189,6 +191,9 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
   const [dividirPor10, setDividirPor10] = useState(false);
   /** Nome do ficheiro a gravar, sem a extensão (a ".txt" é sempre acrescentada, nunca se edita). */
   const [nomeBase, setNomeBase] = useState(() => semExtensao(nomeFicheiroPS2()));
+  /** Empresa (só para a lista de verificação). Sugere-se a partir do nome do ficheiro: SA + empresa + mês + letra. */
+  const [empresaManual, setEmpresaManual] = useState<string | null>(null);
+  const empresa = empresaManual ?? empresaSugerida(nomeBase);
 
   const [verNatureza, setVerNatureza] = useState(false);
   const [overrides, setOverrides] = useState<Record<number, string>>({});
@@ -229,6 +234,7 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
     setLinhaInicial(1);
     setDividirPor10(false);
     setNomeBase(semExtensao(nomeFicheiroPS2()));
+    setEmpresaManual(null);
     resetLinhas();
     toast.success('Dados limpos.');
   };
@@ -446,11 +452,43 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
   const descarregar = async () => {
     if (!resultado || resultado.erros.length > 0) return;
     const blob = new Blob([resultado.conteudo], { type: 'text/plain;charset=utf-8' });
-    await guardarFicheiro(blob, {
+    const guardou = await guardarFicheiro(blob, {
       sugestaoNome: comExtensao(nomeBase, '.txt'),
       extensao: '.txt',
       descricaoTipo: 'Ficheiro PS2',
     });
+    if (!guardou) return;
+
+    // Fica registado para a verificação do turno seguinte (empresa, conta, valor). Falhar aqui
+    // nunca impede o ficheiro: já está gravado.
+    try {
+      const reg = await registarLote({
+        nomeFicheiro: comExtensao(nomeBase, '.txt'),
+        empresa,
+        contaEmpresa: nibEmpresa.nib,
+        tipoOperacao: tipo,
+        sentido: sentidoPorTipo(tipo),
+        data,
+        total: resultado.somaTotal,
+        nRegistos: resultado.totalRegistos,
+        hash: await sha256Hex(resultado.conteudo),
+      });
+      if (reg.erro) {
+        toast.warning(`Ficheiro guardado, mas não ficou registado para verificação: ${reg.erro}`);
+      } else if (reg.repetido) {
+        toast.warning(
+          `Atenção: este ficheiro (exatamente o mesmo conteúdo) já tinha sido guardado${
+            reg.repetidoEm ? ' em ' + new Date(reg.repetidoEm).toLocaleString('pt-PT') : ''
+          }. Confirma que não o aplicas duas vezes.`,
+        );
+      } else {
+        toast.success('Ficheiro guardado e registado para verificação.');
+      }
+      window.dispatchEvent(new Event('update-verificacao-badge'));
+    } catch (e) {
+      console.error('Erro ao registar o lote para verificação:', e);
+      toast.warning('Ficheiro guardado, mas não ficou registado para verificação.');
+    }
   };
 
   const previewFonte = soAlertas ? tratadas.filter((t) => t.estado === 'alerta') : tratadas;
@@ -992,6 +1030,21 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
               />
               <span className="text-xs text-muted-foreground">.txt</span>
             </div>
+          </div>
+        )}
+        {resultado && resultado.erros.length === 0 && (
+          <div className="space-y-1">
+            <Label htmlFor="ps2-empresa" className="text-xs text-muted-foreground">
+              Empresa (para a verificação)
+            </Label>
+            <Input
+              id="ps2-empresa"
+              value={empresa}
+              onChange={(e) => setEmpresaManual(e.target.value)}
+              placeholder="ex.: EMPR"
+              maxLength={60}
+              className="w-44 text-xs"
+            />
           </div>
         )}
         <Button variant="outline" onClick={descarregar} disabled={!resultado || resultado.erros.length > 0}>
