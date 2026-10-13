@@ -10,36 +10,34 @@
     2. npm install + npm run build
     3. verifica que o build aponta para o servidor certo (e nao para localhost)
     4. limpa ~/sci-novo no servidor e envia o dist, as migracoes e o script do servidor
-    5. corre o script do servidor: backup, migracoes, publica, recarrega o nginx, confirma
+    5. corre o script do servidor: backup, migracoes EM FALTA, publica, recarrega o nginx, confirma
+
+  As migracoes: o servidor guarda quais ja aplicou e so aplica as que faltam. Nao ha lista
+  para manter a mao.
 
   Opcoes:
-    -SoVerificar     so faz os passos 1 a 3 (nao toca no servidor)
-    -SemMigracoes    nao envia nem aplica migracoes
-    -Utilizador dis  utilizador de SSH no servidor (por omissao: dis)
-    -Servidor ...    endereco do servidor (por omissao: 172.20.11.54)
+    -SoVerificar            so faz os passos 1 a 3 (nao toca no servidor)
+    -SemMigracoes           nao envia nem aplica migracoes
+    -BaselineAte <nome>     SO NA PRIMEIRA VEZ neste servidor: nome (sem .sql) da ultima migracao
+                            que JA esta aplicada em producao. Todas as anteriores ficam marcadas
+                            como aplicadas; as posteriores sao aplicadas neste deploy.
+    -Utilizador dis         utilizador de SSH no servidor (por omissao: dis)
+    -Servidor ...           endereco do servidor (por omissao: 172.20.11.54)
 
-  ANTES DE CADA DEPLOY: rever a lista $MigracoesPendentes aqui em baixo (so as que ainda
-  NAO foram aplicadas em producao, por ordem). O script do servidor mostra o que ja la esta.
+  Dica: com uma chave SSH instalada no servidor deixa de pedir a palavra-passe a cada passo
+  (ver "Deploy para producao" no README).
 
   Este ficheiro so tem ASCII de proposito (o PowerShell 5 le mal acentos sem BOM).
 #>
 param(
   [string]$Servidor = '172.20.11.54',
   [string]$Utilizador = 'dis',
+  [string]$BaselineAte = '',
   [switch]$SoVerificar,
   [switch]$SemMigracoes
 )
 
 $ErrorActionPreference = 'Stop'
-
-# --- Migracoes a aplicar neste deploy (sem .sql, por ordem). Atualizar a cada deploy. ---
-$MigracoesPendentes = @(
-  '20260917090000_card_renewal_cards_insert_scope',
-  '20260920100000_handover_historico',
-  '20260920140000_handover_arquivar',
-  '20260920160000_daily_alerts_horarios',
-  '20260924100000_alerta_etr_1330'
-)
 
 $Raiz = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 Set-Location $Raiz
@@ -84,31 +82,43 @@ Write-Host "Build OK: tem $Servidor, sem localhost:8000. Ficheiro principal: $pr
 if ($SoVerificar) { Write-Host ''; Write-Host 'Modo -SoVerificar: nao toquei no servidor.' -ForegroundColor Yellow; exit 0 }
 
 # ------------------------------------------------------------------ 4. enviar
+# Todas as migracoes do projeto, por ordem: o servidor decide quais faltam.
 $migs = @()
-if (-not $SemMigracoes) { $migs = $MigracoesPendentes }
-foreach ($m in $migs) {
-  if (-not (Test-Path "supabase\migrations\$m.sql")) { Parar "nao existe supabase\migrations\$m.sql" }
+if (-not $SemMigracoes) {
+  $migs = @(Get-ChildItem -Path 'supabase\migrations' -Filter '*.sql' | Sort-Object Name | ForEach-Object { $_.BaseName })
+}
+if ($BaselineAte -and $migs.Count -gt 0 -and ($migs -notcontains $BaselineAte)) {
+  Parar "-BaselineAte $BaselineAte nao e o nome de nenhuma migracao em supabase\migrations."
 }
 
 Write-Host ''
 Write-Host "Vou enviar para $Destino :" -ForegroundColor Yellow
 Write-Host "  versao : $versao"
 Write-Host "  dist   : $principal"
-Write-Host "  migracoes ($($migs.Count)) : $($migs -join ', ')"
+if ($migs.Count -gt 0) {
+  Write-Host "  migracoes: $($migs.Count) no projeto (o servidor aplica so as que faltam)"
+  if ($BaselineAte) { Write-Host "  primeira vez: ja aplicadas ate $BaselineAte" }
+} else {
+  Write-Host '  migracoes: nenhuma'
+}
 $r = Read-Host 'Continuar? (s/n)'
 if ($r -notmatch '^[sSyY]') { Write-Host 'Cancelado.'; exit 0 }
 
-Passo '4. Enviar para o servidor (pede a palavra-passe do utilizador do servidor)'
+Passo '4. Enviar para o servidor'
 Correr 'limpar ~/sci-novo no servidor' { ssh -t $Destino 'sudo rm -rf ~/sci-novo && mkdir -p ~/sci-novo' }
 Correr 'enviar dist' { scp -r dist "${Destino}:~/sci-novo/" }
 
 if ($migs.Count -gt 0) {
-  $lista = Join-Path $env:TEMP 'migracoes.txt'
+  $lista = Join-Path $env:TEMP 'todas.txt'
   [System.IO.File]::WriteAllText($lista, (($migs -join "`n") + "`n"), (New-Object System.Text.UTF8Encoding $false))
   $ficheiros = @($migs | ForEach-Object { "supabase\migrations\$_.sql" })
   Correr 'enviar migracoes' { scp @ficheiros "${Destino}:~/sci-novo/" }
-  Correr 'enviar lista de migracoes' { scp $lista "${Destino}:~/sci-novo/migracoes.txt" }
+  Correr 'enviar lista de migracoes' { scp $lista "${Destino}:~/sci-novo/todas.txt" }
 }
+
+$ver = Join-Path $env:TEMP 'versao.txt'
+[System.IO.File]::WriteAllText($ver, ($versao + "`n"), (New-Object System.Text.UTF8Encoding $false))
+Correr 'enviar versao' { scp $ver "${Destino}:~/sci-novo/versao.txt" }
 
 # o script do servidor tem de ter fins de linha do Linux (LF), mesmo que o git tenha posto CRLF
 $sh = Join-Path $env:TEMP 'aplicar-no-servidor.sh'
@@ -117,8 +127,10 @@ $txt = (Get-Content -Raw (Join-Path $PSScriptRoot 'aplicar-no-servidor.sh')) -re
 Correr 'enviar script do servidor' { scp $sh "${Destino}:~/sci-novo/aplicar-no-servidor.sh" }
 
 # ------------------------------------------------------------------ 5. aplicar no servidor
-Passo '5. Aplicar no servidor (backup, migracoes, publicar, recarregar nginx)'
-ssh -t $Destino 'bash ~/sci-novo/aplicar-no-servidor.sh'
+Passo '5. Aplicar no servidor (backup, migracoes em falta, publicar, recarregar nginx)'
+$cmd = 'bash ~/sci-novo/aplicar-no-servidor.sh'
+if ($BaselineAte) { $cmd = "BASELINE=$BaselineAte $cmd" }
+ssh -t $Destino $cmd
 if ($LASTEXITCODE -ne 0) { Parar 'o script do servidor terminou com erro - le as mensagens acima. Nada foi publicado depois do erro.' }
 
 Write-Host ''

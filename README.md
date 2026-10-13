@@ -181,7 +181,24 @@ O servidor de produção é Ubuntu + nginx + Supabase em Docker, numa rede sem I
 .\production\deploy\deploy-sci.ps1
 ```
 
-Faz `git pull` da `main`, build, confirma que o build aponta para o servidor (e não para `localhost:8000`), envia o `dist` e as migrações e corre no servidor o `aplicar-no-servidor.sh` (backup, migrações, publicar, recarregar o nginx, confirmar). Pede confirmação antes de mexer no servidor. `-SoVerificar` só faz o build e as verificações. Requisitos: `.env.production.local` na pasta (não vai para o git), utilizador de SSH `dis` no servidor e a lista `$MigracoesPendentes` do script revista antes de cada deploy. Os scripts antigos em `production/scripts/` são de outro setup e não se aplicam.
+Faz `git pull` da `main`, build, confirma que o build aponta para o servidor (e não para `localhost:8000`), envia o `dist` e as migrações e corre no servidor o `aplicar-no-servidor.sh` (backup, migrações em falta, publicar, recarregar o nginx, confirmar). Pede confirmação antes de mexer no servidor. `-SoVerificar` só faz o build e as verificações.
+
+**Migrações:** o servidor guarda quais já aplicou (tabela `deploy.migracoes_aplicadas`, num schema que a API não expõe) e aplica só as que faltam, cada uma numa transação com o seu registo. Não há lista para manter à mão. **Só na primeira vez** neste servidor é preciso dizer qual a última migração que já está em produção:
+
+```powershell
+.\production\deploy\deploy-sci.ps1 -BaselineAte 20260912090000_renovacao_cartoes_audit_fixes
+```
+
+Cada deploy deixa uma linha em `~/sci-versoes.log` no servidor (data, versão, build, resultado, backup).
+
+**Sem pedir a palavra-passe a cada passo:** instalar uma chave SSH (uma vez, no PC que faz o deploy):
+
+```powershell
+ssh-keygen -t ed25519
+type $env:USERPROFILE\.ssh\id_ed25519.pub | ssh dis@172.20.11.54 "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"
+```
+
+Requisitos: `.env.production.local` na pasta (não vai para o git) e utilizador de SSH `dis` no servidor (o `sudo` continua a pedir a palavra-passe). Os scripts antigos em `production/scripts/` são de outro setup e não se aplicam.
 
 ## Configuração de Base de Dados
 
