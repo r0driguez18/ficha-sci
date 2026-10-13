@@ -183,11 +183,7 @@ Ou, com duplo-clique (a janela fica aberta no fim, mesmo se der erro): `deploy-p
 
 Faz `git pull` da `main`, build, confirma que o build aponta para o servidor (e não para `localhost:8000`), envia o `dist` e as migrações e corre no servidor o `aplicar-no-servidor.sh` (backup, migrações em falta, publicar, recarregar o nginx, confirmar). Pede confirmação antes de mexer no servidor. `-SoVerificar` só faz o build e as verificações.
 
-**Migrações:** o servidor guarda quais já aplicou (tabela `deploy.migracoes_aplicadas`, num schema que a API não expõe) e aplica só as que faltam, cada uma numa transação com o seu registo. Não há lista para manter à mão. **Só na primeira vez** neste servidor é preciso dizer qual a última migração que já está em produção:
-
-```powershell
-.\production\deploy\deploy-sci.ps1 -BaselineAte 20260912090000_renovacao_cartoes_audit_fixes
-```
+**Migrações:** o servidor guarda quais já aplicou (tabela `deploy.migracoes_aplicadas`, num schema que a API não expõe) e aplica só as que faltam, cada uma numa transação com o seu registo. Não há lista para manter à mão. Na primeira vez neste servidor usa-se `-BaselineAte` (a última migração que já lá estava); já vem por omissão no script, não é preciso escrevê-lo.
 
 Cada deploy deixa uma linha em `~/sci-versoes.log` no servidor (data, versão, build, resultado, backup).
 
@@ -208,18 +204,9 @@ No login escreve-se só o utilizador. O Supabase identifica as contas por email,
 
 A chave de administração do Supabase não pode ir para o browser, por isso isto passa por uma **função no servidor** (`supabase/functions/admin-utilizadores`), que volta a verificar em cada pedido que quem chama é administrador.
 
-**Quem é administrador:** o operador com `papel = 'administrador'` ligado à conta. O primeiro define-se uma vez, no servidor (trocar o email):
+**Quem é administrador:** o operador com `papel = 'administrador'` ligado à conta. O deploy trata disto sozinho: se ainda não houver nenhum administrador, promove o operador `nalves` (desde que já tenha a conta ligada). Se não tiver, corre-se uma vez `deploy-producao.cmd -AdminEmail o.teu@email`.
 
-```bash
-sudo docker exec -i supabase-db psql -U postgres -c "update public.operators set papel='administrador', user_id=(select id from auth.users where email='EMAIL_DO_ADMIN') where value='nalves';"
-```
-
-**Instalar a função no servidor** (uma vez, e de novo se o ficheiro mudar):
-
-1. Descobrir a pasta de funções: `sudo docker inspect supabase-edge-functions --format '{{range .Mounts}}{{.Source}} -> {{.Destination}}{{println}}{{end}}'` — a que acaba em `/home/deno/functions`.
-2. Copiar a pasta `supabase/functions/admin-utilizadores` para lá (fica `.../functions/admin-utilizadores/index.ts`).
-3. O nginx tem de encaminhar `/functions/v1/` para o Kong, tal como já faz com `/auth/v1/` e `/rest/v1/`.
-4. Opcional: variável `SCI_URL_PUBLICA` (endereço da app) no contentor; por omissão usa o endereço de onde o administrador abriu a app.
+**A função no servidor** (`supabase/functions/admin-utilizadores`) também é instalada pelo deploy: descobre a pasta de funções do contentor `supabase-edge-functions` e copia-a para lá. No fim verifica se o nginx encaminha `/functions/v1/` para o Kong e, se não encaminhar, diz exatamente o que acrescentar ao vhost do SCI (é o único passo que continua à mão, e só se faltar).
 
 O GoTrue só redireciona o link para `/reset-password` se o endereço da app estiver em `GOTRUE_URI_ALLOW_LIST` (ou for o `SITE_URL`). Se não estiver, a pessoa aterra na página inicial — a troca obrigatória de palavra-passe apanha-a na mesma.
 
