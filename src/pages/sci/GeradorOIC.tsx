@@ -25,6 +25,7 @@ import {
 import { COLUNAS_JUNTA, lerFolhasOIC, type FolhaIgnorada, type FolhaUsada } from '@/lib/oicFolhas';
 import { guardarFicheiro } from '@/lib/guardarFicheiro';
 import { comExtensao, semExtensao } from '@/lib/nomeFicheiro';
+import { DICA_TAB, tabNoCampo } from '@/lib/tabNoCampo';
 
 const letraColuna = (i: number) => {
   let s = '';
@@ -294,9 +295,11 @@ export default function GeradorOIC() {
           <Textarea
             value={textoColado}
             onChange={(e) => aoColar(e.target.value)}
+            onKeyDown={tabNoCampo}
             placeholder="Cola aqui as linhas copiadas do Excel (com ou sem cabeçalho)…"
             className="min-h-[120px] font-mono text-xs"
           />
+          <p className="text-[11px] text-muted-foreground">{DICA_TAB}</p>
 
           {folhas && (
             <div className="rounded-md border bg-muted/40 p-3 text-sm space-y-1">
