@@ -25,10 +25,15 @@ export const SidebarItem = ({ icon: Icon, label, to, badge }: SidebarItemProps) 
 
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton asChild isActive={isActive} tooltip={showBadge ? `${label} (${badge})` : label}>
+      <SidebarMenuButton
+        asChild
+        isActive={isActive}
+        tooltip={showBadge ? `${label} (${badge})` : label}
+        className={showBadge ? 'pr-9' : undefined}
+      >
         <NavLink to={to}>
           <Icon className="h-4 w-4 shrink-0" />
-          <span>{label}</span>
+          <span className="truncate">{label}</span>
         </NavLink>
       </SidebarMenuButton>
       {showBadge && (

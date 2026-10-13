@@ -1,15 +1,14 @@
 /**
  * Utilizador de login = o nome sem o email (ex.: "nalves"), como no Windows.
  *
- * O Supabase identifica as contas por email, por isso uma conta criada por um
- * administrador usa internamente "<utilizador>@sci.local" (um endereço que não existe
- * nem recebe nada — o email verdadeiro da pessoa fica guardado à parte). No login,
- * o que não tem "@" completa-se com esse domínio. Contas antigas, com email verdadeiro,
- * continuam a entrar com o email completo.
+ * O Supabase identifica as contas por email: o utilizador "nalves" é a conta
+ * "nalves@bca.cv". No login, o que não tem "@" completa-se com esse domínio; quem
+ * quiser pode continuar a escrever o email completo (e contas de outros domínios
+ * entram com o email completo).
  *
  * O mesmo valor está em supabase/functions/admin-utilizadores/index.ts (DOMINIO_INTERNO).
  */
-export const DOMINIO_INTERNO = 'sci.local';
+export const DOMINIO_INTERNO = 'bca.cv';
 
 /** O que se escreveu no login → o email com que o Supabase conhece a conta. */
 export function emailDeLogin(entrada: string): string {

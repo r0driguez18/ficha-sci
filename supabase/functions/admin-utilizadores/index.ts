@@ -55,10 +55,10 @@ export function normalizarNome(v: unknown): string {
 }
 
 /**
- * O utilizador de login (sem email). O Supabase identifica contas por email, por isso a conta
- * usa "<utilizador>@sci.local" — mesmo valor que src/lib/utilizador.ts (DOMINIO_INTERNO).
+ * O utilizador de login (sem email). O Supabase identifica contas por email: o utilizador
+ * "nalves" é a conta "nalves@bca.cv" — mesmo valor que src/lib/utilizador.ts (DOMINIO_INTERNO).
  */
-export const DOMINIO_INTERNO = 'sci.local';
+export const DOMINIO_INTERNO = 'bca.cv';
 
 /** O utilizador e tambem o codigo de operador (ex.: "nalves", "etavares", "elvisb"). */
 export function normalizarUtilizador(v: unknown): string {
@@ -163,7 +163,7 @@ async function criar(req: Request, amb: Ambiente, f: FetchFn, corpo: Json): Prom
   const nome = normalizarNome(corpo.nome);
   const utilizador = normalizarUtilizador(corpo.utilizador);
   const codigo = utilizador; // o utilizador e o codigo de operador
-  const conta = `${utilizador}@${DOMINIO_INTERNO}`; // identificador da conta no Supabase
+  const conta = `${utilizador}@${DOMINIO_INTERNO}`; // a conta no Supabase (ex.: nalves@bca.cv)
   const origem = origemPublica(req, amb);
   const c = cliente(amb, f);
 
