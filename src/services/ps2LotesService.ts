@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import type { Sentido } from '@/lib/verificacaoMovimentos';
+import type { Sentido } from '@/lib/verificacaoSentido';
 
 export interface Ps2Lote {
   id: string;
@@ -92,17 +92,8 @@ export async function editarLote(id: string, empresa: string, sentido: Sentido):
   return { erro: error ? error.message : null };
 }
 
-export async function verificarLote(
-  id: string,
-  token: string,
-  contagem: number,
-  observacoes: string,
-): Promise<{ erro: string | null }> {
-  const { error } = await supabase.rpc('verificar_lote_ps2', {
-    p_id: id,
-    p_token: token,
-    p_contagem: contagem,
-    p_observacoes: observacoes,
-  });
+/** Marca (ou desfaz) a verificação de um ficheiro. */
+export async function marcarVerificado(id: string, verificado: boolean): Promise<{ erro: string | null }> {
+  const { error } = await supabase.rpc('marcar_lote_ps2', { p_id: id, p_verificado: verificado });
   return { erro: error ? error.message : null };
 }

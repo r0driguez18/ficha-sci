@@ -90,7 +90,7 @@ O menu é plano, agrupado por:
   - Retornos de Cobranças (SLA em dias úteis; > 2 dias úteis de atraso = urgente)
   - Passagem de Turno (histórico de notas por turno; cada pessoa confirma a leitura de cada nota)
 - **SCI** (continuação)
-  - Verificar Débitos/Créditos (cada PS2 guardado no gerador fica registado; o turno seguinte confere o débito/crédito no core, com contagem de duplicados, e assina com o PIN)
+  - Verificar Débitos/Créditos (cada PS2 guardado no gerador fica registado; o turno seguinte confere o débito/crédito no core e marca "verificado")
 - **Ferramentas**
   - Geradores PS2 / OIC (um separador por gerador: PS2 — folha de salários → NIB → `PS2_AAAAMMDD.txt`; OIC — pagamentos interbancários → `Interbancario_AAAAMMDD.txt`, 135 caracteres/linha, ANSI)
   - Estatísticas (evolução mensal dos processamentos; exportar XLSX/PDF)
@@ -202,7 +202,7 @@ Requisitos: `.env.production.local` na pasta (não vai para o git) e utilizador 
 
 Em **Configurações → Utilizadores** (só para administradores) cria-se a conta de um colega: nome, email e **utilizador** (o que escreve no login, sem `@`; é também o código de operador, ex.: `nalves`, `etavares`, `elvisb`). A conta fica ligada ao operador com esse código e a app devolve um **link de uso único** (cerca de 1 hora) que se envia à pessoa; é ela quem escolhe a palavra-passe, ninguém a vê. "Novo link" gera outro.
 
-No login escreve-se só o utilizador. O Supabase identifica as contas por email, por isso as contas criadas aqui usam `<utilizador>@sci.local` (um endereço interno que não recebe nada; o email verdadeiro fica guardado à parte). Contas antigas continuam a entrar com o email completo.
+No login escreve-se só o utilizador: `nalves` é a conta `nalves@bca.cv` (o domínio completa-se sozinho; quem quiser pode escrever o email completo, e contas de outros domínios entram com o email completo).
 
 A chave de administração do Supabase não pode ir para o browser, por isso isto passa por uma **função no servidor** (`supabase/functions/admin-utilizadores`), que volta a verificar em cada pedido que quem chama é administrador.
 

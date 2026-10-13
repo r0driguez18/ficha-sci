@@ -720,6 +720,10 @@ export type Database = {
         Args: { p_id: string; p_empresa: string; p_sentido: string }
         Returns: undefined
       }
+      marcar_lote_ps2: {
+        Args: { p_id: string; p_verificado: boolean }
+        Returns: undefined
+      }
       verificar_lote_ps2: {
         Args: { p_id: string; p_token: string; p_contagem: number; p_observacoes: string }
         Returns: undefined
