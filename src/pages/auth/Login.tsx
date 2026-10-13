@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Mail, Lock, Eye, EyeOff, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ArrowLeft, ShieldCheck, User } from 'lucide-react';
+import { emailDeLogin } from '@/lib/utilizador';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -24,13 +25,13 @@ const Login = () => {
     setFormError(null);
     
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await supabase.auth.signInWithPassword({ email: emailDeLogin(email), password });
       if (error) throw error;
       navigate('/dashboard');
     } catch (error: any) {
       const raw = error?.message || '';
       const isInvalid = raw.toLowerCase().includes('invalid') || raw.toLowerCase().includes('credenciais');
-      const errorMessage = isInvalid ? 'Email ou senha incorretos' : (raw || 'Erro ao fazer login');
+      const errorMessage = isInvalid ? 'Utilizador ou senha incorretos' : (raw || 'Erro ao fazer login');
       setFormError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -41,7 +42,12 @@ const Login = () => {
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
-      setFormError('Por favor, insira o seu email.');
+      setFormError('Por favor, insira o seu utilizador ou email.');
+      return;
+    }
+    if (!email.includes('@')) {
+      // As contas criadas pelo administrador não têm email para receber nada: pede-se um link novo.
+      setFormError('Para repor a senha pede um link novo ao administrador do SCI.');
       return;
     }
     setLoading(true);
@@ -76,7 +82,7 @@ const Login = () => {
             </button>
             <h1 className="text-2xl font-bold text-foreground">Recuperar Senha</h1>
             <p className="text-sm text-muted-foreground">
-              Escreve o teu email para receber um link de recuperação
+              Escreve o teu email para receber um link de recuperação. Se entras só com o utilizador, pede um link novo ao administrador.
             </p>
           </CardHeader>
           <CardContent className="px-8 pb-8">
@@ -141,17 +147,20 @@ const Login = () => {
             </Alert>
           )}
           <form onSubmit={handleLogin} className="space-y-4">
-            {/* Email field */}
+            {/* Utilizador (ou email, nas contas antigas) */}
             <div>
               <label htmlFor="login-email" className="text-sm font-medium text-foreground mb-1.5 block">
-                Email
+                Utilizador
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="login-email"
-                  type="email"
-                  placeholder="nome@exemplo.com"
+                  type="text"
+                  autoComplete="username"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  placeholder="utilizador"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required

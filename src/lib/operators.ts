@@ -19,9 +19,20 @@ export const OPERATORS: Operator[] = [
   { value: 'nalves', label: 'Nelson Alves' },
   { value: 'etavares', label: 'Evandro Tavares' },
   { value: 'edelgado', label: 'Emanuel Delgado' },
-  { value: 'ebrito', label: 'Elvis Brito' },
+  { value: 'elvisb', label: 'Elvis Brito' },
   { value: 'lspencer', label: 'Louis Spencer' },
 ];
+
+/**
+ * Códigos que já existiram e foram corrigidos. As fichas já assinadas não se reescrevem (o selo
+ * de integridade cobre o código do operador), por isso o código antigo continua nos dados
+ * históricos e resolve-se para o atual.
+ */
+export const CODIGOS_ANTIGOS: Record<string, string> = { ebrito: 'elvisb' };
+
+export function codigoAtual(value: string): string {
+  return CODIGOS_ANTIGOS[value] ?? value;
+}
 
 /**
  * Nome apresentável a partir do `value` guardado nos dados. Só conhece os 5
@@ -30,5 +41,6 @@ export const OPERATORS: Operator[] = [
  */
 export function operatorLabel(value: string | null | undefined): string {
   if (!value) return '';
-  return OPERATORS.find((o) => o.value === value)?.label ?? value;
+  const atual = codigoAtual(value);
+  return OPERATORS.find((o) => o.value === atual)?.label ?? value;
 }

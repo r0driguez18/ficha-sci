@@ -32,7 +32,7 @@ INSERT INTO public.operators (value, nome) VALUES
   ('nalves',   'Nelson Alves'),
   ('etavares', 'Evandro Tavares'),
   ('edelgado', 'Emanuel Delgado'),
-  ('ebrito',   'Elvis Brito'),
+  ('elvisb',   'Elvis Brito'),
   ('lspencer', 'Louis Spencer')
 ON CONFLICT (value) DO NOTHING;
 

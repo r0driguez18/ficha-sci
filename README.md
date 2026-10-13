@@ -196,6 +196,29 @@ type $env:USERPROFILE\.ssh\id_ed25519.pub | ssh dis@172.20.11.54 "mkdir -p ~/.ss
 
 Requisitos: `.env.production.local` na pasta (não vai para o git) e utilizador de SSH `dis` no servidor (o `sudo` continua a pedir a palavra-passe). Os scripts antigos em `production/scripts/` são de outro setup e não se aplicam.
 
+## Administração de utilizadores
+
+Em **Configurações → Utilizadores** (só para administradores) cria-se a conta de um colega: nome, email e **utilizador** (o que escreve no login, sem `@`; é também o código de operador, ex.: `nalves`, `etavares`, `elvisb`). A conta fica ligada ao operador com esse código e a app devolve um **link de uso único** (cerca de 1 hora) que se envia à pessoa; é ela quem escolhe a palavra-passe, ninguém a vê. "Novo link" gera outro.
+
+No login escreve-se só o utilizador. O Supabase identifica as contas por email, por isso as contas criadas aqui usam `<utilizador>@sci.local` (um endereço interno que não recebe nada; o email verdadeiro fica guardado à parte). Contas antigas continuam a entrar com o email completo.
+
+A chave de administração do Supabase não pode ir para o browser, por isso isto passa por uma **função no servidor** (`supabase/functions/admin-utilizadores`), que volta a verificar em cada pedido que quem chama é administrador.
+
+**Quem é administrador:** o operador com `papel = 'administrador'` ligado à conta. O primeiro define-se uma vez, no servidor (trocar o email):
+
+```bash
+sudo docker exec -i supabase-db psql -U postgres -c "update public.operators set papel='administrador', user_id=(select id from auth.users where email='EMAIL_DO_ADMIN') where value='nalves';"
+```
+
+**Instalar a função no servidor** (uma vez, e de novo se o ficheiro mudar):
+
+1. Descobrir a pasta de funções: `sudo docker inspect supabase-edge-functions --format '{{range .Mounts}}{{.Source}} -> {{.Destination}}{{println}}{{end}}'` — a que acaba em `/home/deno/functions`.
+2. Copiar a pasta `supabase/functions/admin-utilizadores` para lá (fica `.../functions/admin-utilizadores/index.ts`).
+3. O nginx tem de encaminhar `/functions/v1/` para o Kong, tal como já faz com `/auth/v1/` e `/rest/v1/`.
+4. Opcional: variável `SCI_URL_PUBLICA` (endereço da app) no contentor; por omissão usa o endereço de onde o administrador abriu a app.
+
+O GoTrue só redireciona o link para `/reset-password` se o endereço da app estiver em `GOTRUE_URI_ALLOW_LIST` (ou for o `SITE_URL`). Se não estiver, a pessoa aterra na página inicial — a troca obrigatória de palavra-passe apanha-a na mesma.
+
 ## Configuração de Base de Dados
 
 Para alterar a configuração da base de dados Supabase:
