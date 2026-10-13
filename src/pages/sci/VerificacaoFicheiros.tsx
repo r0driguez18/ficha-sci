@@ -1,24 +1,18 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PinDialog } from '@/components/taskboard/PinDialog';
-import { AlertTriangle, CheckCircle2, ChevronDown, ChevronRight, Copy, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, Copy } from 'lucide-react';
 import { toast } from 'sonner';
-import { contarMovimentos, type Sentido } from '@/lib/verificacaoMovimentos';
-import { editarLote, listarLotes, verificarLote, type Ps2Lote } from '@/services/ps2LotesService';
-import { operatorHasPin, verifyOperatorPin } from '@/services/operatorPinService';
-import { useCurrentOperator } from '@/hooks/useOperators';
+import type { Sentido } from '@/lib/verificacaoSentido';
+import { editarLote, listarLotes, marcarVerificado, type Ps2Lote } from '@/services/ps2LotesService';
 
 const fmtValor = (n: number) =>
   Number(n).toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -34,8 +28,11 @@ const valorParaCopiar = (n: number) => {
 /** A conta como o operador a conhece: o NIB sem o banco/balcão ("00030000" + conta + natureza). */
 const contaCurta = (nib: string) => (nib.length === 21 ? nib.slice(8) : nib);
 
-const dataCurta = (iso: string | null) =>
-  iso ? new Date(iso).toLocaleString('pt-PT', { dateStyle: 'short', timeStyle: 'short' }) : '—';
+const dataHora = (iso: string | null) =>
+  iso ? new Date(iso).toLocaleString('pt-PT', { dateStyle: 'short', timeStyle: 'short' }) : '';
+
+/** O nome do ficheiro já traz a empresa (SA + empresa + mês + letra): mostra-se sem a extensão. */
+const nomeSemExtensao = (n: string) => n.replace(/\.[A-Za-z0-9]{1,8}$/, '');
 
 async function copiar(texto: string, rotulo: string) {
   try {
@@ -46,277 +43,18 @@ async function copiar(texto: string, rotulo: string) {
   }
 }
 
-function EstadoBadge({ l }: { l: Ps2Lote }) {
-  if (l.estado === 'verificado') {
-    return (
-      <Badge variant="secondary" className="whitespace-nowrap">
-        <CheckCircle2 className="mr-1 h-3 w-3" /> verificado
-      </Badge>
-    );
-  }
-  if (l.estado === 'problema') {
-    return (
-      <Badge variant="destructive" className="whitespace-nowrap">
-        <AlertTriangle className="mr-1 h-3 w-3" /> com problema
-      </Badge>
-    );
-  }
-  return (
-    <Badge variant="outline" className="whitespace-nowrap">
-      por verificar
-    </Badge>
-  );
-}
-
-interface LinhaProps {
-  lote: Ps2Lote;
-  aberto: boolean;
-  aAbrir: () => void;
-  aoAlterado: () => void;
-}
-
-function LinhaLote({ lote, aberto, aAbrir, aoAlterado }: LinhaProps) {
-  const operador = useCurrentOperator();
-  const [empresa, setEmpresa] = useState(lote.empresa);
-  const [sentido, setSentido] = useState<Sentido>(lote.sentido);
-  const [texto, setTexto] = useState('');
-  const [observacoes, setObservacoes] = useState('');
-  const [pinAberto, setPinAberto] = useState(false);
-  const [aGuardar, setAGuardar] = useState(false);
-  const tokenRef = useRef<string | null>(null);
-
-  const porVerificar = lote.estado === 'por_verificar';
-  const resultado = useMemo(
-    () => contarMovimentos(texto, Number(lote.total), sentido),
-    [texto, lote.total, sentido],
-  );
-  const temTexto = texto.trim() !== '';
-
-  const guardarEdicao = async (novaEmpresa: string, novoSentido: Sentido) => {
-    const r = await editarLote(lote.id, novaEmpresa, novoSentido);
-    if (r.erro) toast.error(r.erro);
-    else aoAlterado();
-  };
-
-  const pedirPin = async () => {
-    if (resultado.contagem !== 1 && observacoes.trim() === '') {
-      toast.error('Escreve uma observação: o resultado não é "um movimento".');
-      return;
-    }
-    const tem = await operatorHasPin();
-    if (tem === false) {
-      toast.error('Ainda não tens PIN. Define-o em Configurações → PIN de assinatura.');
-      return;
-    }
-    setPinAberto(true);
-  };
-
-  const confirmarPin = async (pin: string) => {
-    const r = await verifyOperatorPin(pin);
-    if (!r.token) return { ok: false, error: r.error ?? 'PIN incorreto.' };
-    tokenRef.current = r.token;
-    return { ok: true };
-  };
-
-  const concluir = async () => {
-    const token = tokenRef.current;
-    tokenRef.current = null;
-    if (!token) return;
-    setAGuardar(true);
-    const r = await verificarLote(lote.id, token, resultado.contagem, observacoes.trim());
-    setAGuardar(false);
-    if (r.erro) {
-      toast.error(r.erro);
-      return;
-    }
-    toast.success('Verificação registada.');
-    aoAlterado();
-  };
-
-  return (
-    <>
-      <TableRow className={aberto ? 'bg-muted/40' : undefined}>
-        <TableCell className="w-8 p-2">
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={aAbrir} aria-label="Abrir verificação">
-            {aberto ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-          </Button>
-        </TableCell>
-        <TableCell className="whitespace-nowrap text-xs">{lote.data_processamento}</TableCell>
-        <TableCell className="min-w-[10rem]">
-          <Input
-            value={empresa}
-            onChange={(e) => setEmpresa(e.target.value)}
-            onBlur={() => empresa.trim() !== lote.empresa && guardarEdicao(empresa, sentido)}
-            placeholder="Empresa"
-            className="h-8"
-            aria-label="Empresa"
-          />
-        </TableCell>
-        <TableCell>
-          <div className="font-mono text-xs">{lote.nome_ficheiro}</div>
-          <div className="text-[10px] text-muted-foreground">{lote.tipo_operacao}</div>
-        </TableCell>
-        <TableCell>
-          <Select
-            value={sentido}
-            disabled={!porVerificar}
-            onValueChange={(v) => {
-              setSentido(v as Sentido);
-              guardarEdicao(empresa, v as Sentido);
-            }}
-          >
-            <SelectTrigger className="h-8 w-[7.5rem]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="debito">Débito</SelectItem>
-              <SelectItem value="credito">Crédito</SelectItem>
-            </SelectContent>
-          </Select>
-        </TableCell>
-        <TableCell className="whitespace-nowrap">
-          <button
-            type="button"
-            className="inline-flex items-center gap-1 font-mono text-xs hover:text-primary"
-            title={`NIB ${lote.conta_empresa} — clica para copiar a conta`}
-            onClick={() => copiar(contaCurta(lote.conta_empresa), 'Conta')}
-          >
-            {contaCurta(lote.conta_empresa)} <Copy className="h-3 w-3" />
-          </button>
-        </TableCell>
-        <TableCell className="whitespace-nowrap text-right">
-          <button
-            type="button"
-            className="inline-flex items-center gap-1 tabular-nums hover:text-primary"
-            title="Clica para copiar o valor"
-            onClick={() => copiar(valorParaCopiar(lote.total), 'Valor')}
-          >
-            {fmtValor(lote.total)} <Copy className="h-3 w-3" />
-          </button>
-          <div className="text-[10px] text-muted-foreground">{lote.n_registos} registos</div>
-        </TableCell>
-        <TableCell>
-          <EstadoBadge l={lote} />
-        </TableCell>
-      </TableRow>
-
-      {aberto && (
-        <TableRow className="bg-muted/20">
-          <TableCell />
-          <TableCell colSpan={7} className="space-y-3 p-4">
-            {!porVerificar ? (
-              <div className="space-y-1 text-sm">
-                <p>
-                  {lote.estado === 'verificado' ? 'Verificado' : 'Registado com problema'} por{' '}
-                  <strong>{lote.verificado_por_codigo ?? '—'}</strong> em {dataCurta(lote.verificado_em)} —{' '}
-                  {lote.contagem} movimento(s) encontrado(s).
-                </p>
-                {lote.mesma_pessoa && (
-                  <p className="text-amber-600">Verificado pela mesma pessoa que guardou o ficheiro.</p>
-                )}
-                {lote.observacoes && <p className="text-muted-foreground">Observação: {lote.observacoes}</p>}
-              </div>
-            ) : (
-              <>
-                <div className="space-y-1.5">
-                  <Label htmlFor={`mov-${lote.id}`}>
-                    Movimentos da conta no core ({sentido === 'debito' ? 'débito' : 'crédito'} de{' '}
-                    <strong>{fmtValor(lote.total)}</strong>)
-                  </Label>
-                  <Textarea
-                    id={`mov-${lote.id}`}
-                    value={texto}
-                    onChange={(e) => setTexto(e.target.value)}
-                    placeholder="No core, abre os movimentos da conta, seleciona o texto, copia e cola aqui."
-                    className="min-h-[110px] font-mono text-xs"
-                  />
-                </div>
-
-                {temTexto && (
-                  <div className="space-y-2 text-sm">
-                    {resultado.contagem === 1 && (
-                      <p className="flex items-center gap-2 font-medium text-green-600">
-                        <CheckCircle2 className="h-4 w-4" /> 1 movimento com este valor — certo.
-                      </p>
-                    )}
-                    {resultado.contagem === 0 && (
-                      <p className="flex items-center gap-2 font-medium text-destructive">
-                        <AlertTriangle className="h-4 w-4" /> Nenhum movimento com este valor — em falta.
-                      </p>
-                    )}
-                    {resultado.contagem >= 2 && (
-                      <p className="flex items-center gap-2 font-medium text-amber-600">
-                        <AlertTriangle className="h-4 w-4" /> {resultado.contagem} movimentos com este valor —
-                        possível duplicado.
-                      </p>
-                    )}
-                    {resultado.outroSentido > 0 && (
-                      <p className="text-xs text-muted-foreground">
-                        {resultado.outroSentido} linha(s) com o valor mas no sentido contrário — não contam.
-                      </p>
-                    )}
-                    {resultado.semIndicacaoDeSentido > 0 && (
-                      <p className="text-xs text-muted-foreground">
-                        {resultado.semIndicacaoDeSentido} das linhas não traz D/C no texto: confirma o sentido no
-                        core.
-                      </p>
-                    )}
-                    {resultado.linhas.length > 0 && (
-                      <pre className="max-h-32 overflow-auto whitespace-pre-wrap rounded border bg-background p-2 text-xs">
-                        {resultado.linhas.join('\n')}
-                      </pre>
-                    )}
-                  </div>
-                )}
-
-                {temTexto && resultado.contagem !== 1 && (
-                  <div className="space-y-1.5">
-                    <Label htmlFor={`obs-${lote.id}`}>Observação (obrigatória quando não é "um movimento")</Label>
-                    <Input
-                      id={`obs-${lote.id}`}
-                      value={observacoes}
-                      onChange={(e) => setObservacoes(e.target.value)}
-                      placeholder="O que se passa? (ex.: aplicado duas vezes, falta o débito…)"
-                    />
-                  </div>
-                )}
-
-                <Button onClick={pedirPin} disabled={!temTexto || aGuardar}>
-                  <ShieldCheck className="mr-2 h-4 w-4" />
-                  {resultado.contagem === 1 ? 'Confirmar com PIN' : 'Registar com problema (PIN)'}
-                </Button>
-              </>
-            )}
-          </TableCell>
-        </TableRow>
-      )}
-
-      <PinDialog
-        open={pinAberto}
-        onOpenChange={setPinAberto}
-        mode="enter"
-        operatorName={operador?.label ?? ''}
-        title="Confirmar verificação"
-        description={`Introduza o seu PIN para registar a verificação de ${lote.nome_ficheiro}${
-          operador ? ` como ${operador.label}` : ''
-        }.`}
-        onConfirm={confirmarPin}
-        onSuccess={concluir}
-      />
-    </>
-  );
-}
-
 export default function VerificacaoFicheiros() {
   const queryClient = useQueryClient();
   const [soPorVerificar, setSoPorVerificar] = useState(true);
   const [pesquisa, setPesquisa] = useState('');
-  const [aberto, setAberto] = useState<string | null>(null);
+  /** Ficheiros marcados nesta sessão: ficam visíveis (esbatidos) até se recarregar a página. */
+  const [marcadosAgora, setMarcadosAgora] = useState<Set<string>>(new Set());
+  const [aGravar, setAGravar] = useState<string | null>(null);
 
   const q = useQuery({
-    queryKey: ['ps2-lotes', soPorVerificar],
+    queryKey: ['ps2-lotes'],
     queryFn: async () => {
-      const r = await listarLotes({ soPorVerificar });
+      const r = await listarLotes({ limite: 300 });
       if (r.erro) throw new Error(r.erro);
       return r.lotes;
     },
@@ -325,16 +63,16 @@ export default function VerificacaoFicheiros() {
 
   const lotes = useMemo(() => {
     const t = pesquisa.trim().toLowerCase();
-    const todos = q.data ?? [];
-    if (!t) return todos;
-    return todos.filter(
-      (l) =>
-        l.empresa.toLowerCase().includes(t) ||
-        l.nome_ficheiro.toLowerCase().includes(t) ||
-        l.conta_empresa.includes(t) ||
-        contaCurta(l.conta_empresa).includes(t),
-    );
-  }, [q.data, pesquisa]);
+    return (q.data ?? [])
+      .filter((l) => !soPorVerificar || l.estado !== 'verificado' || marcadosAgora.has(l.id))
+      .filter(
+        (l) =>
+          !t ||
+          l.nome_ficheiro.toLowerCase().includes(t) ||
+          l.conta_empresa.includes(t) ||
+          contaCurta(l.conta_empresa).includes(t),
+      );
+  }, [q.data, pesquisa, soPorVerificar, marcadosAgora]);
 
   const repetidos = useMemo(() => {
     const cont = new Map<string, number>();
@@ -342,12 +80,46 @@ export default function VerificacaoFicheiros() {
     return new Set([...cont.entries()].filter(([, n]) => n > 1).map(([h]) => h));
   }, [q.data]);
 
+  const recarregar = async () => {
+    await queryClient.invalidateQueries({ queryKey: ['ps2-lotes'] });
+    window.dispatchEvent(new Event('update-verificacao-badge'));
+  };
+
+  const alternar = async (l: Ps2Lote) => {
+    const novo = l.estado !== 'verificado';
+    setAGravar(l.id);
+    const r = await marcarVerificado(l.id, novo);
+    setAGravar(null);
+    if (r.erro) {
+      toast.error(r.erro);
+      return;
+    }
+    setMarcadosAgora((prev) => {
+      const n = new Set(prev);
+      if (novo) n.add(l.id);
+      else n.delete(l.id);
+      return n;
+    });
+    await recarregar();
+  };
+
+  const mudarSentido = async (l: Ps2Lote, s: Sentido) => {
+    const r = await editarLote(l.id, l.empresa, s);
+    if (r.erro) toast.error(r.erro);
+    else await recarregar();
+  };
+
   return (
     <PageContainer size="wide">
       <PageHeader
         title="Verificar Débitos/Créditos"
-        subtitle="Os ficheiros PS2 guardados no gerador: confere o débito ou crédito no core e assina com o PIN"
+        subtitle="Os ficheiros PS2 guardados no gerador: confere no core e marca como verificado"
       />
+
+      <p className="mb-4 text-sm text-muted-foreground">
+        Salários e pagamentos <strong>debitam</strong> a conta da empresa; cobranças <strong>creditam</strong>-na. No core,
+        confirma que há <strong>um</strong> movimento com o valor (dois é duplicado) e marca o ficheiro como verificado.
+      </p>
 
       <Card className="mb-4">
         <CardContent className="flex flex-wrap items-center gap-4 pt-6">
@@ -362,18 +134,12 @@ export default function VerificacaoFicheiros() {
           <Input
             value={pesquisa}
             onChange={(e) => setPesquisa(e.target.value)}
-            placeholder="Procurar por empresa, ficheiro ou conta…"
             className="max-w-sm"
+            aria-label="Procurar por ficheiro ou conta"
           />
           <span className="text-xs text-muted-foreground">{lotes.length} ficheiro(s)</span>
         </CardContent>
       </Card>
-
-      <p className="mb-4 text-sm text-muted-foreground">
-        Salários e pagamentos <strong>debitam</strong> a conta da empresa; cobranças <strong>creditam</strong>-na. Em
-        cada ficheiro, o core deve mostrar <strong>um</strong> movimento com o valor — dois é duplicado, nenhum é em
-        falta.
-      </p>
 
       {repetidos.size > 0 && (
         <Alert className="mb-4">
@@ -396,53 +162,105 @@ export default function VerificacaoFicheiros() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-8" />
+                <TableHead className="w-24">Verificado</TableHead>
                 <TableHead>Data</TableHead>
-                <TableHead>Empresa</TableHead>
-                <TableHead>Ficheiro</TableHead>
+                <TableHead>Empresa / ficheiro</TableHead>
                 <TableHead title="O que o core deve mostrar na conta da empresa: um débito (salários, pagamentos) ou um crédito (cobranças)">
                   Na conta da empresa
                 </TableHead>
                 <TableHead>Conta</TableHead>
                 <TableHead className="text-right">Valor</TableHead>
-                <TableHead>Estado</TableHead>
+                <TableHead>Quem verificou</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {q.isLoading && (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-sm text-muted-foreground">
+                  <TableCell colSpan={7} className="text-sm text-muted-foreground">
                     A carregar…
                   </TableCell>
                 </TableRow>
               )}
               {!q.isLoading && lotes.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="py-8 text-center text-sm text-muted-foreground">
+                  <TableCell colSpan={7} className="py-8 text-center text-sm text-muted-foreground">
                     {soPorVerificar
                       ? 'Nada por verificar. Os ficheiros aparecem aqui quando são guardados no gerador PS2.'
                       : 'Ainda não há ficheiros registados.'}
                   </TableCell>
                 </TableRow>
               )}
-              {lotes.map((l) => (
-                <React.Fragment key={l.id}>
-                  <LinhaLote
-                    lote={l}
-                    aberto={aberto === l.id}
-                    aAbrir={() => setAberto(aberto === l.id ? null : l.id)}
-                    aoAlterado={() => queryClient.invalidateQueries({ queryKey: ['ps2-lotes'] })}
-                  />
-                  {repetidos.has(l.hash_ficheiro) && (
-                    <TableRow className="border-0">
-                      <TableCell />
-                      <TableCell colSpan={7} className="pb-2 pt-0 text-[11px] text-amber-600">
-                        ↑ repetido: este conteúdo já foi guardado noutro registo.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </React.Fragment>
-              ))}
+              {lotes.map((l) => {
+                const feito = l.estado === 'verificado';
+                return (
+                  <TableRow key={l.id} className={feito ? 'bg-muted/30' : undefined}>
+                    <TableCell>
+                      <Checkbox
+                        checked={feito}
+                        disabled={aGravar === l.id}
+                        onCheckedChange={() => alternar(l)}
+                        aria-label={`Verificado: ${l.nome_ficheiro}`}
+                        className="h-5 w-5"
+                      />
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-xs">{l.data_processamento}</TableCell>
+                    <TableCell>
+                      <div className={`font-mono text-sm font-medium ${feito ? 'text-muted-foreground' : ''}`}>
+                        {nomeSemExtensao(l.nome_ficheiro)}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground">
+                        {l.tipo_operacao} · {l.n_registos} registos
+                        {repetidos.has(l.hash_ficheiro) && (
+                          <span className="ml-2 text-amber-600">repetido: mesmo conteúdo guardado antes</span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Select
+                        value={l.sentido}
+                        disabled={feito}
+                        onValueChange={(v) => mudarSentido(l, v as Sentido)}
+                      >
+                        <SelectTrigger className="h-8 w-[7.5rem]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="debito">Débito</SelectItem>
+                          <SelectItem value="credito">Crédito</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1 font-mono text-xs hover:text-primary"
+                        title={`NIB ${l.conta_empresa} — clica para copiar a conta`}
+                        onClick={() => copiar(contaCurta(l.conta_empresa), 'Conta')}
+                      >
+                        {contaCurta(l.conta_empresa)} <Copy className="h-3 w-3" />
+                      </button>
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-right">
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1 tabular-nums hover:text-primary"
+                        title="Clica para copiar o valor"
+                        onClick={() => copiar(valorParaCopiar(l.total), 'Valor')}
+                      >
+                        {fmtValor(l.total)} <Copy className="h-3 w-3" />
+                      </button>
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {feito && (
+                        <>
+                          {l.verificado_por_codigo ?? '—'} · {dataHora(l.verificado_em)}
+                          {l.mesma_pessoa && <div className="text-amber-600">mesma pessoa que guardou</div>}
+                        </>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </CardContent>

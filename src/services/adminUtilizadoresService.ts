@@ -55,11 +55,18 @@ async function chamar<T>(corpo: Record<string, unknown>): Promise<Resposta<T>> {
       if (ctx.status === 404) {
         return {
           dados: null,
-          erro: 'O serviço de administração não está instalado no servidor (função admin-utilizadores).',
+          erro: 'O serviço de administração não está instalado no servidor (função admin-utilizadores) ou o nginx não encaminha /functions/v1/.',
         };
       }
+      return {
+        dados: null,
+        erro: `O serviço de administração respondeu com erro ${ctx.status}. Confirma que a função admin-utilizadores está instalada no servidor.`,
+      };
     }
-    return { dados: null, erro: 'Não consegui contactar o serviço de administração de utilizadores.' };
+    return {
+      dados: null,
+      erro: 'Sem ligação ao serviço de administração (rede, certificado ou /functions/v1/ sem encaminhamento no nginx).',
+    };
   }
   const d = data as { erro?: string } & Record<string, unknown>;
   if (d?.erro) return { dados: null, erro: d.erro };
