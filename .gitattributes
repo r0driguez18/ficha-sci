@@ -1,2 +1,2 @@
-# Scripts de servidor (Linux): nunca com fins de linha do Windows, senão o bash não os corre.
+# Scripts de shell (Linux): nunca com fins de linha do Windows, senao o bash nao os corre.
 *.sh text eol=lf
