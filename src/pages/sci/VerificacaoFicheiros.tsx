@@ -152,8 +152,10 @@ function LinhaLote({ lote, aberto, aAbrir, aoAlterado }: LinhaProps) {
             aria-label="Empresa"
           />
         </TableCell>
-        <TableCell className="font-mono text-xs">{lote.nome_ficheiro}</TableCell>
-        <TableCell className="text-xs">{lote.tipo_operacao}</TableCell>
+        <TableCell>
+          <div className="font-mono text-xs">{lote.nome_ficheiro}</div>
+          <div className="text-[10px] text-muted-foreground">{lote.tipo_operacao}</div>
+        </TableCell>
         <TableCell>
           <Select
             value={sentido}
@@ -201,7 +203,7 @@ function LinhaLote({ lote, aberto, aAbrir, aoAlterado }: LinhaProps) {
       {aberto && (
         <TableRow className="bg-muted/20">
           <TableCell />
-          <TableCell colSpan={8} className="space-y-3 p-4">
+          <TableCell colSpan={7} className="space-y-3 p-4">
             {!porVerificar ? (
               <div className="space-y-1 text-sm">
                 <p>
@@ -343,8 +345,8 @@ export default function VerificacaoFicheiros() {
   return (
     <PageContainer size="wide">
       <PageHeader
-        title="Verificação de ficheiros"
-        subtitle="Os ficheiros PS2 guardados no gerador: confere o débito/crédito no core e assina com o PIN"
+        title="Verificar Débitos/Créditos"
+        subtitle="Os ficheiros PS2 guardados no gerador: confere o débito ou crédito no core e assina com o PIN"
       />
 
       <Card className="mb-4">
@@ -366,6 +368,12 @@ export default function VerificacaoFicheiros() {
           <span className="text-xs text-muted-foreground">{lotes.length} ficheiro(s)</span>
         </CardContent>
       </Card>
+
+      <p className="mb-4 text-sm text-muted-foreground">
+        Salários e pagamentos <strong>debitam</strong> a conta da empresa; cobranças <strong>creditam</strong>-na. Em
+        cada ficheiro, o core deve mostrar <strong>um</strong> movimento com o valor — dois é duplicado, nenhum é em
+        falta.
+      </p>
 
       {repetidos.size > 0 && (
         <Alert className="mb-4">
@@ -392,8 +400,9 @@ export default function VerificacaoFicheiros() {
                 <TableHead>Data</TableHead>
                 <TableHead>Empresa</TableHead>
                 <TableHead>Ficheiro</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Sentido</TableHead>
+                <TableHead title="O que o core deve mostrar na conta da empresa: um débito (salários, pagamentos) ou um crédito (cobranças)">
+                  Na conta da empresa
+                </TableHead>
                 <TableHead>Conta</TableHead>
                 <TableHead className="text-right">Valor</TableHead>
                 <TableHead>Estado</TableHead>
@@ -402,14 +411,14 @@ export default function VerificacaoFicheiros() {
             <TableBody>
               {q.isLoading && (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-sm text-muted-foreground">
+                  <TableCell colSpan={8} className="text-sm text-muted-foreground">
                     A carregar…
                   </TableCell>
                 </TableRow>
               )}
               {!q.isLoading && lotes.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={9} className="py-8 text-center text-sm text-muted-foreground">
+                  <TableCell colSpan={8} className="py-8 text-center text-sm text-muted-foreground">
                     {soPorVerificar
                       ? 'Nada por verificar. Os ficheiros aparecem aqui quando são guardados no gerador PS2.'
                       : 'Ainda não há ficheiros registados.'}
@@ -427,7 +436,7 @@ export default function VerificacaoFicheiros() {
                   {repetidos.has(l.hash_ficheiro) && (
                     <TableRow className="border-0">
                       <TableCell />
-                      <TableCell colSpan={8} className="pb-2 pt-0 text-[11px] text-amber-600">
+                      <TableCell colSpan={7} className="pb-2 pt-0 text-[11px] text-amber-600">
                         ↑ repetido: este conteúdo já foi guardado noutro registo.
                       </TableCell>
                     </TableRow>
