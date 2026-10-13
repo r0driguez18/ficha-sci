@@ -109,7 +109,7 @@ export const SidebarContent = () => {
     { label: 'Histórico de Fichas', path: '/sci/historico-fichas', group: 'SCI', keywords: ['histórico', 'fichas', 'guardadas', 'arquivo'] },
     { label: 'Retornos de Cobranças', path: '/sci/retornos-cobrancas', group: 'SCI', keywords: ['retornos', 'cobranças', 'ficheiros', 'sla'] },
     { label: 'Passagem de Turno', path: '/sci/passagem-turno', group: 'SCI', keywords: ['passagem', 'turno', 'notas', 'handover'] },
-    { label: 'Verificação de ficheiros', path: '/sci/verificacao-ficheiros', group: 'SCI', keywords: ['verificação', 'verificar', 'salários', 'cobranças', 'ps2', 'débito', 'crédito', 'duplicado'] },
+    { label: 'Verificar Débitos/Créditos', path: '/sci/verificacao-ficheiros', group: 'SCI', keywords: ['verificação', 'verificar', 'salários', 'cobranças', 'ps2', 'débito', 'crédito', 'duplicado'] },
     { label: 'Geradores PS2 / OIC', path: '/sci/geradores', group: 'Ferramentas', keywords: ['geradores', 'ps2', 'oic', 'salários', 'pagamentos', 'ficheiro', 'banco', 'nib'] },
     { label: 'Renovação de Cartões', path: '/sci/renovacao-cartoes', group: 'Ferramentas', keywords: ['cartões', 'renovação', 'prn', 'balcão', 'lote'] },
     { label: 'Estatísticas', path: '/easyvista/estatisticas', group: 'Ferramentas', keywords: ['estatísticas', 'gráficos', 'processamentos', 'charts'] },
@@ -155,7 +155,7 @@ export const SidebarContent = () => {
             <SidebarItem icon={Archive} label="Histórico de Fichas" to="/sci/historico-fichas" badge={tapesBadge} />
             <SidebarItem icon={Undo2} label="Retornos de Cobranças" to="/sci/retornos-cobrancas" badge={retornosBadge} />
             <SidebarItem icon={ArrowRightLeft} label="Passagem de Turno" to="/sci/passagem-turno" />
-            <SidebarItem icon={ShieldCheck} label="Verificação de ficheiros" to="/sci/verificacao-ficheiros" badge={verificacaoBadge} />
+            <SidebarItem icon={ShieldCheck} label="Verificar Débitos/Créditos" to="/sci/verificacao-ficheiros" badge={verificacaoBadge} />
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>
