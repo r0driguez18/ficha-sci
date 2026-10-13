@@ -89,6 +89,8 @@ O menu é plano, agrupado por:
   - Histórico de Fichas (visão de equipa, filtros, anexar display de tapes)
   - Retornos de Cobranças (SLA em dias úteis; > 2 dias úteis de atraso = urgente)
   - Passagem de Turno (histórico de notas por turno; cada pessoa confirma a leitura de cada nota)
+- **SCI** (continuação)
+  - Verificação de ficheiros (cada PS2 guardado no gerador fica registado; o turno seguinte confere o débito/crédito no core, com contagem de duplicados, e assina com o PIN)
 - **Ferramentas**
   - Geradores PS2 / OIC (um separador por gerador: PS2 — folha de salários → NIB → `PS2_AAAAMMDD.txt`; OIC — pagamentos interbancários → `Interbancario_AAAAMMDD.txt`, 135 caracteres/linha, ANSI)
   - Estatísticas (evolução mensal dos processamentos; exportar XLSX/PDF)
