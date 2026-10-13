@@ -139,7 +139,6 @@ export function AdminUtilizadoresCard() {
                   id="adm-nome"
                   value={nome}
                   onChange={(e) => aoMudarNome(e.target.value)}
-                  placeholder="Nome e apelido"
                   required
                 />
               </div>
@@ -150,7 +149,6 @@ export function AdminUtilizadoresCard() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="nome@dominio"
                   required
                 />
               </div>
@@ -163,7 +161,6 @@ export function AdminUtilizadoresCard() {
                     setUtilizador(e.target.value.toLowerCase());
                     setUtilizadorMexido(true);
                   }}
-                  placeholder="ex.: nalves (sem @)"
                   autoComplete="off"
                   required
                 />
