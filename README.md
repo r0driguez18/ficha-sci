@@ -177,6 +177,8 @@ O servidor de produção é Ubuntu + nginx + Supabase em Docker, numa rede sem I
 .\production\deploy\deploy-sci.ps1
 ```
 
+Ou, com duplo-clique (a janela fica aberta no fim, mesmo se der erro): `deploy-producao.cmd`, na raiz do projeto. Um `.ps1` aberto com duplo-clique fecha a janela mal termina — por isso não se abre assim.
+
 Faz `git pull` da `main`, build, confirma que o build aponta para o servidor (e não para `localhost:8000`), envia o `dist` e as migrações e corre no servidor o `aplicar-no-servidor.sh` (backup, migrações em falta, publicar, recarregar o nginx, confirmar). Pede confirmação antes de mexer no servidor. `-SoVerificar` só faz o build e as verificações.
 
 **Migrações:** o servidor guarda quais já aplicou (tabela `deploy.migracoes_aplicadas`, num schema que a API não expõe) e aplica só as que faltam, cada uma numa transação com o seu registo. Não há lista para manter à mão. **Só na primeira vez** neste servidor é preciso dizer qual a última migração que já está em produção:
