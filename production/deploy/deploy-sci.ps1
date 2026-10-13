@@ -18,9 +18,13 @@
   Opcoes:
     -SoVerificar            so faz os passos 1 a 3 (nao toca no servidor)
     -SemMigracoes           nao envia nem aplica migracoes
-    -BaselineAte <nome>     SO NA PRIMEIRA VEZ neste servidor: nome (sem .sql) da ultima migracao
-                            que JA esta aplicada em producao. Todas as anteriores ficam marcadas
-                            como aplicadas; as posteriores sao aplicadas neste deploy.
+    -BaselineAte <nome>     So conta na PRIMEIRA vez neste servidor (depois o servidor ignora): nome
+                            (sem .sql) da ultima migracao que JA estava aplicada em producao. Por
+                            omissao ja vem preenchido com a de 2026-09-14 - normalmente nao se mexe.
+    -AdminEmail <email>     So se for preciso: email da conta que passa a administrador (operador
+                            nalves). Por omissao o deploy promove sozinho o operador nalves, se ainda
+                            nao houver nenhum administrador.
+    -AdminCodigo <codigo>   Operador a promover com -AdminEmail (por omissao: nalves).
     -Utilizador dis         utilizador de SSH no servidor (por omissao: dis)
     -Servidor ...           endereco do servidor (por omissao: 172.20.11.54)
 
@@ -32,7 +36,9 @@
 param(
   [string]$Servidor = '172.20.11.54',
   [string]$Utilizador = 'dis',
-  [string]$BaselineAte = '',
+  [string]$BaselineAte = '20260912090000_renovacao_cartoes_audit_fixes',
+  [string]$AdminEmail = '',
+  [string]$AdminCodigo = 'nalves',
   [switch]$SoVerificar,
   [switch]$SemMigracoes
 )
@@ -97,7 +103,7 @@ Write-Host "  versao : $versao"
 Write-Host "  dist   : $principal"
 if ($migs.Count -gt 0) {
   Write-Host "  migracoes: $($migs.Count) no projeto (o servidor aplica so as que faltam)"
-  if ($BaselineAte) { Write-Host "  primeira vez: ja aplicadas ate $BaselineAte" }
+  if ($BaselineAte) { Write-Host "  (so na 1.a vez neste servidor: ja aplicadas ate $BaselineAte)" }
 } else {
   Write-Host '  migracoes: nenhuma'
 }
@@ -105,8 +111,11 @@ $r = Read-Host 'Continuar? (s/n)'
 if ($r -notmatch '^[sSyY]') { Write-Host 'Cancelado.'; exit 0 }
 
 Passo '4. Enviar para o servidor'
-Correr 'limpar ~/sci-novo no servidor' { ssh -t $Destino 'sudo rm -rf ~/sci-novo && mkdir -p ~/sci-novo' }
+Correr 'limpar ~/sci-novo no servidor' { ssh -t $Destino 'sudo rm -rf ~/sci-novo && mkdir -p ~/sci-novo/functions' }
 Correr 'enviar dist' { scp -r dist "${Destino}:~/sci-novo/" }
+if (Test-Path 'supabaseunctionsadmin-utilizadores') {
+  Correr 'enviar funcao admin-utilizadores' { scp -r 'supabaseunctionsadmin-utilizadores' "${Destino}:~/sci-novo/functions/" }
+}
 
 if ($migs.Count -gt 0) {
   $lista = Join-Path $env:TEMP 'todas.txt'
@@ -130,6 +139,11 @@ Correr 'enviar script do servidor' { scp $sh "${Destino}:~/sci-novo/aplicar-no-s
 Passo '5. Aplicar no servidor (backup, migracoes em falta, publicar, recarregar nginx)'
 $cmd = 'bash ~/sci-novo/aplicar-no-servidor.sh'
 if ($BaselineAte) { $cmd = "BASELINE=$BaselineAte $cmd" }
+if ($AdminEmail) {
+  if ($AdminEmail -notmatch '^[A-Za-z0-9._%+@-]+$') { Parar '-AdminEmail com caracteres invalidos.' }
+  if ($AdminCodigo -notmatch '^[a-z][a-z0-9_]{2,19}$') { Parar '-AdminCodigo invalido.' }
+  $cmd = "ADMIN_EMAIL=$AdminEmail ADMIN_CODIGO=$AdminCodigo $cmd"
+}
 ssh -t $Destino $cmd
 if ($LASTEXITCODE -ne 0) { Parar 'o script do servidor terminou com erro - le as mensagens acima. Nada foi publicado depois do erro.' }
 
