@@ -11,6 +11,7 @@ import { SyncStatusProvider } from "./hooks/useSyncStatus";
 import { ServerStatusProvider } from "./hooks/useServerStatus";
 import Login from "./pages/auth/Login";
 import ResetPassword from "./pages/auth/ResetPassword";
+import DefinirSenha from "./pages/auth/DefinirSenha";
 
 // Import pages
 import Dashboard from "./pages/Dashboard";
@@ -38,7 +39,9 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
-              <Route path="/auth/login" element={<Login />} />              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/auth/login" element={<Login />} />
+              <Route path="/auth/definir-senha" element={<DefinirSenha />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
 
               {/* Protected Routes */}
               <Route path="/dashboard" element={<PrivateRoute><DashboardLayout><Dashboard /></DashboardLayout></PrivateRoute>} />
