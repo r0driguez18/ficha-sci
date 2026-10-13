@@ -4,12 +4,12 @@
 // (SUPABASE_SERVICE_ROLE_KEY) fica aqui e nunca chega ao browser.
 //
 //   POST /functions/v1/admin-utilizadores   { "acao": "listar" }
-//   POST /functions/v1/admin-utilizadores   { "acao": "criar", "email", "nome", "codigo" }
+//   POST /functions/v1/admin-utilizadores   { "acao": "criar", "email", "nome", "utilizador" }
 //   POST /functions/v1/admin-utilizadores   { "acao": "novo-link", "email" }
 //
 // "criar" faz tudo de uma vez: cria a conta com uma palavra-passe aleatoria que ninguem ve,
-// liga-a ao operador (cria o operador se for novo) e devolve um link de uso unico para a
-// pessoa escolher a sua palavra-passe. Quem chama tem de ser administrador (operators.papel).
+// liga-a ao operador (o codigo de operador e o proprio utilizador; cria o operador se for novo)
+// e devolve um link de uso unico para a pessoa escolher a sua palavra-passe. Quem chama tem de ser administrador (operators.papel).
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -60,20 +60,13 @@ export function normalizarNome(v: unknown): string {
  */
 export const DOMINIO_INTERNO = 'sci.local';
 
+/** O utilizador e tambem o codigo de operador (ex.: "nalves", "etavares", "elvisb"). */
 export function normalizarUtilizador(v: unknown): string {
   const u = String(v ?? '').trim().toLowerCase();
-  if (!/^[a-z][a-z0-9._-]{2,29}$/.test(u)) {
-    throw new ErroPedido(400, 'O utilizador deve ter 3 a 30 caracteres (letras minúsculas, números, ponto, _ ou -), sem @, e começar por uma letra.');
+  if (!/^[a-z][a-z0-9_]{2,19}$/.test(u)) {
+    throw new ErroPedido(400, 'O utilizador deve ter 3 a 20 caracteres (letras minúsculas, números ou _), sem @, e começar por uma letra.');
   }
   return u;
-}
-
-export function normalizarCodigo(v: unknown): string {
-  const c = String(v ?? '').trim().toLowerCase();
-  if (!/^[a-z][a-z0-9_]{2,19}$/.test(c)) {
-    throw new ErroPedido(400, 'O código de operador deve ter 3 a 20 caracteres (letras minúsculas, números ou _) e começar por uma letra.');
-  }
-  return c;
 }
 
 /** Troca o endereco interno do link pelo que os colegas conseguem abrir. */
@@ -169,7 +162,7 @@ async function criar(req: Request, amb: Ambiente, f: FetchFn, corpo: Json): Prom
   const email = normalizarEmail(corpo.email); // email verdadeiro da pessoa (contacto)
   const nome = normalizarNome(corpo.nome);
   const utilizador = normalizarUtilizador(corpo.utilizador);
-  const codigo = normalizarCodigo(corpo.codigo);
+  const codigo = utilizador; // o utilizador e o codigo de operador
   const conta = `${utilizador}@${DOMINIO_INTERNO}`; // identificador da conta no Supabase
   const origem = origemPublica(req, amb);
   const c = cliente(amb, f);

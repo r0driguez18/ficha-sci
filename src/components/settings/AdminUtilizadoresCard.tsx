@@ -21,7 +21,6 @@ import {
   criarUtilizador,
   listarUtilizadores,
   novoLinkUtilizador,
-  sugerirCodigo,
 } from '@/services/adminUtilizadoresService';
 import { sugerirUtilizador, validarUtilizador } from '@/lib/utilizador';
 
@@ -51,8 +50,6 @@ export function AdminUtilizadoresCard() {
   const [email, setEmail] = useState('');
   const [utilizador, setUtilizador] = useState('');
   const [utilizadorMexido, setUtilizadorMexido] = useState(false);
-  const [codigo, setCodigo] = useState('');
-  const [codigoMexido, setCodigoMexido] = useState(false);
   const [aCriar, setACriar] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [gerado, setGerado] = useState<LinkGerado | null>(null);
@@ -72,11 +69,6 @@ export function AdminUtilizadoresCard() {
 
   const aoMudarNome = (v: string) => {
     setNome(v);
-    if (!codigoMexido) setCodigo(sugerirCodigo(v));
-  };
-
-  const aoMudarEmail = (v: string) => {
-    setEmail(v);
     if (!utilizadorMexido) setUtilizador(sugerirUtilizador(v));
   };
 
@@ -100,7 +92,6 @@ export function AdminUtilizadoresCard() {
       email: email.trim(),
       nome: nome.trim(),
       utilizador: utilizador.trim().toLowerCase(),
-      codigo: codigo.trim(),
     });
     setACriar(false);
     if (r.erro) {
@@ -113,8 +104,6 @@ export function AdminUtilizadoresCard() {
     setEmail('');
     setUtilizador('');
     setUtilizadorMexido(false);
-    setCodigo('');
-    setCodigoMexido(false);
     queryClient.invalidateQueries({ queryKey: ['admin-utilizadores'] });
     queryClient.invalidateQueries({ queryKey: ['operators'] });
   };
@@ -136,8 +125,9 @@ export function AdminUtilizadoresCard() {
         <CardHeader>
           <CardTitle>Utilizadores</CardTitle>
           <CardDescription>
-            Cria a conta de um colega e liga-a ao código de operador. Ninguém vê a palavra-passe: recebes um
-            link, envias à pessoa e ela escolhe a dela.
+            Cria a conta de um colega. O utilizador é o que ele escreve no login e é também o código de
+            operador (ex.: nalves). Ninguém vê a palavra-passe: recebes um link, envias à pessoa e ela escolhe
+            a dela.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -159,7 +149,7 @@ export function AdminUtilizadoresCard() {
                   id="adm-email"
                   type="email"
                   value={email}
-                  onChange={(e) => aoMudarEmail(e.target.value)}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="nome@dominio"
                   required
                 />
@@ -173,21 +163,8 @@ export function AdminUtilizadoresCard() {
                     setUtilizador(e.target.value.toLowerCase());
                     setUtilizadorMexido(true);
                   }}
-                  placeholder="o que escreve no login, sem @"
+                  placeholder="ex.: nalves (sem @)"
                   autoComplete="off"
-                  required
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="adm-codigo">Código de operador</Label>
-                <Input
-                  id="adm-codigo"
-                  value={codigo}
-                  onChange={(e) => {
-                    setCodigo(e.target.value.toLowerCase());
-                    setCodigoMexido(true);
-                  }}
-                  placeholder="ex.: nalves"
                   required
                 />
               </div>
@@ -203,8 +180,8 @@ export function AdminUtilizadoresCard() {
                       type="button"
                       className="text-primary hover:underline"
                       onClick={() => {
-                        setCodigo(o.codigo);
-                        setCodigoMexido(true);
+                        setUtilizador(o.codigo);
+                        setUtilizadorMexido(true);
                         if (!nome) setNome(o.nome);
                       }}
                     >

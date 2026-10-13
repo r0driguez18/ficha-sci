@@ -70,24 +70,10 @@ export function listarUtilizadores() {
   return chamar<ListaAdmin & { ok: boolean }>({ acao: 'listar' });
 }
 
-export function criarUtilizador(dados: { email: string; nome: string; utilizador: string; codigo: string }) {
+export function criarUtilizador(dados: { email: string; nome: string; utilizador: string }) {
   return chamar<CriarUtilizadorResultado & { ok: boolean }>({ acao: 'criar', ...dados });
 }
 
 export function novoLinkUtilizador(conta: string) {
   return chamar<{ ok: boolean; conta: string; link: string }>({ acao: 'novo-link', conta });
-}
-
-/** "Nelson Alves" → "nalves" (inicial do 1.º nome + último apelido, sem acentos). */
-export function sugerirCodigo(nome: string): string {
-  const partes = nome
-    .normalize('NFD')
-    .replace(/\p{M}/gu, '')
-    .toLowerCase()
-    .replace(/[^a-z\s]/g, '')
-    .split(/\s+/)
-    .filter(Boolean);
-  if (partes.length === 0) return '';
-  if (partes.length === 1) return partes[0].slice(0, 20);
-  return (partes[0][0] + partes[partes.length - 1]).slice(0, 20);
 }
