@@ -52,6 +52,8 @@ done
 [ -n "$EMAIL" ] || uso
 
 EMAIL="$(printf '%s' "$EMAIL" | tr '[:upper:]' '[:lower:]')"
+# So o utilizador (sem @): usa o endereco interno, como a app faz no login.
+[[ "$EMAIL" == *"@"* ]] || EMAIL="$EMAIL@sci.local"
 # Caracteres seguros: assim o email pode ir no JSON sem escapes.
 [[ "$EMAIL" =~ ^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$ ]] || erro "email invalido: $EMAIL"
 

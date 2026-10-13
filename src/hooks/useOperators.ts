@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/components/auth/AuthProvider';
-import { OPERATORS } from '@/lib/operators';
+import { OPERATORS, codigoAtual } from '@/lib/operators';
 import {
   listOperators,
   getMyOperator,
@@ -41,7 +41,7 @@ export function useOperators(): {
   const operators = data && data.length > 0 ? data : FALLBACK;
   const labelOf = useMemo(() => {
     const map = new Map(operators.map((o) => [o.value, o.label]));
-    return (value: string | null | undefined) => (value ? map.get(value) ?? value : '');
+    return (value: string | null | undefined) => (value ? map.get(codigoAtual(value)) ?? value : '');
   }, [operators]);
   return { operators, loading: isLoading, labelOf };
 }
