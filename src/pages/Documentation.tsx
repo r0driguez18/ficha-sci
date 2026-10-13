@@ -121,11 +121,11 @@ const SECCOES: Seccao[] = [
   },
   {
     icon: ShieldCheck,
-    title: 'Verificação de ficheiros',
+    title: 'Verificar Débitos/Créditos',
     intro: 'A conferência dos ficheiros PS2 (salários, cobranças…) pelo turno seguinte, sem abrir emails.',
     points: [
-      'Cada ficheiro guardado no gerador PS2 fica registado sozinho: empresa, conta, valor e nº de registos. A empresa sugere-se a partir do nome (SA + letras da empresa + mês + letra, ex.: SAEMPRSETA) e pode corrigir-se no gerador ou na lista.',
-      'O sentido vem do tipo de operação: salários, fornecedores, etc. debitam a empresa; "Diversos (Crédito Empresa)" credita-a. Pode corrigir-se antes de verificar.',
+      'Cada ficheiro guardado no gerador PS2 fica registado sozinho: empresa, conta, valor e nº de registos. A empresa lê-se do nome do ficheiro (SA + letras da empresa + mês + letra, ex.: SAEMPRSETA) e pode corrigir-se na lista.',
+      'A coluna "Na conta da empresa" diz o que o core deve mostrar: salários, fornecedores, etc. debitam a empresa; "Diversos (Crédito Empresa)" credita-a (cobranças). Pode corrigir-se antes de verificar.',
       'Para cada ficheiro: copia-se a conta e o valor (um clique cada), no core abrem-se os movimentos da conta, seleciona-se o texto e cola-se na linha. A app conta quantos movimentos têm o valor: 1 = certo, 0 = em falta, 2 ou mais = possível duplicado.',
       'Confirma-se com o PIN. Fica registado quem verificou, quando e o resultado; um resultado diferente de "um movimento" exige uma observação.',
       'Um ficheiro guardado duas vezes com exatamente o mesmo conteúdo é avisado no gerador e marcado como "repetido" na lista.',

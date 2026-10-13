@@ -32,6 +32,8 @@ import { adivinharFolhaDoMes } from '@/lib/planilhaMeses';
 import { guardarFicheiro } from '@/lib/guardarFicheiro';
 import { comExtensao, semExtensao } from '@/lib/nomeFicheiro';
 import { empresaSugerida } from '@/lib/empresaDoFicheiro';
+import { autodetectar, parseColagem, type LinhaBruta } from '@/lib/colagemPs2';
+import { DICA_TAB, tabNoCampo } from '@/lib/tabNoCampo';
 import { registarLote, sentidoPorTipo, sha256Hex } from '@/services/ps2LotesService';
 
 const MODOS: { valor: ModoConta; label: string; hint: string }[] = [
@@ -43,12 +45,6 @@ const MODOS: { valor: ModoConta; label: string; hint: string }[] = [
   { valor: 'so-conta', label: 'Só o nº de conta', hint: 'concatena 0003…10176, não mexe no fim' },
   { valor: 'nib', label: 'NIB completo (21 díg.)', hint: 'só limpa e converte a natureza' },
 ];
-
-interface LinhaBruta {
-  recebido: string;
-  valor: string;
-  nome: string;
-}
 
 interface LinhaTratada extends LinhaBruta {
   idx: number;
@@ -74,85 +70,6 @@ const todayIso = () => {
 function limparValor(s: string): string {
   const v = valorEmEscudos(s);
   return v === null || Number.isNaN(v) ? '' : String(v);
-}
-
-function parseColagem(txt: string): LinhaBruta[] {
-  return txt
-    .split(/\r?\n/)
-    .map((l) => l.trimEnd())
-    .filter((l) => l.trim() !== '')
-    .map((l) => {
-      const sep = l.includes('\t') ? '\t' : l.includes(';') ? ';' : ',';
-      const [c = '', v = '', n = ''] = l.split(sep).map((x) => x.trim());
-      return { recebido: c, valor: v, nome: n };
-    });
-}
-
-const pareceNib = (v: unknown) => String(v ?? '').replace(/\D/g, '').length >= 8;
-const pareceValor = (v: unknown) => {
-  const s = String(v ?? '').replace(/[.,\s]/g, '');
-  return s.length > 0 && !Number.isNaN(Number(s)) && Number(s) > 0;
-};
-
-/** Adivinha as colunas (NIB / valor / nome) e a linha onde começam os dados. */
-function autodetectar(rows: string[][]) {
-  const nCols = rows.reduce((m, r) => Math.max(m, r.length), 0);
-  let header = -1;
-  for (let i = 0; i < Math.min(rows.length, 12); i++) {
-    const txt = (rows[i] ?? []).filter(
-      (c) => String(c).trim().length > 1 && Number.isNaN(Number(String(c).replace(/[.,\s]/g, ''))),
-    ).length;
-    if (txt >= 2) {
-      header = i;
-      break;
-    }
-  }
-  const heads = (header >= 0 ? rows[header] ?? [] : []).map((c) => String(c ?? '').toLowerCase());
-  const acha = (...keys: string[]) => heads.findIndex((h) => keys.some((k) => h.includes(k)));
-  let cConta = acha('nib', 'conta');
-  let cValor = acha('valor', 'montante', 'líquido', 'liquido', 'a pagar', 'total');
-  let cNome = acha('nome', 'benefici', 'deputado', 'funcion', 'colaborad');
-
-  const dataStart = header < 0 ? 0 : header + 1;
-  if (cConta < 0) {
-    let best = 0;
-    let bestN = -1;
-    for (let c = 0; c < nCols; c++) {
-      let n = 0;
-      for (let i = dataStart; i < rows.length; i++) if (pareceNib((rows[i] ?? [])[c])) n++;
-      if (n > bestN) {
-        bestN = n;
-        best = c;
-      }
-    }
-    cConta = best;
-  }
-  if (cValor < 0) {
-    for (let c = nCols - 1; c >= 0; c--) {
-      let n = 0;
-      for (let i = dataStart; i < rows.length; i++) if (pareceValor((rows[i] ?? [])[c])) n++;
-      if (c !== cConta && n > 0) {
-        cValor = c;
-        break;
-      }
-    }
-    if (cValor < 0) cValor = Math.min(cConta + 1, nCols - 1);
-  }
-  if (cNome < 0) cNome = cConta > 1 ? cConta - 1 : nCols > 2 ? 2 : 0;
-
-  let li = dataStart;
-  for (let i = dataStart; i < rows.length; i++) {
-    if (pareceNib((rows[i] ?? [])[cConta])) {
-      li = i;
-      break;
-    }
-  }
-  return {
-    colConta: Math.max(0, cConta),
-    colValor: Math.max(0, cValor),
-    colNome: Math.max(0, cNome),
-    linhaInicial: li + 1,
-  };
 }
 
 const fmtNum = (v: string) => {
@@ -191,9 +108,8 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
   const [dividirPor10, setDividirPor10] = useState(false);
   /** Nome do ficheiro a gravar, sem a extensão (a ".txt" é sempre acrescentada, nunca se edita). */
   const [nomeBase, setNomeBase] = useState(() => semExtensao(nomeFicheiroPS2()));
-  /** Empresa (só para a lista de verificação). Sugere-se a partir do nome do ficheiro: SA + empresa + mês + letra. */
-  const [empresaManual, setEmpresaManual] = useState<string | null>(null);
-  const empresa = empresaManual ?? empresaSugerida(nomeBase);
+  /** A empresa para a lista de verificação lê-se do nome do ficheiro: SA + empresa + mês + letra. */
+  const empresa = empresaSugerida(nomeBase);
 
   const [verNatureza, setVerNatureza] = useState(false);
   const [overrides, setOverrides] = useState<Record<number, string>>({});
@@ -234,7 +150,6 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
     setLinhaInicial(1);
     setDividirPor10(false);
     setNomeBase(semExtensao(nomeFicheiroPS2()));
-    setEmpresaManual(null);
     resetLinhas();
     toast.success('Dados limpos.');
   };
@@ -693,15 +608,19 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
           />
 
           {modo === 'colar' ? (
+            <div className="space-y-1">
             <Textarea
               value={colagem}
               onChange={(e) => {
                 setColagem(e.target.value);
                 resetLinhas();
               }}
-              placeholder={'NIB/conta [tab] valor [tab] nome\n000300001234567810176\t108800,00\tJOÃO SILVA\n87654321\t142500\tMARIA COSTA'}
+              onKeyDown={tabNoCampo}
+              placeholder={'Cola aqui as linhas do Excel: conta/NIB, valor e nome (as colunas detetam-se sozinhas, com ou sem cabeçalho)\n000300001234567810176\t108800,00\tJOÃO SILVA\n87654321\t142500\tMARIA COSTA'}
               className="min-h-[150px] font-mono text-xs"
             />
+            <p className="text-[11px] text-muted-foreground">{DICA_TAB}</p>
+            </div>
           ) : (
             <div className="space-y-4">
               {folhasVisiveis.length > 1 && (
@@ -1030,21 +949,6 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
               />
               <span className="text-xs text-muted-foreground">.txt</span>
             </div>
-          </div>
-        )}
-        {resultado && resultado.erros.length === 0 && (
-          <div className="space-y-1">
-            <Label htmlFor="ps2-empresa" className="text-xs text-muted-foreground">
-              Empresa (para a verificação)
-            </Label>
-            <Input
-              id="ps2-empresa"
-              value={empresa}
-              onChange={(e) => setEmpresaManual(e.target.value)}
-              placeholder="ex.: EMPR"
-              maxLength={60}
-              className="w-44 text-xs"
-            />
           </div>
         )}
         <Button variant="outline" onClick={descarregar} disabled={!resultado || resultado.erros.length > 0}>
