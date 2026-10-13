@@ -11,9 +11,12 @@ import { clearAllTaskboardLocalDrafts } from '@/services/taskboardService';
 import { toast } from 'sonner';
 import { PinManagerCard } from '@/components/settings/PinManagerCard';
 import { OperatorLinkCard } from '@/components/settings/OperatorLinkCard';
+import { AdminUtilizadoresCard } from '@/components/settings/AdminUtilizadoresCard';
+import { useIsAdmin } from '@/hooks/useOperators';
 
 const Settings = () => {
   const { user } = useAuth();
+  const isAdmin = useIsAdmin();
   const navigate = useNavigate();
   
   // Logout function
@@ -60,6 +63,8 @@ const Settings = () => {
         <OperatorLinkCard />
 
         <PinManagerCard />
+
+        {isAdmin && <AdminUtilizadoresCard />}
       </div>
     </PageContainer>
   );

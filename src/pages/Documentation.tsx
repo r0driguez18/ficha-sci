@@ -136,6 +136,7 @@ const SECCOES: Seccao[] = [
       'Associar a conta a um código de operador (para o nome sair certo no PDF e no histórico).',
       'Definir / alterar o PIN de assinatura e a palavra-passe.',
       'Tema: claro, escuro ou alto contraste — a escolha fica guardada neste dispositivo.',
+      'Só para administradores — cartão "Utilizadores": cria a conta de um colega (nome, email e código de operador) e gera um link de uso único. Envia-se o link à pessoa e é ela quem escolhe a palavra-passe; ninguém a vê. "Novo link" gera outro se o primeiro expirar (cerca de 1 hora).',
     ],
   },
   {
