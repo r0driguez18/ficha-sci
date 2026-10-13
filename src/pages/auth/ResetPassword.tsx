@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CHAVE_TROCA_OBRIGATORIA, SENHA_MIN, validarSenha } from '@/lib/politicaSenha';
 
 const ResetPassword = () => {
   const navigate = useNavigate();
@@ -36,20 +37,20 @@ const ResetPassword = () => {
     e.preventDefault();
     setFormError(null);
 
-    if (password.length < 6) {
-      setFormError('A senha deve ter pelo menos 6 caracteres.');
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setFormError('As senhas não coincidem.');
+    const problema = validarSenha(password, confirmPassword);
+    if (problema) {
+      setFormError(problema);
       return;
     }
 
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.updateUser({ password });
+      // Quem define a palavra-passe por aqui escolheu-a: deixa de ser obrigatório trocá-la.
+      const { error } = await supabase.auth.updateUser({
+        password,
+        data: { [CHAVE_TROCA_OBRIGATORIA]: false },
+      });
 
       if (error) throw error;
 
@@ -84,11 +85,11 @@ const ResetPassword = () => {
           <form onSubmit={handleResetPassword} className="space-y-4">
             <Input
               type="password"
-              placeholder="Nova senha"
+              placeholder={`Nova senha (mín. ${SENHA_MIN} caracteres)`}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              minLength={6}
+              minLength={SENHA_MIN}
             />
             <Input
               type="password"
@@ -96,7 +97,7 @@ const ResetPassword = () => {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
-              minLength={6}
+              minLength={SENHA_MIN}
             />
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'A alterar…' : 'Alterar senha'}
