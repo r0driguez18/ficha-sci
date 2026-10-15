@@ -189,6 +189,12 @@ $txt = (Get-Content -Raw (Join-Path $PSScriptRoot 'aplicar-no-servidor.sh')) -re
 [System.IO.File]::WriteAllText($sh, $txt, (New-Object System.Text.UTF8Encoding $false))
 Correr 'enviar script do servidor' { scp $sh "${Destino}:~/sci-novo/aplicar-no-servidor.sh" }
 
+# auxiliar que faz o nginx encaminhar /functions/v1/ (tambem com fins de linha LF)
+$shNginx = Join-Path $env:TEMP 'nginx-funcoes.sh'
+$txtNginx = (Get-Content -Raw (Join-Path $PSScriptRoot 'nginx-funcoes.sh')) -replace "`r`n", "`n"
+[System.IO.File]::WriteAllText($shNginx, $txtNginx, (New-Object System.Text.UTF8Encoding $false))
+Correr 'enviar auxiliar do nginx' { scp $shNginx "${Destino}:~/sci-novo/nginx-funcoes.sh" }
+
 # ------------------------------------------------------------------ 5. aplicar no servidor
 Passo '5. Aplicar no servidor (backup, migracoes em falta, publicar, recarregar nginx)'
 $cmd = 'bash ~/sci-novo/aplicar-no-servidor.sh'
