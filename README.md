@@ -200,9 +200,17 @@ Requisitos: `.env.production.local` na pasta (não vai para o git) e utilizador 
 
 ## Administração de utilizadores
 
-Em **Configurações → Utilizadores** (só para administradores) cria-se a conta de um colega: nome, email e **utilizador** (o que escreve no login, sem `@`; é também o código de operador, ex.: `nalves`, `etavares`, `elvisb`). A conta fica ligada ao operador com esse código e a app devolve um **link de uso único** (cerca de 1 hora) que se envia à pessoa; é ela quem escolhe a palavra-passe, ninguém a vê. "Novo link" gera outro.
+Em **Configurações → Utilizadores** (só para administradores) cria-se a conta de um colega: nome, email e **utilizador** (o que escreve no login, sem `@`; é também o código de operador, ex.: `nalves`, `etavares`, `elvisb`). A conta fica ligada ao operador com esse código e a app devolve um **link de uso único** (cerca de 1 hora) que se envia à pessoa; é ela quem escolhe a palavra-passe, ninguém a vê. "Novo link" gera outro. O caixote do lixo elimina a conta (pede confirmação): a pessoa deixa de entrar e o PIN apaga-se, mas o operador e tudo o que registou ficam. Não se eliminam a própria conta nem as de administradores.
 
 No login escreve-se só o utilizador: `nalves` é a conta `nalves@bca.cv` (o domínio completa-se sozinho; quem quiser pode escrever o email completo, e contas de outros domínios entram com o email completo).
+
+**Senha esquecida.** Não há recuperação por email (a rede não tem servidor de email). Há três caminhos:
+
+1. **Link novo** (o administrador, em "Novo link"): ninguém fica a saber a senha; a pessoa escolhe a dela.
+2. **Repor senha** (o administrador): gera uma senha temporária, mostrada uma só vez; a pessoa é obrigada a trocá-la ao entrar. O administrador conhece essa senha até ela ser trocada.
+3. **"Esqueceu a senha?" no login**, sem o administrador: utilizador + PIN de assinatura + senha nova (função `repor-senha`). Cada conta tem **5 tentativas por 24 h**; ao fim disso fica bloqueada durante 24 h. As respostas não dizem se o utilizador existe, e cada reposição fica registada e visível aos administradores. Quem não tem PIN definido não pode usar este caminho. Para o desligar: `REPOR_SENHA_POR_PIN=false` no contentor das funções.
+
+Na lista de utilizadores, a caixa **Admin** torna alguém administrador (precisa de operador ligado) e nunca deixa o sistema sem administrador. Se o único administrador esquecer a senha e o PIN falhar, no servidor corre-se `criar-utilizador.sh <utilizador>`, que gera um link novo para a conta existente.
 
 A chave de administração do Supabase não pode ir para o browser, por isso isto passa por uma **função no servidor** (`supabase/functions/admin-utilizadores`), que volta a verificar em cada pedido que quem chama é administrador.
 
