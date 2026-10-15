@@ -148,7 +148,9 @@ const SECCOES: Seccao[] = [
       'Associar a conta a um código de operador (para o nome sair certo no PDF e no histórico).',
       'Definir / alterar o PIN de assinatura e a palavra-passe.',
       'Tema: claro, escuro ou alto contraste — a escolha fica guardada neste dispositivo.',
-      'Só para administradores — cartão "Utilizadores": cria a conta de um colega (nome, email e utilizador — o que se escreve no login, sem @, e que é também o código de operador, ex.: nalves) e gera um link de uso único. Envia-se o link à pessoa e é ela quem escolhe a palavra-passe; ninguém a vê. "Novo link" gera outro se o primeiro expirar (cerca de 1 hora).',
+      'Só para administradores — cartão "Utilizadores": cria a conta de um colega (nome, email e utilizador — o que se escreve no login, sem @, e que é também o código de operador, ex.: nalves) e gera um link de uso único. Envia-se o link à pessoa e é ela quem escolhe a palavra-passe; ninguém a vê. "Novo link" gera outro se o primeiro expirar (cerca de 1 hora). O caixote do lixo elimina a conta (com confirmação): a pessoa deixa de entrar, mas o operador e o histórico ficam; não se eliminam a própria conta nem as de administradores.',
+      'Senha esquecida — três caminhos: (1) o administrador gera um "Novo link" (ninguém fica a saber a senha); (2) o administrador usa "Repor senha": a pessoa recebe uma senha temporária e é obrigada a trocá-la ao entrar; (3) a própria pessoa, em "Esqueceu a senha?" no login, com o utilizador e o PIN de assinatura — 5 tentativas por 24 h; fica registado e o administrador vê-o na lista.',
+      'Só para administradores — caixa "Admin" na lista de utilizadores: torna alguém administrador. Nunca fica o sistema sem administrador.',
     ],
   },
   {

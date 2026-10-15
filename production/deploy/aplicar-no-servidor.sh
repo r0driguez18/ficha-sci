@@ -92,16 +92,19 @@ echo
 echo "== 2b. Administracao de utilizadores (funcao no servidor + administrador)"
 # Nada daqui para o deploy: se algo falhar, avisa e o front-end publica-se na mesma.
 
-# --- a funcao admin-utilizadores (so se veio no deploy)
-if [ -f "$PASTA/functions/admin-utilizadores/index.ts" ]; then
+# --- as funcoes (admin-utilizadores, repor-senha, ...), so as que vieram no deploy
+if ls "$PASTA"/functions/*/index.ts >/dev/null 2>&1; then
   if sudo docker inspect supabase-edge-functions >/dev/null 2>&1; then
     DESTINO_FN="$(sudo docker inspect supabase-edge-functions \
       --format '{{range .Mounts}}{{if eq .Destination "/home/deno/functions"}}{{.Source}}{{end}}{{end}}' 2>/dev/null)"
     if [ -n "$DESTINO_FN" ] && [ -d "$DESTINO_FN" ]; then
-      sudo mkdir -p "$DESTINO_FN/admin-utilizadores" \
-        && sudo cp "$PASTA/functions/admin-utilizadores/index.ts" "$DESTINO_FN/admin-utilizadores/index.ts" \
-        && echo "Funcao instalada em $DESTINO_FN/admin-utilizadores" \
-        || echo "AVISO: nao consegui copiar a funcao para $DESTINO_FN"
+      for FN_IDX in "$PASTA"/functions/*/index.ts; do
+        FN_NOME="$(basename "$(dirname "$FN_IDX")")"
+        sudo mkdir -p "$DESTINO_FN/$FN_NOME" \
+          && sudo cp "$FN_IDX" "$DESTINO_FN/$FN_NOME/index.ts" \
+          && echo "Funcao instalada: $FN_NOME (em $DESTINO_FN)" \
+          || echo "AVISO: nao consegui copiar a funcao $FN_NOME para $DESTINO_FN"
+      done
     else
       echo "AVISO: nao encontrei a pasta de funcoes do contentor supabase-edge-functions (montagem em /home/deno/functions)."
     fi
