@@ -156,7 +156,7 @@ esac
 
 echo
 echo "Utilizador: $EMAIL"
-echo "Envia este link a pessoa (uso unico, expira em cerca de 1 hora):"
+echo "Envia este link a pessoa (uso unico, vale 24 horas depois do deploy; 1 hora se o servidor nao foi atualizado):"
 echo
 echo "$LINK"
 echo
