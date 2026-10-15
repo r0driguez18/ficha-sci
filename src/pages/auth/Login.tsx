@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Mail, Lock, Eye, EyeOff, ArrowLeft, ShieldCheck, User } from 'lucide-react';
+import { Lock, Eye, EyeOff, ShieldCheck, User } from 'lucide-react';
 import { emailDeLogin } from '@/lib/utilizador';
 
 const Login = () => {
@@ -16,7 +16,6 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
-  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -38,86 +37,6 @@ const Login = () => {
       setLoading(false);
     }
   };
-
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) {
-      setFormError('Por favor, insira o seu utilizador ou email.');
-      return;
-    }
-    if (!email.includes('@')) {
-      // As contas criadas pelo administrador não têm email para receber nada: pede-se um link novo.
-      setFormError('Para repor a senha pede um link novo ao administrador do SCI.');
-      return;
-    }
-    setLoading(true);
-    setFormError(null);
-
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`
-      });
-      if (error) throw error;
-      toast.success('Email de recuperação enviado! Vê a tua caixa de entrada.');
-      setShowForgotPassword(false);
-    } catch (error: any) {
-      toast.error(error.message || 'Erro ao enviar email de recuperação');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (showForgotPassword) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10 p-4">
-        <Card className="w-full max-w-[420px] shadow-lg border border-border/60 rounded-xl overflow-hidden">
-          <div className="h-1.5 bg-gradient-to-r from-primary via-primary/80 to-primary/60" />
-          <CardHeader className="space-y-1 pb-2 pt-8 px-8">
-            <button
-              onClick={() => { setShowForgotPassword(false); setFormError(null); }}
-              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4 -ml-1"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Voltar ao login
-            </button>
-            <h1 className="text-2xl font-bold text-foreground">Recuperar Senha</h1>
-            <p className="text-sm text-muted-foreground">
-              Escreve o teu email para receber um link de recuperação. Se entras só com o utilizador, pede um link novo ao administrador.
-            </p>
-          </CardHeader>
-          <CardContent className="px-8 pb-8">
-            {formError && (
-              <Alert variant="destructive" className="mb-4 rounded-xl">
-                <AlertDescription>{formError}</AlertDescription>
-              </Alert>
-            )}
-            <form onSubmit={handleForgotPassword} className="space-y-5">
-              <div>
-                <label htmlFor="recovery-email" className="text-sm font-medium text-foreground mb-1.5 block">
-                  Email
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="recovery-email"
-                    type="email"
-                    placeholder="nome@exemplo.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="pl-10 h-11 rounded-xl border-border focus:border-primary focus:ring-2 focus:ring-primary/20"
-                  />
-                </div>
-              </div>
-              <Button type="submit" className="w-full h-11 rounded-xl text-sm font-semibold" disabled={loading}>
-                {loading ? 'A enviar…' : 'Enviar link de recuperação'}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10 p-4">
@@ -171,17 +90,10 @@ const Login = () => {
 
             {/* Password field */}
             <div>
-              <div className="flex items-center justify-between mb-1.5">
+              <div className="mb-1.5">
                 <label htmlFor="login-password" className="text-sm font-medium text-foreground">
                   Senha
                 </label>
-                <button
-                  type="button"
-                  onClick={() => { setShowForgotPassword(true); setFormError(null); }}
-                  className="text-xs font-medium text-primary hover:text-primary/80 transition-colors"
-                >
-                  Esqueceu a senha?
-                </button>
               </div>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -216,8 +128,8 @@ const Login = () => {
             </Button>
 
             <p className="text-center text-xs text-muted-foreground pt-1">
-              As contas são criadas pelo administrador do sistema. Contacte o Centro Informática se
-              não conseguir aceder.
+              As contas e as senhas são geridas pelo administrador do sistema: se não consegues
+              entrar ou esqueceste a senha, pede-lhe um link novo.
             </p>
           </form>
         </CardContent>
