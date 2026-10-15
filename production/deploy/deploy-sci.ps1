@@ -167,8 +167,12 @@ if ($r -notmatch '^[sSyY]') { Write-Host 'Cancelado.'; exit 0 }
 Passo '4. Enviar para o servidor'
 Correr 'limpar ~/sci-novo no servidor' { ssh -t $Destino 'sudo rm -rf ~/sci-novo && mkdir -p ~/sci-novo/functions' }
 Correr 'enviar dist' { scp -r dist "${Destino}:~/sci-novo/" }
-if (Test-Path 'supabase/functions/admin-utilizadores') {
-  Correr 'enviar funcao admin-utilizadores' { scp -r 'supabase/functions/admin-utilizadores' "${Destino}:~/sci-novo/functions/" }
+# todas as funcoes do projeto (admin-utilizadores, repor-senha, ...)
+if (Test-Path 'supabase/functions') {
+  foreach ($pastaFn in (Get-ChildItem 'supabase/functions' -Directory)) {
+    $caminhoFn = 'supabase/functions/' + $pastaFn.Name
+    Correr ('enviar funcao ' + $pastaFn.Name) { scp -r $caminhoFn "${Destino}:~/sci-novo/functions/" }
+  }
 }
 
 if ($migs.Count -gt 0) {

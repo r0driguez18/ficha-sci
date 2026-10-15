@@ -14,6 +14,13 @@ export interface UtilizadorAdmin {
   pendente: boolean;
   /** Falso para a própria conta e para administradores. */
   eliminavel: boolean;
+  administrador: boolean;
+  /** Tem operador ligado (sem isso não se pode ser administrador). */
+  temOperador: boolean;
+  /** É a conta de quem está a ver a lista. */
+  eu: boolean;
+  /** Última reposição de senha: pela própria pessoa (PIN) ou por um administrador. */
+  ultimaReposicao: { quando: string; metodo: 'pin' | 'admin' } | null;
   ultimoAcesso: string | null;
   criadaEm: string;
 }
@@ -81,6 +88,14 @@ export function listarUtilizadores() {
 
 export function criarUtilizador(dados: { email: string; nome: string; utilizador: string }) {
   return chamar<CriarUtilizadorResultado & { ok: boolean }>({ acao: 'criar', ...dados });
+}
+
+export function reporSenhaUtilizador(conta: string) {
+  return chamar<{ ok: boolean; conta: string; senhaTemporaria: string }>({ acao: 'repor', conta });
+}
+
+export function definirAdministrador(conta: string, administrador: boolean) {
+  return chamar<{ ok: boolean; conta: string; administrador: boolean }>({ acao: 'papel', conta, administrador });
 }
 
 export function eliminarUtilizador(conta: string) {

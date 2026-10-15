@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Lock, Eye, EyeOff, ShieldCheck, User } from 'lucide-react';
 import { emailDeLogin } from '@/lib/utilizador';
+import { ReporSenhaPorPin } from '@/components/auth/ReporSenhaPorPin';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [aRepor, setARepor] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,6 +39,21 @@ const Login = () => {
       setLoading(false);
     }
   };
+
+  if (aRepor) {
+    return (
+      <ReporSenhaPorPin
+        utilizadorInicial={email.includes('@') ? '' : email}
+        onVoltar={() => setARepor(false)}
+        onConcluido={(u) => {
+          setEmail(u);
+          setPassword('');
+          setFormError(null);
+          setARepor(false);
+        }}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10 p-4">
@@ -90,10 +107,17 @@ const Login = () => {
 
             {/* Password field */}
             <div>
-              <div className="mb-1.5">
+              <div className="flex items-center justify-between mb-1.5">
                 <label htmlFor="login-password" className="text-sm font-medium text-foreground">
                   Senha
                 </label>
+                <button
+                  type="button"
+                  onClick={() => { setARepor(true); setFormError(null); }}
+                  className="text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+                >
+                  Esqueceu a senha?
+                </button>
               </div>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -128,8 +152,8 @@ const Login = () => {
             </Button>
 
             <p className="text-center text-xs text-muted-foreground pt-1">
-              As contas e as senhas são geridas pelo administrador do sistema: se não consegues
-              entrar ou esqueceste a senha, pede-lhe um link novo.
+              As contas são criadas pelo administrador do sistema. Se não consegues entrar, pede-lhe
+              um link novo.
             </p>
           </form>
         </CardContent>
