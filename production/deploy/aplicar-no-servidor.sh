@@ -182,6 +182,14 @@ SQL
 fi
 
 echo
+echo "== 2c. Validade dos links de definir senha (24 h)"
+if [ -f "$PASTA/auth-validade-link.sh" ]; then
+  bash "$PASTA/auth-validade-link.sh" 24 || echo "AVISO: nao consegui alterar a validade dos links (ficam com a que ja tinham, 1 h por omissao)."
+else
+  echo "(auxiliar nao enviado)"
+fi
+
+echo
 echo "== 3. Publicar o front-end (copia por cima, sem apagar o que la esta)"
 sudo cp -r "$PASTA/dist/." "$WEB/" || fim "a copia para $WEB falhou"
 sudo chown -R www-data:www-data "$WEB" || fim "o chown falhou"

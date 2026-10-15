@@ -199,6 +199,12 @@ $txtNginx = (Get-Content -Raw (Join-Path $PSScriptRoot 'nginx-funcoes.sh')) -rep
 [System.IO.File]::WriteAllText($shNginx, $txtNginx, (New-Object System.Text.UTF8Encoding $false))
 Correr 'enviar auxiliar do nginx' { scp $shNginx "${Destino}:~/sci-novo/nginx-funcoes.sh" }
 
+# auxiliar que define a validade dos links de definir senha (LF tambem)
+$shAuth = Join-Path $env:TEMP 'auth-validade-link.sh'
+$txtAuth = (Get-Content -Raw (Join-Path $PSScriptRoot 'auth-validade-link.sh')) -replace "`r`n", "`n"
+[System.IO.File]::WriteAllText($shAuth, $txtAuth, (New-Object System.Text.UTF8Encoding $false))
+Correr 'enviar auxiliar da validade dos links' { scp $shAuth "${Destino}:~/sci-novo/auth-validade-link.sh" }
+
 # ------------------------------------------------------------------ 5. aplicar no servidor
 Passo '5. Aplicar no servidor (backup, migracoes em falta, publicar, recarregar nginx)'
 $cmd = 'bash ~/sci-novo/aplicar-no-servidor.sh'
