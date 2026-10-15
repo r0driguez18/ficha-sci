@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Mail, Lock, Eye, EyeOff, ArrowLeft, ShieldCheck, User } from 'lucide-react';
+import { Lock, Eye, EyeOff, ArrowLeft, ShieldCheck, User } from 'lucide-react';
 import { emailDeLogin } from '@/lib/utilizador';
 
 const Login = () => {
@@ -39,34 +39,6 @@ const Login = () => {
     }
   };
 
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) {
-      setFormError('Por favor, insira o seu utilizador ou email.');
-      return;
-    }
-    if (!email.includes('@')) {
-      // As contas criadas pelo administrador não têm email para receber nada: pede-se um link novo.
-      setFormError('Para repor a senha pede um link novo ao administrador do SCI.');
-      return;
-    }
-    setLoading(true);
-    setFormError(null);
-
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`
-      });
-      if (error) throw error;
-      toast.success('Email de recuperação enviado! Vê a tua caixa de entrada.');
-      setShowForgotPassword(false);
-    } catch (error: any) {
-      toast.error(error.message || 'Erro ao enviar email de recuperação');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   if (showForgotPassword) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10 p-4">
@@ -80,39 +52,28 @@ const Login = () => {
               <ArrowLeft className="h-4 w-4" />
               Voltar ao login
             </button>
-            <h1 className="text-2xl font-bold text-foreground">Recuperar Senha</h1>
+            <h1 className="text-2xl font-bold text-foreground">Esqueceu a senha?</h1>
             <p className="text-sm text-muted-foreground">
-              Escreve o teu email para receber um link de recuperação. Se entras só com o utilizador, pede um link novo ao administrador.
+              Esta aplicação não envia emails. A senha repõe-se com um link que o administrador gera.
             </p>
           </CardHeader>
-          <CardContent className="px-8 pb-8">
-            {formError && (
-              <Alert variant="destructive" className="mb-4 rounded-xl">
-                <AlertDescription>{formError}</AlertDescription>
-              </Alert>
-            )}
-            <form onSubmit={handleForgotPassword} className="space-y-5">
-              <div>
-                <label htmlFor="recovery-email" className="text-sm font-medium text-foreground mb-1.5 block">
-                  Email
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="recovery-email"
-                    type="email"
-                    placeholder="nome@exemplo.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="pl-10 h-11 rounded-xl border-border focus:border-primary focus:ring-2 focus:ring-primary/20"
-                  />
-                </div>
-              </div>
-              <Button type="submit" className="w-full h-11 rounded-xl text-sm font-semibold" disabled={loading}>
-                {loading ? 'A enviar…' : 'Enviar link de recuperação'}
-              </Button>
-            </form>
+          <CardContent className="space-y-4 px-8 pb-8">
+            <ol className="list-decimal space-y-2 pl-5 text-sm text-foreground">
+              <li>Pede ao administrador do SCI um <strong>link novo</strong> para a tua conta.</li>
+              <li>Abre o link no browser e escolhe a senha nova.</li>
+              <li>Entra com o teu utilizador e a senha nova.</li>
+            </ol>
+            <p className="text-xs text-muted-foreground">
+              O administrador gera o link em Configurações → Utilizadores → Novo link. O link serve uma só vez e expira em cerca de 1 hora.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full h-11 rounded-xl text-sm font-semibold"
+              onClick={() => { setShowForgotPassword(false); setFormError(null); }}
+            >
+              Voltar ao login
+            </Button>
           </CardContent>
         </Card>
       </div>
