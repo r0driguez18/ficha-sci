@@ -89,7 +89,7 @@ export function AdminUtilizadoresCard() {
     return (
       `Olá ${primeiro}, já tens conta no SCI. O teu utilizador é "${gerado.entrada}". ` +
       `Abre este link para escolheres a tua palavra-passe ` +
-      `(serve uma vez e expira em cerca de 1 hora):\n${gerado.link}`
+      `(serve uma vez e vale 24 horas):\n${gerado.link}`
     );
   }, [gerado]);
 
@@ -428,7 +428,7 @@ export function AdminUtilizadoresCard() {
           <DialogHeader>
             <DialogTitle>Link para {gerado?.nome}</DialogTitle>
             <DialogDescription>
-              Envia à pessoa (utilizador: <strong>{gerado?.entrada}</strong>). Serve uma só vez e expira em cerca de 1 hora. Esta janela é a
+              Envia à pessoa (utilizador: <strong>{gerado?.entrada}</strong>). Serve uma só vez e vale 24 horas. Esta janela é a
               única vez que o link aparece — se se perder, gera outro.
             </DialogDescription>
           </DialogHeader>
