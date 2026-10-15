@@ -109,16 +109,36 @@ if [ -f "$PASTA/functions/admin-utilizadores/index.ts" ]; then
     echo "AVISO: nao existe o contentor supabase-edge-functions - a administracao de utilizadores nao vai funcionar."
   fi
 
-  # A rota tem de chegar ao Kong: se o nginx devolver a pagina da app (HTML) ou 404, nao encaminha /functions/v1/.
-  RESP="$(curl -sk --max-time 10 -o - -w '\n%{http_code}' -X POST -H 'Content-Type: application/json' -d '{}' \
-            https://127.0.0.1:8443/functions/v1/admin-utilizadores 2>/dev/null || true)"
-  CODIGO_HTTP="$(printf '%s' "$RESP" | tail -n1)"
-  if printf '%s' "$RESP" | grep -qi '<html\|<!doctype' || [ "$CODIGO_HTTP" = "404" ] || [ -z "$CODIGO_HTTP" ]; then
-    echo "AVISO: o nginx NAO encaminha /functions/v1/ para o Supabase (resposta $CODIGO_HTTP)."
-    echo "       No vhost do SCI (/etc/nginx/sites-available/sci), junto das outras rotas /auth/v1/ e /rest/v1/,"
-    echo "       acrescenta o mesmo proxy_pass para /functions/v1/ e faz: sudo nginx -t && sudo systemctl reload nginx"
-  else
+  # A rota tem de chegar ao Kong. Se o nginx devolver a pagina da app (HTML), 404 ou 405 (um POST a um
+  # ficheiro estatico), nao esta a encaminhar /functions/v1/.
+  rota_ok() {
+    RESP="$(curl -sk --max-time 10 -o - -w '\n%{http_code}' -X POST -H 'Content-Type: application/json' -d '{}' \
+              https://127.0.0.1:8443/functions/v1/admin-utilizadores 2>/dev/null || true)"
+    CODIGO_HTTP="$(printf '%s' "$RESP" | tail -n1)"
+    if printf '%s' "$RESP" | grep -qi '<html\|<!doctype' || [ -z "$CODIGO_HTTP" ] \
+       || [ "$CODIGO_HTTP" = "404" ] || [ "$CODIGO_HTTP" = "405" ]; then
+      return 1
+    fi
+    return 0
+  }
+
+  if rota_ok; then
     echo "Rota /functions/v1/ OK (resposta $CODIGO_HTTP)."
+  else
+    echo "O nginx NAO encaminha /functions/v1/ para o Supabase (resposta $CODIGO_HTTP). A tentar corrigir o vhost..."
+    if [ -f "$PASTA/nginx-funcoes.sh" ] && bash "$PASTA/nginx-funcoes.sh" "${NGINX_VHOST:-/etc/nginx/sites-available/sci}"; then
+      sleep 1
+      if rota_ok; then
+        echo "Rota /functions/v1/ OK depois da correcao (resposta $CODIGO_HTTP)."
+      else
+        echo "AVISO: corrigi o nginx mas a rota continua sem responder bem (resposta $CODIGO_HTTP)."
+        echo "       Confirma que o contentor supabase-edge-functions esta a correr: sudo docker ps | grep functions"
+      fi
+    else
+      echo "AVISO: nao consegui corrigir o nginx sozinho. No vhost do SCI (/etc/nginx/sites-available/sci),"
+      echo "       junto das rotas /auth/v1/ e /rest/v1/, acrescenta um location /functions/v1/ com o mesmo"
+      echo "       proxy_pass, e faz: sudo nginx -t && sudo systemctl reload nginx"
+    fi
   fi
 fi
 
