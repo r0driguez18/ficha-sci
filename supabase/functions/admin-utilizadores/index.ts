@@ -5,7 +5,8 @@
 //
 //   POST /functions/v1/admin-utilizadores   { "acao": "listar" }
 //   POST /functions/v1/admin-utilizadores   { "acao": "criar", "email", "nome", "utilizador" }
-//   POST /functions/v1/admin-utilizadores   { "acao": "novo-link", "email" }
+//   POST /functions/v1/admin-utilizadores   { "acao": "novo-link", "conta" }
+//   POST /functions/v1/admin-utilizadores   { "acao": "eliminar", "conta" }
 //
 // "criar" faz tudo de uma vez: cria a conta com uma palavra-passe aleatoria que ninguem ve,
 // liga-a ao operador (o codigo de operador e o proprio utilizador; cria o operador se for novo)
@@ -232,7 +233,36 @@ async function novoLink(req: Request, amb: Ambiente, f: FetchFn, corpo: Json): P
   return { ok: true, conta, link };
 }
 
-async function listar(amb: Ambiente, f: FetchFn): Promise<Json> {
+/**
+ * Elimina uma conta. Nao se elimina a propria conta nem a de um administrador (para isso
+ * deixa-se primeiro de ser administrador). O operador fica (sem conta) — o historico e as
+ * fichas assinadas continuam a mostrar o codigo; o PIN e os tokens apagam-se com a conta.
+ */
+async function eliminar(uidChamador: string, amb: Ambiente, f: FetchFn, corpo: Json): Promise<Json> {
+  const conta = normalizarEmail(corpo.conta);
+  const c = cliente(amb, f);
+
+  const contas = await todasAsContas(c);
+  const alvo = contas.find((x) => String(x.email ?? '').toLowerCase() === conta);
+  if (!alvo) throw new ErroPedido(404, 'Não existe nenhuma conta com esse email.');
+  if (alvo.id === uidChamador) throw new ErroPedido(409, 'Não podes eliminar a tua própria conta.');
+
+  const op = await c.pedir(
+    `/rest/v1/operators?select=value,papel&user_id=eq.${encodeURIComponent(alvo.id)}&limit=1`,
+  );
+  if (op.estado !== 200) throw new ErroPedido(502, 'Não consegui consultar os operadores.');
+  const ligado = Array.isArray(op.corpo) ? op.corpo[0] : null;
+  if (ligado?.papel === 'administrador') {
+    throw new ErroPedido(409, 'Esta conta é de um administrador e não se elimina aqui.');
+  }
+
+  const d = await c.pedir(`/auth/v1/admin/users/${encodeURIComponent(alvo.id)}`, { method: 'DELETE' });
+  if (![200, 204].includes(d.estado)) throw new ErroPedido(502, 'O Supabase recusou eliminar a conta.');
+
+  return { ok: true, conta, codigo: (ligado?.value as string | undefined) ?? null };
+}
+
+async function listar(uidChamador: string, amb: Ambiente, f: FetchFn): Promise<Json> {
   const c = cliente(amb, f);
   const contas = await todasAsContas(c);
 
@@ -256,6 +286,8 @@ async function listar(amb: Ambiente, f: FetchFn): Promise<Json> {
         codigo: (op?.value as string | undefined) ?? null,
         papel: (op?.papel as string | undefined) ?? null,
         pendente: x.user_metadata?.must_change_password === true,
+        // A propria conta e as de administradores nao se eliminam por aqui.
+        eliminavel: x.id !== uidChamador && op?.papel !== 'administrador',
         ultimoAcesso: (x.last_sign_in_at as string | null) ?? null,
         criadaEm: x.created_at as string,
       };
@@ -275,7 +307,7 @@ export async function manipular(req: Request, amb: Ambiente, f: FetchFn = fetch)
 
   try {
     if (!amb.supabaseUrl || !amb.serviceKey) throw new ErroPedido(500, 'Função sem configuração do servidor.');
-    await exigirAdministrador(req, amb, f);
+    const uid = await exigirAdministrador(req, amb, f);
 
     let corpo: Json;
     try {
@@ -286,11 +318,13 @@ export async function manipular(req: Request, amb: Ambiente, f: FetchFn = fetch)
 
     switch (corpo.acao) {
       case 'listar':
-        return resposta(await listar(amb, f));
+        return resposta(await listar(uid, amb, f));
       case 'criar':
         return resposta(await criar(req, amb, f, corpo));
       case 'novo-link':
         return resposta(await novoLink(req, amb, f, corpo));
+      case 'eliminar':
+        return resposta(await eliminar(uid, amb, f, corpo));
       default:
         throw new ErroPedido(400, 'Ação desconhecida.');
     }

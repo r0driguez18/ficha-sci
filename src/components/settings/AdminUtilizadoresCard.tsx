@@ -15,10 +15,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Copy, KeyRound, Loader2, UserPlus } from 'lucide-react';
+import { Copy, KeyRound, Loader2, Trash2, UserPlus } from 'lucide-react';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { toast } from 'sonner';
 import {
   criarUtilizador,
+  eliminarUtilizador,
   listarUtilizadores,
   novoLinkUtilizador,
 } from '@/services/adminUtilizadoresService';
@@ -54,6 +56,7 @@ export function AdminUtilizadoresCard() {
   const [erro, setErro] = useState<string | null>(null);
   const [gerado, setGerado] = useState<LinkGerado | null>(null);
   const [aGerarPara, setAGerarPara] = useState<string | null>(null);
+  const [aEliminar, setAEliminar] = useState<{ conta: string; nome: string; utilizador: string | null; codigo: string | null } | null>(null);
 
   const lista = useQuery({
     queryKey: ['admin-utilizadores'],
@@ -104,6 +107,20 @@ export function AdminUtilizadoresCard() {
     setEmail('');
     setUtilizador('');
     setUtilizadorMexido(false);
+    queryClient.invalidateQueries({ queryKey: ['admin-utilizadores'] });
+    queryClient.invalidateQueries({ queryKey: ['operators'] });
+  };
+
+  const eliminar = async () => {
+    if (!aEliminar) return;
+    const alvo = aEliminar;
+    setAEliminar(null);
+    const r = await eliminarUtilizador(alvo.conta);
+    if (r.erro) {
+      toast.error(r.erro);
+      return;
+    }
+    toast.success(`Conta de ${alvo.nome || alvo.conta} eliminada.`);
     queryClient.invalidateQueries({ queryKey: ['admin-utilizadores'] });
     queryClient.invalidateQueries({ queryKey: ['operators'] });
   };
@@ -259,6 +276,20 @@ export function AdminUtilizadoresCard() {
                             )}
                             Novo link
                           </Button>
+                          {u.eliminavel && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive"
+                              aria-label={`Eliminar ${u.nome || u.conta}`}
+                              title="Eliminar esta conta"
+                              onClick={() =>
+                                setAEliminar({ conta: u.conta, nome: u.nome, utilizador: u.utilizador, codigo: u.codigo })
+                              }
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -269,6 +300,27 @@ export function AdminUtilizadoresCard() {
           </div>
         </CardContent>
       </Card>
+
+      <ConfirmDialog
+        open={!!aEliminar}
+        onOpenChange={(aberto) => !aberto && setAEliminar(null)}
+        title={`Eliminar ${aEliminar?.nome || aEliminar?.conta || 'conta'}?`}
+        description={
+          <span className="block space-y-2 text-left">
+            <span className="block">
+              A conta <strong>{aEliminar?.utilizador ?? aEliminar?.conta}</strong> deixa de poder entrar e o PIN é
+              apagado. Não se pode desfazer.
+            </span>
+            <span className="block">
+              O operador{aEliminar?.codigo ? <> <strong>{aEliminar.codigo}</strong></> : ''} e tudo o que já registou
+              (fichas, histórico, estatísticas) ficam como estão. Para voltar a dar acesso, cria o utilizador outra vez.
+            </span>
+          </span>
+        }
+        confirmLabel="Eliminar conta"
+        variant="destructive"
+        onConfirm={eliminar}
+      />
 
       <Dialog open={!!gerado} onOpenChange={(aberto) => !aberto && setGerado(null)}>
         <DialogContent className="max-w-xl">
