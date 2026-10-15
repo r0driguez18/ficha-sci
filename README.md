@@ -200,7 +200,7 @@ Requisitos: `.env.production.local` na pasta (não vai para o git) e utilizador 
 
 ## Administração de utilizadores
 
-Em **Configurações → Utilizadores** (só para administradores) cria-se a conta de um colega: nome, email e **utilizador** (o que escreve no login, sem `@`; é também o código de operador, ex.: `nalves`, `etavares`, `elvisb`). A conta fica ligada ao operador com esse código e a app devolve um **link de uso único** (cerca de 1 hora) que se envia à pessoa; é ela quem escolhe a palavra-passe, ninguém a vê. "Novo link" gera outro.
+Em **Configurações → Utilizadores** (só para administradores) cria-se a conta de um colega: nome, email e **utilizador** (o que escreve no login, sem `@`; é também o código de operador, ex.: `nalves`, `etavares`, `elvisb`). A conta fica ligada ao operador com esse código e a app devolve um **link de uso único** (cerca de 1 hora) que se envia à pessoa; é ela quem escolhe a palavra-passe, ninguém a vê. "Novo link" gera outro. O caixote do lixo elimina a conta (pede confirmação): a pessoa deixa de entrar e o PIN apaga-se, mas o operador e tudo o que registou ficam. Não se eliminam a própria conta nem as de administradores.
 
 No login escreve-se só o utilizador: `nalves` é a conta `nalves@bca.cv` (o domínio completa-se sozinho; quem quiser pode escrever o email completo, e contas de outros domínios entram com o email completo).
 

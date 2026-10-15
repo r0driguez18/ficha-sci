@@ -12,6 +12,8 @@ export interface UtilizadorAdmin {
   papel: string | null;
   /** Ainda não definiu a palavra-passe (conta criada por um administrador). */
   pendente: boolean;
+  /** Falso para a própria conta e para administradores. */
+  eliminavel: boolean;
   ultimoAcesso: string | null;
   criadaEm: string;
 }
@@ -79,6 +81,10 @@ export function listarUtilizadores() {
 
 export function criarUtilizador(dados: { email: string; nome: string; utilizador: string }) {
   return chamar<CriarUtilizadorResultado & { ok: boolean }>({ acao: 'criar', ...dados });
+}
+
+export function eliminarUtilizador(conta: string) {
+  return chamar<{ ok: boolean; conta: string; codigo: string | null }>({ acao: 'eliminar', conta });
 }
 
 export function novoLinkUtilizador(conta: string) {
