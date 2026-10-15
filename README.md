@@ -200,7 +200,7 @@ Requisitos: `.env.production.local` na pasta (não vai para o git) e utilizador 
 
 ## Administração de utilizadores
 
-Em **Configurações → Utilizadores** (só para administradores) cria-se a conta de um colega: nome, email e **utilizador** (o que escreve no login, sem `@`; é também o código de operador, ex.: `nalves`, `etavares`, `elvisb`). A conta fica ligada ao operador com esse código e a app devolve um **link de uso único** (cerca de 1 hora) que se envia à pessoa; é ela quem escolhe a palavra-passe, ninguém a vê. "Novo link" gera outro. Não há recuperação por email (a rede não tem servidor de email): quem esquece a senha pede ao administrador um link novo, e o ecrã "Esqueceu a senha?" diz isso mesmo.
+Em **Configurações → Utilizadores** (só para administradores) cria-se a conta de um colega: nome, email e **utilizador** (o que escreve no login, sem `@`; é também o código de operador, ex.: `nalves`, `etavares`, `elvisb`). A conta fica ligada ao operador com esse código e a app devolve um **link de uso único** (cerca de 1 hora) que se envia à pessoa; é ela quem escolhe a palavra-passe, ninguém a vê. "Novo link" gera outro. Não há recuperação por email (a rede não tem servidor de email) nem "Esqueceu a senha?" no login: quem esquece a senha pede ao administrador um link novo. Se for o próprio administrador, outro administrador gera o link; se for o único, corre-se no servidor `criar-utilizador.sh <utilizador>`, que gera um link novo para a conta existente.
 
 No login escreve-se só o utilizador: `nalves` é a conta `nalves@bca.cv` (o domínio completa-se sozinho; quem quiser pode escrever o email completo, e contas de outros domínios entram com o email completo).
 
