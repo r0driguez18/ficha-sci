@@ -7,6 +7,8 @@
 //   POST /functions/v1/admin-utilizadores   { "acao": "criar", "email", "nome", "utilizador" }
 //   POST /functions/v1/admin-utilizadores   { "acao": "novo-link", "conta" }
 //   POST /functions/v1/admin-utilizadores   { "acao": "eliminar", "conta" }
+//   POST /functions/v1/admin-utilizadores   { "acao": "repor", "conta" }          senha temporaria
+//   POST /functions/v1/admin-utilizadores   { "acao": "papel", "conta", "administrador": true|false }
 //
 // "criar" faz tudo de uma vez: cria a conta com uma palavra-passe aleatoria que ninguem ve,
 // liga-a ao operador (o codigo de operador e o proprio utilizador; cria o operador se for novo)
@@ -262,6 +264,84 @@ async function eliminar(uidChamador: string, amb: Ambiente, f: FetchFn, corpo: J
   return { ok: true, conta, codigo: (ligado?.value as string | undefined) ?? null };
 }
 
+/** Senha temporaria legivel (sem 0/O, 1/l/I). So aparece uma vez ao administrador. */
+function senhaTemporaria(): string {
+  const alfabeto = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+  const bytes = crypto.getRandomValues(new Uint8Array(12));
+  return Array.from(bytes, (b) => alfabeto[b % alfabeto.length]).join('');
+}
+
+/**
+ * Repoe a senha de uma conta com uma senha temporaria; a pessoa e obrigada a trocá-la ao entrar.
+ * (Quem prefere que ninguem saiba a senha usa "novo-link".) Nao serve para a propria conta.
+ */
+async function repor(uidChamador: string, amb: Ambiente, f: FetchFn, corpo: Json): Promise<Json> {
+  const conta = normalizarEmail(corpo.conta);
+  const c = cliente(amb, f);
+
+  const contas = await todasAsContas(c);
+  const alvo = contas.find((x) => String(x.email ?? '').toLowerCase() === conta);
+  if (!alvo) throw new ErroPedido(404, 'Não existe nenhuma conta com esse email.');
+  if (alvo.id === uidChamador) {
+    throw new ErroPedido(409, 'Não podes repor a tua própria senha aqui: pede a outro administrador.');
+  }
+
+  const temporaria = senhaTemporaria();
+  const u = await c.pedir(`/auth/v1/admin/users/${encodeURIComponent(alvo.id)}`, {
+    method: 'PUT',
+    body: JSON.stringify({ password: temporaria, user_metadata: { must_change_password: true } }),
+  });
+  if (u.estado !== 200) throw new ErroPedido(502, 'O Supabase recusou repor a senha.');
+
+  // Registo (visivel aos administradores). Falhar aqui nao desfaz a reposicao.
+  await c.pedir('/rest/v1/reposicoes_senha', {
+    method: 'POST',
+    headers: { Prefer: 'return=minimal' },
+    body: JSON.stringify({ user_id: alvo.id, metodo: 'admin', feito_por: uidChamador }),
+  });
+
+  return { ok: true, conta, senhaTemporaria: temporaria };
+}
+
+/** Torna (ou deixa de tornar) alguem administrador. Nunca deixa o sistema sem administrador. */
+async function papel(uidChamador: string, amb: Ambiente, f: FetchFn, corpo: Json): Promise<Json> {
+  const conta = normalizarEmail(corpo.conta);
+  if (typeof corpo.administrador !== 'boolean') throw new ErroPedido(400, 'Indica se é administrador.');
+  const quer = corpo.administrador as boolean;
+  const c = cliente(amb, f);
+
+  const contas = await todasAsContas(c);
+  const alvo = contas.find((x) => String(x.email ?? '').toLowerCase() === conta);
+  if (!alvo) throw new ErroPedido(404, 'Não existe nenhuma conta com esse email.');
+
+  const op = await c.pedir(`/rest/v1/operators?select=id,value,papel,ativo&user_id=eq.${encodeURIComponent(alvo.id)}&limit=1`);
+  if (op.estado !== 200) throw new ErroPedido(502, 'Não consegui consultar os operadores.');
+  const ligado = Array.isArray(op.corpo) ? op.corpo[0] : null;
+  if (!ligado) throw new ErroPedido(409, 'Esta conta não tem operador ligado — liga-a a um operador primeiro.');
+
+  const novoPapel = quer ? 'administrador' : 'operador';
+  if (ligado.papel === novoPapel) return { ok: true, conta, administrador: quer };
+
+  if (!quer) {
+    // Tem de ficar pelo menos um administrador ativo com conta.
+    const outros = await c.pedir(
+      `/rest/v1/operators?select=id&papel=eq.administrador&ativo=eq.true&user_id=not.is.null&id=neq.${encodeURIComponent(ligado.id)}&limit=1`,
+    );
+    if (outros.estado !== 200) throw new ErroPedido(502, 'Não consegui consultar os administradores.');
+    if (!Array.isArray(outros.corpo) || outros.corpo.length === 0) {
+      throw new ErroPedido(409, 'Tem de ficar pelo menos um administrador: torna outra pessoa administradora primeiro.');
+    }
+  }
+
+  const p = await c.pedir(`/rest/v1/operators?id=eq.${encodeURIComponent(ligado.id)}`, {
+    method: 'PATCH',
+    headers: { Prefer: 'return=minimal' },
+    body: JSON.stringify({ papel: novoPapel }),
+  });
+  if (p.estado >= 300) throw new ErroPedido(502, 'Não consegui alterar o papel.');
+  return { ok: true, conta, administrador: quer };
+}
+
 async function listar(uidChamador: string, amb: Ambiente, f: FetchFn): Promise<Json> {
   const c = cliente(amb, f);
   const contas = await todasAsContas(c);
@@ -270,6 +350,13 @@ async function listar(uidChamador: string, amb: Ambiente, f: FetchFn): Promise<J
   const ops: any[] = o.estado === 200 && Array.isArray(o.corpo) ? o.corpo : [];
   const porConta = new Map(ops.filter((x) => x.user_id).map((x) => [x.user_id as string, x]));
   const sufixo = `@${DOMINIO_INTERNO}`;
+
+  // Ultima reposicao de senha por conta (a mais recente primeiro).
+  const rp = await c.pedir('/rest/v1/reposicoes_senha?select=user_id,quando,metodo&order=quando.desc&limit=500');
+  const ultimaReposicao = new Map<string, { quando: string; metodo: string }>();
+  if (rp.estado === 200 && Array.isArray(rp.corpo)) {
+    for (const r of rp.corpo) if (!ultimaReposicao.has(r.user_id)) ultimaReposicao.set(r.user_id, { quando: r.quando, metodo: r.metodo });
+  }
 
   const utilizadores = contas
     .map((x) => {
@@ -288,6 +375,10 @@ async function listar(uidChamador: string, amb: Ambiente, f: FetchFn): Promise<J
         pendente: x.user_metadata?.must_change_password === true,
         // A propria conta e as de administradores nao se eliminam por aqui.
         eliminavel: x.id !== uidChamador && op?.papel !== 'administrador',
+        administrador: op?.papel === 'administrador',
+        temOperador: !!op,
+        eu: x.id === uidChamador,
+        ultimaReposicao: ultimaReposicao.get(x.id) ?? null,
         ultimoAcesso: (x.last_sign_in_at as string | null) ?? null,
         criadaEm: x.created_at as string,
       };
@@ -325,6 +416,10 @@ export async function manipular(req: Request, amb: Ambiente, f: FetchFn = fetch)
         return resposta(await novoLink(req, amb, f, corpo));
       case 'eliminar':
         return resposta(await eliminar(uid, amb, f, corpo));
+      case 'repor':
+        return resposta(await repor(uid, amb, f, corpo));
+      case 'papel':
+        return resposta(await papel(uid, amb, f, corpo));
       default:
         throw new ErroPedido(400, 'Ação desconhecida.');
     }
