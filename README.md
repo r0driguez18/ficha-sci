@@ -208,7 +208,7 @@ A chave de administração do Supabase não pode ir para o browser, por isso ist
 
 **Quem é administrador:** o operador com `papel = 'administrador'` ligado à conta. O deploy trata disto sozinho: se ainda não houver nenhum administrador, promove o operador `nalves` (desde que já tenha a conta ligada). Se não tiver, corre-se uma vez `deploy-producao.cmd -AdminEmail o.teu@email`.
 
-**A função no servidor** (`supabase/functions/admin-utilizadores`) também é instalada pelo deploy: descobre a pasta de funções do contentor `supabase-edge-functions` e copia-a para lá. No fim verifica se o nginx encaminha `/functions/v1/` para o Kong e, se não encaminhar, diz exatamente o que acrescentar ao vhost do SCI (é o único passo que continua à mão, e só se faltar).
+**A função no servidor** (`supabase/functions/admin-utilizadores`) também é instalada pelo deploy: descobre a pasta de funções do contentor `supabase-edge-functions` e copia-a para lá. No fim verifica se o nginx encaminha `/functions/v1/` para o Kong (sem isso a app recebe um 405) e, se não encaminhar, corrige-o sozinho com `nginx-funcoes.sh`: copia o destino que o vhost já usa para `/auth/v1/`, faz cópia de segurança do ficheiro, testa com `nginx -t` e só então recarrega (se o teste falhar, repõe o original).
 
 O GoTrue só redireciona o link para `/reset-password` se o endereço da app estiver em `GOTRUE_URI_ALLOW_LIST` (ou for o `SITE_URL`). Se não estiver, a pessoa aterra na página inicial — a troca obrigatória de palavra-passe apanha-a na mesma.
 
