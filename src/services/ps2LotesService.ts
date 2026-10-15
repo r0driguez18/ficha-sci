@@ -87,8 +87,8 @@ export async function listarLotes(opcoes: { soPorVerificar?: boolean; limite?: n
   return { lotes: (data ?? []) as unknown as Ps2Lote[], erro: null };
 }
 
-export async function editarLote(id: string, empresa: string, sentido: Sentido): Promise<{ erro: string | null }> {
-  const { error } = await supabase.rpc('editar_lote_ps2', { p_id: id, p_empresa: empresa, p_sentido: sentido });
+export async function renomearLote(id: string, nome: string): Promise<{ erro: string | null }> {
+  const { error } = await supabase.rpc('renomear_lote_ps2', { p_id: id, p_nome: nome });
   return { erro: error ? error.message : null };
 }
 

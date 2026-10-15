@@ -7,12 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertTriangle, Copy } from 'lucide-react';
 import { toast } from 'sonner';
-import type { Sentido } from '@/lib/verificacaoSentido';
-import { editarLote, listarLotes, marcarVerificado, type Ps2Lote } from '@/services/ps2LotesService';
+import { listarLotes, marcarVerificado, renomearLote, type Ps2Lote } from '@/services/ps2LotesService';
 
 const fmtValor = (n: number) =>
   Number(n).toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -103,10 +101,19 @@ export default function VerificacaoFicheiros() {
     await recarregar();
   };
 
-  const mudarSentido = async (l: Ps2Lote, s: Sentido) => {
-    const r = await editarLote(l.id, l.empresa, s);
+  /** Só o nome/empresa se edita; a extensão original (.txt, .ps2…) mantém-se. */
+  const renomear = async (l: Ps2Lote, texto: string) => {
+    const base = texto.trim();
+    if (base === nomeSemExtensao(l.nome_ficheiro)) return;
+    if (!base) {
+      toast.error('O nome não pode ficar vazio.');
+      await recarregar();
+      return;
+    }
+    const ext = l.nome_ficheiro.match(/\.[A-Za-z0-9]{1,8}$/)?.[0] ?? '';
+    const r = await renomearLote(l.id, base + ext);
     if (r.erro) toast.error(r.erro);
-    else await recarregar();
+    await recarregar();
   };
 
   return (
@@ -205,9 +212,23 @@ export default function VerificacaoFicheiros() {
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-xs">{l.data_processamento}</TableCell>
                     <TableCell>
-                      <div className={`font-mono text-sm font-medium ${feito ? 'text-muted-foreground' : ''}`}>
-                        {nomeSemExtensao(l.nome_ficheiro)}
-                      </div>
+                      {feito ? (
+                        <div className="font-mono text-sm font-medium text-muted-foreground">
+                          {nomeSemExtensao(l.nome_ficheiro)}
+                        </div>
+                      ) : (
+                        <Input
+                          key={`${l.id}-${l.nome_ficheiro}`}
+                          defaultValue={nomeSemExtensao(l.nome_ficheiro)}
+                          maxLength={200}
+                          aria-label="Empresa / ficheiro"
+                          className="h-8 font-mono text-sm font-medium"
+                          onBlur={(e) => renomear(l, e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') e.currentTarget.blur();
+                          }}
+                        />
+                      )}
                       <div className="text-[10px] text-muted-foreground">
                         {l.tipo_operacao} · {l.n_registos} registos
                         {repetidos.has(l.hash_ficheiro) && (
@@ -215,20 +236,8 @@ export default function VerificacaoFicheiros() {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <Select
-                        value={l.sentido}
-                        disabled={feito}
-                        onValueChange={(v) => mudarSentido(l, v as Sentido)}
-                      >
-                        <SelectTrigger className="h-8 w-[7.5rem]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="debito">Débito</SelectItem>
-                          <SelectItem value="credito">Crédito</SelectItem>
-                        </SelectContent>
-                      </Select>
+                    <TableCell className="whitespace-nowrap text-sm">
+                      {l.sentido === 'credito' ? 'Crédito' : 'Débito'}
                     </TableCell>
                     <TableCell className="whitespace-nowrap">
                       <button
