@@ -1,5 +1,11 @@
 # Documento de Requisitos — Sistema SCI (Centro Informática / BCA)
 
+> **SUPERADO.** Este documento (v1.0) descreve o projeto no início. Os requisitos atuais estão no
+> [PRD](docs/01-PRD.md), com [TRD](docs/02-TRD.md), [UI/UX](docs/03-UI-UX-Design.md),
+> [App Flow](docs/04-App-Flow.md), [Backend Schema](docs/05-Backend-Schema.md) e
+> [Plano de Implementação](docs/06-Plano-de-Implementacao.md). Foram entretanto retirados o CRC, o DIS e o
+> Calendário, e a instalação real é Ubuntu + nginx (não Windows/IIS).
+
 **Projeto:** SCI — Sistema de Controlo Interno
 **Cliente:** Banco Comercial do Atlântico (BCA) — Direção de Sistemas de Informação, Centro Informática (DSI-CI)
 **Versão do documento:** 1.0
