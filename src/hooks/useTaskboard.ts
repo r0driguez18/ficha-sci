@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -6,7 +6,9 @@ import { useOperators, useCurrentOperator } from '@/hooks/useOperators';
 import {
   useTaskboardSync,
   taskboardLocalPrefix,
+  verificarFichaDesatualizada,
   type FormType,
+  type MotivoDesatualizada,
 } from '@/services/taskboardService';
 import { saveFileProcess } from '@/services/fileProcessService';
 import { createCobrancaRetorno } from '@/services/cobrancasRetornoService';
@@ -77,6 +79,10 @@ export function useTaskboard(formType: FormType) {
   const [isLoading, setIsLoading] = useState(true);
   /** Bloqueia "Guardar" / "Exportar PDF" durante a operação (evita duplo-clique). */
   const [busy, setBusy] = useState(false);
+
+  /** A cópia desta ficha ficou para trás (ver `verificarFichaDesatualizada`): bloqueia edição e gravação. */
+  const [desatualizada, setDesatualizada] = useState<MotivoDesatualizada | null>(null);
+  const ultimaVerificacao = useRef(0);
 
   const singleTurn = config.turns.length === 1;
   const activeTabForSync = singleTurn ? undefined : activeTab;
@@ -171,11 +177,61 @@ export function useTaskboard(formType: FormType) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, formType]);
 
-  // ---------- Gravação automática do rascunho ----------
+  // ---------- Ficha desatualizada ----------
+  const verificar = useCallback(async (): Promise<MotivoDesatualizada | null> => {
+    if (!user) return null;
+    const motivo = await verificarFichaDesatualizada(formType, date);
+    ultimaVerificacao.current = Date.now();
+    setDesatualizada(motivo);
+    return motivo;
+  }, [user, formType, date]);
+
+  // Verifica ao carregar, ao mudar a data, ao voltar à janela e de 2 em 2 minutos
+  // (a ficha só era lida do servidor ao abrir a página). Não corre a meio de uma exportação.
   useEffect(() => {
-    if (!isLoading) syncData();
+    if (isLoading || busy || !user) return;
+    verificar();
+    const aoVoltar = () => {
+      if (document.visibilityState === 'visible') verificar();
+    };
+    document.addEventListener('visibilitychange', aoVoltar);
+    window.addEventListener('focus', aoVoltar);
+    const timer = window.setInterval(aoVoltar, 120_000);
+    return () => {
+      document.removeEventListener('visibilitychange', aoVoltar);
+      window.removeEventListener('focus', aoVoltar);
+      window.clearInterval(timer);
+    };
+  }, [isLoading, busy, user, verificar]);
+
+  // ---------- Gravação automática do rascunho ----------
+  // Antes de gravar confirma (no máximo de 30 em 30 s) que a ficha não ficou para
+  // trás: um separador antigo não pode ressuscitar o rascunho de um dia já fechado.
+  useEffect(() => {
+    if (isLoading || desatualizada) return;
+    let cancelado = false;
+    (async () => {
+      if (user && Date.now() - ultimaVerificacao.current > 30_000) {
+        const motivo = await verificar();
+        if (motivo || cancelado) return;
+      }
+      if (!cancelado) syncData();
+    })();
+    return () => {
+      cancelado = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [date, turnData, tasks, tableRows, verificacaoTapes, activeTab, isLoading]);
+  }, [date, turnData, tasks, tableRows, verificacaoTapes, activeTab, isLoading, desatualizada]);
+
+  /** Recarrega a página para ir buscar a ficha em vigor ao servidor. */
+  const recarregarFicha = useCallback(() => window.location.reload(), []);
+
+  /** Ficha desta data já exportada: apaga o rascunho (servidor + local) e recarrega. */
+  const descartarRascunho = useCallback(async () => {
+    await resetData();
+    window.location.reload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [date, formType, user]);
 
   // A assinatura vale para o conteúdo tal como estava no momento de
   // assinar — qualquer edição depois disso invalida-a (o token de
@@ -397,6 +453,16 @@ export function useTaskboard(formType: FormType) {
 
     setBusy(true);
     try {
+      const motivo = await verificar();
+      if (motivo) {
+        toast.error(
+          motivo.tipo === 'exportada'
+            ? `A ficha do dia ${date} já foi exportada — não pode ser exportada outra vez.`
+            : `Há uma ficha mais recente (${motivo.data}) — recarrega a ficha antes de exportar.`,
+        );
+        return;
+      }
+
       let duplicates: string[];
       try {
         duplicates = await findDuplicateOps();
@@ -573,6 +639,9 @@ export function useTaskboard(formType: FormType) {
     operatorsList,
     date,
     setDate,
+    desatualizada,
+    recarregarFicha,
+    descartarRascunho,
     isEndOfMonth,
     showTapeVerification,
     verificacaoTapes,
