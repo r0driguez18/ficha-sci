@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useSyncStatus } from '@/hooks/useSyncStatus';
@@ -32,6 +32,47 @@ export function clearAllTaskboardLocalDrafts(): void {
     localStorage.removeItem(`${prefix}-tableRows`);
     localStorage.removeItem(`${prefix}-activeTab`);
   });
+}
+
+/** Limpa o rascunho local de um tipo de ficha. */
+export function clearTaskboardLocalDraft(formType: FormType): void {
+  const prefix = taskboardLocalPrefix(formType);
+  ['date', 'turnData', 'tasks', 'tableRows', 'activeTab'].forEach((k) => localStorage.removeItem(`${prefix}-${k}`));
+}
+
+/** Porque é que a cópia da ficha que este computador tem já não vale. */
+export type MotivoDesatualizada =
+  | { tipo: 'exportada' }
+  | { tipo: 'mais-recente'; data: string };
+
+/**
+ * A ficha desta data já foi fechada (existe em `exported_taskboards`) ou há no
+ * servidor um rascunho de uma data posterior? Nos dois casos a cópia que está
+ * em memória (ou no localStorage) ficou para trás e gravá-la ressuscitaria um
+ * rascunho já arquivado. Falha "aberta": se a consulta falhar, não bloqueia.
+ */
+export async function verificarFichaDesatualizada(
+  formType: FormType,
+  date: string,
+): Promise<MotivoDesatualizada | null> {
+  try {
+    const [exp, rec] = await Promise.all([
+      supabase.from('exported_taskboards').select('id').eq('form_type', formType).eq('date', date).limit(1),
+      supabase
+        .from('taskboard_data')
+        .select('date')
+        .eq('form_type', formType)
+        .gt('date', date)
+        .order('date', { ascending: false })
+        .limit(1),
+    ]);
+    if (!exp.error && exp.data && exp.data.length > 0) return { tipo: 'exportada' };
+    if (!rec.error && rec.data && rec.data.length > 0) return { tipo: 'mais-recente', data: rec.data[0].date };
+    return null;
+  } catch (error) {
+    console.error('Erro ao verificar se a ficha está desatualizada:', error);
+    return null;
+  }
 }
 
 export interface TaskboardData {
@@ -258,6 +299,8 @@ export const useTaskboardSync = (
   const { report, clear } = useSyncStatus();
   const [status, setStatus] = useState<SyncStatus>('idle');
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+  /** Última data gravada no servidor por este hook (para limpar o rascunho antigo se a data mudar). */
+  const lastSavedDate = useRef<string | null>(null);
 
   // Publica o estado da gravação para o cabeçalho e limpa-o ao sair da ficha.
   useEffect(() => {
@@ -303,6 +346,12 @@ export const useTaskboardSync = (
       const { error } = await saveTaskboardData(taskboardData);
       if (error) throw error;
 
+      // Mudar a data cria um rascunho novo; o da data anterior ficava para trás
+      // no servidor e voltava a aparecer mais tarde como "ficha mais recente".
+      const anterior = lastSavedDate.current;
+      lastSavedDate.current = date;
+      if (anterior && anterior !== date) await deleteTaskboardData(formType, anterior);
+
       setStatus('saved');
       setLastSavedAt(new Date());
     } catch (error) {
@@ -338,6 +387,13 @@ export const useTaskboardSync = (
       const localActiveTab = localStorage.getItem(`${localStoragePrefix}-activeTab`);
       
       if (localDate && localTurnData && localTasks && localTableRows) {
+        // O rascunho local pode ser de um dia que entretanto outro posto já
+        // fechou: nesse caso descarta-se, em vez de o gravar de volta no servidor.
+        const motivo = await verificarFichaDesatualizada(formType, localDate);
+        if (motivo?.tipo === 'exportada') {
+          clearTaskboardLocalDraft(formType);
+          return null;
+        }
         // Data exists in localStorage, sync it to Supabase
         const taskboardData: TaskboardData = {
           user_id: user.id,
