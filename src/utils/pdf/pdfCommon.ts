@@ -130,7 +130,7 @@ export const checkPageSpace = (doc: jsPDF, y: number, requiredSpace: number): nu
 };
 
 // Helper function to draw a rectangle around observations
-export const drawObservationsBox = (doc: jsPDF, startY: number, text: string): number => {
+export const drawObservationsBox = (doc: jsPDF, startY: number, text: string, minBoxHeight = 20): number => {
   const pageWidth = doc.internal.pageSize.width;
   const padding = 5;
   const lineHeight = 5;
@@ -149,7 +149,7 @@ export const drawObservationsBox = (doc: jsPDF, startY: number, text: string): n
   const textHeight = splitText.length * lineHeight;
   
   // Draw rectangle with padding and subtle style
-  const boxHeight = Math.max(20, textHeight + padding * 2);
+  const boxHeight = Math.max(minBoxHeight, textHeight + padding * 2);
   doc.setDrawColor(...BCA_COLORS.blue);
   doc.setFillColor(...BCA_COLORS.lightGray);
   doc.setLineWidth(0.3);
@@ -160,7 +160,7 @@ export const drawObservationsBox = (doc: jsPDF, startY: number, text: string): n
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.text(splitText, 15, startY + padding);
-    return startY + textHeight + (padding * 2);
+    return startY + Math.max(textHeight + padding * 2, boxHeight);
   }
   
   return startY + boxHeight;

@@ -9,6 +9,12 @@ import {
   BCA_COLORS
 } from './pdfCommon';
 
+// O Turno 2 tem menos tarefas que os outros e ocupa uma página própria: espaça-se a lista
+// e dá-se mais altura às observações para a página não ficar meio vazia.
+const PASSO = 9.5;
+const FONTE = 11;
+const ALTURA_OBSERVACOES = 60;
+
 export const renderTurno2Tasks = (
   doc: jsPDF, 
   tasks: Turno2Tasks,
@@ -39,7 +45,7 @@ export const renderTurno2Tasks = (
   ];
   
   taskList.forEach(item => {
-    y = checkPageSpace(doc, y, 8);
+    y = checkPageSpace(doc, y, PASSO);
     
     // Especial: Percurso title e checkboxes
     let isChecked = false;
@@ -50,7 +56,7 @@ export const renderTurno2Tasks = (
     }
     
     drawCheckbox(doc, 15, y - 3, isChecked);
-    doc.setFontSize(10);
+    doc.setFontSize(FONTE);
     doc.setFont("helvetica", "normal");
     
     // Bold logic
@@ -74,7 +80,7 @@ export const renderTurno2Tasks = (
     }
 
     if (item.key === 'percurso76857') {
-      let xOffset = 55;
+      let xOffset = 60;
       const hoursItems = [
         { key: 'percurso76857_14h', text: '14h' },
         { key: 'percurso76857_16h', text: '16h' },
@@ -88,10 +94,10 @@ export const renderTurno2Tasks = (
         xOffset += 22;
       });
     }
-    y += 6;
+    y += PASSO;
   });
   
   // Observations with rectangle
-  y = checkPageSpace(doc, y, 30);
-  return drawObservationsBox(doc, y, observations);
+  y = checkPageSpace(doc, y + 4, ALTURA_OBSERVACOES + 12);
+  return drawObservationsBox(doc, y, observations, ALTURA_OBSERVACOES);
 };
