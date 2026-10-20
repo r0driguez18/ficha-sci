@@ -1,10 +1,10 @@
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, PlusCircle, Trash2 } from 'lucide-react';
 import { TaskTableRow } from '@/types/taskTableRow';
 
 interface TableRowsSectionProps {
@@ -23,10 +23,15 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
   onInputChange,
 }) => {
   const focarNova = useRef(false);
+  const preenchidas = tableRows.filter((r) => r.hora || r.tarefa || r.nomeAs || r.operacao || r.tipo).length;
+  // Com muitos processamentos a tabela começa recolhida: a lista de tarefas fica à vista
+  // e os processamentos regista-se pelo painel flutuante.
+  const [aberta, setAberta] = useState(preenchidas <= 3);
 
   /** Adiciona uma linha e, quando ela aparece, leva o cursor ao primeiro campo dela. */
   const adicionar = () => {
     focarNova.current = true;
+    setAberta(true);
     onAddRow();
   };
 
@@ -43,7 +48,16 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
   return (
     <div className="mt-8 pt-6 border-t">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-base font-semibold text-foreground">Processamentos</h3>
+        <button
+          type="button"
+          onClick={() => setAberta((a) => !a)}
+          aria-expanded={aberta}
+          className="flex items-center gap-1.5 text-base font-semibold text-foreground hover:text-primary"
+        >
+          {aberta ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          Processamentos
+          <span className="text-sm font-normal text-muted-foreground">({preenchidas})</span>
+        </button>
         <div className="flex gap-2">
           <Button
             variant="outline"
@@ -58,6 +72,8 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
         </div>
       </div>
       
+      {aberta && (
+      <>
       <div className="rounded-lg border overflow-hidden">
         <Table>
           <TableHeader>
@@ -170,6 +186,8 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
         <PlusCircle className="h-4 w-4" />
         Adicionar linha
       </Button>
+      </>
+      )}
     </div>
   );
 };
