@@ -17,6 +17,7 @@ import { consumirTokenAssinatura } from '@/services/operatorPinService';
 import { generateTaskboardPDF } from '@/utils/pdfGenerator';
 import { computeFichaHash } from '@/lib/signatureHash';
 import { fichaFileName } from '@/lib/fichaFileName';
+import { enviarEventoFecho } from '@/services/notificarFechoService';
 import { supabase } from '@/integrations/supabase/client';
 import { TASKBOARD_CONFIGS } from '@/lib/taskboardConfig';
 import {
@@ -31,6 +32,11 @@ import type { TasksType, TurnDataType, TurnKey, VerificacaoTapes } from '@/types
 import type { TaskTableRow } from '@/types/taskTableRow';
 
 const OP_LENGTH = 9;
+
+const horaAgora = () => {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+};
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyRecord = Record<string, any>;
@@ -266,8 +272,28 @@ export function useTaskboard(formType: FormType) {
     saldoPositivo: 'saldoNegativo',
   };
 
+  // Última versão do estado, para o handler (estável) ler a hora e a data sem se recriar a cada tecla.
+  const tasksRef = useRef(tasks);
+  tasksRef.current = tasks;
+  const dateRef = useRef(date);
+  dateRef.current = date;
+
+  /** Início/término do fecho marcados → mensagem para o Teams (o servidor garante uma por dia e tipo). */
+  const avisarFecho = useCallback(async (tipo: 'inicio' | 'termino') => {
+    const campo = tipo === 'inicio' ? 'inicioFechoHora' : 'terminoFechoHora';
+    const escrita = String(tasksRef.current.turno3[campo] ?? '');
+    const hora = /^([01]\d|2[0-3]):[0-5]\d$/.test(escrita) ? escrita : horaAgora();
+    const r = await enviarEventoFecho(tipo, dateRef.current, hora);
+    if (r.estado === 'enviada') toast.success('Mensagem enviada para o Teams.');
+    else if (r.estado === 'falha') toast.error(`Não consegui enviar a mensagem para o Teams: ${r.detalhe}`);
+  }, []);
+
   const handleTaskChange = useCallback(
     (turnKey: TurnKey, task: string, checked: boolean | string) => {
+      if (turnKey === 'turno3' && checked === true) {
+        if (task === 'inicioFecho') void avisarFecho('inicio');
+        else if (task === 'terminoFecho') void avisarFecho('termino');
+      }
       setTasks((prev) => {
         const turnTasks = { ...prev[turnKey], [task]: checked };
         const oposto = SALDO_OPOSTO[task];
@@ -277,7 +303,7 @@ export function useTaskboard(formType: FormType) {
         return { ...prev, [turnKey]: turnTasks };
       });
     },
-    [],
+    [avisarFecho],
   );
 
   const handleTurnDataChange = useCallback((turnKey: TurnKey, field: string, value: string) => {

@@ -193,7 +193,14 @@ Nota única por `(date, turno)` com leitura única. Substituída funcionalmente 
 | `card_renewal_cards` | `id`, `session_id` (CASCADE), `numero_cartao` (CHECK 7 dígitos), `balcao`, `nome_titular`, `posicao`, `lote_numero` (NULL = pendente), `dados` jsonb | **UNIQUE `(session_id, numero_cartao)`**; trigger de proteção; `INSERT` só na sessão |
 | `card_renewal_lotes` | `id`, `session_id` (CASCADE), `numero`, `balcoes[]`, `total_cartoes`, `ficheiro_nome`, `criado_por` | **UNIQUE `(session_id, numero)`**; só `SELECT` |
 
-### 2.6 Legado
+### 2.6 Notificações (Teams)
+
+| Tabela | Colunas principais | Regras |
+|---|---|---|
+| `notificacoes_config` | `chave` (PK, ex.: `teams_webhook`), `valor`, `atualizado_em`, `atualizado_por` | RLS ligado **sem políticas**: só a função `notificar-fecho` (chave de serviço) lê e escreve |
+| `notificacoes_fecho` | `id`, `data`, `tipo` (`inicio`/`termino`), `hora`, `operador`, `criado_em` | **UNIQUE `(data, tipo)`**: uma mensagem por dia e tipo; RLS ligado sem políticas |
+
+### 2.7 Legado
 
 - **`crc_tratamentos`**: tabela da ferramenta CRC (removida da aplicação). Mantida; decidir se se apaga.
 
@@ -269,6 +276,17 @@ Todas `SECURITY DEFINER` com `search_path` fixo; `REVOKE … FROM public, anon`;
 | `repor` | `conta` | **Senha temporária** (uma vez) + troca obrigatória; não na própria conta |
 | `papel` | `conta`, `administrador` | Torna/retira administrador; nunca deixa zero |
 | `eliminar` | `conta` | Elimina a conta; não a própria, nem a de administradores |
+
+### `notificar-fecho` — requer JWT de operador ativo
+
+| Ação | Quem | Pedido | Efeito |
+|---|---|---|---|
+| `evento` | operador | `tipo` (`inicio`/`termino`), `data`, `hora` | Reserva `(data, tipo)` e publica a mensagem no Teams; respostas `enviada`, `ja-enviada`, `sem-webhook` ou `falha` (a reserva é libertada para nova tentativa) |
+| `estado` | administrador | — | `{ configurado, anfitriao }` (nunca devolve o endereço completo) |
+| `configurar` | administrador | `url` (`""` remove) | Guarda o webhook; só aceita HTTPS em `*.logic.azure.com`, `*.powerplatform.com`, `*.webhook.office.com`, `outlook.office.com` |
+| `testar` | administrador | — | Envia uma mensagem de teste |
+
+A ficha dispara `evento` ao marcar «Início do Fecho» / «Término do Fecho» no Turno 3. O servidor precisa de saída HTTPS para o Teams.
 
 ### `repor-senha` — sem sessão
 

@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { PinManagerCard } from '@/components/settings/PinManagerCard';
 import { OperatorLinkCard } from '@/components/settings/OperatorLinkCard';
 import { AdminUtilizadoresCard } from '@/components/settings/AdminUtilizadoresCard';
+import { NotificacoesTeamsCard } from '@/components/settings/NotificacoesTeamsCard';
 import { useIsAdmin } from '@/hooks/useOperators';
 
 const Settings = () => {
@@ -65,6 +66,8 @@ const Settings = () => {
         <PinManagerCard />
 
         {isAdmin && <AdminUtilizadoresCard />}
+
+        {isAdmin && <NotificacoesTeamsCard />}
       </div>
     </PageContainer>
   );
