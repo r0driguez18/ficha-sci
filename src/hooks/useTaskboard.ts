@@ -32,6 +32,9 @@ import type { TaskTableRow } from '@/types/taskTableRow';
 
 const OP_LENGTH = 9;
 
+/** Próximo id de linha: máximo + 1 (com `length + 1` repetiam-se ids depois de remover uma linha do meio). */
+const nextRowId = (rows: TaskTableRow[]) => rows.reduce((m, r) => Math.max(m, r.id), 0) + 1;
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyRecord = Record<string, any>;
 
@@ -288,8 +291,17 @@ export function useTaskboard(formType: FormType) {
   }, []);
 
   const addTableRow = useCallback(() => {
-    setTableRows((rows) => [...rows, emptyTableRow(rows.length + 1, currentOperator?.value ?? '')]);
+    setTableRows((rows) => [...rows, emptyTableRow(nextRowId(rows), currentOperator?.value ?? '')]);
   }, [currentOperator]);
+
+  /** Acrescenta uma linha já preenchida; se só existir a linha inicial vazia, preenche-a em vez de acrescentar. */
+  const addTableRowWith = useCallback((linha: Omit<TaskTableRow, 'id'>) => {
+    setTableRows((rows) => {
+      const vazia = (r: TaskTableRow) => !r.hora && !r.tarefa && !r.nomeAs && !r.operacao && !r.tipo;
+      if (rows.length === 1 && vazia(rows[0])) return [{ ...linha, id: rows[0].id }];
+      return [...rows, { ...linha, id: nextRowId(rows) }];
+    });
+  }, []);
 
   /** Remove a linha indicada (nunca a última que sobrar) — nunca a "última da lista" por omissão. */
   const removeTableRow = useCallback((id: number) => {
@@ -664,7 +676,9 @@ export function useTaskboard(formType: FormType) {
     handleTaskChange,
     handleTurnDataChange,
     handleTapesChange,
+    currentOperatorValue: currentOperator?.value ?? '',
     addTableRow,
+    addTableRowWith,
     removeTableRow,
     handleInputChange,
     exportToPDF,
