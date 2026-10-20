@@ -17,7 +17,6 @@ import { consumirTokenAssinatura } from '@/services/operatorPinService';
 import { generateTaskboardPDF } from '@/utils/pdfGenerator';
 import { computeFichaHash } from '@/lib/signatureHash';
 import { fichaFileName } from '@/lib/fichaFileName';
-import { horaAgora } from '@/components/ui/hora-input';
 import { supabase } from '@/integrations/supabase/client';
 import { TASKBOARD_CONFIGS } from '@/lib/taskboardConfig';
 import {
@@ -32,6 +31,11 @@ import type { TasksType, TurnDataType, TurnKey, VerificacaoTapes } from '@/types
 import type { TaskTableRow } from '@/types/taskTableRow';
 
 const OP_LENGTH = 9;
+
+const horaAgora = () => {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+};
 
 /** Próximo id de linha: máximo + 1 (com `length + 1` repetiam-se ids depois de remover uma linha do meio). */
 const nextRowId = (rows: TaskTableRow[]) => rows.reduce((m, r) => Math.max(m, r.id), 0) + 1;

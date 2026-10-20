@@ -4,7 +4,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { HoraInput } from '@/components/ui/hora-input';
 import { ChevronDown, ChevronRight, PlusCircle, Trash2 } from 'lucide-react';
 import { TaskTableRow } from '@/types/taskTableRow';
 
@@ -92,10 +91,11 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
             {tableRows.map((row) => (
               <TableRow key={row.id} data-linha={row.id}>
                 <TableCell>
-                  <HoraInput
-                    value={row.hora}
-                    onChange={(v) => onInputChange(row.id, 'hora', v)}
-                    aria-label="Hora"
+                  <Input 
+                    type="time" 
+                    value={row.hora} 
+                    onChange={(e) => onInputChange(row.id, 'hora', e.target.value)}
+                    className="h-9"
                   />
                 </TableCell>
                 <TableCell>
