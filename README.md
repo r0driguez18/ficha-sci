@@ -170,6 +170,8 @@ download depois de o display de tapes estar anexado, quando aplicável.
 - `npm run dev` - Inicia o servidor de desenvolvimento
 - `npm run build` - Compila o projeto para produção
 - `npm run preview` - Visualiza a build de produção localmente
+- `npm test` - Corre os testes automáticos (Vitest): ficheiros PS2/OIC, selo da ficha, reposição de senha, administração de utilizadores, dias úteis…
+- `npm run test:watch` - Testes em modo de observação, para desenvolver
 
 ## Deploy para produção
 

@@ -291,7 +291,7 @@ executados à mão, fora do repositório. Ver [Plano de Implementação](06-Plan
 
 | Item | Detalhe |
 |---|---|
-| Sem testes automatizados | Fluxos críticos (assinatura, lotes de cartões, reposição de senha) merecem testes no repositório |
+| Cobertura de testes parcial | Há testes para a lógica pura e as funções do servidor (`npm test`); faltam testes de ecrãs (React) e de SQL/RLS contra uma base real |
 | `eslint` partido | A configuração não corre (incompatibilidade de versões); o `tsc` é a verificação efetiva |
 | `crc_tratamentos` | Tabela e tipos da ferramenta CRC (removida) ainda existem; decidir se se apaga |
 | `types.ts` à mão | Os tipos do Supabase são mantidos manualmente; gerar com a CLI quando houver acesso |
