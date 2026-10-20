@@ -15,6 +15,7 @@ import { Turno3TasksComponent } from '@/components/tasks/Turno3Tasks';
 import { VerificacaoTapesSection } from '@/components/tasks/VerificacaoTapesSection';
 import { TurnInfoSection } from '@/components/taskboard/TurnInfoSection';
 import { TableRowsSection } from '@/components/taskboard/TableRowsSection';
+import { AdicionarProcessamento } from '@/components/taskboard/AdicionarProcessamento';
 import { FormActions } from '@/components/taskboard/FormActions';
 import { SignatureSection } from '@/components/taskboard/SignatureSection';
 import { SyncStatusBadge } from '@/components/taskboard/SyncStatusBadge';
@@ -224,6 +225,13 @@ export default function FichaProcedimentos({ formType }: FichaProcedimentosProps
           ) : (
             renderTurn(config.turns[0])
           )}
+
+          <AdicionarProcessamento
+            operatorsList={operatorsList}
+            executadoPorOmissao={tb.currentOperatorValue}
+            total={tb.tableRows.filter((r) => r.tarefa || r.nomeAs || r.operacao || r.tipo).length}
+            onAdd={tb.addTableRowWith}
+          />
 
           <TableRowsSection
             tableRows={tb.tableRows}

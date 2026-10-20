@@ -9,6 +9,12 @@ import {
   BCA_COLORS
 } from './pdfCommon';
 
+// O Turno 2 tem menos tarefas que os outros e ocupa uma página própria: espaça-se a lista
+// para a página não ficar meio vazia (as observações mantêm uma caixa de tamanho normal).
+const PASSO = 9.5;
+const FONTE = 11;
+const ALTURA_OBSERVACOES = 30;
+
 export const renderTurno2Tasks = (
   doc: jsPDF, 
   tasks: Turno2Tasks,
@@ -26,10 +32,10 @@ export const renderTurno2Tasks = (
     {key: 'verificarDebitos', text: "Verificar Débitos/Créditos Aplicados no Turno Anterior"},
     {key: 'percurso76857', text: "Percurso 76857 –"},
     {key: 'inpsEnviarRetorno', text: "Processar e enviar os ficheiros retorno do INPS"},
+    {key: 'enviarEnv', text: "Enviar ENV"},
     {key: 'processarTef', text: "Processar Ficheiros TEF – RTR/RCT/ERR"},
     {key: 'processarTelecomp', text: "Processar Ficheiros Telecompensação – RCB/RTC/FCT/IMR"},
     {key: 'rececaoFicheirosVisaVss', text: "Verificar envio ficheiro VISA (VSS)"},
-    {key: 'enviarEnvIma', text: "Enviar Ficheiro ENV/IMA (até às 15:00)"},
     {key: 'enviarEciEdv', text: "Enviar Ficheiro ECI/EDV"},
     {key: 'confirmarAtualizacaoFicheiros', text: "Confirmar Atualização Ficheiros Enviados à SISP (ECI * ENV/IMA)"},
     {key: 'verificarPendentes', text: "Verificar Pendentes dos Balcões abertos"},
@@ -39,7 +45,7 @@ export const renderTurno2Tasks = (
   ];
   
   taskList.forEach(item => {
-    y = checkPageSpace(doc, y, 8);
+    y = checkPageSpace(doc, y, PASSO);
     
     // Especial: Percurso title e checkboxes
     let isChecked = false;
@@ -50,7 +56,7 @@ export const renderTurno2Tasks = (
     }
     
     drawCheckbox(doc, 15, y - 3, isChecked);
-    doc.setFontSize(10);
+    doc.setFontSize(FONTE);
     doc.setFont("helvetica", "normal");
     
     // Bold logic
@@ -58,6 +64,11 @@ export const renderTurno2Tasks = (
       doc.text("Enviar Ficheiro ", 22, y);
       doc.setFont("helvetica", "bold");
       doc.text("ECI/EDV", 22 + doc.getTextWidth("Enviar Ficheiro "), y);
+      doc.setFont("helvetica", "normal");
+    } else if (item.key === 'enviarEnv') {
+      doc.text("Enviar ", 22, y);
+      doc.setFont("helvetica", "bold");
+      doc.text("ENV", 22 + doc.getTextWidth("Enviar "), y);
       doc.setFont("helvetica", "normal");
     } else if (item.key === 'confirmarAtualizacaoFicheiros') {
       doc.text("Confirmar Atualização Ficheiros Enviados à SISP ", 22, y);
@@ -74,7 +85,7 @@ export const renderTurno2Tasks = (
     }
 
     if (item.key === 'percurso76857') {
-      let xOffset = 55;
+      let xOffset = 60;
       const hoursItems = [
         { key: 'percurso76857_14h', text: '14h' },
         { key: 'percurso76857_16h', text: '16h' },
@@ -88,10 +99,10 @@ export const renderTurno2Tasks = (
         xOffset += 22;
       });
     }
-    y += 6;
+    y += PASSO;
   });
   
   // Observations with rectangle
-  y = checkPageSpace(doc, y, 30);
-  return drawObservationsBox(doc, y, observations);
+  y = checkPageSpace(doc, y + 4, ALTURA_OBSERVACOES + 12);
+  return drawObservationsBox(doc, y, observations, ALTURA_OBSERVACOES);
 };

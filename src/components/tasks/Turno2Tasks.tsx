@@ -70,6 +70,11 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
       </div>
 
       <div className="flex items-start space-x-2">
+        <Checkbox id="enviarEnv" checked={tasks.enviarEnv} onCheckedChange={(c) => onTaskChange('enviarEnv', !!c)} />
+        <Label htmlFor="enviarEnv" className="cursor-pointer text-foreground">Enviar <span className="font-bold">ENV</span></Label>
+      </div>
+
+      <div className="flex items-start space-x-2">
         <Checkbox id="processarTef2" checked={tasks.processarTef} onCheckedChange={(c) => onTaskChange('processarTef', !!c)} />
         <Label htmlFor="processarTef2" className="cursor-pointer text-foreground font-medium">Processar Ficheiros TEF – RTR/RCT/ERR</Label>
       </div>
@@ -82,11 +87,6 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
       <div className="flex items-start space-x-2">
         <Checkbox id="rececaoFicheirosVisaVss" checked={tasks.rececaoFicheirosVisaVss} onCheckedChange={(c) => onTaskChange('rececaoFicheirosVisaVss', !!c)} />
         <Label htmlFor="rececaoFicheirosVisaVss" className="cursor-pointer text-foreground">Verificar envio ficheiro VISA (VSS)</Label>
-      </div>
-
-      <div className="flex items-start space-x-2">
-        <Checkbox id="enviarEnvIma" checked={tasks.enviarEnvIma} onCheckedChange={(c) => onTaskChange('enviarEnvIma', !!c)} />
-        <Label htmlFor="enviarEnvIma" className="cursor-pointer text-foreground">Enviar Ficheiro <span className="font-bold">ENV/IMA</span> (até às 15:00)</Label>
       </div>
 
       <div className="flex items-start space-x-2">

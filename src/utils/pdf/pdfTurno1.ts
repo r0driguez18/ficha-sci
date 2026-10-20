@@ -97,7 +97,7 @@ export const renderTurno1Tasks = (
       });
       y += 6;
     } else if (item.key === 'enviar') {
-      y += 6;
+      // Como na ficha em papel: "Enviar:" e as opções todas na mesma linha.
       const enviarSubItems = [
         { key: 'etr', text: 'ETR' },
         { key: 'impostos', text: 'Impostos' },
@@ -105,19 +105,16 @@ export const renderTurno1Tasks = (
         { key: 'vistoUsa', text: 'Visto USA' },
         { key: 'ben', text: 'BEN' }
       ];
-      for (let i = 0; i < enviarSubItems.length; i += 3) {
-        y = checkPageSpace(doc, y, 8);
-        for (let j = 0; j < 3; j++) {
-          if (i + j < enviarSubItems.length) {
-            const subItem = enviarSubItems[i + j];
-            const itemKey = subItem.key as keyof typeof tasks;
-            const xOffset = 25 + (j * 40);
-            drawCheckbox(doc, xOffset, y - 3, ensureBoolean(tasks[itemKey]));
-            doc.text(subItem.text, xOffset + 6, y);
-          }
-        }
-        y += 6;
-      }
+      doc.setFont("helvetica", "bold");
+      let xOffset = 22 + doc.getTextWidth(item.text) + 6;
+      doc.setFont("helvetica", "normal");
+      enviarSubItems.forEach((subItem) => {
+        const itemKey = subItem.key as keyof typeof tasks;
+        drawCheckbox(doc, xOffset, y - 3, ensureBoolean(tasks[itemKey]));
+        doc.text(subItem.text, xOffset + 6, y);
+        xOffset += 6 + doc.getTextWidth(subItem.text) + 7;
+      });
+      y += 6;
     } else if (item.key === 'verificarRecepcaoSisp') {
       let xOffset = 90;
       const sispItems = [
