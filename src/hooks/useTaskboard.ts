@@ -17,6 +17,7 @@ import { consumirTokenAssinatura } from '@/services/operatorPinService';
 import { generateTaskboardPDF } from '@/utils/pdfGenerator';
 import { computeFichaHash } from '@/lib/signatureHash';
 import { fichaFileName } from '@/lib/fichaFileName';
+import { horaAgora } from '@/components/ui/hora-input';
 import { supabase } from '@/integrations/supabase/client';
 import { TASKBOARD_CONFIGS } from '@/lib/taskboardConfig';
 import {
@@ -291,13 +292,16 @@ export function useTaskboard(formType: FormType) {
   }, []);
 
   const addTableRow = useCallback(() => {
-    setTableRows((rows) => [...rows, emptyTableRow(nextRowId(rows), currentOperator?.value ?? '')]);
+    setTableRows((rows) => [
+      ...rows,
+      { ...emptyTableRow(nextRowId(rows), currentOperator?.value ?? ''), hora: horaAgora() },
+    ]);
   }, [currentOperator]);
 
   /** Acrescenta uma linha já preenchida; se só existir a linha inicial vazia, preenche-a em vez de acrescentar. */
   const addTableRowWith = useCallback((linha: Omit<TaskTableRow, 'id'>) => {
     setTableRows((rows) => {
-      const vazia = (r: TaskTableRow) => !r.hora && !r.tarefa && !r.nomeAs && !r.operacao && !r.tipo;
+      const vazia = (r: TaskTableRow) => !r.tarefa && !r.nomeAs && !r.operacao && !r.tipo;
       if (rows.length === 1 && vazia(rows[0])) return [{ ...linha, id: rows[0].id }];
       return [...rows, { ...linha, id: nextRowId(rows) }];
     });
