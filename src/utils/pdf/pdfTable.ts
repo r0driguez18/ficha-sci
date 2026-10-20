@@ -5,13 +5,11 @@ import { TaskTableRow } from '@/types/taskTableRow';
 import { addBCALogo, BCA_COLORS } from './pdfCommon';
 
 export const renderTaskTable = (doc: jsPDF, tableRows: TaskTableRow[]): void => {
-  // Filter out any empty rows
-  const validRows = tableRows.filter(row => 
-    (row.hora || '').trim() !== '' || 
-    (row.tarefa || '').trim() !== '' || 
-    (row.nomeAs || '').trim() !== '' || 
-    (row.operacao || '').trim() !== '' || 
-    (row.executado || '').trim() !== '' ||
+  // Linhas só com hora/executado (pré-preenchidos ao adicionar) não são processamentos.
+  const validRows = tableRows.filter(row =>
+    (row.tarefa || '').trim() !== '' ||
+    (row.nomeAs || '').trim() !== '' ||
+    (row.operacao || '').trim() !== '' ||
     (row.tipo || '').trim() !== ''
   );
   

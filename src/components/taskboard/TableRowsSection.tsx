@@ -1,10 +1,10 @@
 
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, PlusCircle, Trash2 } from 'lucide-react';
 import { TaskTableRow } from '@/types/taskTableRow';
 
 interface TableRowsSectionProps {
@@ -22,15 +22,47 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
   onRemoveRow,
   onInputChange,
 }) => {
+  const focarNova = useRef(false);
+  const preenchidas = tableRows.filter((r) => r.tarefa || r.nomeAs || r.operacao || r.tipo).length;
+  // Com muitos processamentos a tabela começa recolhida: a lista de tarefas fica à vista
+  // e os processamentos regista-se pelo painel flutuante.
+  const [aberta, setAberta] = useState(preenchidas <= 3);
+
+  /** Adiciona uma linha e, quando ela aparece, leva o cursor ao primeiro campo dela. */
+  const adicionar = () => {
+    focarNova.current = true;
+    setAberta(true);
+    onAddRow();
+  };
+
+  useEffect(() => {
+    if (!focarNova.current) return;
+    focarNova.current = false;
+    const ultima = tableRows[tableRows.length - 1];
+    const linha = document.querySelector<HTMLElement>(`[data-linha="${ultima.id}"]`);
+    if (!linha) return;
+    linha.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    linha.querySelector<HTMLInputElement>('input')?.focus({ preventScroll: true });
+  }, [tableRows]);
+
   return (
     <div className="mt-8 pt-6 border-t">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-base font-semibold text-foreground">Processamentos</h3>
+        <button
+          type="button"
+          onClick={() => setAberta((a) => !a)}
+          aria-expanded={aberta}
+          className="flex items-center gap-1.5 text-base font-semibold text-foreground hover:text-primary"
+        >
+          {aberta ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          Processamentos
+          <span className="text-sm font-normal text-muted-foreground">({preenchidas})</span>
+        </button>
         <div className="flex gap-2">
           <Button
             variant="outline"
             size="sm"
-            onClick={onAddRow}
+            onClick={adicionar}
             title="Adicionar linha"
             className="gap-1.5"
           >
@@ -40,6 +72,8 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
         </div>
       </div>
       
+      {aberta && (
+      <>
       <div className="rounded-lg border overflow-hidden">
         <Table>
           <TableHeader>
@@ -55,7 +89,7 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
           </TableHeader>
           <TableBody>
             {tableRows.map((row) => (
-              <TableRow key={row.id}>
+              <TableRow key={row.id} data-linha={row.id}>
                 <TableCell>
                   <Input 
                     type="time" 
@@ -87,6 +121,13 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
                     onChange={(e) => onInputChange(row.id, 'operacao', e.target.value)}
                     pattern="[0-9]*"
                     maxLength={9}
+                    onKeyDown={(e) => {
+                      // Enter no Nº Operação da última linha preenchida abre a linha seguinte.
+                      if (e.key === 'Enter' && row.id === tableRows[tableRows.length - 1].id && row.operacao.trim()) {
+                        e.preventDefault();
+                        adicionar();
+                      }
+                    }}
                     className="min-w-[110px] h-9"
                   />
                 </TableCell>
@@ -139,6 +180,14 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
           </TableBody>
         </Table>
       </div>
+
+      {/* Ao fim da lista: com muitas linhas, não é preciso voltar ao topo para adicionar a seguinte. */}
+      <Button variant="outline" onClick={adicionar} className="mt-3 w-full gap-1.5 border-dashed">
+        <PlusCircle className="h-4 w-4" />
+        Adicionar linha
+      </Button>
+      </>
+      )}
     </div>
   );
 };
