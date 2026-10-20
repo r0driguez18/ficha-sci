@@ -94,11 +94,11 @@ export const generateTaskboardPDF = (
       const turnName = turnNames[index];
       const turn = turnData[turnKey];
       
-      // Add extra spacing between turns
+      // Cada turno começa numa página nova (como na ficha em papel): o cabeçalho
+      // do Turno 2/3 não fica a meio da página do turno anterior.
       if (index > 0) {
-        y += 10;
-        y = drawSeparator(doc, y);
-        y += 5;
+        doc.addPage();
+        y = 20;
       }
       
       // Turn header with colored background

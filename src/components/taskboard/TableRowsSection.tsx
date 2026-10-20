@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -22,6 +22,24 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
   onRemoveRow,
   onInputChange,
 }) => {
+  const focarNova = useRef(false);
+
+  /** Adiciona uma linha e, quando ela aparece, leva o cursor ao primeiro campo dela. */
+  const adicionar = () => {
+    focarNova.current = true;
+    onAddRow();
+  };
+
+  useEffect(() => {
+    if (!focarNova.current) return;
+    focarNova.current = false;
+    const ultima = tableRows[tableRows.length - 1];
+    const linha = document.querySelector<HTMLElement>(`[data-linha="${ultima.id}"]`);
+    if (!linha) return;
+    linha.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    linha.querySelector<HTMLInputElement>('input')?.focus({ preventScroll: true });
+  }, [tableRows]);
+
   return (
     <div className="mt-8 pt-6 border-t">
       <div className="flex justify-between items-center mb-4">
@@ -30,7 +48,7 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
           <Button
             variant="outline"
             size="sm"
-            onClick={onAddRow}
+            onClick={adicionar}
             title="Adicionar linha"
             className="gap-1.5"
           >
@@ -55,7 +73,7 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
           </TableHeader>
           <TableBody>
             {tableRows.map((row) => (
-              <TableRow key={row.id}>
+              <TableRow key={row.id} data-linha={row.id}>
                 <TableCell>
                   <Input 
                     type="time" 
@@ -87,6 +105,13 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
                     onChange={(e) => onInputChange(row.id, 'operacao', e.target.value)}
                     pattern="[0-9]*"
                     maxLength={9}
+                    onKeyDown={(e) => {
+                      // Enter no Nº Operação da última linha preenchida abre a linha seguinte.
+                      if (e.key === 'Enter' && row.id === tableRows[tableRows.length - 1].id && row.operacao.trim()) {
+                        e.preventDefault();
+                        adicionar();
+                      }
+                    }}
                     className="min-w-[110px] h-9"
                   />
                 </TableCell>
@@ -139,6 +164,12 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
           </TableBody>
         </Table>
       </div>
+
+      {/* Ao fim da lista: com muitas linhas, não é preciso voltar ao topo para adicionar a seguinte. */}
+      <Button variant="outline" onClick={adicionar} className="mt-3 w-full gap-1.5 border-dashed">
+        <PlusCircle className="h-4 w-4" />
+        Adicionar linha
+      </Button>
     </div>
   );
 };
