@@ -10,10 +10,10 @@ import {
 } from './pdfCommon';
 
 // O Turno 2 tem menos tarefas que os outros e ocupa uma página própria: espaça-se a lista
-// e dá-se mais altura às observações para a página não ficar meio vazia.
+// para a página não ficar meio vazia (as observações mantêm uma caixa de tamanho normal).
 const PASSO = 9.5;
 const FONTE = 11;
-const ALTURA_OBSERVACOES = 60;
+const ALTURA_OBSERVACOES = 30;
 
 export const renderTurno2Tasks = (
   doc: jsPDF, 
@@ -32,6 +32,7 @@ export const renderTurno2Tasks = (
     {key: 'verificarDebitos', text: "Verificar Débitos/Créditos Aplicados no Turno Anterior"},
     {key: 'percurso76857', text: "Percurso 76857 –"},
     {key: 'inpsEnviarRetorno', text: "Processar e enviar os ficheiros retorno do INPS"},
+    {key: 'enviarEnv', text: "Enviar ENV"},
     {key: 'processarTef', text: "Processar Ficheiros TEF – RTR/RCT/ERR"},
     {key: 'processarTelecomp', text: "Processar Ficheiros Telecompensação – RCB/RTC/FCT/IMR"},
     {key: 'rececaoFicheirosVisaVss', text: "Verificar envio ficheiro VISA (VSS)"},
@@ -64,6 +65,11 @@ export const renderTurno2Tasks = (
       doc.text("Enviar Ficheiro ", 22, y);
       doc.setFont("helvetica", "bold");
       doc.text("ECI/EDV", 22 + doc.getTextWidth("Enviar Ficheiro "), y);
+      doc.setFont("helvetica", "normal");
+    } else if (item.key === 'enviarEnv') {
+      doc.text("Enviar ", 22, y);
+      doc.setFont("helvetica", "bold");
+      doc.text("ENV", 22 + doc.getTextWidth("Enviar "), y);
       doc.setFont("helvetica", "normal");
     } else if (item.key === 'confirmarAtualizacaoFicheiros') {
       doc.text("Confirmar Atualização Ficheiros Enviados à SISP ", 22, y);

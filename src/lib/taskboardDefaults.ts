@@ -68,6 +68,7 @@ export function emptyTurno2Tasks(): Turno2Tasks {
     percurso76857_19h: false,
     inpsProcessar: false,
     inpsEnviarRetorno: false,
+    enviarEnv: false,
     processarTef: false,
     processarTelecomp: false,
     rececaoFicheirosVisaVss: false,

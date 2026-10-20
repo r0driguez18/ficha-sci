@@ -70,6 +70,11 @@ export const Turno2TasksComponent: React.FC<Turno2TasksProps> = ({
       </div>
 
       <div className="flex items-start space-x-2">
+        <Checkbox id="enviarEnv" checked={tasks.enviarEnv} onCheckedChange={(c) => onTaskChange('enviarEnv', !!c)} />
+        <Label htmlFor="enviarEnv" className="cursor-pointer text-foreground">Enviar <span className="font-bold">ENV</span></Label>
+      </div>
+
+      <div className="flex items-start space-x-2">
         <Checkbox id="processarTef2" checked={tasks.processarTef} onCheckedChange={(c) => onTaskChange('processarTef', !!c)} />
         <Label htmlFor="processarTef2" className="cursor-pointer text-foreground font-medium">Processar Ficheiros TEF – RTR/RCT/ERR</Label>
       </div>

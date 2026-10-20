@@ -53,6 +53,7 @@ export interface Turno2Tasks {
   percurso76857_19h: boolean;
   inpsProcessar: boolean;
   inpsEnviarRetorno: boolean;
+  enviarEnv: boolean;
   processarTef: boolean;
   processarTelecomp: boolean;
   rececaoFicheirosVisaVss: boolean;
