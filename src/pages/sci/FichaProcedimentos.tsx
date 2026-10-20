@@ -229,7 +229,7 @@ export default function FichaProcedimentos({ formType }: FichaProcedimentosProps
           <AdicionarProcessamento
             operatorsList={operatorsList}
             executadoPorOmissao={tb.currentOperatorValue}
-            total={tb.tableRows.filter((r) => r.hora || r.tarefa || r.nomeAs || r.operacao || r.tipo).length}
+            total={tb.tableRows.filter((r) => r.tarefa || r.nomeAs || r.operacao || r.tipo).length}
             onAdd={tb.addTableRowWith}
           />
 
