@@ -293,9 +293,7 @@ executados à mão, fora do repositório. Ver [Plano de Implementação](06-Plan
 |---|---|
 | Sem testes automatizados | Fluxos críticos (assinatura, lotes de cartões, reposição de senha) merecem testes no repositório |
 | `eslint` partido | A configuração não corre (incompatibilidade de versões); o `tsc` é a verificação efetiva |
-| `jsonwebtoken` em `dependencies` | Não é usado no código; remover |
 | `crc_tratamentos` | Tabela e tipos da ferramenta CRC (removida) ainda existem; decidir se se apaga |
 | `types.ts` à mão | Os tipos do Supabase são mantidos manualmente; gerar com a CLI quando houver acesso |
-| `REQUISITOS.md` | Desatualizado; substituído por este conjunto de documentos |
 | Utilizador interno `@bca.cv` | Assume o domínio do banco; configurável em `src/lib/utilizador.ts` e na função |
 | Dois ambientes de rede | O deploy depende de um PC com acesso por cabo |

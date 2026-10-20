@@ -16,7 +16,7 @@ export const SidebarHeader = () => {
   return (
     <div className="flex h-16 items-center px-3 w-full">
       <img
-        src="/lovable-uploads/e9c60d16-29f0-415b-8024-2888c0e9f536.png"
+        src="/logo-bca.png"
         alt="BCA — Sistema de Controlo Interno"
         className="ml-1 h-10"
       />

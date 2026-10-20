@@ -16,6 +16,6 @@ Complementares:
 
 - [contraste.md](contraste.md) — auditoria de contraste WCAG AA dos três temas
 - `../README.md` — arranque rápido, deploy e administração
-- `../REQUISITOS.md` — requisitos originais (v1.0), **superados** pelo PRD
+- [guia-supabase-local-windows.md](guia-supabase-local-windows.md) — Supabase local em Docker no Windows (ambiente de desenvolvimento)
 
 > Os diagramas usam Mermaid. Para uma versão em Word/PDF, exportar a partir de um editor Markdown.

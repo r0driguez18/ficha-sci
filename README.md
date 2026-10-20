@@ -196,7 +196,7 @@ ssh-keygen -t ed25519
 type $env:USERPROFILE\.ssh\id_ed25519.pub | ssh dis@172.20.11.54 "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"
 ```
 
-Requisitos: `.env.production.local` na pasta (não vai para o git) e utilizador de SSH `dis` no servidor (o `sudo` continua a pedir a palavra-passe). Os scripts antigos em `production/scripts/` são de outro setup e não se aplicam.
+Requisitos: `.env.production.local` na pasta (não vai para o git) e utilizador de SSH `dis` no servidor (o `sudo` continua a pedir a palavra-passe). O único script em `production/scripts/` é o `criar-utilizador.sh` (último recurso, no servidor).
 
 ## Administração de utilizadores
 
