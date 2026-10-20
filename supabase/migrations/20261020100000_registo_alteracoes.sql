@@ -64,7 +64,7 @@ DECLARE
   v_base    jsonb := coalesce(v_new, v_old);
   -- Conteúdo grande ou secreto: nunca vai para o registo (só se diz que mudou).
   v_grandes text[] := ARRAY['turn_data', 'tasks', 'table_rows', 'pdf_signature', 'tapes_evidencia', 'pin_hash'];
-  v_ruido   text[] := ARRAY['created_at', 'updated_at'];
+  v_ruido   text[] := ARRAY['created_at', 'updated_at', 'atualizada_em', 'atualizado_em'];
   v_chave   text;
   v_alt     jsonb := '{}'::jsonb;
   v_campos  text[] := ARRAY[]::text[];

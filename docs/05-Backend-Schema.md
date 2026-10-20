@@ -206,7 +206,15 @@ ficha (turnos, tarefas, tabela, assinatura — só diz que mudou, e guarda o sel
 O autor é o utilizador da sessão; nas funções do servidor vem do cabeçalho `x-sci-ator`, aceite só com a chave de serviço.
 As ações sobre contas (criar, eliminar, repor senha, novo link) entram com a tabela `contas`.
 
-### 2.7 Legado
+### 2.7 Ocorrências
+
+| Tabela | Colunas principais | Regras |
+|---|---|---|
+| `ocorrencias` | `id`, `data`, `hora`, `turno`, `categoria` (`core`/`ficheiros`/`rede`/`servidores`/`balcoes`/`cartoes`/`seguranca`/`outro`), `gravidade` (`baixa`/`media`/`alta`), `sistema`, `titulo` (3–120), `descricao`, `estado` (`aberta`/`resolvida`), `resolucao`, `criada_por(_codigo)`, `resolvida_por_codigo`, `resolvida_em` | `CHECK` em todos os domínios; RLS: `SELECT` para a equipa, **sem escrita direta** (só pelas funções); auditada |
+
+Funções: `registar_ocorrencia`, `atualizar_ocorrencia` (autor ou administrador), `resolver_ocorrencia` (exige texto da resolução; só uma vez) e `reabrir_ocorrencia`.
+
+### 2.8 Legado
 
 - **`crc_tratamentos`**: tabela da ferramenta CRC (removida da aplicação). Mantida; decidir se se apaga.
 

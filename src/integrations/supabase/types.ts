@@ -536,6 +536,30 @@ export type Database = {
         }
         Relationships: []
       }
+      ocorrencias: {
+        Row: {
+          id: string
+          data: string
+          hora: string | null
+          turno: string | null
+          categoria: string
+          gravidade: string
+          sistema: string | null
+          titulo: string
+          descricao: string | null
+          estado: string
+          resolucao: string | null
+          criada_por: string | null
+          criada_por_codigo: string | null
+          criada_em: string
+          resolvida_por_codigo: string | null
+          resolvida_em: string | null
+          atualizada_em: string
+        }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
       registo_alteracoes: {
         Row: {
           id: number
@@ -734,6 +758,39 @@ export type Database = {
       }
       editar_lote_ps2: {
         Args: { p_id: string; p_empresa: string; p_sentido: string }
+        Returns: undefined
+      }
+      registar_ocorrencia: {
+        Args: {
+          p_data: string
+          p_hora: string
+          p_turno: string
+          p_categoria: string
+          p_gravidade: string
+          p_sistema: string
+          p_titulo: string
+          p_descricao: string
+        }
+        Returns: string
+      }
+      atualizar_ocorrencia: {
+        Args: {
+          p_id: string
+          p_hora: string
+          p_categoria: string
+          p_gravidade: string
+          p_sistema: string
+          p_titulo: string
+          p_descricao: string
+        }
+        Returns: undefined
+      }
+      resolver_ocorrencia: {
+        Args: { p_id: string; p_resolucao: string }
+        Returns: undefined
+      }
+      reabrir_ocorrencia: {
+        Args: { p_id: string }
         Returns: undefined
       }
       renomear_lote_ps2: {

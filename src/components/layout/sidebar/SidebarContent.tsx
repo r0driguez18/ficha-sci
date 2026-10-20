@@ -24,10 +24,12 @@ import {
   Search,
   CreditCard,
   ShieldCheck,
+  AlertTriangle,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { getPendingReturns } from '@/services/cobrancasRetornoService';
 import { getPendingTapesEvidencia } from '@/services/exportedTaskboardService';
+import { contarAbertas } from '@/services/ocorrenciasService';
 import { listarLotes } from '@/services/ps2LotesService';
 
 export const SidebarContent = () => {
@@ -39,6 +41,7 @@ export const SidebarContent = () => {
   const [retornosBadge, setRetornosBadge] = useState<number>(0);
   const [tapesBadge, setTapesBadge] = useState<number>(0);
   const [verificacaoBadge, setVerificacaoBadge] = useState<number>(0);
+  const [ocorrenciasBadge, setOcorrenciasBadge] = useState<number>(0);
 
   // Atalho ⌘K / Ctrl+K abre a paleta de comandos.
   useEffect(() => {
@@ -82,24 +85,37 @@ export const SidebarContent = () => {
       }
     };
 
+    const fetchOcorrencias = async () => {
+      try {
+        const n = await contarAbertas();
+        if (isMounted) setOcorrenciasBadge(n);
+      } catch (error) {
+        console.error('Failed to load open incidents count:', error);
+      }
+    };
+
     fetchCounts();
     fetchTapes();
     fetchVerificacao();
+    fetchOcorrencias();
     const interval = setInterval(() => {
       fetchCounts();
       fetchTapes();
       fetchVerificacao();
+      fetchOcorrencias();
     }, 5 * 60 * 1000);
 
     window.addEventListener('update-returns-badge', fetchCounts);
     window.addEventListener('update-tapes-badge', fetchTapes);
     window.addEventListener('update-verificacao-badge', fetchVerificacao);
+    window.addEventListener('update-ocorrencias-badge', fetchOcorrencias);
     return () => {
       isMounted = false;
       clearInterval(interval);
       window.removeEventListener('update-returns-badge', fetchCounts);
       window.removeEventListener('update-tapes-badge', fetchTapes);
       window.removeEventListener('update-verificacao-badge', fetchVerificacao);
+      window.removeEventListener('update-ocorrencias-badge', fetchOcorrencias);
     };
   }, [user]);
 
@@ -109,6 +125,7 @@ export const SidebarContent = () => {
     { label: 'Histórico de Fichas', path: '/sci/historico-fichas', group: 'SCI', keywords: ['histórico', 'fichas', 'guardadas', 'arquivo'] },
     { label: 'Retornos de Cobranças', path: '/sci/retornos-cobrancas', group: 'SCI', keywords: ['retornos', 'cobranças', 'ficheiros', 'sla'] },
     { label: 'Passagem de Turno', path: '/sci/passagem-turno', group: 'SCI', keywords: ['passagem', 'turno', 'notas', 'handover'] },
+    { label: 'Ocorrências', path: '/sci/ocorrencias', group: 'SCI', keywords: ['ocorrências', 'incidentes', 'falhas', 'problemas', 'registo'] },
     { label: 'Verificar Débitos/Créditos', path: '/sci/verificacao-ficheiros', group: 'SCI', keywords: ['verificação', 'verificar', 'salários', 'cobranças', 'ps2', 'débito', 'crédito', 'duplicado'] },
     { label: 'Geradores PS2 / OIC', path: '/sci/geradores', group: 'Ferramentas', keywords: ['geradores', 'ps2', 'oic', 'salários', 'pagamentos', 'ficheiro', 'banco', 'nib'] },
     { label: 'Renovação de Cartões', path: '/sci/renovacao-cartoes', group: 'Ferramentas', keywords: ['cartões', 'renovação', 'prn', 'balcão', 'lote'] },
@@ -155,6 +172,7 @@ export const SidebarContent = () => {
             <SidebarItem icon={Archive} label="Histórico de Fichas" to="/sci/historico-fichas" badge={tapesBadge} />
             <SidebarItem icon={Undo2} label="Retornos de Cobranças" to="/sci/retornos-cobrancas" badge={retornosBadge} />
             <SidebarItem icon={ArrowRightLeft} label="Passagem de Turno" to="/sci/passagem-turno" />
+            <SidebarItem icon={AlertTriangle} label="Ocorrências" to="/sci/ocorrencias" badge={ocorrenciasBadge} />
             <SidebarItem icon={ShieldCheck} label="Verificar Débitos/Créditos" to="/sci/verificacao-ficheiros" badge={verificacaoBadge} />
           </SidebarMenu>
         </SidebarGroupContent>

@@ -94,6 +94,15 @@ a aplicação não pode depender de nenhum serviço externo (nem fontes, nem CDN
 | RF-01A.2 | O registo é **imutável** e só os **administradores** o consultam, com filtros por assunto, operador e datas. |
 | RF-01A.3 | Não guarda o conteúdo das fichas nem valores secretos: só os campos que mudaram (de → para) e o selo da ficha. |
 
+### RF-01B — Ocorrências
+
+| ID | Requisito |
+|---|---|
+| RF-01B.1 | Registar um incidente com **data, hora, turno, categoria, gravidade, sistema afetado, título e descrição**; fica o autor e a hora do registo. |
+| RF-01B.2 | Qualquer operador **resolve** (com texto obrigatório da resolução) e **reabre**; só o autor ou um administrador **edita**. Nada se apaga. |
+| RF-01B.3 | Lista com filtros (estado, categoria, gravidade, pesquisa de texto) e painel: **abertas** (e quantas de gravidade alta), **por categoria nos últimos 90 dias** e **o que se repete** (sistema com 2 ou mais ocorrências). |
+| RF-01B.4 | O menu mostra o número de ocorrências abertas; todas as alterações entram no registo de alterações. |
+
 ### RF-02 — Ficha de Procedimentos (módulo central)
 
 | ID | Requisito |
