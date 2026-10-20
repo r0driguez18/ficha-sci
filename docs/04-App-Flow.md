@@ -28,6 +28,7 @@ Os diagramas usam Mermaid (renderizam no GitHub e em editores com suporte). Comp
 | `/sci/renovacao-cartoes` | Renovação de cartões | Autenticado |
 | `/easyvista` → `/easyvista/estatisticas` | Estatísticas de processamentos | Autenticado |
 | `/settings` | Configurações (conta, PIN, utilizadores) | Autenticado (utilizadores: administrador) |
+| `/registo-alteracoes` | Registo de alterações (quem alterou o quê e quando) | Administrador |
 | `/docs` | Documentação | Autenticado |
 | `*` | 404 | — |
 

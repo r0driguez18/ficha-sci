@@ -24,18 +24,18 @@ function montar(opts: { papelChamador?: 'administrador' | 'operador'; soUmAdmin?
     { id: 'o2', value: 'ebrito', nome: 'Elvis', papel: opts.soUmAdmin ? 'operador' : 'administrador', ativo: true, user_id: 'u2' },
     { id: 'o3', value: 'etavares', nome: 'Edson', papel: 'operador', ativo: true, user_id: 'u3' },
   ];
-  const chamadas: { metodo: string; url: string; corpo: any }[] = [];
+  const chamadas: { metodo: string; url: string; corpo: any; ator?: string }[] = [];
 
   const fake = async (url: string, init: RequestInit = {}) => {
     const metodo = init.method ?? 'GET';
     const corpo = init.body ? JSON.parse(String(init.body)) : null;
-    chamadas.push({ metodo, url, corpo });
+    chamadas.push({ metodo, url, corpo, ator: (init.headers as Record<string, string> | undefined)?.['x-sci-ator'] });
     const json = (v: unknown, s = 200) => new Response(v === null ? null : JSON.stringify(v), { status: s });
     if (url.endsWith('/auth/v1/user')) return json({ id: 'u1' });
     if (url.includes('/auth/v1/admin/users?')) return json({ users: contas });
     if (url.includes('/auth/v1/admin/users/') && metodo === 'PUT') return json({ id: 'x' });
     if (url.includes('/auth/v1/admin/users/') && metodo === 'DELETE') return json(null, 204);
-    if (url.includes('/rest/v1/reposicoes_senha')) return new Response(null, { status: 201 });
+    if (url.includes('/rest/v1/reposicoes_senha') || url.includes('/rest/v1/registo_alteracoes')) return new Response(null, { status: 201 });
     if (url.includes('/rest/v1/operators')) {
       const q = new URL(url).searchParams;
       if (metodo === 'PATCH') return new Response(null, { status: 204 });
@@ -157,6 +157,33 @@ describe('admin-utilizadores: papel de administrador', () => {
 
   it('exige um booleano', async () => {
     expect((await montar().pedir({ acao: 'papel', conta: 'etavares@bca.cv', administrador: 'sim' })).estado).toBe(400);
+  });
+});
+
+describe('admin-utilizadores: registo de alterações', () => {
+  const registos = (m: ReturnType<typeof montar>) =>
+    m.chamadas.filter((c) => c.url.includes('/rest/v1/registo_alteracoes')).map((c) => c.corpo);
+
+  it('eliminar e repor senha ficam registados com o administrador que os fez', async () => {
+    const m = montar();
+    await m.pedir({ acao: 'eliminar', conta: 'etavares@bca.cv' });
+    await m.pedir({ acao: 'repor', conta: 'etavares@bca.cv' });
+    expect(registos(m).map((r) => [r.operador, r.registo_id, r.resumo])).toEqual([
+      ['nalves', 'etavares@bca.cv', 'Conta eliminada (etavares)'],
+      ['nalves', 'etavares@bca.cv', expect.stringContaining('Senha reposta')],
+    ]);
+  });
+
+  it('as escritas na base levam o cabeçalho do ator (para os gatilhos de auditoria)', async () => {
+    const m = montar();
+    await m.pedir({ acao: 'papel', conta: 'etavares@bca.cv', administrador: true });
+    expect(m.chamadas.find((c) => c.metodo === 'PATCH')!.ator).toBe('nalves');
+  });
+
+  it('uma ação recusada não deixa registo', async () => {
+    const m = montar();
+    await m.pedir({ acao: 'eliminar', conta: 'nalves@bca.cv' });
+    expect(registos(m)).toEqual([]);
   });
 });
 

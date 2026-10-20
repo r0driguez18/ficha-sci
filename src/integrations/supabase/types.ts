@@ -536,6 +536,22 @@ export type Database = {
         }
         Relationships: []
       }
+      registo_alteracoes: {
+        Row: {
+          id: number
+          quando: string
+          tabela: string
+          operacao: 'INSERT' | 'UPDATE' | 'DELETE'
+          registo_id: string | null
+          user_id: string | null
+          operador: string
+          resumo: string
+          alteracoes: Json
+        }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
       ps2_lotes: {
         Row: {
           id: string

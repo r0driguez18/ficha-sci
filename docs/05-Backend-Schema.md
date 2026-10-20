@@ -193,7 +193,20 @@ Nota única por `(date, turno)` com leitura única. Substituída funcionalmente 
 | `card_renewal_cards` | `id`, `session_id` (CASCADE), `numero_cartao` (CHECK 7 dígitos), `balcao`, `nome_titular`, `posicao`, `lote_numero` (NULL = pendente), `dados` jsonb | **UNIQUE `(session_id, numero_cartao)`**; trigger de proteção; `INSERT` só na sessão |
 | `card_renewal_lotes` | `id`, `session_id` (CASCADE), `numero`, `balcoes[]`, `total_cartoes`, `ficheiro_nome`, `criado_por` | **UNIQUE `(session_id, numero)`**; só `SELECT` |
 
-### 2.6 Legado
+### 2.6 Registo de alterações (auditoria)
+
+| Tabela | Colunas principais | Regras |
+|---|---|---|
+| `registo_alteracoes` | `id`, `quando`, `tabela`, `operacao` (`INSERT`/`UPDATE`/`DELETE`), `registo_id`, `user_id`, `operador`, `resumo`, `alteracoes` jsonb | **Só leitura para administradores** (RLS com `is_admin()`); só os gatilhos escrevem; **imutável** (gatilho recusa `UPDATE`/`DELETE`) |
+
+O gatilho `registar_alteracao()` (SECURITY DEFINER) está ligado a: `exported_taskboards`, `ps2_lotes`, `operators`,
+`operator_pins`, `cobrancas_retornos`, `handover_notes`, `handover_entries`, `card_renewal_sessions`, `card_renewal_lotes`
+e (só alterações/remoções) `file_processes`. Num `UPDATE` guarda `{campo: {de, para}}`; nunca guarda o conteúdo grande da
+ficha (turnos, tarefas, tabela, assinatura — só diz que mudou, e guarda o selo SHA-256) nem os PINs (só o facto).
+O autor é o utilizador da sessão; nas funções do servidor vem do cabeçalho `x-sci-ator`, aceite só com a chave de serviço.
+As ações sobre contas (criar, eliminar, repor senha, novo link) entram com a tabela `contas`.
+
+### 2.7 Legado
 
 - **`crc_tratamentos`**: tabela da ferramenta CRC (removida da aplicação). Mantida; decidir se se apaga.
 

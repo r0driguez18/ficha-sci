@@ -26,6 +26,8 @@ export interface Ambiente {
   serviceKey: string;
   /** Endereco publico da app (opcional); se faltar usa-se o Origin do pedido. */
   urlPublica?: string;
+  /** Codigo do administrador que fez o pedido: vai no cabecalho x-sci-ator para o registo de alteracoes. */
+  ator?: string;
 }
 
 type Json = Record<string, unknown>;
@@ -94,6 +96,7 @@ function cliente(amb: Ambiente, f: FetchFn) {
     apikey: amb.serviceKey,
     Authorization: `Bearer ${amb.serviceKey}`,
     'Content-Type': 'application/json',
+    ...(amb.ator ? { 'x-sci-ator': amb.ator } : {}),
   };
   const base = amb.supabaseUrl.replace(/\/+$/, '');
   return {
@@ -112,7 +115,7 @@ function cliente(amb: Ambiente, f: FetchFn) {
 }
 
 /** Quem esta a chamar: valida o token no GoTrue e confirma que e administrador ativo. */
-async function exigirAdministrador(req: Request, amb: Ambiente, f: FetchFn): Promise<string> {
+async function exigirAdministrador(req: Request, amb: Ambiente, f: FetchFn): Promise<{ uid: string; codigo: string }> {
   const auth = req.headers.get('authorization') ?? '';
   if (!/^Bearer\s+\S+/i.test(auth)) throw new ErroPedido(401, 'Sem sessão.');
 
@@ -125,12 +128,12 @@ async function exigirAdministrador(req: Request, amb: Ambiente, f: FetchFn): Pro
 
   const c = cliente(amb, f);
   const q = await c.pedir(
-    `/rest/v1/operators?select=id&user_id=eq.${encodeURIComponent(uid)}&papel=eq.administrador&ativo=eq.true&limit=1`,
+    `/rest/v1/operators?select=id,value&user_id=eq.${encodeURIComponent(uid)}&papel=eq.administrador&ativo=eq.true&limit=1`,
   );
   if (q.estado !== 200 || !Array.isArray(q.corpo) || q.corpo.length === 0) {
     throw new ErroPedido(403, 'Só um administrador pode gerir utilizadores.');
   }
-  return uid;
+  return { uid, codigo: String(q.corpo[0]?.value ?? '') };
 }
 
 function origemPublica(req: Request, amb: Ambiente): string {
@@ -150,6 +153,30 @@ async function gerarLink(c: ReturnType<typeof cliente>, email: string, origem: s
     throw new ErroPedido(502, 'Não consegui gerar o link de acesso.');
   }
   return { link: linkPublico(g.corpo.action_link, origem), userId: g.corpo.id as string | undefined };
+}
+
+// ----------------------------------------------------------------- registo de alteracoes
+
+/**
+ * Acoes sobre contas (que nao passam por uma tabela publica) ficam no registo de alteracoes.
+ * Falhar aqui nao desfaz a acao: o registo e uma garantia a mais, nao uma condicao.
+ */
+async function auditar(
+  c: ReturnType<typeof cliente>,
+  ator: string | undefined,
+  registo: string,
+  resumo: string,
+  dados: Json = {},
+): Promise<void> {
+  try {
+    await c.pedir('/rest/v1/registo_alteracoes', {
+      method: 'POST',
+      headers: { Prefer: 'return=minimal' },
+      body: JSON.stringify({ tabela: 'contas', operacao: 'UPDATE', registo_id: registo, operador: ator || 'sistema', resumo, alteracoes: dados }),
+    });
+  } catch {
+    /* sem registo, a acao mantem-se */
+  }
 }
 
 // ----------------------------------------------------------------- acoes
@@ -225,13 +252,16 @@ async function criar(req: Request, amb: Ambiente, f: FetchFn, corpo: Json): Prom
     if (p.estado >= 300) throw new ErroPedido(409, 'Esta conta já está associada a outro operador.');
   }
 
+  await auditar(c, amb.ator, conta, `Conta ${jaExiste ? 'retomada' : 'criada'} (${codigo})`, { utilizador, codigo, retomada: !!jaExiste });
   return { ok: true, utilizador, email, nome, codigo, conta, link, retomada: !!jaExiste };
 }
 
 /** Novo link para uma conta que ja existe. `conta` e o identificador devolvido por "listar". */
 async function novoLink(req: Request, amb: Ambiente, f: FetchFn, corpo: Json): Promise<Json> {
   const conta = normalizarEmail(corpo.conta);
-  const { link } = await gerarLink(cliente(amb, f), conta, origemPublica(req, amb));
+  const c = cliente(amb, f);
+  const { link } = await gerarLink(c, conta, origemPublica(req, amb));
+  await auditar(c, amb.ator, conta, 'Novo link de acesso gerado');
   return { ok: true, conta, link };
 }
 
@@ -261,6 +291,7 @@ async function eliminar(uidChamador: string, amb: Ambiente, f: FetchFn, corpo: J
   const d = await c.pedir(`/auth/v1/admin/users/${encodeURIComponent(alvo.id)}`, { method: 'DELETE' });
   if (![200, 204].includes(d.estado)) throw new ErroPedido(502, 'O Supabase recusou eliminar a conta.');
 
+  await auditar(c, amb.ator, conta, `Conta eliminada${ligado?.value ? ` (${ligado.value})` : ''}`, { codigo: ligado?.value ?? null });
   return { ok: true, conta, codigo: (ligado?.value as string | undefined) ?? null };
 }
 
@@ -300,6 +331,7 @@ async function repor(uidChamador: string, amb: Ambiente, f: FetchFn, corpo: Json
     body: JSON.stringify({ user_id: alvo.id, metodo: 'admin', feito_por: uidChamador }),
   });
 
+  await auditar(c, amb.ator, conta, 'Senha reposta pelo administrador (senha temporária)');
   return { ok: true, conta, senhaTemporaria: temporaria };
 }
 
@@ -398,7 +430,10 @@ export async function manipular(req: Request, amb: Ambiente, f: FetchFn = fetch)
 
   try {
     if (!amb.supabaseUrl || !amb.serviceKey) throw new ErroPedido(500, 'Função sem configuração do servidor.');
-    const uid = await exigirAdministrador(req, amb, f);
+    const quem = await exigirAdministrador(req, amb, f);
+    const uid = quem.uid;
+    // A partir daqui todas as chamadas ao Supabase levam o ator (registo de alteracoes).
+    const ambA: Ambiente = { ...amb, ator: quem.codigo };
 
     let corpo: Json;
     try {
@@ -409,17 +444,17 @@ export async function manipular(req: Request, amb: Ambiente, f: FetchFn = fetch)
 
     switch (corpo.acao) {
       case 'listar':
-        return resposta(await listar(uid, amb, f));
+        return resposta(await listar(uid, ambA, f));
       case 'criar':
-        return resposta(await criar(req, amb, f, corpo));
+        return resposta(await criar(req, ambA, f, corpo));
       case 'novo-link':
-        return resposta(await novoLink(req, amb, f, corpo));
+        return resposta(await novoLink(req, ambA, f, corpo));
       case 'eliminar':
-        return resposta(await eliminar(uid, amb, f, corpo));
+        return resposta(await eliminar(uid, ambA, f, corpo));
       case 'repor':
-        return resposta(await repor(uid, amb, f, corpo));
+        return resposta(await repor(uid, ambA, f, corpo));
       case 'papel':
-        return resposta(await papel(uid, amb, f, corpo));
+        return resposta(await papel(uid, ambA, f, corpo));
       default:
         throw new ErroPedido(400, 'Ação desconhecida.');
     }
