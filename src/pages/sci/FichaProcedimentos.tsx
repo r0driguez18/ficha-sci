@@ -19,6 +19,7 @@ import { AdicionarProcessamento } from '@/components/taskboard/AdicionarProcessa
 import { FormActions } from '@/components/taskboard/FormActions';
 import { SignatureSection } from '@/components/taskboard/SignatureSection';
 import { SyncStatusBadge } from '@/components/taskboard/SyncStatusBadge';
+import { FichasPorFecharAviso } from '@/components/taskboard/FichasPorFecharAviso';
 import { useTaskboard } from '@/hooks/useTaskboard';
 import { isoDateOffset } from '@/lib/taskboardDefaults';
 import type { FormType } from '@/services/taskboardService';
@@ -140,6 +141,7 @@ export default function FichaProcedimentos({ formType }: FichaProcedimentosProps
 
   return (
     <PageContainer size="default">
+      <FichasPorFecharAviso atual={{ formType, date: tb.date }} />
       <Card>
         <CardHeader className="border-b bg-muted/30">
           <div className="flex items-start justify-between gap-3">

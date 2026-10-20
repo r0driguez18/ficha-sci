@@ -4,13 +4,15 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PageContainer } from '@/components/layout/PageContainer';
-import { ClipboardCheck, PieChart, ArrowRight, CalendarClock, FileCheck2, Bell } from 'lucide-react';
+import { ClipboardCheck, PieChart, ArrowRight, CalendarClock, FileCheck2, Bell, AlertTriangle } from 'lucide-react';
 import { Link as RouterLink } from 'react-router-dom';
 import { DailyAlertsWidget } from '@/components/alerts/DailyAlertsWidget';
 import { useAlerts } from '@/hooks/useAlerts';
 import { fichaDoDia } from '@/lib/fichaDoDia';
 import { todayIso } from '@/lib/taskboardDefaults';
 import { existeExportadaNaData } from '@/services/exportedTaskboardService';
+import { useFichasPorFechar } from '@/services/fichasPorFecharService';
+import { ListaFichasPorFechar } from '@/components/taskboard/FichasPorFecharAviso';
 
 const MODULES = [
   { title: 'SCI', description: 'Sistema de Controlo Interno', icon: ClipboardCheck, path: '/sci/procedimentos' },
@@ -43,6 +45,8 @@ const Dashboard = () => {
       alive = false;
     };
   }, [hoje]);
+
+  const porFechar = useFichasPorFechar();
 
   const proximoAlerta = useMemo(() => {
     const hm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
@@ -91,6 +95,22 @@ const Dashboard = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Fichas de dias anteriores com trabalho feito e ainda por fechar */}
+      {porFechar.length > 0 && (
+        <Card className="mb-6 border-amber-500/50 bg-amber-50 dark:bg-amber-950/30">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2 text-amber-950 dark:text-amber-100">
+              <AlertTriangle className="h-4 w-4" />
+              {porFechar.length === 1 ? 'Há uma ficha por fechar' : `Há ${porFechar.length} fichas por fechar`}
+            </CardTitle>
+            <CardDescription>Têm trabalho feito e ainda não foram validadas e exportadas.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ListaFichasPorFechar fichas={porFechar} compacto />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Próximo alerta */}
       <Card className="mb-6">

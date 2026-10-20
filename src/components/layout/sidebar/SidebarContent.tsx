@@ -28,6 +28,7 @@ import {
 import { useAuth } from '@/components/auth/AuthProvider';
 import { getPendingReturns } from '@/services/cobrancasRetornoService';
 import { getPendingTapesEvidencia } from '@/services/exportedTaskboardService';
+import { useFichasPorFechar } from '@/services/fichasPorFecharService';
 import { listarLotes } from '@/services/ps2LotesService';
 
 export const SidebarContent = () => {
@@ -39,6 +40,7 @@ export const SidebarContent = () => {
   const [retornosBadge, setRetornosBadge] = useState<number>(0);
   const [tapesBadge, setTapesBadge] = useState<number>(0);
   const [verificacaoBadge, setVerificacaoBadge] = useState<number>(0);
+  const fichasPorFechar = useFichasPorFechar();
 
   // Atalho ⌘K / Ctrl+K abre a paleta de comandos.
   useEffect(() => {
@@ -151,7 +153,7 @@ export const SidebarContent = () => {
         <SidebarGroupLabel>SCI</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
-            <SidebarItem icon={ClipboardCheck} label="Ficha de Procedimentos" to="/sci/procedimentos" />
+            <SidebarItem icon={ClipboardCheck} label="Ficha de Procedimentos" to="/sci/procedimentos" badge={fichasPorFechar.length} />
             <SidebarItem icon={Archive} label="Histórico de Fichas" to="/sci/historico-fichas" badge={tapesBadge} />
             <SidebarItem icon={Undo2} label="Retornos de Cobranças" to="/sci/retornos-cobrancas" badge={retornosBadge} />
             <SidebarItem icon={ArrowRightLeft} label="Passagem de Turno" to="/sci/passagem-turno" />
