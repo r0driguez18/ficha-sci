@@ -4,7 +4,7 @@
 **Cliente:** Banco Comercial do Atlântico (BCA) — Direção de Sistemas de Informação, Centro Informática (DSI-CI)
 **Versão:** 2.0 · **Data:** 2026-10-15 · **Estado:** em produção (rede interna), em evolução
 
-> Este documento **substitui** o `REQUISITOS.md` original (v1.0), que descrevia módulos entretanto
+> Este documento **substitui** os requisitos originais (v1.0, retirados do repositório), que descreviam módulos entretanto
 > retirados (CRC, DIS, Calendário) e uma instalação Windows/IIS que não é a real. Descreve o produto
 > **como está hoje**, e assinala o que ainda está em aberto.
 

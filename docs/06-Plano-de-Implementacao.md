@@ -55,7 +55,7 @@ flowchart LR
 
 Ficha digital com gravação automática, exportação em PDF fiel ao papel, histórico, retornos de cobranças,
 registo de processamentos, estatísticas, alertas e *dashboard*; backend Supabase self-hosted; migração
-`full_schema`. Requisitos originais em `REQUISITOS.md` (v1.0).
+`full_schema`. Os requisitos originais (v1.0) foram substituídos pelo PRD.
 
 ### Fase 1 — Revisão de UX e confiança (roadmap F1–F11)
 
