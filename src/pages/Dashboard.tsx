@@ -4,13 +4,16 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PageContainer } from '@/components/layout/PageContainer';
-import { ClipboardCheck, PieChart, ArrowRight, CalendarClock, FileCheck2, Bell } from 'lucide-react';
+import { ClipboardCheck, PieChart, ArrowRight, CalendarClock, FileCheck2, Bell, AlertTriangle } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { Link as RouterLink } from 'react-router-dom';
 import { DailyAlertsWidget } from '@/components/alerts/DailyAlertsWidget';
 import { useAlerts } from '@/hooks/useAlerts';
 import { fichaDoDia } from '@/lib/fichaDoDia';
 import { todayIso } from '@/lib/taskboardDefaults';
 import { existeExportadaNaData } from '@/services/exportedTaskboardService';
+import { listarOcorrencias } from '@/services/ocorrenciasService';
+import { nomeCategoria, nomeGravidade, resumirOcorrencias } from '@/lib/ocorrencias';
 
 const MODULES = [
   { title: 'SCI', description: 'Sistema de Controlo Interno', icon: ClipboardCheck, path: '/sci/procedimentos' },
@@ -43,6 +46,19 @@ const Dashboard = () => {
       alive = false;
     };
   }, [hoje]);
+
+  // Ocorrências abertas (a mesma consulta e cache da página de ocorrências).
+  const ocorrencias = useQuery({
+    queryKey: ['ocorrencias'],
+    queryFn: async () => {
+      const r = await listarOcorrencias();
+      if (r.erro) throw new Error(r.erro);
+      return r.ocorrencias;
+    },
+    refetchInterval: 60_000,
+  });
+  const abertas = useMemo(() => (ocorrencias.data ?? []).filter((o) => o.estado === 'aberta'), [ocorrencias.data]);
+  const resumoOcorrencias = useMemo(() => resumirOcorrencias(ocorrencias.data ?? [], hoje), [ocorrencias.data, hoje]);
 
   const proximoAlerta = useMemo(() => {
     const hm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
@@ -126,6 +142,58 @@ const Dashboard = () => {
             >
               <Bell className="h-4 w-4 mr-1.5" /> Ativar também avisos do sistema (com a app em segundo plano)
             </Button>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Ocorrências abertas */}
+      <Card className={`mb-6 ${resumoOcorrencias.abertasAltas > 0 ? 'border-destructive/50' : ''}`}>
+        <CardHeader className="pb-2">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4" /> Ocorrências abertas
+            </CardTitle>
+            <RouterLink to="/sci/ocorrencias">
+              <Button size="sm" variant="outline">
+                Ver ocorrências
+                <ArrowRight className="h-4 w-4 ml-1.5" />
+              </Button>
+            </RouterLink>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {ocorrencias.isLoading ? (
+            <p className="text-sm text-muted-foreground">a carregar…</p>
+          ) : ocorrencias.isError ? (
+            <p className="text-sm text-muted-foreground">Não consegui carregar as ocorrências.</p>
+          ) : abertas.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhuma ocorrência aberta.</p>
+          ) : (
+            <>
+              <div className="flex items-baseline gap-3">
+                <span className="text-2xl font-bold tabular-nums">{abertas.length}</span>
+                <span className="text-sm text-muted-foreground">
+                  {resumoOcorrencias.abertasAltas > 0
+                    ? `${resumoOcorrencias.abertasAltas} de gravidade alta`
+                    : 'nenhuma de gravidade alta'}
+                </span>
+              </div>
+              <ul className="mt-3 space-y-1 text-sm">
+                {abertas.slice(0, 3).map((o) => (
+                  <li key={o.id} className="flex flex-wrap items-center gap-2">
+                    <Badge variant={o.gravidade === 'alta' ? 'destructive' : o.gravidade === 'media' ? 'default' : 'secondary'}>
+                      {nomeGravidade(o.gravidade)}
+                    </Badge>
+                    <span className="font-medium">{o.titulo}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {nomeCategoria(o.categoria)}
+                      {o.sistema ? ` · ${o.sistema}` : ''} · {o.data}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              {abertas.length > 3 && <p className="mt-2 text-xs text-muted-foreground">e mais {abertas.length - 3}…</p>}
+            </>
           )}
         </CardContent>
       </Card>
