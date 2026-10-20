@@ -1,7 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { HoraInput, horaAgora } from '@/components/ui/hora-input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChevronDown, PlusCircle } from 'lucide-react';
@@ -17,6 +16,11 @@ interface AdicionarProcessamentoProps {
   total: number;
   onAdd: (linha: NovaLinha) => void;
 }
+
+const horaAgora = () => {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+};
 
 /**
  * Painel flutuante (canto do ecrã) para registar um processamento sem sair do
@@ -102,7 +106,7 @@ export const AdicionarProcessamento: React.FC<AdicionarProcessamentoProps> = ({
       <div className="grid grid-cols-3 gap-2">
         <div>
           <Label htmlFor="pa-hora" className="text-xs">Hora</Label>
-          <HoraInput id="pa-hora" value={hora} onChange={setHora} />
+          <Input id="pa-hora" type="time" value={hora} onChange={(e) => setHora(e.target.value)} className="h-9" />
         </div>
         <div className="col-span-2">
           <Label htmlFor="pa-tarefa" className="text-xs">Tarefa</Label>

@@ -2,7 +2,6 @@
 import React from 'react';
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { HoraInput } from '@/components/ui/hora-input';
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Turno3Tasks } from '@/types/taskboard';
@@ -111,9 +110,12 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
             Interromper o Real-Time com a SISP
           </Label>
           <span className="text-sm font-medium">Fecho Real-Time:</span>
-          <span className="mx-2 inline-block w-28">
-            <HoraInput compact value={tasks.interromperRealTimeHora || ''} onChange={(v) => onTaskChange('interromperRealTimeHora', v)} />
-          </span>
+          <Input 
+            className="w-20 h-7 mx-2 shadow-inner border-input [&::-webkit-datetime-edit-ampm-field]:hidden [&::-webkit-calendar-picker-indicator]:hidden" 
+            type="time" 
+            value={tasks.interromperRealTimeHora || ''}
+            onChange={(e) => onTaskChange('interromperRealTimeHora', e.target.value)} 
+          />
         </div>
       </div>
 
@@ -163,9 +165,12 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
           <Label htmlFor="inicioFecho" className="cursor-pointer font-bold mr-2">
             Início do Fecho
           </Label>
-          <span className="mx-2 inline-block w-28">
-            <HoraInput compact value={tasks.inicioFechoHora || ''} onChange={(v) => onTaskChange('inicioFechoHora', v)} />
-          </span>
+          <Input 
+            className="w-20 h-7 mx-2 shadow-inner border-input [&::-webkit-datetime-edit-ampm-field]:hidden [&::-webkit-calendar-picker-indicator]:hidden" 
+            type="time" 
+            value={tasks.inicioFechoHora || ''}
+            onChange={(e) => onTaskChange('inicioFechoHora', e.target.value)} 
+          />
         </div>
       </div>
 
@@ -257,9 +262,12 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
             <span className="font-bold mr-1">Abrir o Real-Time</span> com a SISP
           </Label>
           <span className="font-bold ml-6 mr-1 text-sm">Abertura Real-Time:</span>
-          <span className="mx-2 inline-block w-28">
-            <HoraInput compact value={tasks.abrirRealTimeHora || ''} onChange={(v) => onTaskChange('abrirRealTimeHora', v)} />
-          </span>
+          <Input 
+            className="w-20 h-7 mx-2 shadow-inner border-input [&::-webkit-datetime-edit-ampm-field]:hidden [&::-webkit-calendar-picker-indicator]:hidden" 
+            type="time" 
+            value={tasks.abrirRealTimeHora || ''}
+            onChange={(e) => onTaskChange('abrirRealTimeHora', e.target.value)} 
+          />
         </div>
       </div>
 
@@ -309,9 +317,12 @@ export const Turno3TasksComponent: React.FC<Turno3TasksProps> = ({
           <Label htmlFor="terminoFecho" className="cursor-pointer font-bold mr-2">
             Término do Fecho
           </Label>
-          <span className="mx-2 inline-block w-28">
-            <HoraInput compact value={tasks.terminoFechoHora || ''} onChange={(v) => onTaskChange('terminoFechoHora', v)} />
-          </span>
+          <Input 
+            className="w-20 h-7 mx-2 shadow-inner border-input [&::-webkit-datetime-edit-ampm-field]:hidden [&::-webkit-calendar-picker-indicator]:hidden" 
+            type="time" 
+            value={tasks.terminoFechoHora || ''}
+            onChange={(e) => onTaskChange('terminoFechoHora', e.target.value)} 
+          />
         </div>
       </div>
 

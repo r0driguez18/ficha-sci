@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { HoraInput } from '@/components/ui/hora-input';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { TurnKey } from '@/types/taskboard';
@@ -54,11 +53,12 @@ export const TurnInfoSection: React.FC<TurnInfoSectionProps> = ({
             <Clock className="h-3.5 w-3.5" />
             Entrada
           </Label>
-          <HoraInput
+          <Input
             id={`${turnKey}-entrada`}
+            type="time"
             value={entrada}
-            onChange={(v) => onTurnDataChange(turnKey, 'entrada', v)}
-            className="h-10"
+            onChange={(e) => onTurnDataChange(turnKey, 'entrada', e.target.value)}
+            className="bg-background"
           />
         </div>
         
@@ -67,11 +67,12 @@ export const TurnInfoSection: React.FC<TurnInfoSectionProps> = ({
             <LogOut className="h-3.5 w-3.5" />
             Saída
           </Label>
-          <HoraInput
+          <Input
             id={`${turnKey}-saida`}
+            type="time"
             value={saida}
-            onChange={(v) => onTurnDataChange(turnKey, 'saida', v)}
-            className="h-10"
+            onChange={(e) => onTurnDataChange(turnKey, 'saida', e.target.value)}
+            className="bg-background"
           />
         </div>
       </div>
