@@ -72,7 +72,6 @@ export function emptyTurno2Tasks(): Turno2Tasks {
     processarTef: false,
     processarTelecomp: false,
     rececaoFicheirosVisaVss: false,
-    enviarEnvIma: false,
     enviarEciEdv: false,
     confirmarAtualizacaoFicheiros: false,
     envioFicheirosVisaPafCaf: false,
