@@ -24,6 +24,7 @@ Os diagramas usam Mermaid (renderizam no GitHub e em editores com suporte). Comp
 | `/sci/retornos-cobrancas` | Retornos de cobranças | Autenticado |
 | `/sci/passagem-turno` | Passagem de turno | Autenticado |
 | `/sci/verificacao-ficheiros` | Verificar Débitos/Créditos | Autenticado |
+| `/sci/soc` | SOC — Quarentena de e-mail (análise do relatório do Cisco ESA) | Autenticado |
 | `/sci/geradores` | Geradores PS2 / OIC (`/sci/gerador-ps2` → separador PS2) | Autenticado |
 | `/sci/renovacao-cartoes` | Renovação de cartões | Autenticado |
 | `/easyvista` → `/easyvista/estatisticas` | Estatísticas de processamentos | Autenticado |
