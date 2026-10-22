@@ -86,6 +86,14 @@ a aplicação não pode depender de nenhum serviço externo (nem fontes, nem CDN
 | RF-01.7 | A reposição pelo PIN tem limite de **5 tentativas por conta em 24 h**, respostas que não revelam se o utilizador existe, e fica **registada e visível** aos administradores. |
 | RF-01.8 | Mínimo de 8 caracteres para a senha escolhida. |
 
+### RF-01A — Registo de alterações
+
+| ID | Requisito |
+|---|---|
+| RF-01A.1 | Fica registado **quem criou, alterou ou apagou** fichas exportadas, lotes PS2 e a sua verificação, operadores e papéis, PINs (só o facto), retornos de cobrança, passagem de turno, renovação de cartões e contas de utilizador. |
+| RF-01A.2 | O registo é **imutável** e só os **administradores** o consultam, com filtros por assunto, operador e datas. |
+| RF-01A.3 | Não guarda o conteúdo das fichas nem valores secretos: só os campos que mudaram (de → para) e o selo da ficha. |
+
 ### RF-02 — Ficha de Procedimentos (módulo central)
 
 | ID | Requisito |

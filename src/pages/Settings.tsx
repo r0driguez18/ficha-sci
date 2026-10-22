@@ -65,6 +65,22 @@ const Settings = () => {
         <PinManagerCard />
 
         {isAdmin && <AdminUtilizadoresCard />}
+
+        {isAdmin && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Registo de alterações</CardTitle>
+              <CardDescription>
+                Quem criou, alterou ou apagou fichas, lotes, operadores e contas. Só os administradores o veem e não se pode editar.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button variant="outline" onClick={() => navigate('/registo-alteracoes')}>
+                Abrir o registo
+              </Button>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </PageContainer>
   );

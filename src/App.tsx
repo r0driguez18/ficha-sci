@@ -27,6 +27,7 @@ import PassagemTurno from './pages/sci/PassagemTurno';
 import Geradores from './pages/sci/Geradores';
 import RenovacaoCartoes from './pages/sci/RenovacaoCartoes';
 import VerificacaoFicheiros from './pages/sci/VerificacaoFicheiros';
+import RegistoAlteracoes from './pages/RegistoAlteracoes';
 
 const queryClient = new QueryClient();
 
@@ -71,6 +72,7 @@ const App = () => (
               
               {/* System Routes */}
               <Route path="/settings" element={<PrivateRoute><DashboardLayout><Settings /></DashboardLayout></PrivateRoute>} />
+              <Route path="/registo-alteracoes" element={<PrivateRoute><DashboardLayout><RegistoAlteracoes /></DashboardLayout></PrivateRoute>} />
               <Route path="/docs" element={<PrivateRoute><DashboardLayout><Documentation /></DashboardLayout></PrivateRoute>} />
               
               {/* 404 Route */}
