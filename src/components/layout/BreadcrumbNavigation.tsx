@@ -23,7 +23,7 @@ const routeLabels: Record<string, string> = {
   '/sci/verificacao-ficheiros': 'Verificar Débitos/Créditos',
   '/sci/geradores': 'Geradores PS2 / OIC',
   '/sci/renovacao-cartoes': 'Renovação de Cartões',
-  '/sci/soc': 'SOC — Quarentena de e-mail',
+  '/sci/soc': 'Relatório SOC',
   '/easyvista': 'Processamentos',
   '/easyvista/estatisticas': 'Estatísticas',
   '/settings': 'Configurações',

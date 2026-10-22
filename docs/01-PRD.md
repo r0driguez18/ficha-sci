@@ -86,7 +86,7 @@ a aplicação não pode depender de nenhum serviço externo (nem fontes, nem CDN
 | RF-01.7 | A reposição pelo PIN tem limite de **5 tentativas por conta em 24 h**, respostas que não revelam se o utilizador existe, e fica **registada e visível** aos administradores. |
 | RF-01.8 | Mínimo de 8 caracteres para a senha escolhida. |
 
-### RF-01C — SOC: quarentena de e-mail
+### RF-01C — Relatório SOC (quarentena de e-mail)
 
 | ID | Requisito |
 |---|---|

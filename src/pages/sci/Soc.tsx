@@ -119,7 +119,7 @@ export default function Soc() {
   return (
     <PageContainer size="wide">
       <PageHeader
-        title="SOC — Quarentena de e-mail"
+        title="Relatório SOC"
         subtitle="Descobre que remetentes legítimos de Cabo Verde e Portugal o Cisco ESA está a bloquear, e prepara o pedido de libertação"
       />
 

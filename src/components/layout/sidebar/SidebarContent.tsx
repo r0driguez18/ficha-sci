@@ -113,7 +113,7 @@ export const SidebarContent = () => {
     { label: 'Verificar Débitos/Créditos', path: '/sci/verificacao-ficheiros', group: 'SCI', keywords: ['verificação', 'verificar', 'salários', 'cobranças', 'ps2', 'débito', 'crédito', 'duplicado'] },
     { label: 'Geradores PS2 / OIC', path: '/sci/geradores', group: 'Ferramentas', keywords: ['geradores', 'ps2', 'oic', 'salários', 'pagamentos', 'ficheiro', 'banco', 'nib'] },
     { label: 'Renovação de Cartões', path: '/sci/renovacao-cartoes', group: 'Ferramentas', keywords: ['cartões', 'renovação', 'prn', 'balcão', 'lote'] },
-    { label: 'SOC — Quarentena de e-mail', path: '/sci/soc', group: 'Ferramentas', keywords: ['soc', 'quarentena', 'email', 'spam', 'cisco', 'esa', 'whitelist', 'dmarc', 'domínios'] },
+    { label: 'Relatório SOC', path: '/sci/soc', group: 'Ferramentas', keywords: ['soc', 'quarentena', 'email', 'spam', 'cisco', 'esa', 'whitelist', 'dmarc', 'domínios'] },
     { label: 'Estatísticas', path: '/easyvista/estatisticas', group: 'Ferramentas', keywords: ['estatísticas', 'gráficos', 'processamentos', 'charts'] },
     { label: 'Configurações', path: '/settings', group: 'Sistema', keywords: ['settings', 'configurações', 'tema', 'senha'] },
     { label: 'Documentação', path: '/docs', group: 'Sistema', keywords: ['docs', 'documentação', 'ajuda', 'help'] },
@@ -170,7 +170,7 @@ export const SidebarContent = () => {
           <SidebarMenu>
             <SidebarItem icon={Banknote} label="Geradores PS2 / OIC" to="/sci/geradores" />
             <SidebarItem icon={CreditCard} label="Renovação de Cartões" to="/sci/renovacao-cartoes" />
-            <SidebarItem icon={MailWarning} label="SOC — Quarentena" to="/sci/soc" />
+            <SidebarItem icon={MailWarning} label="Relatório SOC" to="/sci/soc" />
             <SidebarItem icon={BarChart3} label="Estatísticas" to="/easyvista/estatisticas" />
           </SidebarMenu>
         </SidebarGroupContent>
