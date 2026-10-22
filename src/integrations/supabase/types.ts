@@ -785,6 +785,8 @@ export type Database = {
       atualizar_ocorrencia: {
         Args: {
           p_id: string
+          p_data: string
+          p_turno: string
           p_n_avaria: string
           p_descricao: string
           p_hora_inicio: string

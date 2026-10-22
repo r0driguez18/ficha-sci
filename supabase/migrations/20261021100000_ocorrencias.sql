@@ -1,8 +1,8 @@
 -- Ficha de Comunicação/Ocorrências.
 --
--- Replica a ficha em papel do Centro Informática: por dia, uma lista de avarias com
+-- Replica a ficha em papel do Centro Informática: por dia, uma lista de ocorrências com
 --   N.º Avaria · Descrição da Avaria · Hora Início · Hora Término · Encaminhamento
--- e o campo "Outras Intervenções/Observações". Uma avaria sem hora de término está em curso.
+-- e o campo "Outras Intervenções/Observações". Uma ocorrência sem hora de término está em curso.
 -- (Categoria e sistema são opcionais: servem para pesquisar e ver o que se repete.)
 --
 -- Leitura: toda a equipa. Escrita: só pelas funções abaixo (nunca direta). Tudo fica também no
@@ -101,9 +101,13 @@ BEGIN
 END;
 $$;
 
--- ---------------------------------------------------------------- editar (autor ou administrador)
+-- ---------------------------------------------------------------- editar (qualquer operador)
+-- Quem se engana na data ou no turno corrige-o aqui. Qualquer operador ativo pode editar: cada alteração
+-- (de → para, e quem a fez) fica no registo de alterações.
 CREATE OR REPLACE FUNCTION public.atualizar_ocorrencia(
   p_id              uuid,
+  p_data            date,
+  p_turno           text,
   p_n_avaria        text,
   p_descricao       text,
   p_hora_inicio     text,
@@ -116,23 +120,21 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public, pg_temp
 AS $$
-DECLARE
-  v_o public.ocorrencias%ROWTYPE;
 BEGIN
   IF auth.uid() IS NULL THEN
     RAISE EXCEPTION 'Não autenticado';
   END IF;
-
-  SELECT * INTO v_o FROM public.ocorrencias WHERE id = p_id FOR UPDATE;
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'Ocorrência não encontrada';
+  IF NOT EXISTS (SELECT 1 FROM public.operators WHERE user_id = auth.uid() AND ativo) THEN
+    RAISE EXCEPTION 'A conta não está ligada a um operador ativo';
   END IF;
-  IF v_o.criada_por IS DISTINCT FROM auth.uid() AND NOT public.is_admin() THEN
-    RAISE EXCEPTION 'Só quem registou a ocorrência (ou um administrador) a pode editar';
+  IF p_data IS NULL THEN
+    RAISE EXCEPTION 'Indica a data da ocorrência';
   END IF;
 
   UPDATE public.ocorrencias
-     SET n_avaria = nullif(btrim(coalesce(p_n_avaria, '')), ''),
+     SET data = p_data,
+         turno = nullif(btrim(coalesce(p_turno, '')), ''),
+         n_avaria = nullif(btrim(coalesce(p_n_avaria, '')), ''),
          descricao = btrim(coalesce(p_descricao, '')),
          hora_inicio = nullif(btrim(coalesce(p_hora_inicio, '')), ''),
          hora_termino = nullif(btrim(coalesce(p_hora_termino, '')), ''),
@@ -141,11 +143,15 @@ BEGIN
          sistema = nullif(btrim(coalesce(p_sistema, '')), ''),
          atualizada_em = now()
    WHERE id = p_id;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Ocorrência não encontrada';
+  END IF;
 END;
 $$;
 
 -- ---------------------------------------------------------------- terminar / reabrir (qualquer operador:
--- uma avaria pode começar num turno e terminar noutro)
+-- uma ocorrência pode começar num turno e terminar noutro)
 CREATE OR REPLACE FUNCTION public.terminar_ocorrencia(p_id uuid, p_hora_termino text)
 RETURNS void
 LANGUAGE plpgsql
@@ -220,12 +226,12 @@ END;
 $$;
 
 REVOKE ALL ON FUNCTION public.registar_ocorrencia(date, text, text, text, text, text, text, text, text) FROM public, anon;
-REVOKE ALL ON FUNCTION public.atualizar_ocorrencia(uuid, text, text, text, text, text, text, text) FROM public, anon;
+REVOKE ALL ON FUNCTION public.atualizar_ocorrencia(uuid, date, text, text, text, text, text, text, text, text) FROM public, anon;
 REVOKE ALL ON FUNCTION public.terminar_ocorrencia(uuid, text) FROM public, anon;
 REVOKE ALL ON FUNCTION public.reabrir_ocorrencia(uuid) FROM public, anon;
 REVOKE ALL ON FUNCTION public.guardar_observacoes_dia(date, text) FROM public, anon;
 GRANT EXECUTE ON FUNCTION public.registar_ocorrencia(date, text, text, text, text, text, text, text, text) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.atualizar_ocorrencia(uuid, text, text, text, text, text, text, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.atualizar_ocorrencia(uuid, date, text, text, text, text, text, text, text, text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.terminar_ocorrencia(uuid, text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.reabrir_ocorrencia(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.guardar_observacoes_dia(date, text) TO authenticated;

@@ -22,7 +22,7 @@ export const generateTaskboardPDF = (
   isDiaNaoUtil: boolean = false,
   signature?: Partial<FichaSignature>,
   verificacaoTapes?: VerificacaoTapes | null,
-  /** Avarias do dia (Ficha Comunicação/Ocorrências): vai como anexo, numa página horizontal no fim. */
+  /** Ocorrências do dia (Ficha Comunicação/Ocorrências): vai como anexo, numa página horizontal no fim. */
   anexoOcorrencias?: AnexoOcorrencias | null,
 ) => {
   const doc = new jsPDF();

@@ -213,9 +213,9 @@ As ações sobre contas (criar, eliminar, repor senha, novo link) entram com a t
 | `ocorrencias` | `id`, `data`, `turno`, `n_avaria`, `descricao` (3–1000), `hora_inicio`, `hora_termino`, `encaminhamento`, `categoria` (opcional: `core`/`ficheiros`/`rede`/`servidores`/`balcoes`/`cartoes`/`seguranca`/`outro`), `sistema` (opcional), `criada_por(_codigo)` | Os campos da ficha em papel. **Sem `hora_termino` = em curso.** `CHECK` em horas (HH:MM) e domínios; RLS: `SELECT` para a equipa, **sem escrita direta**; auditada |
 | `ocorrencias_dia` | `data` (PK), `observacoes`, `atualizada_por_codigo`, `atualizada_em` | «Outras Intervenções/Observações» (um texto por dia); só se escreve por função; auditada |
 
-Funções: `registar_ocorrencia`, `atualizar_ocorrencia` (autor ou administrador), `terminar_ocorrencia` (qualquer operador; exige hora; só uma vez), `reabrir_ocorrencia` e `guardar_observacoes_dia`.
+Funções: `registar_ocorrencia`, `atualizar_ocorrencia` (qualquer operador ativo; também corrige a data e o turno), `terminar_ocorrencia` (qualquer operador; exige hora; só uma vez), `reabrir_ocorrencia` e `guardar_observacoes_dia`.
 
-O PDF da ficha de procedimentos leva, **como anexo** (página horizontal no fim), a ficha de ocorrências desse dia quando há avarias ou observações. O anexo não faz parte do conteúdo assinado (selo SHA-256).
+O PDF da ficha de procedimentos leva, **como anexo** (página horizontal no fim), a ficha de ocorrências desse dia quando há ocorrências ou observações. O anexo não faz parte do conteúdo assinado (selo SHA-256).
 
 ### 2.8 Legado
 
