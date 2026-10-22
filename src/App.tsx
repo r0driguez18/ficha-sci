@@ -29,6 +29,7 @@ import RenovacaoCartoes from './pages/sci/RenovacaoCartoes';
 import VerificacaoFicheiros from './pages/sci/VerificacaoFicheiros';
 import RegistoAlteracoes from './pages/RegistoAlteracoes';
 import Ocorrencias from './pages/sci/Ocorrencias';
+import Soc from './pages/sci/Soc';
 
 const queryClient = new QueryClient();
 
@@ -66,6 +67,7 @@ const App = () => (
 
               {/* Rota antiga do Gerador PS2 — agora é um separador da página "Geradores" */}
               <Route path="/sci/gerador-ps2" element={<Navigate to="/sci/geradores#ps2" replace />} />
+              <Route path="/sci/soc" element={<PrivateRoute><DashboardLayout><Soc /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/renovacao-cartoes" element={<PrivateRoute><DashboardLayout><RenovacaoCartoes /></DashboardLayout></PrivateRoute>} />
 
               {/* Processamentos Routes */}

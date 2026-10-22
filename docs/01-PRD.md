@@ -104,6 +104,15 @@ a aplicação não pode depender de nenhum serviço externo (nem fontes, nem CDN
 | RF-01B.4 | **PDF** igual à ficha em papel (12 linhas, página horizontal), descarregável por dia e **anexado ao PDF da ficha de procedimentos** desse dia. |
 | RF-01B.5 | Aviso das avarias em curso (de qualquer dia) no painel inicial e no menu; histórico com pesquisa e o que se repete (sistemas com 2 ou mais avarias em 90 dias). Tudo fica no registo de alterações. |
 
+### RF-01C — Relatório SOC (quarentena de e-mail)
+
+| ID | Requisito |
+|---|---|
+| RF-01C.1 | Abrir o Excel semanal do SOC (folha «cisco - esa») e analisá-lo **no browser**: o ficheiro e os endereços não saem do computador. |
+| RF-01C.2 | Analisar só o **domínio do remetente**; o domínio de destino (o do banco) nunca conta como «bloqueado». |
+| RF-01C.3 | Classificar cada domínio (Cabo Verde, Portugal, webmail, suspeito, outro) e recomendar: **pedir whitelist** (CV/PT só apanhado pelo anti-spam), **verificar com o remetente** (DMARC falhou), **não libertar** (vírus ou domínio parecido com o do banco), **verificar caso a caso** (webmail) ou **manter bloqueado**. |
+| RF-01C.4 | Marcar os domínios a pedir, e gerar o **e-mail para o Victor**, a lista de domínios (1 por linha) para o ESA e um CSV de todos os domínios. |
+
 ### RF-02 — Ficha de Procedimentos (módulo central)
 
 | ID | Requisito |
