@@ -18,6 +18,7 @@ import { generateTaskboardPDF } from '@/utils/pdfGenerator';
 import { computeFichaHash } from '@/lib/signatureHash';
 import { fichaFileName } from '@/lib/fichaFileName';
 import { carregarAnexoOcorrencias } from '@/services/ocorrenciasService';
+import { avisarFichasPorFecharMudaram } from '@/services/fichasPorFecharService';
 import { supabase } from '@/integrations/supabase/client';
 import { TASKBOARD_CONFIGS } from '@/lib/taskboardConfig';
 import {
@@ -629,6 +630,7 @@ export function useTaskboard(formType: FormType) {
       // termina noutro) o "rascunho mais recente" voltava a apontar sempre
       // para esta ficha já fechada, em vez de deixar começar uma nova.
       await resetData();
+      avisarFichasPorFecharMudaram();
 
       const [ny, nm, nd] = date.split('-').map(Number);
       const next = new Date(ny, nm - 1, nd + 1);
@@ -655,6 +657,7 @@ export function useTaskboard(formType: FormType) {
     setSignatureDataUrl(null);
     setSigningToken(null);
     await resetData();
+    avisarFichasPorFecharMudaram();
     toast.success('Formulário reiniciado com sucesso!');
   };
 
