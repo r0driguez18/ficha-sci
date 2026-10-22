@@ -29,7 +29,7 @@ import {
 import { useAuth } from '@/components/auth/AuthProvider';
 import { getPendingReturns } from '@/services/cobrancasRetornoService';
 import { getPendingTapesEvidencia } from '@/services/exportedTaskboardService';
-import { contarAbertas } from '@/services/ocorrenciasService';
+import { contarEmCurso } from '@/services/ocorrenciasService';
 import { listarLotes } from '@/services/ps2LotesService';
 
 export const SidebarContent = () => {
@@ -87,7 +87,7 @@ export const SidebarContent = () => {
 
     const fetchOcorrencias = async () => {
       try {
-        const n = await contarAbertas();
+        const n = await contarEmCurso();
         if (isMounted) setOcorrenciasBadge(n);
       } catch (error) {
         console.error('Failed to load open incidents count:', error);

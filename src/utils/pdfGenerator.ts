@@ -10,6 +10,8 @@ import { renderTurno2Tasks } from './pdf/pdfTurno2';
 import { renderTurno3Tasks } from './pdf/pdfTurno3';
 import { renderTaskTable } from './pdf/pdfTable';
 import { renderVerificacaoTapes } from './pdf/pdfVerificacaoTapes';
+import { renderOcorrenciasPagina } from './pdf/pdfOcorrencias';
+import type { AnexoOcorrencias } from '@/services/ocorrenciasService';
 
 export const generateTaskboardPDF = (
   date: string,
@@ -19,6 +21,8 @@ export const generateTaskboardPDF = (
   isDiaNaoUtil: boolean = false,
   signature?: Partial<FichaSignature>,
   verificacaoTapes?: VerificacaoTapes | null,
+  /** Avarias do dia (Ficha Comunicação/Ocorrências): vai como anexo, numa página horizontal no fim. */
+  anexoOcorrencias?: AnexoOcorrencias | null,
 ) => {
   const doc = new jsPDF();
   let y = 15;
@@ -187,6 +191,11 @@ export const generateTaskboardPDF = (
       y += 7;
       centerText(doc, `Impressão digital do conteúdo (SHA-256): ${shortHash(signature.contentHash)}`, y);
     }
+  }
+
+  // Anexo: a ficha de comunicação/ocorrências desse dia (não faz parte do conteúdo assinado).
+  if (anexoOcorrencias) {
+    renderOcorrenciasPagina(doc, anexoOcorrencias, true);
   }
 
   return doc;

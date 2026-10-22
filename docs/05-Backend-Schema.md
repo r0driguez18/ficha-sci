@@ -206,13 +206,16 @@ ficha (turnos, tarefas, tabela, assinatura — só diz que mudou, e guarda o sel
 O autor é o utilizador da sessão; nas funções do servidor vem do cabeçalho `x-sci-ator`, aceite só com a chave de serviço.
 As ações sobre contas (criar, eliminar, repor senha, novo link) entram com a tabela `contas`.
 
-### 2.7 Ocorrências
+### 2.7 Ocorrências (Ficha de Comunicação/Ocorrências)
 
 | Tabela | Colunas principais | Regras |
 |---|---|---|
-| `ocorrencias` | `id`, `data`, `hora`, `turno`, `categoria` (`core`/`ficheiros`/`rede`/`servidores`/`balcoes`/`cartoes`/`seguranca`/`outro`), `gravidade` (`baixa`/`media`/`alta`), `sistema`, `titulo` (3–120), `descricao`, `estado` (`aberta`/`resolvida`), `resolucao`, `criada_por(_codigo)`, `resolvida_por_codigo`, `resolvida_em` | `CHECK` em todos os domínios; RLS: `SELECT` para a equipa, **sem escrita direta** (só pelas funções); auditada |
+| `ocorrencias` | `id`, `data`, `turno`, `n_avaria`, `descricao` (3–1000), `hora_inicio`, `hora_termino`, `encaminhamento`, `categoria` (opcional: `core`/`ficheiros`/`rede`/`servidores`/`balcoes`/`cartoes`/`seguranca`/`outro`), `sistema` (opcional), `criada_por(_codigo)` | Os campos da ficha em papel. **Sem `hora_termino` = em curso.** `CHECK` em horas (HH:MM) e domínios; RLS: `SELECT` para a equipa, **sem escrita direta**; auditada |
+| `ocorrencias_dia` | `data` (PK), `observacoes`, `atualizada_por_codigo`, `atualizada_em` | «Outras Intervenções/Observações» (um texto por dia); só se escreve por função; auditada |
 
-Funções: `registar_ocorrencia`, `atualizar_ocorrencia` (autor ou administrador), `resolver_ocorrencia` (exige texto da resolução; só uma vez) e `reabrir_ocorrencia`.
+Funções: `registar_ocorrencia`, `atualizar_ocorrencia` (autor ou administrador), `terminar_ocorrencia` (qualquer operador; exige hora; só uma vez), `reabrir_ocorrencia` e `guardar_observacoes_dia`.
+
+O PDF da ficha de procedimentos leva, **como anexo** (página horizontal no fim), a ficha de ocorrências desse dia quando há avarias ou observações. O anexo não faz parte do conteúdo assinado (selo SHA-256).
 
 ### 2.8 Legado
 

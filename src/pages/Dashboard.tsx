@@ -12,8 +12,7 @@ import { useAlerts } from '@/hooks/useAlerts';
 import { fichaDoDia } from '@/lib/fichaDoDia';
 import { todayIso } from '@/lib/taskboardDefaults';
 import { existeExportadaNaData } from '@/services/exportedTaskboardService';
-import { listarOcorrencias } from '@/services/ocorrenciasService';
-import { nomeCategoria, nomeGravidade, resumirOcorrencias } from '@/lib/ocorrencias';
+import { listarEmCurso } from '@/services/ocorrenciasService';
 
 const MODULES = [
   { title: 'SCI', description: 'Sistema de Controlo Interno', icon: ClipboardCheck, path: '/sci/procedimentos' },
@@ -47,18 +46,9 @@ const Dashboard = () => {
     };
   }, [hoje]);
 
-  // Ocorrências abertas (a mesma consulta e cache da página de ocorrências).
-  const ocorrencias = useQuery({
-    queryKey: ['ocorrencias'],
-    queryFn: async () => {
-      const r = await listarOcorrencias();
-      if (r.erro) throw new Error(r.erro);
-      return r.ocorrencias;
-    },
-    refetchInterval: 60_000,
-  });
-  const abertas = useMemo(() => (ocorrencias.data ?? []).filter((o) => o.estado === 'aberta'), [ocorrencias.data]);
-  const resumoOcorrencias = useMemo(() => resumirOcorrencias(ocorrencias.data ?? [], hoje), [ocorrencias.data, hoje]);
+  // Avarias em curso (sem hora de término), de qualquer dia.
+  const emCurso = useQuery({ queryKey: ['ocorrencias', 'curso'], queryFn: listarEmCurso, refetchInterval: 60_000 });
+  const avarias = emCurso.data ?? [];
 
   const proximoAlerta = useMemo(() => {
     const hm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
@@ -146,53 +136,47 @@ const Dashboard = () => {
         </CardContent>
       </Card>
 
-      {/* Ocorrências abertas */}
-      <Card className={`mb-6 ${resumoOcorrencias.abertasAltas > 0 ? 'border-destructive/50' : ''}`}>
+      {/* Avarias em curso */}
+      <Card className={`mb-6 ${avarias.length > 0 ? 'border-amber-500/50' : ''}`}>
         <CardHeader className="pb-2">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <CardTitle className="text-base flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4" /> Ocorrências abertas
+              <AlertTriangle className="h-4 w-4" /> Avarias em curso
             </CardTitle>
             <RouterLink to="/sci/ocorrencias">
               <Button size="sm" variant="outline">
-                Ver ocorrências
+                Ficha de ocorrências
                 <ArrowRight className="h-4 w-4 ml-1.5" />
               </Button>
             </RouterLink>
           </div>
         </CardHeader>
         <CardContent>
-          {ocorrencias.isLoading ? (
+          {emCurso.isLoading ? (
             <p className="text-sm text-muted-foreground">a carregar…</p>
-          ) : ocorrencias.isError ? (
-            <p className="text-sm text-muted-foreground">Não consegui carregar as ocorrências.</p>
-          ) : abertas.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhuma ocorrência aberta.</p>
+          ) : emCurso.isError ? (
+            <p className="text-sm text-muted-foreground">Não consegui carregar as avarias.</p>
+          ) : avarias.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhuma avaria em curso.</p>
           ) : (
             <>
               <div className="flex items-baseline gap-3">
-                <span className="text-2xl font-bold tabular-nums">{abertas.length}</span>
-                <span className="text-sm text-muted-foreground">
-                  {resumoOcorrencias.abertasAltas > 0
-                    ? `${resumoOcorrencias.abertasAltas} de gravidade alta`
-                    : 'nenhuma de gravidade alta'}
-                </span>
+                <span className="text-2xl font-bold tabular-nums">{avarias.length}</span>
+                <span className="text-sm text-muted-foreground">sem hora de término</span>
               </div>
               <ul className="mt-3 space-y-1 text-sm">
-                {abertas.slice(0, 3).map((o) => (
+                {avarias.slice(0, 3).map((o) => (
                   <li key={o.id} className="flex flex-wrap items-center gap-2">
-                    <Badge variant={o.gravidade === 'alta' ? 'destructive' : o.gravidade === 'media' ? 'default' : 'secondary'}>
-                      {nomeGravidade(o.gravidade)}
-                    </Badge>
-                    <span className="font-medium">{o.titulo}</span>
+                    {o.n_avaria && <Badge variant="outline">{o.n_avaria}</Badge>}
+                    <span className="font-medium">{o.descricao.length > 90 ? `${o.descricao.slice(0, 90)}…` : o.descricao}</span>
                     <span className="text-xs text-muted-foreground">
-                      {nomeCategoria(o.categoria)}
-                      {o.sistema ? ` · ${o.sistema}` : ''} · {o.data}
+                      {o.data.split('-').reverse().join('/')}
+                      {o.hora_inicio ? ` · desde as ${o.hora_inicio}` : ''}
                     </span>
                   </li>
                 ))}
               </ul>
-              {abertas.length > 3 && <p className="mt-2 text-xs text-muted-foreground">e mais {abertas.length - 3}…</p>}
+              {avarias.length > 3 && <p className="mt-2 text-xs text-muted-foreground">e mais {avarias.length - 3}…</p>}
             </>
           )}
         </CardContent>

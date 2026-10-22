@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PageContainer } from '@/components/layout/PageContainer';
@@ -12,87 +12,101 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { LoadingState } from '@/components/ui/loading-state';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { AlertTriangle, CheckCircle2, Pencil, Plus, RotateCcw } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, FileDown, Pencil, Plus, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCurrentOperator, useIsAdmin } from '@/hooks/useOperators';
 import { OcorrenciaDialog } from '@/components/ocorrencias/OcorrenciaDialog';
 import {
   CATEGORIAS,
-  GRAVIDADES,
+  duracaoMinutos,
+  emCurso,
+  formatarDuracao,
+  horaAtual,
   nomeCategoria,
-  nomeGravidade,
   nomeTurno,
   resumirOcorrencias,
+  somarDias,
   type FormOcorrencia,
-  type Gravidade,
   type Ocorrencia,
 } from '@/lib/ocorrencias';
 import { todayIso } from '@/lib/taskboardDefaults';
 import {
   atualizarOcorrencia,
+  guardarObservacoesDia,
+  listarEmCurso,
   listarOcorrencias,
+  listarOcorrenciasDoDia,
+  obterObservacoesDia,
   reabrirOcorrencia,
   registarOcorrencia,
-  resolverOcorrencia,
+  terminarOcorrencia,
 } from '@/services/ocorrenciasService';
+import { generateOcorrenciasPDF } from '@/utils/pdf/pdfOcorrencias';
 
 const TODAS = '__todas__';
-
-const COR_GRAVIDADE: Record<Gravidade, 'secondary' | 'default' | 'destructive'> = {
-  baixa: 'secondary',
-  media: 'default',
-  alta: 'destructive',
-};
-
-const dataHora = (iso: string | null) =>
-  iso ? new Date(iso).toLocaleString('pt-PT', { dateStyle: 'short', timeStyle: 'short' }) : '';
+const dataCurta = (iso: string) => iso.split('-').reverse().join('/');
 
 export default function Ocorrencias() {
   const queryClient = useQueryClient();
   const operador = useCurrentOperator();
   const isAdmin = useIsAdmin();
 
-  const [estado, setEstado] = useState<'aberta' | 'resolvida' | typeof TODAS>('aberta');
-  const [categoria, setCategoria] = useState<string>(TODAS);
-  const [gravidade, setGravidade] = useState<string>(TODAS);
-  const [pesquisa, setPesquisa] = useState('');
+  const [aba, setAba] = useState('dia');
+  const [data, setData] = useState(todayIso());
   const [dialogo, setDialogo] = useState<{ aberto: boolean; ocorrencia: Ocorrencia | null }>({ aberto: false, ocorrencia: null });
-  const [aResolver, setAResolver] = useState<Ocorrencia | null>(null);
-  const [resolucao, setResolucao] = useState('');
-  const [aGravar, setAGravar] = useState(false);
+  const [observacoes, setObservacoes] = useState('');
+  const [observacoesGuardadas, setObservacoesGuardadas] = useState('');
+  const [aGravarObs, setAGravarObs] = useState(false);
 
-  const q = useQuery({
-    queryKey: ['ocorrencias'],
-    queryFn: async () => {
-      const r = await listarOcorrencias();
-      if (r.erro) throw new Error(r.erro);
-      return r.ocorrencias;
-    },
+  // Histórico
+  const [categoria, setCategoria] = useState<string>(TODAS);
+  const [estado, setEstado] = useState<'curso' | 'terminadas' | typeof TODAS>(TODAS);
+  const [pesquisa, setPesquisa] = useState('');
+
+  const doDia = useQuery({
+    queryKey: ['ocorrencias', 'dia', data],
+    queryFn: () => listarOcorrenciasDoDia(data),
     refetchInterval: 60_000,
   });
+  const obs = useQuery({
+    queryKey: ['ocorrencias', 'obs', data],
+    queryFn: () => obterObservacoesDia(data),
+  });
+  const abertas = useQuery({ queryKey: ['ocorrencias', 'curso'], queryFn: listarEmCurso, refetchInterval: 60_000 });
+  const historico = useQuery({ queryKey: ['ocorrencias', 'historico'], queryFn: () => listarOcorrencias() });
 
-  const todas = q.data ?? [];
+  // As observações do dia vêm do servidor sempre que se muda de dia.
+  useEffect(() => {
+    if (obs.data !== undefined) {
+      setObservacoes(obs.data);
+      setObservacoesGuardadas(obs.data);
+    }
+  }, [obs.data, data]);
+
+  const linhas = doDia.data ?? [];
+  const emCursoDeOutrosDias = (abertas.data ?? []).filter((o) => o.data !== data);
+  const todas = historico.data ?? [];
   const resumo = useMemo(() => resumirOcorrencias(todas, todayIso()), [todas]);
   const sistemas = useMemo(
     () => [...new Set(todas.map((o) => o.sistema?.trim()).filter((s): s is string => !!s))].sort(),
     [todas],
   );
 
-  const lista = useMemo(() => {
+  const listaHistorico = useMemo(() => {
     const t = pesquisa.trim().toLowerCase();
     return todas.filter(
       (o) =>
-        (estado === TODAS || o.estado === estado) &&
+        (estado === TODAS || (estado === 'curso' ? emCurso(o) : !emCurso(o))) &&
         (categoria === TODAS || o.categoria === categoria) &&
-        (gravidade === TODAS || o.gravidade === gravidade) &&
         (!t ||
-          o.titulo.toLowerCase().includes(t) ||
-          (o.descricao ?? '').toLowerCase().includes(t) ||
-          (o.sistema ?? '').toLowerCase().includes(t) ||
-          (o.resolucao ?? '').toLowerCase().includes(t)),
+          o.descricao.toLowerCase().includes(t) ||
+          (o.n_avaria ?? '').toLowerCase().includes(t) ||
+          (o.encaminhamento ?? '').toLowerCase().includes(t) ||
+          (o.sistema ?? '').toLowerCase().includes(t)),
     );
-  }, [todas, estado, categoria, gravidade, pesquisa]);
+  }, [todas, estado, categoria, pesquisa]);
 
   const recarregar = async () => {
     await queryClient.invalidateQueries({ queryKey: ['ocorrencias'] });
@@ -103,29 +117,17 @@ export default function Ocorrencias() {
     const alvo = dialogo.ocorrencia;
     const r = alvo ? await atualizarOcorrencia(alvo.id, f) : await registarOcorrencia(f);
     if (r.erro) return r.erro;
-    toast.success(alvo ? 'Ocorrência atualizada.' : 'Ocorrência registada.');
+    toast.success(alvo ? 'Avaria atualizada.' : 'Avaria registada.');
     setDialogo({ aberto: false, ocorrencia: null });
+    if (!alvo && f.data !== data) setData(f.data);
     await recarregar();
     return null;
   };
 
-  const confirmarResolucao = async () => {
-    if (!aResolver) return;
-    if (!resolucao.trim()) {
-      toast.error('Indica como foi resolvida.');
-      return;
-    }
-    setAGravar(true);
-    const r = await resolverOcorrencia(aResolver.id, resolucao);
-    setAGravar(false);
-    if (r.erro) {
-      toast.error(r.erro);
-      return;
-    }
-    toast.success('Ocorrência resolvida.');
-    setAResolver(null);
-    setResolucao('');
-    await recarregar();
+  const terminar = async (o: Ocorrencia) => {
+    const r = await terminarOcorrencia(o.id, horaAtual());
+    if (r.erro) toast.error(r.erro);
+    else await recarregar();
   };
 
   const reabrir = async (o: Ocorrencia) => {
@@ -134,216 +136,362 @@ export default function Ocorrencias() {
     else await recarregar();
   };
 
+  const guardarObs = async () => {
+    setAGravarObs(true);
+    const r = await guardarObservacoesDia(data, observacoes);
+    setAGravarObs(false);
+    if (r.erro) {
+      toast.error(r.erro);
+      return;
+    }
+    setObservacoesGuardadas(observacoes);
+    toast.success('Observações guardadas.');
+    await queryClient.invalidateQueries({ queryKey: ['ocorrencias', 'obs'] });
+  };
+
+  const descarregarPdf = () => {
+    const doc = generateOcorrenciasPDF({ data, linhas, observacoes: observacoesGuardadas });
+    doc.save(`Ocorrencias_${data}.pdf`);
+  };
+
   const podeEditar = (o: Ocorrencia) => isAdmin || (!!operador && o.criada_por_codigo === operador.value);
+  const obsAlteradas = observacoes !== observacoesGuardadas;
 
   return (
     <PageContainer size="wide">
       <PageHeader
         title="Ocorrências"
-        subtitle="Incidentes dos turnos, registados de forma estruturada para pesquisar e aprender com o que se repete"
+        subtitle="Ficha de Comunicação/Ocorrências: as avarias do dia, como na ficha em papel"
       >
+        <Button variant="outline" onClick={descarregarPdf} className="gap-1.5" disabled={linhas.length === 0 && !observacoesGuardadas.trim()}>
+          <FileDown className="h-4 w-4" />
+          Descarregar PDF
+        </Button>
         <Button onClick={() => setDialogo({ aberto: true, ocorrencia: null })} className="gap-1.5">
           <Plus className="h-4 w-4" />
-          Nova ocorrência
+          Nova avaria
         </Button>
       </PageHeader>
 
-      <div className="mb-4 grid gap-3 md:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Abertas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-semibold tabular-nums">{resumo.abertas}</div>
-            <p className="text-xs text-muted-foreground">
-              {resumo.abertasAltas > 0 ? `${resumo.abertasAltas} de gravidade alta` : 'nenhuma de gravidade alta'}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Últimos 90 dias, por categoria</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-1.5">
-            {resumo.porCategoria.length === 0 && <span className="text-sm text-muted-foreground">Sem ocorrências.</span>}
-            {resumo.porCategoria.map((c) => (
-              <Badge key={c.chave} variant="secondary">
-                {nomeCategoria(c.chave)} · {c.total}
-              </Badge>
-            ))}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">O que se repete (2 ou mais vezes)</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-1.5">
-            {resumo.recorrentes.length === 0 && <span className="text-sm text-muted-foreground">Nada recorrente.</span>}
-            {resumo.recorrentes.map((s) => (
-              <Badge key={s.chave} variant="outline">
-                {s.chave} · {s.total}×
-              </Badge>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
+      <Tabs value={aba} onValueChange={setAba}>
+        <TabsList className="mb-4">
+          <TabsTrigger value="dia">Ficha do dia</TabsTrigger>
+          <TabsTrigger value="historico">Histórico e pesquisa</TabsTrigger>
+        </TabsList>
 
-      <Card className="mb-4">
-        <CardContent className="grid gap-3 pt-6 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="space-y-1.5">
-            <Label>Estado</Label>
-            <Select value={estado} onValueChange={(v) => setEstado(v as typeof estado)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="aberta">Abertas</SelectItem>
-                <SelectItem value="resolvida">Resolvidas</SelectItem>
-                <SelectItem value={TODAS}>Todas</SelectItem>
-              </SelectContent>
-            </Select>
+        <TabsContent value="dia" className="space-y-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" size="icon" onClick={() => setData(somarDias(data, -1))} aria-label="Dia anterior">
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Input type="date" value={data} onChange={(e) => e.target.value && setData(e.target.value)} className="w-44" aria-label="Data da ficha" />
+            <Button variant="outline" size="icon" onClick={() => setData(somarDias(data, 1))} aria-label="Dia seguinte">
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            {data !== todayIso() && (
+              <Button variant="ghost" size="sm" onClick={() => setData(todayIso())}>
+                Hoje
+              </Button>
+            )}
           </div>
-          <div className="space-y-1.5">
-            <Label>Categoria</Label>
-            <Select value={categoria} onValueChange={setCategoria}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={TODAS}>Todas</SelectItem>
-                {CATEGORIAS.map((c) => (
-                  <SelectItem key={c.valor} value={c.valor}>
-                    {c.nome}
-                  </SelectItem>
+
+          {emCursoDeOutrosDias.length > 0 && (
+            <div role="status" className="rounded-lg border border-amber-500/50 bg-amber-50 p-3 text-sm text-amber-950 dark:bg-amber-950/30 dark:text-amber-100">
+              <div className="flex items-center gap-2 font-medium">
+                <AlertTriangle className="h-4 w-4" />
+                {emCursoDeOutrosDias.length === 1 ? 'Há uma avaria em curso de outro dia' : `Há ${emCursoDeOutrosDias.length} avarias em curso de outros dias`}
+              </div>
+              <ul className="mt-1 space-y-1">
+                {emCursoDeOutrosDias.map((o) => (
+                  <li key={o.id} className="flex flex-wrap items-center justify-between gap-2">
+                    <span>
+                      <strong>{dataCurta(o.data)}</strong> · {o.n_avaria ? `${o.n_avaria} · ` : ''}
+                      {o.descricao.length > 80 ? `${o.descricao.slice(0, 80)}…` : o.descricao}
+                    </span>
+                    <span className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={() => setData(o.data)}>
+                        Ver o dia
+                      </Button>
+                      <Button size="sm" onClick={() => terminar(o)}>
+                        Terminar agora
+                      </Button>
+                    </span>
+                  </li>
                 ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5">
-            <Label>Gravidade</Label>
-            <Select value={gravidade} onValueChange={setGravidade}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={TODAS}>Todas</SelectItem>
-                {GRAVIDADES.map((g) => (
-                  <SelectItem key={g.valor} value={g.valor}>
-                    {g.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="oc-pesquisa">Pesquisar</Label>
-            <Input id="oc-pesquisa" placeholder="título, sistema, descrição…" value={pesquisa} onChange={(e) => setPesquisa(e.target.value)} />
-          </div>
-        </CardContent>
-      </Card>
+              </ul>
+            </div>
+          )}
 
-      {q.isError && (
-        <Alert variant="destructive" className="mb-4">
-          <AlertDescription>{(q.error as Error).message}</AlertDescription>
-        </Alert>
-      )}
+          {doDia.isError && (
+            <Alert variant="destructive">
+              <AlertDescription>{(doDia.error as Error).message}</AlertDescription>
+            </Alert>
+          )}
 
-      {q.isLoading ? (
-        <LoadingState label="A carregar as ocorrências…" />
-      ) : lista.length === 0 ? (
-        <EmptyState
-          icon={AlertTriangle}
-          title={todas.length === 0 ? 'Ainda não há ocorrências' : 'Nenhuma ocorrência com estes filtros'}
-          hint="Regista aqui o que correr mal num turno: fica pesquisável e mostra o que se repete."
-        />
-      ) : (
-        <div className="space-y-3">
-          {lista.map((o) => (
-            <Card key={o.id} className={o.estado === 'resolvida' ? 'bg-muted/30' : undefined}>
-              <CardContent className="pt-5">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="mb-1 flex flex-wrap items-center gap-2">
-                      <Badge variant={COR_GRAVIDADE[o.gravidade]}>{nomeGravidade(o.gravidade)}</Badge>
-                      <Badge variant="outline">{nomeCategoria(o.categoria)}</Badge>
-                      {o.sistema && <Badge variant="secondary">{o.sistema}</Badge>}
-                      {o.estado === 'resolvida' && (
-                        <Badge variant="outline" className="gap-1 text-green-700 dark:text-green-400">
-                          <CheckCircle2 className="h-3 w-3" />
-                          Resolvida
-                        </Badge>
-                      )}
-                    </div>
-                    <h3 className="font-medium text-foreground">{o.titulo}</h3>
-                    <p className="text-xs text-muted-foreground">
-                      {o.data}
-                      {o.hora ? ` às ${o.hora}` : ''}
-                      {nomeTurno(o.turno) ? ` · ${nomeTurno(o.turno)}` : ''} · registada por {o.criada_por_codigo ?? '—'}
-                    </p>
-                    {o.descricao && <p className="mt-2 whitespace-pre-wrap text-sm">{o.descricao}</p>}
-                    {o.estado === 'resolvida' && (
-                      <div className="mt-2 rounded-md border bg-background p-2 text-sm">
-                        <span className="font-medium">Resolução:</span> {o.resolucao}
-                        <div className="text-xs text-muted-foreground">
-                          por {o.resolvida_por_codigo ?? '—'} · {dataHora(o.resolvida_em)}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex shrink-0 gap-2">
-                    {podeEditar(o) && (
-                      <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setDialogo({ aberto: true, ocorrencia: o })}>
-                        <Pencil className="h-3.5 w-3.5" />
-                        Editar
-                      </Button>
-                    )}
-                    {o.estado === 'aberta' ? (
-                      <Button size="sm" className="gap-1.5" onClick={() => setAResolver(o)}>
-                        <CheckCircle2 className="h-3.5 w-3.5" />
-                        Resolver
-                      </Button>
-                    ) : (
-                      <Button variant="outline" size="sm" className="gap-1.5" onClick={() => reabrir(o)}>
-                        <RotateCcw className="h-3.5 w-3.5" />
-                        Reabrir
-                      </Button>
-                    )}
-                  </div>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">
+                Avarias de {dataCurta(data)}
+                {linhas.length > 0 && <span className="ml-2 text-sm font-normal text-muted-foreground">({linhas.length})</span>}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {doDia.isLoading ? (
+                <div className="p-6">
+                  <LoadingState label="A carregar as avarias…" />
                 </div>
+              ) : linhas.length === 0 ? (
+                <div className="p-6">
+                  <EmptyState
+                    icon={CheckCircle2}
+                    title="Sem avarias neste dia"
+                    hint="Quando houver uma, regista-a em «Nova avaria»: fica na ficha e segue em anexo ao PDF da ficha de procedimentos."
+                  />
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-28">N.º Avaria</TableHead>
+                      <TableHead>Descrição da Avaria</TableHead>
+                      <TableHead className="w-24">Hora início</TableHead>
+                      <TableHead className="w-40">Hora término</TableHead>
+                      <TableHead className="w-48">Encaminhamento</TableHead>
+                      <TableHead className="w-28" />
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {linhas.map((o) => (
+                      <TableRow key={o.id} className={emCurso(o) ? 'bg-amber-50/60 dark:bg-amber-950/20' : undefined}>
+                        <TableCell className="font-mono text-sm">{o.n_avaria ?? ''}</TableCell>
+                        <TableCell>
+                          <div className="whitespace-pre-wrap text-sm">{o.descricao}</div>
+                          {(o.categoria || o.sistema || o.turno) && (
+                            <div className="mt-1 flex flex-wrap gap-1">
+                              {o.turno && <Badge variant="outline">{nomeTurno(o.turno)}</Badge>}
+                              {o.categoria && <Badge variant="secondary">{nomeCategoria(o.categoria)}</Badge>}
+                              {o.sistema && <Badge variant="secondary">{o.sistema}</Badge>}
+                            </div>
+                          )}
+                          <div className="mt-1 text-[11px] text-muted-foreground">registada por {o.criada_por_codigo ?? '—'}</div>
+                        </TableCell>
+                        <TableCell className="tabular-nums">{o.hora_inicio ?? ''}</TableCell>
+                        <TableCell>
+                          {emCurso(o) ? (
+                            <div className="flex flex-col items-start gap-1">
+                              <Badge variant="outline" className="border-amber-500 text-amber-700 dark:text-amber-300">
+                                Em curso
+                              </Badge>
+                              <Button size="sm" className="h-7 gap-1 px-2" onClick={() => terminar(o)}>
+                                <CheckCircle2 className="h-3.5 w-3.5" />
+                                Terminar
+                              </Button>
+                            </div>
+                          ) : (
+                            <div>
+                              <span className="tabular-nums">{o.hora_termino}</span>
+                              {formatarDuracao(duracaoMinutos(o.hora_inicio, o.hora_termino)) && (
+                                <span className="ml-1 text-xs text-muted-foreground">
+                                  ({formatarDuracao(duracaoMinutos(o.hora_inicio, o.hora_termino))})
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-sm">{o.encaminhamento ?? ''}</TableCell>
+                        <TableCell>
+                          <div className="flex justify-end gap-1">
+                            {!emCurso(o) && (
+                              <Button variant="ghost" size="icon" className="h-8 w-8" title="Reabrir" onClick={() => reabrir(o)}>
+                                <RotateCcw className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {podeEditar(o) && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                title="Editar"
+                                onClick={() => setDialogo({ aberto: true, ocorrencia: o })}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Outras Intervenções/Observações</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Textarea
+                rows={5}
+                maxLength={3000}
+                value={observacoes}
+                onChange={(e) => setObservacoes(e.target.value)}
+                aria-label="Outras intervenções e observações do dia"
+              />
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">
+                  {obsAlteradas ? 'Alterações por guardar.' : 'Segue no anexo do PDF da ficha deste dia.'}
+                </span>
+                <Button size="sm" onClick={guardarObs} disabled={!obsAlteradas || aGravarObs}>
+                  Guardar observações
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="historico" className="space-y-4">
+          <div className="grid gap-3 md:grid-cols-3">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Em curso</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-semibold tabular-nums">{resumo.emCurso}</div>
+                <p className="text-xs text-muted-foreground">sem hora de término</p>
               </CardContent>
             </Card>
-          ))}
-        </div>
-      )}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Últimos 90 dias, por categoria</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-wrap gap-1.5">
+                {resumo.porCategoria.length === 0 && <span className="text-sm text-muted-foreground">Sem avarias classificadas.</span>}
+                {resumo.porCategoria.map((c) => (
+                  <Badge key={c.chave} variant="secondary">
+                    {nomeCategoria(c.chave)} · {c.total}
+                  </Badge>
+                ))}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">O que se repete (2 ou mais vezes)</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-wrap gap-1.5">
+                {resumo.recorrentes.length === 0 && <span className="text-sm text-muted-foreground">Nada recorrente.</span>}
+                {resumo.recorrentes.map((s) => (
+                  <Badge key={s.chave} variant="outline">
+                    {s.chave} · {s.total}×
+                  </Badge>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardContent className="grid gap-3 pt-6 sm:grid-cols-3">
+              <div className="space-y-1.5">
+                <Label>Estado</Label>
+                <Select value={estado} onValueChange={(v) => setEstado(v as typeof estado)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={TODAS}>Todas</SelectItem>
+                    <SelectItem value="curso">Em curso</SelectItem>
+                    <SelectItem value="terminadas">Terminadas</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Categoria</Label>
+                <Select value={categoria} onValueChange={setCategoria}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={TODAS}>Todas</SelectItem>
+                    {CATEGORIAS.map((c) => (
+                      <SelectItem key={c.valor} value={c.valor}>
+                        {c.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="oc-pesquisa">Pesquisar</Label>
+                <Input id="oc-pesquisa" placeholder="n.º, descrição, encaminhamento, sistema…" value={pesquisa} onChange={(e) => setPesquisa(e.target.value)} />
+              </div>
+            </CardContent>
+          </Card>
+
+          {historico.isLoading ? (
+            <LoadingState label="A carregar o histórico…" />
+          ) : listaHistorico.length === 0 ? (
+            <EmptyState icon={AlertTriangle} title="Nenhuma avaria com estes filtros" />
+          ) : (
+            <div className="rounded-lg border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-28">Data</TableHead>
+                    <TableHead className="w-28">N.º Avaria</TableHead>
+                    <TableHead>Descrição</TableHead>
+                    <TableHead className="w-36">Início – término</TableHead>
+                    <TableHead className="w-48">Encaminhamento</TableHead>
+                    <TableHead className="w-24" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {listaHistorico.map((o) => (
+                    <TableRow key={o.id}>
+                      <TableCell className="whitespace-nowrap text-sm">{dataCurta(o.data)}</TableCell>
+                      <TableCell className="font-mono text-sm">{o.n_avaria ?? ''}</TableCell>
+                      <TableCell className="text-sm">
+                        <div className="whitespace-pre-wrap">{o.descricao}</div>
+                        {(o.categoria || o.sistema) && (
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {o.categoria && <Badge variant="secondary">{nomeCategoria(o.categoria)}</Badge>}
+                            {o.sistema && <Badge variant="secondary">{o.sistema}</Badge>}
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap text-sm tabular-nums">
+                        {o.hora_inicio ?? '—'} – {o.hora_termino ?? <span className="text-amber-700 dark:text-amber-300">em curso</span>}
+                      </TableCell>
+                      <TableCell className="text-sm">{o.encaminhamento ?? ''}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setData(o.data);
+                            setAba('dia');
+                          }}
+                        >
+                          Ver o dia
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
 
       <OcorrenciaDialog
         aberto={dialogo.aberto}
         ocorrencia={dialogo.ocorrencia}
+        data={data}
         sistemasConhecidos={sistemas}
         onFechar={() => setDialogo({ aberto: false, ocorrencia: null })}
         onGuardar={guardar}
       />
-
-      <Dialog open={!!aResolver} onOpenChange={(o) => !o && !aGravar && setAResolver(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Resolver ocorrência</DialogTitle>
-            <DialogDescription>{aResolver?.titulo}</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-1.5">
-            <Label htmlFor="oc-resolucao">Como foi resolvida?</Label>
-            <Textarea id="oc-resolucao" rows={4} maxLength={2000} value={resolucao} onChange={(e) => setResolucao(e.target.value)} />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAResolver(null)} disabled={aGravar}>
-              Cancelar
-            </Button>
-            <Button onClick={confirmarResolucao} disabled={aGravar}>
-              Marcar como resolvida
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </PageContainer>
   );
 }

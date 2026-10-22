@@ -7,43 +7,39 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Loader2 } from 'lucide-react';
-import {
-  CATEGORIAS,
-  GRAVIDADES,
-  TURNOS,
-  validarOcorrencia,
-  type FormOcorrencia,
-  type Ocorrencia,
-} from '@/lib/ocorrencias';
-import { todayIso } from '@/lib/taskboardDefaults';
+import { CATEGORIAS, TURNOS, horaAtual, validarOcorrencia, type FormOcorrencia, type Ocorrencia } from '@/lib/ocorrencias';
 
-const SEM_TURNO = '__sem_turno__';
+const SEM_VALOR = '__sem_valor__';
 
-export const formVazio = (): FormOcorrencia => ({
-  data: todayIso(),
-  hora: '',
+export const formVazio = (data: string): FormOcorrencia => ({
+  data,
   turno: '',
-  categoria: '',
-  gravidade: 'media',
-  sistema: '',
-  titulo: '',
+  n_avaria: '',
   descricao: '',
+  hora_inicio: horaAtual(),
+  hora_termino: '',
+  encaminhamento: '',
+  categoria: '',
+  sistema: '',
 });
 
 const doRegisto = (o: Ocorrencia): FormOcorrencia => ({
   data: o.data,
-  hora: o.hora ?? '',
   turno: o.turno ?? '',
-  categoria: o.categoria,
-  gravidade: o.gravidade,
+  n_avaria: o.n_avaria ?? '',
+  descricao: o.descricao,
+  hora_inicio: o.hora_inicio ?? '',
+  hora_termino: o.hora_termino ?? '',
+  encaminhamento: o.encaminhamento ?? '',
+  categoria: o.categoria ?? '',
   sistema: o.sistema ?? '',
-  titulo: o.titulo,
-  descricao: o.descricao ?? '',
 });
 
 interface Props {
   aberto: boolean;
   onFechar: () => void;
+  /** Dia da ficha aberta (a data de uma nova avaria). */
+  data: string;
   /** Se vier, é uma edição (a data e o turno não se alteram). */
   ocorrencia?: Ocorrencia | null;
   /** Sistemas já usados, para sugerir (e assim juntar as repetições). */
@@ -51,18 +47,18 @@ interface Props {
   onGuardar: (form: FormOcorrencia) => Promise<string | null>;
 }
 
-/** Registar ou editar uma ocorrência. */
-export const OcorrenciaDialog: React.FC<Props> = ({ aberto, onFechar, ocorrencia, sistemasConhecidos, onGuardar }) => {
-  const [f, setF] = useState<FormOcorrencia>(formVazio());
+/** Registar ou editar uma avaria, com os campos da ficha em papel. */
+export const OcorrenciaDialog: React.FC<Props> = ({ aberto, onFechar, data, ocorrencia, sistemasConhecidos, onGuardar }) => {
+  const [f, setF] = useState<FormOcorrencia>(formVazio(data));
   const [erro, setErro] = useState<string | null>(null);
   const [aGravar, setAGravar] = useState(false);
 
   useEffect(() => {
     if (aberto) {
-      setF(ocorrencia ? doRegisto(ocorrencia) : formVazio());
+      setF(ocorrencia ? doRegisto(ocorrencia) : formVazio(data));
       setErro(null);
     }
-  }, [aberto, ocorrencia]);
+  }, [aberto, ocorrencia, data]);
 
   const mudar = <K extends keyof FormOcorrencia>(k: K, v: FormOcorrencia[K]) => setF((x) => ({ ...x, [k]: v }));
   const edicao = !!ocorrencia;
@@ -74,7 +70,13 @@ export const OcorrenciaDialog: React.FC<Props> = ({ aberto, onFechar, ocorrencia
       return;
     }
     setAGravar(true);
-    const r = await onGuardar({ ...f, titulo: f.titulo.trim(), sistema: f.sistema.trim() });
+    const r = await onGuardar({
+      ...f,
+      n_avaria: f.n_avaria.trim(),
+      descricao: f.descricao.trim(),
+      encaminhamento: f.encaminhamento.trim(),
+      sistema: f.sistema.trim(),
+    });
     setAGravar(false);
     if (r) setErro(r);
   };
@@ -83,33 +85,33 @@ export const OcorrenciaDialog: React.FC<Props> = ({ aberto, onFechar, ocorrencia
     <Dialog open={aberto} onOpenChange={(o) => !o && !aGravar && onFechar()}>
       <DialogContent className="max-w-xl">
         <DialogHeader>
-          <DialogTitle>{edicao ? 'Editar ocorrência' : 'Nova ocorrência'}</DialogTitle>
+          <DialogTitle>{edicao ? 'Editar avaria' : 'Nova avaria'}</DialogTitle>
           <DialogDescription>
-            Regista o que aconteceu de forma que se possa pesquisar e comparar mais tarde. Sê concreto: o que falhou, onde e o que se fez.
+            Os mesmos campos da ficha de comunicação/ocorrências em papel. Sem hora de término, a avaria fica em curso.
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-3 sm:grid-cols-3">
           <div className="space-y-1.5">
+            <Label htmlFor="oc-n">N.º Avaria</Label>
+            <Input id="oc-n" maxLength={30} value={f.n_avaria} onChange={(e) => mudar('n_avaria', e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
             <Label htmlFor="oc-data">Data</Label>
             <Input id="oc-data" type="date" value={f.data} disabled={edicao} onChange={(e) => mudar('data', e.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="oc-hora">Hora (opcional)</Label>
-            <Input id="oc-hora" type="time" value={f.hora} onChange={(e) => mudar('hora', e.target.value)} />
-          </div>
-          <div className="space-y-1.5">
             <Label>Turno</Label>
             <Select
-              value={f.turno || SEM_TURNO}
+              value={f.turno || SEM_VALOR}
               disabled={edicao}
-              onValueChange={(v) => mudar('turno', v === SEM_TURNO ? '' : v)}
+              onValueChange={(v) => mudar('turno', v === SEM_VALOR ? '' : v)}
             >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={SEM_TURNO}>—</SelectItem>
+                <SelectItem value={SEM_VALOR}>—</SelectItem>
                 {TURNOS.map((t) => (
                   <SelectItem key={t.valor} value={t.valor}>
                     {t.nome}
@@ -119,13 +121,37 @@ export const OcorrenciaDialog: React.FC<Props> = ({ aberto, onFechar, ocorrencia
             </Select>
           </div>
 
+          <div className="space-y-1.5 sm:col-span-3">
+            <Label htmlFor="oc-desc">Descrição da avaria</Label>
+            <Textarea id="oc-desc" rows={3} maxLength={1000} value={f.descricao} onChange={(e) => mudar('descricao', e.target.value)} />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="oc-ini">Hora início</Label>
+            <Input id="oc-ini" type="time" value={f.hora_inicio} onChange={(e) => mudar('hora_inicio', e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="oc-fim">Hora término</Label>
+            <Input id="oc-fim" type="time" value={f.hora_termino} onChange={(e) => mudar('hora_termino', e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="oc-enc">Encaminhamento</Label>
+            <Input id="oc-enc" maxLength={300} value={f.encaminhamento} onChange={(e) => mudar('encaminhamento', e.target.value)} />
+          </div>
+
+          <div className="space-y-1.5 sm:col-span-3">
+            <p className="text-xs text-muted-foreground">
+              Opcional — ajuda a pesquisar e a ver o que se repete (não aparece na ficha em papel):
+            </p>
+          </div>
           <div className="space-y-1.5 sm:col-span-2">
             <Label>Categoria</Label>
-            <Select value={f.categoria} onValueChange={(v) => mudar('categoria', v)}>
+            <Select value={f.categoria || SEM_VALOR} onValueChange={(v) => mudar('categoria', v === SEM_VALOR ? '' : v)}>
               <SelectTrigger>
-                <SelectValue placeholder="Escolhe…" />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value={SEM_VALOR}>—</SelectItem>
                 {CATEGORIAS.map((c) => (
                   <SelectItem key={c.valor} value={c.valor}>
                     {c.nome}
@@ -135,27 +161,11 @@ export const OcorrenciaDialog: React.FC<Props> = ({ aberto, onFechar, ocorrencia
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label>Gravidade</Label>
-            <Select value={f.gravidade} onValueChange={(v) => mudar('gravidade', v)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {GRAVIDADES.map((g) => (
-                  <SelectItem key={g.valor} value={g.valor}>
-                    {g.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-1.5 sm:col-span-3">
-            <Label htmlFor="oc-sistema">Sistema afetado (opcional)</Label>
+            <Label htmlFor="oc-sistema">Sistema</Label>
             <Input
               id="oc-sistema"
               list="oc-sistemas"
-              placeholder="ex.: BCACV1, SISP, Vinti4"
+              placeholder="ex.: BCACV1"
               maxLength={60}
               value={f.sistema}
               onChange={(e) => mudar('sistema', e.target.value)}
@@ -165,15 +175,6 @@ export const OcorrenciaDialog: React.FC<Props> = ({ aberto, onFechar, ocorrencia
                 <option key={s} value={s} />
               ))}
             </datalist>
-          </div>
-
-          <div className="space-y-1.5 sm:col-span-3">
-            <Label htmlFor="oc-titulo">Título</Label>
-            <Input id="oc-titulo" maxLength={120} value={f.titulo} onChange={(e) => mudar('titulo', e.target.value)} />
-          </div>
-          <div className="space-y-1.5 sm:col-span-3">
-            <Label htmlFor="oc-desc">Descrição (opcional)</Label>
-            <Textarea id="oc-desc" rows={4} maxLength={2000} value={f.descricao} onChange={(e) => mudar('descricao', e.target.value)} />
           </div>
         </div>
 

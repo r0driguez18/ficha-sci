@@ -17,6 +17,7 @@ import { consumirTokenAssinatura } from '@/services/operatorPinService';
 import { generateTaskboardPDF } from '@/utils/pdfGenerator';
 import { computeFichaHash } from '@/lib/signatureHash';
 import { fichaFileName } from '@/lib/fichaFileName';
+import { carregarAnexoOcorrencias } from '@/services/ocorrenciasService';
 import { supabase } from '@/integrations/supabase/client';
 import { TASKBOARD_CONFIGS } from '@/lib/taskboardConfig';
 import {
@@ -555,6 +556,9 @@ export function useTaskboard(formType: FormType) {
 
       const tapesForExport = showTapeVerification ? verificacaoTapes : undefined;
 
+      // A ficha de comunicação/ocorrências desse dia segue como anexo (se houver avarias ou observações).
+      const anexoOcorrencias = await carregarAnexoOcorrencias(date);
+
       const doc = generateTaskboardPDF(
         date,
         turnData,
@@ -563,6 +567,7 @@ export function useTaskboard(formType: FormType) {
         config.isDiaNaoUtil,
         signature,
         tapesForExport,
+        anexoOcorrencias,
       );
       const fileName = fichaFileName(date);
       // Ficha com verificação de tapes: o display do AS/400 só existe no dia

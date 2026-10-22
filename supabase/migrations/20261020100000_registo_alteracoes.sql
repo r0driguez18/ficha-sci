@@ -72,7 +72,7 @@ DECLARE
   v_op      text;
   v_cab     jsonb;
   v_papel   text;
-  v_id      text := coalesce(v_base->>'id', v_base->>'user_id');
+  v_id      text := coalesce(v_base->>'id', v_base->>'user_id', v_base->>'data');
   v_acao    text;
   v_selo    text;
 BEGIN

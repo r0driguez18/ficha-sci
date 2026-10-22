@@ -1,5 +1,6 @@
 /**
- * Ocorrências estruturadas: categorias, gravidades e o resumo que o painel mostra.
+ * Ficha de Comunicação/Ocorrências: os campos da ficha em papel (N.º Avaria, Descrição, Hora Início,
+ * Hora Término, Encaminhamento), mais categoria e sistema opcionais para pesquisar e ver o que se repete.
  * Lógica pura (sem React nem Supabase) para se poder testar à parte.
  */
 
@@ -14,67 +15,88 @@ export const CATEGORIAS = [
   { valor: 'outro', nome: 'Outro' },
 ] as const;
 
-export const GRAVIDADES = [
-  { valor: 'baixa', nome: 'Baixa' },
-  { valor: 'media', nome: 'Média' },
-  { valor: 'alta', nome: 'Alta' },
-] as const;
-
 export const TURNOS = [
   { valor: 'turno1', nome: 'Turno 1' },
   { valor: 'turno2', nome: 'Turno 2' },
   { valor: 'turno3', nome: 'Turno 3' },
 ] as const;
 
+/** A ficha em papel tem 12 linhas: o PDF completa com linhas em branco até este número. */
+export const LINHAS_DA_FICHA = 12;
+
 export type Categoria = (typeof CATEGORIAS)[number]['valor'];
-export type Gravidade = (typeof GRAVIDADES)[number]['valor'];
-export type Estado = 'aberta' | 'resolvida';
 
 export interface Ocorrencia {
   id: string;
   data: string;
-  hora: string | null;
   turno: string | null;
-  categoria: Categoria;
-  gravidade: Gravidade;
+  n_avaria: string | null;
+  descricao: string;
+  hora_inicio: string | null;
+  hora_termino: string | null;
+  encaminhamento: string | null;
+  categoria: Categoria | null;
   sistema: string | null;
-  titulo: string;
-  descricao: string | null;
-  estado: Estado;
-  resolucao: string | null;
   criada_por_codigo: string | null;
   criada_em: string;
-  resolvida_por_codigo: string | null;
-  resolvida_em: string | null;
 }
 
-export const nomeCategoria = (v: string) => CATEGORIAS.find((c) => c.valor === v)?.nome ?? v;
-export const nomeGravidade = (v: string) => GRAVIDADES.find((g) => g.valor === v)?.nome ?? v;
+/** Sem hora de término = ainda em curso. */
+export const emCurso = (o: Pick<Ocorrencia, 'hora_termino'>) => !o.hora_termino;
+
+export const nomeCategoria = (v: string | null) => CATEGORIAS.find((c) => c.valor === v)?.nome ?? '';
 export const nomeTurno = (v: string | null) => TURNOS.find((t) => t.valor === v)?.nome ?? '';
+
+const HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 export interface FormOcorrencia {
   data: string;
-  hora: string;
   turno: string;
-  categoria: string;
-  gravidade: string;
-  sistema: string;
-  titulo: string;
+  n_avaria: string;
   descricao: string;
+  hora_inicio: string;
+  hora_termino: string;
+  encaminhamento: string;
+  categoria: string;
+  sistema: string;
 }
 
 /** Devolve a mensagem de erro, ou null se o formulário serve. */
 export function validarOcorrencia(f: FormOcorrencia): string | null {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(f.data)) return 'Indica a data.';
-  if (f.hora && !/^([01]\d|2[0-3]):[0-5]\d$/.test(f.hora)) return 'A hora não é válida (HH:MM).';
-  if (!CATEGORIAS.some((c) => c.valor === f.categoria)) return 'Escolhe a categoria.';
-  if (!GRAVIDADES.some((g) => g.valor === f.gravidade)) return 'Escolhe a gravidade.';
-  const titulo = f.titulo.trim();
-  if (titulo.length < 3) return 'O título deve ter pelo menos 3 caracteres.';
-  if (titulo.length > 120) return 'O título não pode ter mais de 120 caracteres.';
+  const descricao = f.descricao.trim();
+  if (descricao.length < 3) return 'A descrição deve ter pelo menos 3 caracteres.';
+  if (descricao.length > 1000) return 'A descrição não pode ter mais de 1000 caracteres.';
+  if (f.hora_inicio && !HORA.test(f.hora_inicio)) return 'A hora de início não é válida (HH:MM).';
+  if (f.hora_termino && !HORA.test(f.hora_termino)) return 'A hora de término não é válida (HH:MM).';
+  if (f.hora_termino && !f.hora_inicio) return 'Indica a hora de início antes da hora de término.';
+  if (f.n_avaria.trim().length > 30) return 'O N.º da avaria não pode ter mais de 30 caracteres.';
+  if (f.encaminhamento.trim().length > 300) return 'O encaminhamento não pode ter mais de 300 caracteres.';
   if (f.sistema.trim().length > 60) return 'O sistema não pode ter mais de 60 caracteres.';
-  if (f.descricao.length > 2000) return 'A descrição não pode ter mais de 2000 caracteres.';
+  if (f.categoria && !CATEGORIAS.some((c) => c.valor === f.categoria)) return 'A categoria não é válida.';
   return null;
+}
+
+/** Minutos entre duas horas HH:MM; passa a meia-noite (uma avaria do Turno 3 pode acabar no dia seguinte). */
+export function duracaoMinutos(inicio: string | null, termino: string | null): number | null {
+  if (!inicio || !termino || !HORA.test(inicio) || !HORA.test(termino)) return null;
+  const m = (h: string) => Number(h.slice(0, 2)) * 60 + Number(h.slice(3, 5));
+  return (m(termino) - m(inicio) + 1440) % 1440;
+}
+
+/** 85 → "1h25", 40 → "40 min". */
+export function formatarDuracao(min: number | null): string {
+  if (min === null) return '';
+  if (min < 60) return `${min} min`;
+  const h = Math.floor(min / 60);
+  const r = min % 60;
+  return r === 0 ? `${h}h` : `${h}h${String(r).padStart(2, '0')}`;
+}
+
+/** As linhas da ficha em papel: as ocorrências e, até ao mínimo, linhas em branco. */
+export function linhasDaFicha<T>(linhas: T[], minimo = LINHAS_DA_FICHA): (T | null)[] {
+  const extra = Math.max(0, minimo - linhas.length);
+  return [...linhas, ...Array<null>(extra).fill(null)];
 }
 
 export interface Contagem {
@@ -83,9 +105,9 @@ export interface Contagem {
 }
 
 export interface ResumoOcorrencias {
-  abertas: number;
-  abertasAltas: number;
-  /** Ocorrências dos últimos `dias` dias, por categoria (da mais frequente para a menos). */
+  /** Sem hora de término. */
+  emCurso: number;
+  /** Ocorrências dos últimos `dias` dias com categoria, da mais frequente para a menos. */
   porCategoria: Contagem[];
   /** Sistemas com 2 ou mais ocorrências no período: o que se repete. */
   recorrentes: Contagem[];
@@ -99,13 +121,12 @@ export function resumirOcorrencias(lista: Ocorrencia[], hoje: string, dias = 90)
   limite.setUTCDate(limite.getUTCDate() - dias);
   const desde = limite.toISOString().slice(0, 10);
 
-  const abertas = lista.filter((o) => o.estado === 'aberta');
   const noPeriodo = lista.filter((o) => o.data >= desde && o.data <= hoje);
 
   const porCategoria = new Map<string, number>();
   const porSistema = new Map<string, { nome: string; total: number }>();
   for (const o of noPeriodo) {
-    porCategoria.set(o.categoria, (porCategoria.get(o.categoria) ?? 0) + 1);
+    if (o.categoria) porCategoria.set(o.categoria, (porCategoria.get(o.categoria) ?? 0) + 1);
     if (o.sistema && o.sistema.trim()) {
       const k = normalizar(o.sistema);
       const atual = porSistema.get(k);
@@ -115,12 +136,22 @@ export function resumirOcorrencias(lista: Ocorrencia[], hoje: string, dias = 90)
 
   const ordenar = (a: Contagem, b: Contagem) => b.total - a.total || a.chave.localeCompare(b.chave);
   return {
-    abertas: abertas.length,
-    abertasAltas: abertas.filter((o) => o.gravidade === 'alta').length,
+    emCurso: lista.filter(emCurso).length,
     porCategoria: [...porCategoria].map(([chave, total]) => ({ chave, total })).sort(ordenar),
     recorrentes: [...porSistema.values()]
       .filter((s) => s.total >= 2)
       .map((s) => ({ chave: s.nome, total: s.total }))
       .sort(ordenar),
   };
+}
+
+/** A hora de agora em HH:MM. */
+export function horaAtual(d: Date = new Date()): string {
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+/** Soma `dias` a uma data AAAA-MM-DD (para o "dia anterior/seguinte" da ficha). */
+export function somarDias(iso: string, dias: number): string {
+  const [a, m, d] = iso.split('-').map(Number);
+  return new Date(Date.UTC(a, m - 1, d + dias)).toISOString().slice(0, 10);
 }
