@@ -7,6 +7,7 @@ import { TurnDataType, TasksType } from '@/types/taskboard';
 import { TaskTableRow, TaskTableRowJson } from '@/types/taskTableRow';
 import { toast } from '@/components/ui/use-toast';
 import { Json } from '@/integrations/supabase/types';
+import { primeiraDataLivre } from '@/lib/datas';
 
 export type FormType = 'dia-util' | 'dia-nao-util';
 
@@ -72,6 +73,27 @@ export async function verificarFichaDesatualizada(
   } catch (error) {
     console.error('Erro ao verificar se a ficha está desatualizada:', error);
     return null;
+  }
+}
+
+/**
+ * A primeira data, a partir de `desde`, para a qual ainda não há ficha exportada deste tipo. Serve para
+ * abrir a ficha do dia seguinte quando a de hoje já foi fechada (e para sair do aviso "já exportada").
+ * Em caso de falha devolve `desde`: nunca impede de trabalhar.
+ */
+export async function proximaDataLivre(formType: FormType, desde: string): Promise<string> {
+  try {
+    const { data, error } = await supabase
+      .from('exported_taskboards')
+      .select('date')
+      .eq('form_type', formType)
+      .gte('date', desde)
+      .order('date', { ascending: true })
+      .limit(400);
+    if (error || !data) return desde;
+    return primeiraDataLivre(desde, new Set(data.map((r) => r.date as string)));
+  } catch {
+    return desde;
   }
 }
 
