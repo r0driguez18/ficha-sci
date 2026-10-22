@@ -12,7 +12,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ChevronDown, ChevronRight, ClipboardList } from 'lucide-react';
-import { useIsAdmin } from '@/hooks/useOperators';
+import { useAdminStatus } from '@/hooks/useOperators';
 import {
   TABELAS_AUDITADAS,
   TAMANHO_PAGINA,
@@ -42,7 +42,7 @@ const NOME_OPERACAO: Record<RegistoAlteracao['operacao'], string> = {
 };
 
 export default function RegistoAlteracoes() {
-  const isAdmin = useIsAdmin();
+  const { isAdmin, loading: aVerificarPapel } = useAdminStatus();
   const [filtro, setFiltro] = useState<FiltroRegisto>({});
   const [registos, setRegistos] = useState<RegistoAlteracao[]>([]);
   const [aCarregar, setACarregar] = useState(true);
@@ -80,6 +80,14 @@ export default function RegistoAlteracoes() {
       else n.add(id);
       return n;
     });
+
+  if (aVerificarPapel) {
+    return (
+      <PageContainer size="wide">
+        <LoadingState label="A verificar o acesso…" />
+      </PageContainer>
+    );
+  }
 
   if (!isAdmin) {
     return (

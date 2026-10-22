@@ -58,13 +58,18 @@ export function useCurrentOperator(): OperatorRow | null {
   return data ?? null;
 }
 
-export function useIsAdmin(): boolean {
+/** Como `useIsAdmin`, mas diz também se a resposta ainda está a chegar (para não mostrar "sem acesso" por engano). */
+export function useAdminStatus(): { isAdmin: boolean; loading: boolean } {
   const { user } = useAuth();
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ['is-admin', user?.id],
     queryFn: checkIsAdmin,
     enabled: !!user?.id,
     staleTime: FIVE_MIN,
   });
-  return data === true;
+  return { isAdmin: data === true, loading: isLoading };
+}
+
+export function useIsAdmin(): boolean {
+  return useAdminStatus().isAdmin;
 }

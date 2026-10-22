@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import { generateTaskboardPDF } from '@/utils/pdfGenerator';
+import { carregarAnexoOcorrencias } from '@/services/ocorrenciasService';
 import { appendTapesEvidencia } from '@/utils/pdf/appendTapesEvidencia';
 import { fichaFileName } from '@/lib/fichaFileName';
 import { supabase } from '@/integrations/supabase/client';
@@ -236,6 +237,9 @@ export default function HistoricoFichas() {
       });
     }
 
+    // Anexo: as ocorrências desse dia tal como estão agora (não fazem parte do conteúdo assinado).
+    const anexoOcorrencias = await carregarAnexoOcorrencias(record.date);
+
     const pdf = generateTaskboardPDF(
       record.date,
       record.turn_data,
@@ -244,6 +248,7 @@ export default function HistoricoFichas() {
       isNaoUtilType(record.form_type),
       record.pdf_signature,
       (record.turn_data as { verificacaoTapes?: unknown })?.verificacaoTapes as never,
+      anexoOcorrencias,
     );
 
     const evidencia = record.tapes_evidencia ?? [];

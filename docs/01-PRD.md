@@ -94,6 +94,16 @@ a aplicação não pode depender de nenhum serviço externo (nem fontes, nem CDN
 | RF-01A.2 | O registo é **imutável** e só os **administradores** o consultam, com filtros por assunto, operador e datas. |
 | RF-01A.3 | Não guarda o conteúdo das fichas nem valores secretos: só os campos que mudaram (de → para) e o selo da ficha. |
 
+### RF-01B — Ficha de Comunicação/Ocorrências
+
+| ID | Requisito |
+|---|---|
+| RF-01B.1 | Registar cada avaria do dia com os campos da ficha em papel: **N.º Avaria, Descrição, Hora Início, Hora Término e Encaminhamento**; fica o autor. Categoria, sistema e turno são opcionais. |
+| RF-01B.2 | Sem hora de término a avaria está **em curso** e pode terminar noutro turno (qualquer operador a termina; reabre-se). Só o autor ou um administrador edita; nada se apaga. |
+| RF-01B.3 | **Outras Intervenções/Observações** por dia, como na ficha em papel. |
+| RF-01B.4 | **PDF** igual à ficha em papel (12 linhas, página horizontal), descarregável por dia e **anexado ao PDF da ficha de procedimentos** desse dia. |
+| RF-01B.5 | Aviso das avarias em curso (de qualquer dia) no painel inicial e no menu; histórico com pesquisa e o que se repete (sistemas com 2 ou mais avarias em 90 dias). Tudo fica no registo de alterações. |
+
 ### RF-02 — Ficha de Procedimentos (módulo central)
 
 | ID | Requisito |
