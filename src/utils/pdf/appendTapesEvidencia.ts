@@ -1,16 +1,18 @@
 import type { TapesEvidenciaFile } from '@/types/taskboard';
 import { downloadTapesEvidencia } from '@/services/tapesEvidenciaService';
+import { paginaPdfEmBranco, paginasDeTexto } from './paginasEmBranco';
 
 /**
  * Junta a prova do display-tape ao PDF da ficha, imediatamente a seguir à
  * folha "PROCEDIMENTO VERIFICAÇÃO DE TAPES" e antes da página de validação
  * eletrónica (que o gerador coloca sempre como última página).
  *
- * - Ficheiros PDF  → as páginas são copiadas tal como estão.
+ * - Ficheiros PDF  → as páginas são copiadas tal como estão, menos as que estão em branco.
  * - Ficheiros TXT  → o conteúdo é desenhado em páginas A4 horizontais, em
  *                    fonte monoespaçada (Courier), preservando o alinhamento
  *                    em colunas do report do AS/400. O caractere de
- *                    form-feed (\f) inicia uma página nova.
+ *                    form-feed (\f) inicia uma página nova; um \f no fim, ou páginas
+ *                    só com linhas vazias, não geram folhas em branco.
  *
  * `pdf-lib` é carregado dinamicamente — só entra no bundle de quem descarrega
  * uma ficha do histórico com evidência anexada.
@@ -23,7 +25,8 @@ export async function appendTapesEvidencia(
     return basePdfBytes instanceof Uint8Array ? basePdfBytes : new Uint8Array(basePdfBytes);
   }
 
-  const { PDFDocument, StandardFonts, rgb } = await import('pdf-lib');
+  const lib = await import('pdf-lib');
+  const { PDFDocument, StandardFonts, rgb } = lib;
   const out = await PDFDocument.load(basePdfBytes);
   const courier = await out.embedFont(StandardFonts.Courier);
 
@@ -81,7 +84,9 @@ export async function appendTapesEvidencia(
     if (file.type === 'application/pdf') {
       try {
         const src = await PDFDocument.load(buf);
-        const pages = await out.copyPages(src, src.getPageIndices());
+        // As páginas em branco do display ficam de fora (vê-se no PDF de origem, antes de copiar).
+        const indices = src.getPageIndices().filter((i) => !paginaPdfEmBranco(src.getPage(i), lib));
+        const pages = await out.copyPages(src, indices);
         pages.forEach((p) => {
           out.insertPage(insertAt++, p);
         });
@@ -98,9 +103,8 @@ export async function appendTapesEvidencia(
     } catch {
       text = new TextDecoder('windows-1252').decode(buf);
     }
-    const formFeeds = text.split('\f');
-    for (const chunk of formFeeds) {
-      drawTxtPage(chunk.replace(/\r\n?/g, '\n').split('\n'));
+    for (const linhas of paginasDeTexto(text)) {
+      drawTxtPage(linhas);
     }
   }
 
