@@ -48,7 +48,7 @@ const Dashboard = () => {
 
   // Ocorrências em curso (sem hora de término), de qualquer dia.
   const emCurso = useQuery({ queryKey: ['ocorrencias', 'curso'], queryFn: listarEmCurso, refetchInterval: 60_000 });
-  const ocorrências = emCurso.data ?? [];
+  const ocorrenciasEmCurso = emCurso.data ?? [];
 
   const proximoAlerta = useMemo(() => {
     const hm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
@@ -137,7 +137,7 @@ const Dashboard = () => {
       </Card>
 
       {/* Ocorrências em curso */}
-      <Card className={`mb-6 ${ocorrências.length > 0 ? 'border-amber-500/50' : ''}`}>
+      <Card className={`mb-6 ${ocorrenciasEmCurso.length > 0 ? 'border-amber-500/50' : ''}`}>
         <CardHeader className="pb-2">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <CardTitle className="text-base flex items-center gap-2">
@@ -156,16 +156,16 @@ const Dashboard = () => {
             <p className="text-sm text-muted-foreground">a carregar…</p>
           ) : emCurso.isError ? (
             <p className="text-sm text-muted-foreground">Não consegui carregar as ocorrências.</p>
-          ) : ocorrências.length === 0 ? (
+          ) : ocorrenciasEmCurso.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nenhuma ocorrência em curso.</p>
           ) : (
             <>
               <div className="flex items-baseline gap-3">
-                <span className="text-2xl font-bold tabular-nums">{ocorrências.length}</span>
+                <span className="text-2xl font-bold tabular-nums">{ocorrenciasEmCurso.length}</span>
                 <span className="text-sm text-muted-foreground">sem hora de término</span>
               </div>
               <ul className="mt-3 space-y-1 text-sm">
-                {ocorrências.slice(0, 3).map((o) => (
+                {ocorrenciasEmCurso.slice(0, 3).map((o) => (
                   <li key={o.id} className="flex flex-wrap items-center gap-2">
                     {o.n_avaria && <Badge variant="outline">{o.n_avaria}</Badge>}
                     <span className="font-medium">{o.descricao.length > 90 ? `${o.descricao.slice(0, 90)}…` : o.descricao}</span>
@@ -176,7 +176,7 @@ const Dashboard = () => {
                   </li>
                 ))}
               </ul>
-              {ocorrências.length > 3 && <p className="mt-2 text-xs text-muted-foreground">e mais {ocorrências.length - 3}…</p>}
+              {ocorrenciasEmCurso.length > 3 && <p className="mt-2 text-xs text-muted-foreground">e mais {ocorrenciasEmCurso.length - 3}…</p>}
             </>
           )}
         </CardContent>
