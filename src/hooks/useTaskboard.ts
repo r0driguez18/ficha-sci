@@ -580,7 +580,7 @@ export function useTaskboard(formType: FormType) {
 
       const tapesForExport = showTapeVerification ? verificacaoTapes : undefined;
 
-      // A ficha de comunicação/ocorrências desse dia segue como anexo (se houver avarias ou observações).
+      // A ficha de comunicação/ocorrências desse dia segue como anexo (se houver ocorrências ou observações).
       const anexoOcorrencias = await carregarAnexoOcorrencias(date);
 
       const doc = generateTaskboardPDF(

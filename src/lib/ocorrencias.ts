@@ -70,14 +70,14 @@ export function validarOcorrencia(f: FormOcorrencia): string | null {
   if (f.hora_inicio && !HORA.test(f.hora_inicio)) return 'A hora de início não é válida (HH:MM).';
   if (f.hora_termino && !HORA.test(f.hora_termino)) return 'A hora de término não é válida (HH:MM).';
   if (f.hora_termino && !f.hora_inicio) return 'Indica a hora de início antes da hora de término.';
-  if (f.n_avaria.trim().length > 30) return 'O N.º da avaria não pode ter mais de 30 caracteres.';
+  if (f.n_avaria.trim().length > 30) return 'O N.º Avaria não pode ter mais de 30 caracteres.';
   if (f.encaminhamento.trim().length > 300) return 'O encaminhamento não pode ter mais de 300 caracteres.';
   if (f.sistema.trim().length > 60) return 'O sistema não pode ter mais de 60 caracteres.';
   if (f.categoria && !CATEGORIAS.some((c) => c.valor === f.categoria)) return 'A categoria não é válida.';
   return null;
 }
 
-/** Minutos entre duas horas HH:MM; passa a meia-noite (uma avaria do Turno 3 pode acabar no dia seguinte). */
+/** Minutos entre duas horas HH:MM; passa a meia-noite (uma ocorrência do Turno 3 pode acabar no dia seguinte). */
 export function duracaoMinutos(inicio: string | null, termino: string | null): number | null {
   if (!inicio || !termino || !HORA.test(inicio) || !HORA.test(termino)) return null;
   const m = (h: string) => Number(h.slice(0, 2)) * 60 + Number(h.slice(3, 5));

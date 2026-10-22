@@ -5,7 +5,7 @@ const COLUNAS =
   'id, data, turno, n_avaria, descricao, hora_inicio, hora_termino, encaminhamento, categoria, sistema, ' +
   'criada_por_codigo, criada_em';
 
-/** As avarias de um dia, pela ordem em que foram registadas (como as linhas da ficha em papel). */
+/** As ocorrências de um dia, pela ordem em que foram registadas (como as linhas da ficha em papel). */
 export async function listarOcorrenciasDoDia(data: string): Promise<Ocorrencia[]> {
   const { data: linhas, error } = await supabase
     .from('ocorrencias')
@@ -75,6 +75,8 @@ export async function registarOcorrencia(f: FormOcorrencia): Promise<{ erro: str
 export async function atualizarOcorrencia(id: string, f: FormOcorrencia): Promise<{ erro: string | null }> {
   const { error } = await supabase.rpc('atualizar_ocorrencia', {
     p_id: id,
+    p_data: f.data,
+    p_turno: f.turno,
     p_n_avaria: f.n_avaria,
     p_descricao: f.descricao,
     p_hora_inicio: f.hora_inicio,
@@ -103,7 +105,7 @@ export interface AnexoOcorrencias {
 }
 
 /**
- * O que se anexa ao PDF da ficha desse dia: as avarias e as observações. null se não houver nada
+ * O que se anexa ao PDF da ficha desse dia: as ocorrências e as observações. null se não houver nada
  * (a ficha sai sem o anexo). Nunca lança: uma falha aqui não pode impedir a exportação da ficha.
  */
 export async function carregarAnexoOcorrencias(data: string): Promise<AnexoOcorrencias | null> {

@@ -35,7 +35,7 @@ export const TABELAS_AUDITADAS: Record<string, string> = {
   card_renewal_sessions: 'Renovação de cartões (sessões)',
   card_renewal_lotes: 'Renovação de cartões (lotes)',
   file_processes: 'Processamentos',
-  ocorrencias: 'Ocorrências (avarias)',
+  ocorrencias: 'Ocorrências',
   ocorrencias_dia: 'Ocorrências (observações do dia)',
   contas: 'Contas de utilizador',
 };

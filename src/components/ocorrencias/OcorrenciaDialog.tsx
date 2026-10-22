@@ -38,16 +38,16 @@ const doRegisto = (o: Ocorrencia): FormOcorrencia => ({
 interface Props {
   aberto: boolean;
   onFechar: () => void;
-  /** Dia da ficha aberta (a data de uma nova avaria). */
+  /** Dia da ficha aberta (a data de uma nova ocorrência). */
   data: string;
-  /** Se vier, é uma edição (a data e o turno não se alteram). */
+  /** Se vier, é uma edição (a data e o turno também se podem corrigir). */
   ocorrencia?: Ocorrencia | null;
   /** Sistemas já usados, para sugerir (e assim juntar as repetições). */
   sistemasConhecidos: string[];
   onGuardar: (form: FormOcorrencia) => Promise<string | null>;
 }
 
-/** Registar ou editar uma avaria, com os campos da ficha em papel. */
+/** Registar ou editar uma ocorrência, com os campos da ficha em papel. */
 export const OcorrenciaDialog: React.FC<Props> = ({ aberto, onFechar, data, ocorrencia, sistemasConhecidos, onGuardar }) => {
   const [f, setF] = useState<FormOcorrencia>(formVazio(data));
   const [erro, setErro] = useState<string | null>(null);
@@ -85,9 +85,9 @@ export const OcorrenciaDialog: React.FC<Props> = ({ aberto, onFechar, data, ocor
     <Dialog open={aberto} onOpenChange={(o) => !o && !aGravar && onFechar()}>
       <DialogContent className="max-w-xl">
         <DialogHeader>
-          <DialogTitle>{edicao ? 'Editar avaria' : 'Nova avaria'}</DialogTitle>
+          <DialogTitle>{edicao ? 'Editar ocorrência' : 'Nova ocorrência'}</DialogTitle>
           <DialogDescription>
-            Os mesmos campos da ficha de comunicação/ocorrências em papel. Sem hora de término, a avaria fica em curso.
+            Os mesmos campos da ficha de comunicação/ocorrências em papel. Sem hora de término, a ocorrência fica em curso.{edicao && ' Se alguém se enganou na data ou no turno, corrige-os aqui.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -98,13 +98,12 @@ export const OcorrenciaDialog: React.FC<Props> = ({ aberto, onFechar, data, ocor
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="oc-data">Data</Label>
-            <Input id="oc-data" type="date" value={f.data} disabled={edicao} onChange={(e) => mudar('data', e.target.value)} />
+            <Input id="oc-data" type="date" value={f.data} onChange={(e) => mudar('data', e.target.value)} />
           </div>
           <div className="space-y-1.5">
             <Label>Turno</Label>
             <Select
               value={f.turno || SEM_VALOR}
-              disabled={edicao}
               onValueChange={(v) => mudar('turno', v === SEM_VALOR ? '' : v)}
             >
               <SelectTrigger>
@@ -122,7 +121,7 @@ export const OcorrenciaDialog: React.FC<Props> = ({ aberto, onFechar, data, ocor
           </div>
 
           <div className="space-y-1.5 sm:col-span-3">
-            <Label htmlFor="oc-desc">Descrição da avaria</Label>
+            <Label htmlFor="oc-desc">Descrição da Avaria</Label>
             <Textarea id="oc-desc" rows={3} maxLength={1000} value={f.descricao} onChange={(e) => mudar('descricao', e.target.value)} />
           </div>
 

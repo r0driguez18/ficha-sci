@@ -16,7 +16,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, FileDown, Pencil, Plus, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
-import { useCurrentOperator, useIsAdmin } from '@/hooks/useOperators';
 import { OcorrenciaDialog } from '@/components/ocorrencias/OcorrenciaDialog';
 import {
   CATEGORIAS,
@@ -50,8 +49,6 @@ const dataCurta = (iso: string) => iso.split('-').reverse().join('/');
 
 export default function Ocorrencias() {
   const queryClient = useQueryClient();
-  const operador = useCurrentOperator();
-  const isAdmin = useIsAdmin();
 
   const [aba, setAba] = useState('dia');
   const [data, setData] = useState(todayIso());
@@ -117,9 +114,16 @@ export default function Ocorrencias() {
     const alvo = dialogo.ocorrencia;
     const r = alvo ? await atualizarOcorrencia(alvo.id, f) : await registarOcorrencia(f);
     if (r.erro) return r.erro;
-    toast.success(alvo ? 'Avaria atualizada.' : 'Avaria registada.');
+    const mudouDeDia = f.data !== data;
+    toast.success(
+      alvo
+        ? mudouDeDia
+          ? `Ocorrência atualizada e passada para ${dataCurta(f.data)}.`
+          : 'Ocorrência atualizada.'
+        : 'Ocorrência registada.',
+    );
     setDialogo({ aberto: false, ocorrencia: null });
-    if (!alvo && f.data !== data) setData(f.data);
+    if (mudouDeDia) setData(f.data);
     await recarregar();
     return null;
   };
@@ -154,14 +158,13 @@ export default function Ocorrencias() {
     doc.save(`Ocorrencias_${data}.pdf`);
   };
 
-  const podeEditar = (o: Ocorrencia) => isAdmin || (!!operador && o.criada_por_codigo === operador.value);
   const obsAlteradas = observacoes !== observacoesGuardadas;
 
   return (
     <PageContainer size="wide">
       <PageHeader
         title="Ocorrências"
-        subtitle="Ficha de Comunicação/Ocorrências: as avarias do dia, como na ficha em papel"
+        subtitle="Ficha de Comunicação/Ocorrências: as ocorrências do dia, como na ficha em papel"
       >
         <Button variant="outline" onClick={descarregarPdf} className="gap-1.5" disabled={linhas.length === 0 && !observacoesGuardadas.trim()}>
           <FileDown className="h-4 w-4" />
@@ -169,7 +172,7 @@ export default function Ocorrencias() {
         </Button>
         <Button onClick={() => setDialogo({ aberto: true, ocorrencia: null })} className="gap-1.5">
           <Plus className="h-4 w-4" />
-          Nova avaria
+          Nova ocorrência
         </Button>
       </PageHeader>
 
@@ -199,7 +202,7 @@ export default function Ocorrencias() {
             <div role="status" className="rounded-lg border border-amber-500/50 bg-amber-50 p-3 text-sm text-amber-950 dark:bg-amber-950/30 dark:text-amber-100">
               <div className="flex items-center gap-2 font-medium">
                 <AlertTriangle className="h-4 w-4" />
-                {emCursoDeOutrosDias.length === 1 ? 'Há uma avaria em curso de outro dia' : `Há ${emCursoDeOutrosDias.length} avarias em curso de outros dias`}
+                {emCursoDeOutrosDias.length === 1 ? 'Há uma ocorrência em curso de outro dia' : `Há ${emCursoDeOutrosDias.length} ocorrências em curso de outros dias`}
               </div>
               <ul className="mt-1 space-y-1">
                 {emCursoDeOutrosDias.map((o) => (
@@ -231,21 +234,21 @@ export default function Ocorrencias() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-base">
-                Avarias de {dataCurta(data)}
+                Ocorrências de {dataCurta(data)}
                 {linhas.length > 0 && <span className="ml-2 text-sm font-normal text-muted-foreground">({linhas.length})</span>}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               {doDia.isLoading ? (
                 <div className="p-6">
-                  <LoadingState label="A carregar as avarias…" />
+                  <LoadingState label="A carregar as ocorrências…" />
                 </div>
               ) : linhas.length === 0 ? (
                 <div className="p-6">
                   <EmptyState
                     icon={CheckCircle2}
-                    title="Sem avarias neste dia"
-                    hint="Quando houver uma, regista-a em «Nova avaria»: fica na ficha e segue em anexo ao PDF da ficha de procedimentos."
+                    title="Sem ocorrências neste dia"
+                    hint="Quando houver uma, regista-a em «Nova ocorrência»: fica na ficha e segue em anexo ao PDF da ficha de procedimentos."
                   />
                 </div>
               ) : (
@@ -306,17 +309,15 @@ export default function Ocorrencias() {
                                 <RotateCcw className="h-4 w-4" />
                               </Button>
                             )}
-                            {podeEditar(o) && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                title="Editar"
-                                onClick={() => setDialogo({ aberto: true, ocorrencia: o })}
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                            )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              title="Editar (também a data e o turno)"
+                              onClick={() => setDialogo({ aberto: true, ocorrencia: o })}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -367,7 +368,7 @@ export default function Ocorrencias() {
                 <CardTitle className="text-sm font-medium text-muted-foreground">Últimos 90 dias, por categoria</CardTitle>
               </CardHeader>
               <CardContent className="flex flex-wrap gap-1.5">
-                {resumo.porCategoria.length === 0 && <span className="text-sm text-muted-foreground">Sem avarias classificadas.</span>}
+                {resumo.porCategoria.length === 0 && <span className="text-sm text-muted-foreground">Sem ocorrências classificadas.</span>}
                 {resumo.porCategoria.map((c) => (
                   <Badge key={c.chave} variant="secondary">
                     {nomeCategoria(c.chave)} · {c.total}
@@ -431,7 +432,7 @@ export default function Ocorrencias() {
           {historico.isLoading ? (
             <LoadingState label="A carregar o histórico…" />
           ) : listaHistorico.length === 0 ? (
-            <EmptyState icon={AlertTriangle} title="Nenhuma avaria com estes filtros" />
+            <EmptyState icon={AlertTriangle} title="Nenhuma ocorrência com estes filtros" />
           ) : (
             <div className="rounded-lg border">
               <Table>
