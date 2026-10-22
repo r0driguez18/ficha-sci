@@ -1,4 +1,5 @@
 import React, { useCallback, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -19,6 +20,7 @@ import { AdicionarProcessamento } from '@/components/taskboard/AdicionarProcessa
 import { FormActions } from '@/components/taskboard/FormActions';
 import { SignatureSection } from '@/components/taskboard/SignatureSection';
 import { SyncStatusBadge } from '@/components/taskboard/SyncStatusBadge';
+import { FichasPorFecharAviso } from '@/components/taskboard/FichasPorFecharAviso';
 import { useTaskboard } from '@/hooks/useTaskboard';
 import { isoDateOffset } from '@/lib/taskboardDefaults';
 import type { FormType } from '@/services/taskboardService';
@@ -140,6 +142,7 @@ export default function FichaProcedimentos({ formType }: FichaProcedimentosProps
 
   return (
     <PageContainer size="default">
+      <FichasPorFecharAviso atual={{ formType, date: tb.date }} />
       <Card>
         <CardHeader className="border-b bg-muted/30">
           <div className="flex items-start justify-between gap-3">
@@ -160,25 +163,30 @@ export default function FichaProcedimentos({ formType }: FichaProcedimentosProps
                   {tb.desatualizada.tipo === 'exportada'
                     ? `A ficha do dia ${tb.date} já foi exportada noutro posto (ou neste).`
                     : `Existe no servidor uma ficha mais recente (${tb.desatualizada.data}).`}{' '}
-                  A edição e a gravação estão bloqueadas para não ressuscitar dados antigos.
+                  A edição e a gravação estão bloqueadas para não ressuscitar dados antigos — podes escolher outra data acima.
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <Button size="sm" onClick={tb.recarregarFicha}>
-                    Recarregar ficha
-                  </Button>
-                  {tb.desatualizada.tipo === 'exportada' && (
-                    <Button size="sm" variant="outline" onClick={tb.descartarRascunho}>
-                      Descartar este rascunho
+                  {tb.desatualizada.tipo === 'exportada' ? (
+                    <>
+                      <Button size="sm" onClick={tb.irParaProximaDataLivre}>
+                        Abrir a próxima data livre
+                      </Button>
+                      <Button size="sm" variant="outline" asChild>
+                        <Link to="/sci/historico-fichas">Ver no histórico</Link>
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={tb.descartarRascunho}>
+                        Descartar este rascunho
+                      </Button>
+                    </>
+                  ) : (
+                    <Button size="sm" onClick={tb.recarregarFicha}>
+                      Recarregar ficha
                     </Button>
                   )}
                 </div>
               </AlertDescription>
             </Alert>
           )}
-          <fieldset
-            disabled={!!tb.desatualizada}
-            className={`m-0 min-w-0 border-0 p-0 ${tb.desatualizada ? 'pointer-events-none opacity-60' : ''}`}
-          >
           <div className="mb-6">
             <Label
               htmlFor="ficha-date"
@@ -196,6 +204,11 @@ export default function FichaProcedimentos({ formType }: FichaProcedimentosProps
               className="max-w-xs mt-1.5"
             />
           </div>
+
+          <fieldset
+            disabled={!!tb.desatualizada}
+            className={`m-0 min-w-0 border-0 p-0 ${tb.desatualizada ? 'pointer-events-none opacity-60' : ''}`}
+          >
 
           {multiTurn ? (
             <Tabs value={tb.activeTab} onValueChange={(v) => tb.setActiveTab(v as TurnKey)}>

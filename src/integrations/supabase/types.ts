@@ -536,6 +536,54 @@ export type Database = {
         }
         Relationships: []
       }
+      ocorrencias: {
+        Row: {
+          id: string
+          data: string
+          turno: string | null
+          n_avaria: string | null
+          descricao: string
+          hora_inicio: string | null
+          hora_termino: string | null
+          encaminhamento: string | null
+          categoria: string | null
+          sistema: string | null
+          criada_por: string | null
+          criada_por_codigo: string | null
+          criada_em: string
+          atualizada_em: string
+        }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      ocorrencias_dia: {
+        Row: {
+          data: string
+          observacoes: string
+          atualizada_por_codigo: string | null
+          atualizada_em: string
+        }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      registo_alteracoes: {
+        Row: {
+          id: number
+          quando: string
+          tabela: string
+          operacao: 'INSERT' | 'UPDATE' | 'DELETE'
+          registo_id: string | null
+          user_id: string | null
+          operador: string
+          resumo: string
+          alteracoes: Json
+        }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
       ps2_lotes: {
         Row: {
           id: string
@@ -718,6 +766,47 @@ export type Database = {
       }
       editar_lote_ps2: {
         Args: { p_id: string; p_empresa: string; p_sentido: string }
+        Returns: undefined
+      }
+      registar_ocorrencia: {
+        Args: {
+          p_data: string
+          p_turno: string
+          p_n_avaria: string
+          p_descricao: string
+          p_hora_inicio: string
+          p_hora_termino: string
+          p_encaminhamento: string
+          p_categoria: string
+          p_sistema: string
+        }
+        Returns: string
+      }
+      atualizar_ocorrencia: {
+        Args: {
+          p_id: string
+          p_data: string
+          p_turno: string
+          p_n_avaria: string
+          p_descricao: string
+          p_hora_inicio: string
+          p_hora_termino: string
+          p_encaminhamento: string
+          p_categoria: string
+          p_sistema: string
+        }
+        Returns: undefined
+      }
+      terminar_ocorrencia: {
+        Args: { p_id: string; p_hora_termino: string }
+        Returns: undefined
+      }
+      reabrir_ocorrencia: {
+        Args: { p_id: string }
+        Returns: undefined
+      }
+      guardar_observacoes_dia: {
+        Args: { p_data: string; p_texto: string }
         Returns: undefined
       }
       renomear_lote_ps2: {

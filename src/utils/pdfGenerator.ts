@@ -10,6 +10,9 @@ import { renderTurno2Tasks } from './pdf/pdfTurno2';
 import { renderTurno3Tasks } from './pdf/pdfTurno3';
 import { renderTaskTable } from './pdf/pdfTable';
 import { renderVerificacaoTapes } from './pdf/pdfVerificacaoTapes';
+import { renderOcorrenciasPagina } from './pdf/pdfOcorrencias';
+import { removerPaginasEmBranco } from './pdf/paginasEmBranco';
+import type { AnexoOcorrencias } from '@/services/ocorrenciasService';
 
 export const generateTaskboardPDF = (
   date: string,
@@ -19,6 +22,8 @@ export const generateTaskboardPDF = (
   isDiaNaoUtil: boolean = false,
   signature?: Partial<FichaSignature>,
   verificacaoTapes?: VerificacaoTapes | null,
+  /** Ocorrências do dia (Ficha Comunicação/Ocorrências): vai como anexo, numa página horizontal no fim. */
+  anexoOcorrencias?: AnexoOcorrencias | null,
 ) => {
   const doc = new jsPDF();
   let y = 15;
@@ -138,8 +143,14 @@ export const generateTaskboardPDF = (
     renderVerificacaoTapes(doc, verificacaoTapes, date, operador);
   }
 
-  // Signature page (simple and safe: new page)
-  doc.addPage();
+  // Anexo: a ficha de comunicação/ocorrências desse dia, antes da validação (que é sempre a última
+  // página) e fora do conteúdo assinado.
+  if (anexoOcorrencias) {
+    renderOcorrenciasPagina(doc, anexoOcorrencias, true);
+  }
+
+  // Signature page (simple and safe: new page). Vertical sempre: a página anterior pode ser o anexo horizontal.
+  doc.addPage('a4', 'portrait');
   y = 30; // More breathing room at the top
   
   // Signature page header
@@ -188,6 +199,9 @@ export const generateTaskboardPDF = (
       centerText(doc, `Impressão digital do conteúdo (SHA-256): ${shortHash(signature.contentHash)}`, y);
     }
   }
+
+  // Nunca páginas em branco no PDF final.
+  removerPaginasEmBranco(doc);
 
   return doc;
 };

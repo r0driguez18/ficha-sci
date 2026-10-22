@@ -27,6 +27,9 @@ import PassagemTurno from './pages/sci/PassagemTurno';
 import Geradores from './pages/sci/Geradores';
 import RenovacaoCartoes from './pages/sci/RenovacaoCartoes';
 import VerificacaoFicheiros from './pages/sci/VerificacaoFicheiros';
+import RegistoAlteracoes from './pages/RegistoAlteracoes';
+import Ocorrencias from './pages/sci/Ocorrencias';
+import Soc from './pages/sci/Soc';
 
 const queryClient = new QueryClient();
 
@@ -59,10 +62,12 @@ const App = () => (
               <Route path="/sci/retornos-cobrancas" element={<PrivateRoute><DashboardLayout><RetornosCobrancas /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/passagem-turno" element={<PrivateRoute><DashboardLayout><PassagemTurno /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/verificacao-ficheiros" element={<PrivateRoute><DashboardLayout><VerificacaoFicheiros /></DashboardLayout></PrivateRoute>} />
+              <Route path="/sci/ocorrencias" element={<PrivateRoute><DashboardLayout><Ocorrencias /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/geradores" element={<PrivateRoute><DashboardLayout><Geradores /></DashboardLayout></PrivateRoute>} />
 
               {/* Rota antiga do Gerador PS2 — agora é um separador da página "Geradores" */}
               <Route path="/sci/gerador-ps2" element={<Navigate to="/sci/geradores#ps2" replace />} />
+              <Route path="/sci/soc" element={<PrivateRoute><DashboardLayout><Soc /></DashboardLayout></PrivateRoute>} />
               <Route path="/sci/renovacao-cartoes" element={<PrivateRoute><DashboardLayout><RenovacaoCartoes /></DashboardLayout></PrivateRoute>} />
 
               {/* Processamentos Routes */}
@@ -71,6 +76,7 @@ const App = () => (
               
               {/* System Routes */}
               <Route path="/settings" element={<PrivateRoute><DashboardLayout><Settings /></DashboardLayout></PrivateRoute>} />
+              <Route path="/registo-alteracoes" element={<PrivateRoute><DashboardLayout><RegistoAlteracoes /></DashboardLayout></PrivateRoute>} />
               <Route path="/docs" element={<PrivateRoute><DashboardLayout><Documentation /></DashboardLayout></PrivateRoute>} />
               
               {/* 404 Route */}

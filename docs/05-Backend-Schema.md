@@ -193,7 +193,31 @@ Nota única por `(date, turno)` com leitura única. Substituída funcionalmente 
 | `card_renewal_cards` | `id`, `session_id` (CASCADE), `numero_cartao` (CHECK 7 dígitos), `balcao`, `nome_titular`, `posicao`, `lote_numero` (NULL = pendente), `dados` jsonb | **UNIQUE `(session_id, numero_cartao)`**; trigger de proteção; `INSERT` só na sessão |
 | `card_renewal_lotes` | `id`, `session_id` (CASCADE), `numero`, `balcoes[]`, `total_cartoes`, `ficheiro_nome`, `criado_por` | **UNIQUE `(session_id, numero)`**; só `SELECT` |
 
-### 2.6 Legado
+### 2.6 Registo de alterações (auditoria)
+
+| Tabela | Colunas principais | Regras |
+|---|---|---|
+| `registo_alteracoes` | `id`, `quando`, `tabela`, `operacao` (`INSERT`/`UPDATE`/`DELETE`), `registo_id`, `user_id`, `operador`, `resumo`, `alteracoes` jsonb | **Só leitura para administradores** (RLS com `is_admin()`); só os gatilhos escrevem; **imutável** (gatilho recusa `UPDATE`/`DELETE`) |
+
+O gatilho `registar_alteracao()` (SECURITY DEFINER) está ligado a: `exported_taskboards`, `ps2_lotes`, `operators`,
+`operator_pins`, `cobrancas_retornos`, `handover_notes`, `handover_entries`, `card_renewal_sessions`, `card_renewal_lotes`
+e (só alterações/remoções) `file_processes`. Num `UPDATE` guarda `{campo: {de, para}}`; nunca guarda o conteúdo grande da
+ficha (turnos, tarefas, tabela, assinatura — só diz que mudou, e guarda o selo SHA-256) nem os PINs (só o facto).
+O autor é o utilizador da sessão; nas funções do servidor vem do cabeçalho `x-sci-ator`, aceite só com a chave de serviço.
+As ações sobre contas (criar, eliminar, repor senha, novo link) entram com a tabela `contas`.
+
+### 2.7 Ocorrências (Ficha de Comunicação/Ocorrências)
+
+| Tabela | Colunas principais | Regras |
+|---|---|---|
+| `ocorrencias` | `id`, `data`, `turno`, `n_avaria`, `descricao` (3–1000), `hora_inicio`, `hora_termino`, `encaminhamento`, `categoria` (opcional: `core`/`ficheiros`/`rede`/`servidores`/`balcoes`/`cartoes`/`seguranca`/`outro`), `sistema` (opcional), `criada_por(_codigo)` | Os campos da ficha em papel. **Sem `hora_termino` = em curso.** `CHECK` em horas (HH:MM) e domínios; RLS: `SELECT` para a equipa, **sem escrita direta**; auditada |
+| `ocorrencias_dia` | `data` (PK), `observacoes`, `atualizada_por_codigo`, `atualizada_em` | «Outras Intervenções/Observações» (um texto por dia); só se escreve por função; auditada |
+
+Funções: `registar_ocorrencia`, `atualizar_ocorrencia` (qualquer operador ativo; também corrige a data e o turno), `terminar_ocorrencia` (qualquer operador; exige hora; só uma vez), `reabrir_ocorrencia` e `guardar_observacoes_dia`.
+
+O PDF da ficha de procedimentos leva, **como anexo** (página horizontal no fim), a ficha de ocorrências desse dia quando há ocorrências ou observações. O anexo não faz parte do conteúdo assinado (selo SHA-256).
+
+### 2.8 Legado
 
 - **`crc_tratamentos`**: tabela da ferramenta CRC (removida da aplicação). Mantida; decidir se se apaga.
 

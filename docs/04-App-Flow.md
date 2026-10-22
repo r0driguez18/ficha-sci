@@ -24,10 +24,13 @@ Os diagramas usam Mermaid (renderizam no GitHub e em editores com suporte). Comp
 | `/sci/retornos-cobrancas` | Retornos de cobranças | Autenticado |
 | `/sci/passagem-turno` | Passagem de turno | Autenticado |
 | `/sci/verificacao-ficheiros` | Verificar Débitos/Créditos | Autenticado |
+| `/sci/ocorrencias` | Ficha de Comunicação/Ocorrências (ocorrências do dia, observações, PDF; histórico e pesquisa) | Autenticado |
+| `/sci/soc` | Relatório SOC (análise do relatório de quarentena do Cisco ESA) | Autenticado |
 | `/sci/geradores` | Geradores PS2 / OIC (`/sci/gerador-ps2` → separador PS2) | Autenticado |
 | `/sci/renovacao-cartoes` | Renovação de cartões | Autenticado |
 | `/easyvista` → `/easyvista/estatisticas` | Estatísticas de processamentos | Autenticado |
 | `/settings` | Configurações (conta, PIN, utilizadores) | Autenticado (utilizadores: administrador) |
+| `/registo-alteracoes` | Registo de alterações (quem alterou o quê e quando) | Administrador |
 | `/docs` | Documentação | Autenticado |
 | `*` | 404 | — |
 

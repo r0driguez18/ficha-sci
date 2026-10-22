@@ -7,6 +7,7 @@ import {
   useTaskboardSync,
   taskboardLocalPrefix,
   verificarFichaDesatualizada,
+  proximaDataLivre,
   type FormType,
   type MotivoDesatualizada,
 } from '@/services/taskboardService';
@@ -17,6 +18,8 @@ import { consumirTokenAssinatura } from '@/services/operatorPinService';
 import { generateTaskboardPDF } from '@/utils/pdfGenerator';
 import { computeFichaHash } from '@/lib/signatureHash';
 import { fichaFileName } from '@/lib/fichaFileName';
+import { carregarAnexoOcorrencias } from '@/services/ocorrenciasService';
+import { avisarFichasPorFecharMudaram } from '@/services/fichasPorFecharService';
 import { supabase } from '@/integrations/supabase/client';
 import { TASKBOARD_CONFIGS } from '@/lib/taskboardConfig';
 import {
@@ -131,7 +134,8 @@ export function useTaskboard(formType: FormType) {
     let cancelled = false;
     const prefix = taskboardLocalPrefix(formType);
 
-    async function readLocalFallback() {
+    /** Devolve true se restaurou um rascunho local (com data); false se a ficha é nova. */
+    async function readLocalFallback(): Promise<boolean> {
       const savedDate = localStorage.getItem(`${prefix}-date`);
       const savedTurnData = localStorage.getItem(`${prefix}-turnData`);
       const savedTasks = localStorage.getItem(`${prefix}-tasks`);
@@ -149,6 +153,7 @@ export function useTaskboard(formType: FormType) {
       if (savedTasks) setTasks(mergeTasks(JSON.parse(savedTasks)));
       if (savedTableRows) setTableRows(JSON.parse(savedTableRows));
       if (!singleTurn && savedActiveTab) setActiveTab(savedActiveTab as TurnKey);
+      return !!savedDate;
     }
 
     async function fetchData() {
@@ -168,7 +173,16 @@ export function useTaskboard(formType: FormType) {
           if (remote.table_rows) setTableRows(remote.table_rows);
           if (!singleTurn && remote.active_tab) setActiveTab(remote.active_tab as TurnKey);
         } else {
-          await readLocalFallback();
+          const restaurou = await readLocalFallback();
+          if (!restaurou) {
+            // Ficha nova: se a de hoje já foi exportada, abre a primeira data livre (como depois de exportar).
+            const hoje = todayIso();
+            const livre = await proximaDataLivre(formType, hoje);
+            if (!cancelled && livre !== hoje) {
+              setDate(livre);
+              toast.info(`A ficha de ${hoje} já foi exportada — abri a de ${livre}.`);
+            }
+          }
         }
       } catch (error) {
         console.error('Erro ao carregar dados da ficha:', error);
@@ -230,6 +244,17 @@ export function useTaskboard(formType: FormType) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [date, turnData, tasks, tableRows, verificacaoTapes, activeTab, isLoading, desatualizada]);
+
+  /** Sai do aviso "já exportada": vai para a primeira data seguinte ainda sem ficha exportada. */
+  const irParaProximaDataLivre = useCallback(async () => {
+    const livre = await proximaDataLivre(formType, date);
+    if (livre === date) {
+      toast.error('Não encontrei uma data livre — escolhe uma data acima.');
+      return;
+    }
+    setDate(livre);
+    toast.info(`Aberta a ficha de ${livre}.`);
+  }, [formType, date]);
 
   /** Recarrega a página para ir buscar a ficha em vigor ao servidor. */
   const recarregarFicha = useCallback(() => window.location.reload(), []);
@@ -555,6 +580,9 @@ export function useTaskboard(formType: FormType) {
 
       const tapesForExport = showTapeVerification ? verificacaoTapes : undefined;
 
+      // A ficha de comunicação/ocorrências desse dia segue como anexo (se houver ocorrências ou observações).
+      const anexoOcorrencias = await carregarAnexoOcorrencias(date);
+
       const doc = generateTaskboardPDF(
         date,
         turnData,
@@ -563,6 +591,7 @@ export function useTaskboard(formType: FormType) {
         config.isDiaNaoUtil,
         signature,
         tapesForExport,
+        anexoOcorrencias,
       );
       const fileName = fichaFileName(date);
       // Ficha com verificação de tapes: o display do AS/400 só existe no dia
@@ -624,6 +653,7 @@ export function useTaskboard(formType: FormType) {
       // termina noutro) o "rascunho mais recente" voltava a apontar sempre
       // para esta ficha já fechada, em vez de deixar começar uma nova.
       await resetData();
+      avisarFichasPorFecharMudaram();
 
       const [ny, nm, nd] = date.split('-').map(Number);
       const next = new Date(ny, nm - 1, nd + 1);
@@ -650,6 +680,7 @@ export function useTaskboard(formType: FormType) {
     setSignatureDataUrl(null);
     setSigningToken(null);
     await resetData();
+    avisarFichasPorFecharMudaram();
     toast.success('Formulário reiniciado com sucesso!');
   };
 
@@ -662,6 +693,7 @@ export function useTaskboard(formType: FormType) {
     desatualizada,
     recarregarFicha,
     descartarRascunho,
+    irParaProximaDataLivre,
     isEndOfMonth,
     showTapeVerification,
     verificacaoTapes,

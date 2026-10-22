@@ -4,13 +4,17 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PageContainer } from '@/components/layout/PageContainer';
-import { ClipboardCheck, PieChart, ArrowRight, CalendarClock, FileCheck2, Bell } from 'lucide-react';
+import { ClipboardCheck, PieChart, ArrowRight, CalendarClock, FileCheck2, Bell, AlertTriangle } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { Link as RouterLink } from 'react-router-dom';
 import { DailyAlertsWidget } from '@/components/alerts/DailyAlertsWidget';
 import { useAlerts } from '@/hooks/useAlerts';
 import { fichaDoDia } from '@/lib/fichaDoDia';
 import { todayIso } from '@/lib/taskboardDefaults';
 import { existeExportadaNaData } from '@/services/exportedTaskboardService';
+import { listarEmCurso } from '@/services/ocorrenciasService';
+import { useFichasPorFechar } from '@/services/fichasPorFecharService';
+import { ListaFichasPorFechar } from '@/components/taskboard/FichasPorFecharAviso';
 
 const MODULES = [
   { title: 'SCI', description: 'Sistema de Controlo Interno', icon: ClipboardCheck, path: '/sci/procedimentos' },
@@ -43,6 +47,11 @@ const Dashboard = () => {
       alive = false;
     };
   }, [hoje]);
+
+  // Ocorrências em curso (sem hora de término), de qualquer dia.
+  const emCurso = useQuery({ queryKey: ['ocorrencias', 'curso'], queryFn: listarEmCurso, refetchInterval: 60_000 });
+  const ocorrenciasEmCurso = emCurso.data ?? [];
+  const porFechar = useFichasPorFechar();
 
   const proximoAlerta = useMemo(() => {
     const hm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
@@ -92,6 +101,22 @@ const Dashboard = () => {
         </CardContent>
       </Card>
 
+      {/* Fichas de dias anteriores com trabalho feito e ainda por fechar */}
+      {porFechar.length > 0 && (
+        <Card className="mb-6 border-amber-500/50 bg-amber-50 dark:bg-amber-950/30">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2 text-amber-950 dark:text-amber-100">
+              <AlertTriangle className="h-4 w-4" />
+              {porFechar.length === 1 ? 'Há uma ficha por fechar' : `Há ${porFechar.length} fichas por fechar`}
+            </CardTitle>
+            <CardDescription>Têm trabalho feito e ainda não foram validadas e exportadas.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ListaFichasPorFechar fichas={porFechar} compacto />
+          </CardContent>
+        </Card>
+      )}
+
       {/* Próximo alerta */}
       <Card className="mb-6">
         <CardHeader className="pb-2">
@@ -126,6 +151,52 @@ const Dashboard = () => {
             >
               <Bell className="h-4 w-4 mr-1.5" /> Ativar também avisos do sistema (com a app em segundo plano)
             </Button>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Ocorrências em curso */}
+      <Card className={`mb-6 ${ocorrenciasEmCurso.length > 0 ? 'border-amber-500/50' : ''}`}>
+        <CardHeader className="pb-2">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4" /> Ocorrências em curso
+            </CardTitle>
+            <RouterLink to="/sci/ocorrencias">
+              <Button size="sm" variant="outline">
+                Ficha de ocorrências
+                <ArrowRight className="h-4 w-4 ml-1.5" />
+              </Button>
+            </RouterLink>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {emCurso.isLoading ? (
+            <p className="text-sm text-muted-foreground">a carregar…</p>
+          ) : emCurso.isError ? (
+            <p className="text-sm text-muted-foreground">Não consegui carregar as ocorrências.</p>
+          ) : ocorrenciasEmCurso.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhuma ocorrência em curso.</p>
+          ) : (
+            <>
+              <div className="flex items-baseline gap-3">
+                <span className="text-2xl font-bold tabular-nums">{ocorrenciasEmCurso.length}</span>
+                <span className="text-sm text-muted-foreground">sem hora de término</span>
+              </div>
+              <ul className="mt-3 space-y-1 text-sm">
+                {ocorrenciasEmCurso.slice(0, 3).map((o) => (
+                  <li key={o.id} className="flex flex-wrap items-center gap-2">
+                    {o.n_avaria && <Badge variant="outline">{o.n_avaria}</Badge>}
+                    <span className="font-medium">{o.descricao.length > 90 ? `${o.descricao.slice(0, 90)}…` : o.descricao}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {o.data.split('-').reverse().join('/')}
+                      {o.hora_inicio ? ` · desde as ${o.hora_inicio}` : ''}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              {ocorrenciasEmCurso.length > 3 && <p className="mt-2 text-xs text-muted-foreground">e mais {ocorrenciasEmCurso.length - 3}…</p>}
+            </>
           )}
         </CardContent>
       </Card>

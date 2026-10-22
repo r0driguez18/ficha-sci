@@ -45,6 +45,8 @@ TABELAS=(
   reposicao_tentativas
   signing_tokens
   crc_tratamentos
+  registo_alteracoes
+  ocorrencias
 )
 
 psql_db() { $SUDO docker exec -i "$CONTENTOR" psql -U postgres -d "$DB_NOME" "$@"; }

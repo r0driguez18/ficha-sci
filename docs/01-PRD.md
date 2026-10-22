@@ -86,6 +86,33 @@ a aplicação não pode depender de nenhum serviço externo (nem fontes, nem CDN
 | RF-01.7 | A reposição pelo PIN tem limite de **5 tentativas por conta em 24 h**, respostas que não revelam se o utilizador existe, e fica **registada e visível** aos administradores. |
 | RF-01.8 | Mínimo de 8 caracteres para a senha escolhida. |
 
+### RF-01A — Registo de alterações
+
+| ID | Requisito |
+|---|---|
+| RF-01A.1 | Fica registado **quem criou, alterou ou apagou** fichas exportadas, lotes PS2 e a sua verificação, operadores e papéis, PINs (só o facto), retornos de cobrança, passagem de turno, renovação de cartões e contas de utilizador. |
+| RF-01A.2 | O registo é **imutável** e só os **administradores** o consultam, com filtros por assunto, operador e datas. |
+| RF-01A.3 | Não guarda o conteúdo das fichas nem valores secretos: só os campos que mudaram (de → para) e o selo da ficha. |
+
+### RF-01B — Ficha de Comunicação/Ocorrências
+
+| ID | Requisito |
+|---|---|
+| RF-01B.1 | Registar cada ocorrência do dia com os campos da ficha em papel: **N.º Avaria, Descrição, Hora Início, Hora Término e Encaminhamento**; fica o autor. Categoria, sistema e turno são opcionais. |
+| RF-01B.2 | Sem hora de término a ocorrência está **em curso** e pode terminar noutro turno (qualquer operador a termina; reabre-se). Qualquer operador pode **editar** (incluindo corrigir a **data** e o **turno**, se alguém se enganou); cada alteração fica no registo de alterações (quem e de → para). Nada se apaga. |
+| RF-01B.3 | **Outras Intervenções/Observações** por dia, como na ficha em papel. |
+| RF-01B.4 | **PDF** igual à ficha em papel (12 linhas, página horizontal), descarregável por dia e **anexado ao PDF da ficha de procedimentos** desse dia. |
+| RF-01B.5 | Aviso das ocorrências em curso (de qualquer dia) no painel inicial e no menu; histórico com pesquisa e o que se repete (sistemas com 2 ou mais ocorrências em 90 dias). Tudo fica no registo de alterações. |
+
+### RF-01C — Relatório SOC (quarentena de e-mail)
+
+| ID | Requisito |
+|---|---|
+| RF-01C.1 | Abrir o Excel semanal do SOC (folha «cisco - esa») e analisá-lo **no browser**: o ficheiro e os endereços não saem do computador. |
+| RF-01C.2 | Analisar só o **domínio do remetente**; o domínio de destino (o do banco) nunca conta como «bloqueado». |
+| RF-01C.3 | Classificar cada domínio (Cabo Verde, Portugal, webmail, suspeito, outro) e recomendar: **pedir whitelist** (CV/PT só apanhado pelo anti-spam), **verificar com o remetente** (DMARC falhou), **não libertar** (vírus ou domínio parecido com o do banco), **verificar caso a caso** (webmail) ou **manter bloqueado**. |
+| RF-01C.4 | Marcar os domínios a pedir, e gerar o **e-mail para o Victor**, a lista de domínios (1 por linha) para o ESA e um CSV de todos os domínios. |
+
 ### RF-02 — Ficha de Procedimentos (módulo central)
 
 | ID | Requisito |
