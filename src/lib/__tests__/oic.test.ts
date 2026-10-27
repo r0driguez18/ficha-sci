@@ -27,6 +27,38 @@ describe('parseMontante', () => {
     expect(parseMontante(250)).toBe(250);
   });
 
+  it('o ponto serve de decimal tal como a vírgula (1 ou 2 casas, ou mais de 3)', () => {
+    expect(parseMontante('1500.50')).toBe(1500.5);
+    expect(parseMontante('12.5')).toBe(12.5);
+    expect(parseMontante('0.5')).toBe(0.5);
+    expect(parseMontante('.5')).toBe(0.5);
+    expect(parseMontante('1500.')).toBe(1500);
+    expect(parseMontante('1500.5000')).toBe(1500.5);
+    expect(parseMontante('1500.50 CVE')).toBe(1500.5);
+  });
+
+  it('três dígitos a seguir ao ponto/vírgula: milhares só quando antes há 1–3 dígitos (sem zero à frente)', () => {
+    // milhares, como sempre
+    expect(parseMontante('1.234')).toBe(1234);
+    expect(parseMontante('6.860')).toBe(6860);
+    expect(parseMontante('12,345')).toBe(12345);
+    expect(parseMontante('150.000')).toBe(150000);
+    expect(parseMontante('1.234.567')).toBe(1234567);
+    // decimais: não podem ser milhares (era o valor ×1000)
+    expect(parseMontante('1234.567')).toBe(1234.567);
+    expect(parseMontante('1500.505')).toBe(1500.505);
+    expect(parseMontante('19893.333')).toBe(19893.333);
+    expect(parseMontante('0.500')).toBe(0.5);
+    expect(parseMontante('0,125')).toBe(0.125);
+  });
+
+  it('notação científica do Excel', () => {
+    expect(parseMontante('1.5E3')).toBe(1500);
+    expect(parseMontante('1e3')).toBe(1000);
+    expect(parseMontante('2,5e2')).toBe(250);
+    expect(parseMontante('1.5e')).toBeNaN();
+  });
+
   it('distingue vazio de inválido', () => {
     expect(parseMontante('')).toBeNull();
     expect(parseMontante(null)).toBeNull();
