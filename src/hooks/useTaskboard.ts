@@ -8,6 +8,7 @@ import {
   taskboardLocalPrefix,
   verificarFichaDesatualizada,
   proximaDataLivre,
+  loadTaskboardData,
   type FormType,
   type MotivoDesatualizada,
 } from '@/services/taskboardService';
@@ -244,6 +245,41 @@ export function useTaskboard(formType: FormType) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [date, turnData, tasks, tableRows, verificacaoTapes, activeTab, isLoading, desatualizada]);
+
+  // ---------- Abrir a ficha de outra data (depois de exportar) ----------
+  /**
+   * Põe no ecrã a ficha de `novaData`: o rascunho dessa data se existir, senão uma ficha em branco. Depois de
+   * exportar, o conteúdo da ficha exportada não pode passar para o dia seguinte (era assim que duas fichas
+   * saíam iguais). Mudar a data no campo da ficha continua a ser só corrigir a data do rascunho em curso.
+   */
+  const abrirData = useCallback(
+    async (novaData: string, opts: { gravarAntes?: boolean } = {}) => {
+      if (!novaData || novaData === date) return;
+      if (opts.gravarAntes !== false) await syncData();
+      let remoto = null;
+      try {
+        remoto = user ? (await loadTaskboardData(formType, novaData)).data : null;
+      } catch (e) {
+        console.error('Erro ao carregar o rascunho da data:', e);
+      }
+      const vt = (remoto?.turn_data as { verificacaoTapes?: Partial<VerificacaoTapes> } | undefined)?.verificacaoTapes;
+      setTurnData(remoto?.turn_data ? mergeTurnData(remoto.turn_data) : emptyTurnData());
+      setTasks(remoto?.tasks ? mergeTasks(remoto.tasks) : emptyTasks());
+      setVerificacaoTapes({ ...emptyVerificacaoTapes(), ...(vt ?? {}) });
+      setTableRows(
+        remoto?.table_rows && remoto.table_rows.length > 0
+          ? remoto.table_rows
+          : [emptyTableRow(1, currentOperator?.value ?? '')],
+      );
+      setSignerName('');
+      setSignatureDataUrl(null);
+      setSigningToken(null);
+      setDate(novaData);
+      if (remoto) toast.info(`Aberto o rascunho de ${novaData}.`);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [date, formType, user, currentOperator, syncData],
+  );
 
   /** Sai do aviso "já exportada": vai para a primeira data seguinte ainda sem ficha exportada. */
   const irParaProximaDataLivre = useCallback(async () => {
@@ -658,7 +694,9 @@ export function useTaskboard(formType: FormType) {
       const [ny, nm, nd] = date.split('-').map(Number);
       const next = new Date(ny, nm - 1, nd + 1);
       const nextIso = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-${String(next.getDate()).padStart(2, '0')}`;
-      setDate(nextIso);
+      // O dia seguinte começa limpo (ou com o rascunho que já tenha): o conteúdo da ficha exportada
+      // não transita. O rascunho desta data já foi apagado acima, por isso não se grava outra vez.
+      await abrirData(nextIso, { gravarAntes: false });
       toast.info(`Data atualizada para ${nextIso}`);
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
