@@ -200,6 +200,21 @@ export const generateTaskboardPDF = (
     }
   }
 
+  if (signature?.retificacao) {
+    const r = signature.retificacao;
+    y += 12;
+    doc.setFontSize(10);
+    doc.setTextColor(...BCA_COLORS.darkBlue);
+    centerText(doc, `Ficha retificada (versão ${r.versao}) por ${r.por} em ${new Date(r.em).toLocaleString('pt-PT')}`, y);
+    y += 6;
+    doc.setTextColor(100, 100, 100);
+    const motivo = doc.splitTextToSize(`Motivo: ${r.motivo}`, 160) as string[];
+    for (const l of motivo.slice(0, 4)) {
+      centerText(doc, l, y);
+      y += 5;
+    }
+  }
+
   // Nunca páginas em branco no PDF final.
   removerPaginasEmBranco(doc);
 

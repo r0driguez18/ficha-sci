@@ -14,6 +14,8 @@ export interface FichaSignature {
   signerUserId?: string | null;
   contentHash?: string;
   method?: 'pin' | 'legacy';
+  /** Presente quando um administrador retificou a ficha depois de exportada (ver `editar_ficha_exportada`). */
+  retificacao?: { versao: number; por: string; porUserId: string; em: string; motivo: string };
 }
 
 /** Verdadeiro se a ficha está assinada, seja pelo método antigo ou por PIN. */

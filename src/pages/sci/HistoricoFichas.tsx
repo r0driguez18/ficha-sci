@@ -27,6 +27,8 @@ import {
   downloadTapesEvidencia,
 } from '@/services/tapesEvidenciaService';
 import { useOperators } from '@/hooks/useOperators';
+import { EditarFichaDialog } from '@/components/historico/EditarFichaDialog';
+import { HistoricoEdicoesDialog } from '@/components/historico/HistoricoEdicoesDialog';
 import { isSigned } from '@/types/signature';
 import { ehFeriadoCaboVerde } from '@/lib/feriadosCaboVerde';
 import { computeFichaHash } from '@/lib/signatureHash';
@@ -34,6 +36,8 @@ import { computeFichaHash } from '@/lib/signatureHash';
 import {
   FileDown,
   Eye,
+  Pencil,
+  History,
   Calendar,
   Search,
   Filter,
@@ -114,6 +118,8 @@ const isNaoUtilType = (t: string) => t === 'dia-nao-util' || t === 'final-mes-na
 
 export default function HistoricoFichas() {
   const { operators } = useOperators();
+  const [editTarget, setEditTarget] = useState<ExportedTaskboard | null>(null);
+  const [edicoesTarget, setEdicoesTarget] = useState<ExportedTaskboard | null>(null);
   const [records, setRecords] = useState<ExportedTaskboard[]>([]);
   const [filteredRecords, setFilteredRecords] = useState<ExportedTaskboard[]>([]);
   const [loading, setLoading] = useState(true);
@@ -548,8 +554,13 @@ export default function HistoricoFichas() {
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4" />
                         {record.date}
+                        {(record.versao ?? 1) > 1 && (
+                          <Badge variant="outline" className="border-primary/50 text-primary" title={`Retificada por ${record.editada_por_codigo ?? '—'}${record.editada_em ? ' em ' + new Date(record.editada_em).toLocaleString('pt-PT') : ''}`}>
+                            Retificada v{record.versao}
+                          </Badge>
+                        )}
                         {(() => {
-                          const suspeita = dataSuspeitaExportada(record.form_type, record.date, record.exported_at || record.created_at);
+                          const suspeita = (record.versao ?? 1) > 1 ? null : dataSuspeitaExportada(record.form_type, record.date, record.exported_at || record.created_at);
                           return suspeita ? (
                             <Badge variant="outline" className="border-warning text-warning" title={suspeita}>
                               <AlertTriangle className="h-3 w-3 mr-1" />
@@ -629,6 +640,26 @@ export default function HistoricoFichas() {
                         <Button
                           variant="outline"
                           size="sm"
+                          onClick={() => setEditTarget(record)}
+                          aria-label={`Retificar a ficha de ${record.date}`}
+                          title="Retificar ficha"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        {(record.versao ?? 1) > 1 && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setEdicoesTarget(record)}
+                            aria-label={`Ver as retificações da ficha de ${record.date}`}
+                            title="Histórico de retificações"
+                          >
+                            <History className="h-4 w-4" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
                           disabled={busyId === record.id}
                           onClick={() => handlePreviewPDF(record)}
                           aria-label={`Pré-visualizar PDF da ficha de ${record.date}`}
@@ -660,6 +691,13 @@ export default function HistoricoFichas() {
           )}
         </CardContent>
       </Card>
+
+      <EditarFichaDialog
+        record={editTarget}
+        onClose={() => setEditTarget(null)}
+        onSaved={(r) => setRecords((rs) => rs.map((x) => (x.id === r.id ? r : x)))}
+      />
+      <HistoricoEdicoesDialog record={edicoesTarget} onClose={() => setEdicoesTarget(null)} />
 
       {/* Anexar display de tapes */}
       <Dialog open={!!attachTarget} onOpenChange={(open) => { if (!open) setAttachTarget(null); }}>

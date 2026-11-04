@@ -22,6 +22,10 @@ export interface ExportedTaskboard {
   tapes_evidencia: TapesEvidenciaFile[];
   tapes_anexada_at: string | null;
   tapes_anexada_by: string | null;
+  /** 1 = como exportada; sobe a cada retificação. */
+  versao?: number;
+  editada_em?: string | null;
+  editada_por_codigo?: string | null;
 }
 
 /**
@@ -202,4 +206,51 @@ export async function checkDuplicateOperations(
   }
 
   return data ?? [];
+}
+// ---------------------------------------------------------------- retificação
+
+export interface EdicaoFicha {
+  id: string;
+  ficha_id: string;
+  versao_anterior: number;
+  versao_nova: number;
+  editado_por_codigo: string | null;
+  editado_em: string;
+  motivo: string;
+  antes: { date: string; turn_data: Record<string, unknown>; tasks: Record<string, unknown>; table_rows: Array<Record<string, unknown>> };
+  depois: { date: string; turn_data: Record<string, unknown>; tasks: Record<string, unknown>; table_rows: Array<Record<string, unknown>> };
+}
+
+/** Grava a retificação: o servidor guarda o conteúdo anterior, gasta o token do PIN e sobe a versão. */
+export async function editarFichaExportada(args: {
+  id: string;
+  token: string;
+  date: string;
+  turnData: unknown;
+  tasks: unknown;
+  tableRows: unknown;
+  assinatura: unknown;
+  motivo: string;
+}): Promise<{ versao: number | null; error: string | null }> {
+  const { data, error } = await (supabase as any).rpc('editar_ficha_exportada', {
+    p_id: args.id,
+    p_token: args.token,
+    p_date: args.date,
+    p_turn_data: args.turnData,
+    p_tasks: args.tasks,
+    p_table_rows: args.tableRows,
+    p_assinatura: args.assinatura,
+    p_motivo: args.motivo,
+  });
+  return { versao: (data as number | null) ?? null, error: error ? error.message : null };
+}
+
+/** Histórico de retificações de uma ficha . */
+export async function listarEdicoesFicha(fichaId: string): Promise<{ data: EdicaoFicha[]; error: string | null }> {
+  const { data, error } = await (supabase as any)
+    .from('fichas_edicoes')
+    .select('*')
+    .eq('ficha_id', fichaId)
+    .order('editado_em', { ascending: false });
+  return { data: (data ?? []) as EdicaoFicha[], error: error ? error.message : null };
 }
