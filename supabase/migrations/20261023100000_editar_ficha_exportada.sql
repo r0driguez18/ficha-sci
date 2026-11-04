@@ -1,7 +1,7 @@
--- Retificação de fichas já exportadas (só administradores).
+-- Retificação de fichas já exportadas (qualquer operador ativo; tudo fica registado).
 --
 -- Uma ficha exportada não se pode repetir nem apagar, mas pode ter erros (data trocada, tarefa mal marcada,
--- "Verificado por" por preencher). Em vez de a refazer, o administrador retifica-a:
+-- "Verificado por" por preencher). Em vez de a refazer, um operador retifica-a:
 --   • tem de dar um motivo e assinar com o PIN (o token é gasto aqui, no servidor);
 --   • o conteúdo ANTERIOR fica guardado, completo, em `fichas_edicoes` (imutável) — nunca se perde o original;
 --   • a ficha passa a versão n+1 e mostra quem a retificou e quando.
@@ -31,9 +31,11 @@ CREATE INDEX IF NOT EXISTS idx_fichas_edicoes_ficha ON public.fichas_edicoes (fi
 
 ALTER TABLE public.fichas_edicoes ENABLE ROW LEVEL SECURITY;
 
+-- Quem retificou e porquê é transparente para toda a equipa (é a garantia de que nada se altera às escondidas).
 DROP POLICY IF EXISTS "Edições visíveis aos administradores" ON public.fichas_edicoes;
-CREATE POLICY "Edições visíveis aos administradores" ON public.fichas_edicoes
-  FOR SELECT TO authenticated USING (public.is_admin());
+DROP POLICY IF EXISTS "Edições visíveis à equipa" ON public.fichas_edicoes;
+CREATE POLICY "Edições visíveis à equipa" ON public.fichas_edicoes
+  FOR SELECT TO authenticated USING (true);
 
 REVOKE ALL ON TABLE public.fichas_edicoes FROM anon, authenticated;
 GRANT SELECT ON TABLE public.fichas_edicoes TO authenticated;
@@ -80,8 +82,8 @@ BEGIN
   IF auth.uid() IS NULL THEN
     RAISE EXCEPTION 'Não autenticado';
   END IF;
-  IF NOT public.is_admin() THEN
-    RAISE EXCEPTION 'Só os administradores podem retificar fichas exportadas';
+  IF NOT EXISTS (SELECT 1 FROM public.operators WHERE user_id = auth.uid() AND ativo) THEN
+    RAISE EXCEPTION 'A conta não está ligada a um operador ativo';
   END IF;
   IF char_length(v_motivo) < 10 THEN
     RAISE EXCEPTION 'Indica o motivo da retificação (pelo menos 10 caracteres)';

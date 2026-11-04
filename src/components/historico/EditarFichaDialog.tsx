@@ -148,7 +148,7 @@ function Editor({ record, onClose, onSaved }: { record: ExportedTaskboard; onClo
       <DialogHeader>
         <DialogTitle>Retificar ficha — {record.date}</DialogTitle>
         <DialogDescription>
-          A ficha original fica guardada no histórico de retificações (quem, quando, porquê e o que mudou). Só administradores.
+          A ficha original fica guardada no histórico de retificações (quem, quando, porquê e o que mudou).
         </DialogDescription>
       </DialogHeader>
 

@@ -24,7 +24,7 @@ import {
   removeTapesEvidencia,
   downloadTapesEvidencia,
 } from '@/services/tapesEvidenciaService';
-import { useOperators, useIsAdmin } from '@/hooks/useOperators';
+import { useOperators } from '@/hooks/useOperators';
 import { EditarFichaDialog } from '@/components/historico/EditarFichaDialog';
 import { HistoricoEdicoesDialog } from '@/components/historico/HistoricoEdicoesDialog';
 import { isSigned } from '@/types/signature';
@@ -116,7 +116,6 @@ const isNaoUtilType = (t: string) => t === 'dia-nao-util' || t === 'final-mes-na
 
 export default function HistoricoFichas() {
   const { operators } = useOperators();
-  const isAdmin = useIsAdmin();
   const [editTarget, setEditTarget] = useState<ExportedTaskboard | null>(null);
   const [edicoesTarget, setEdicoesTarget] = useState<ExportedTaskboard | null>(null);
   const [records, setRecords] = useState<ExportedTaskboard[]>([]);
@@ -621,18 +620,16 @@ export default function HistoricoFichas() {
                           </Button>
                         )}
 
-                        {isAdmin && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setEditTarget(record)}
-                            aria-label={`Retificar a ficha de ${record.date}`}
-                            title="Retificar ficha (administrador)"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {isAdmin && (record.versao ?? 1) > 1 && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setEditTarget(record)}
+                          aria-label={`Retificar a ficha de ${record.date}`}
+                          title="Retificar ficha"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        {(record.versao ?? 1) > 1 && (
                           <Button
                             variant="outline"
                             size="sm"

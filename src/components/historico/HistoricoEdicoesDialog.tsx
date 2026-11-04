@@ -8,7 +8,7 @@ const quando = (iso: string) => {
   return Number.isNaN(d.getTime()) ? iso : d.toLocaleString('pt-PT');
 };
 
-/** Quem retificou a ficha, quando, porquê e o que mudou (só administradores). */
+/** Quem retificou a ficha, quando, porquê e o que mudou . */
 export function HistoricoEdicoesDialog({ record, onClose }: { record: ExportedTaskboard | null; onClose: () => void }) {
   const [edicoes, setEdicoes] = useState<EdicaoFicha[] | null>(null);
   const [erro, setErro] = useState<string | null>(null);
