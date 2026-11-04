@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { ChevronDown, ChevronRight, PlusCircle, Trash2 } from 'lucide-react';
 import { TaskTableRow } from '@/types/taskTableRow';
+import { blocosDaTabela } from '@/lib/blocosTabela';
 
 interface TableRowsSectionProps {
   tableRows: TaskTableRow[];
@@ -23,6 +24,16 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
   onInputChange,
 }) => {
   const focarNova = useRef(false);
+  // Blocos de 20 linhas (uma folha A4): os já cheios minimizam-se; o último está sempre aberto.
+  const blocos = blocosDaTabela(tableRows);
+  const [abertos, setAbertos] = useState<Set<number>>(new Set());
+  const alternarBloco = (i: number) =>
+    setAbertos((a) => {
+      const n = new Set(a);
+      if (n.has(i)) n.delete(i);
+      else n.add(i);
+      return n;
+    });
   const preenchidas = tableRows.filter((r) => r.tarefa || r.nomeAs || r.operacao || r.tipo).length;
   // Com muitos processamentos a tabela começa recolhida: a lista de tarefas fica à vista
   // e os processamentos regista-se pelo painel flutuante.
@@ -88,7 +99,34 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {tableRows.map((row) => (
+            {blocos.map((bloco) => {
+              const minimizado = !bloco.atual && !abertos.has(bloco.indice);
+              const cheias = bloco.linhas.filter((r) => r.tarefa || r.nomeAs || r.operacao || r.tipo).length;
+              const horas = bloco.linhas.map((r) => r.hora).filter(Boolean);
+              return (
+                <React.Fragment key={bloco.indice}>
+                  {blocos.length > 1 && (
+                    <TableRow className="bg-muted/30 hover:bg-muted/50">
+                      <TableCell colSpan={7} className="py-1.5">
+                        <button
+                          type="button"
+                          onClick={() => !bloco.atual && alternarBloco(bloco.indice)}
+                          aria-expanded={!minimizado}
+                          disabled={bloco.atual}
+                          className="flex w-full items-center gap-1.5 text-left text-xs font-medium text-muted-foreground enabled:hover:text-foreground"
+                        >
+                          {minimizado ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                          Folha {bloco.indice + 1} · linhas {bloco.de}–{bloco.ate}
+                          <span className="font-normal">
+                            · {cheias} processamento{cheias === 1 ? '' : 's'}
+                            {horas.length > 0 && ` · ${horas[0]}–${horas[horas.length - 1]}`}
+                          </span>
+                          {minimizado && <span className="ml-auto font-normal">mostrar</span>}
+                        </button>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {!minimizado && bloco.linhas.map((row) => (
               <TableRow key={row.id} data-linha={row.id}>
                 <TableCell>
                   <Input 
@@ -176,7 +214,10 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
                   </Button>
                 </TableCell>
               </TableRow>
-            ))}
+                  ))}
+                </React.Fragment>
+              );
+            })}
           </TableBody>
         </Table>
       </div>
