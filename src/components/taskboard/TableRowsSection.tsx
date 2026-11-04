@@ -24,16 +24,22 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
   onInputChange,
 }) => {
   const focarNova = useRef(false);
-  // Blocos de 20 linhas (uma folha A4): os já cheios minimizam-se; o último está sempre aberto.
+  // Blocos de 20 linhas (uma folha A4): os já cheios minimizam-se sozinhos; qualquer folha se abre ou minimiza à mão.
   const blocos = blocosDaTabela(tableRows);
   const [abertos, setAbertos] = useState<Set<number>>(new Set());
-  const alternarBloco = (i: number) =>
-    setAbertos((a) => {
-      const n = new Set(a);
-      if (n.has(i)) n.delete(i);
-      else n.add(i);
+  const [fechados, setFechados] = useState<Set<number>>(new Set());
+  const estaMinimizado = (i: number, atual: boolean) => fechados.has(i) || (!atual && !abertos.has(i));
+  const alternarBloco = (i: number, atual: boolean) => {
+    const abrir = estaMinimizado(i, atual);
+    const com = (s: Set<number>, add: boolean) => {
+      const n = new Set(s);
+      if (add) n.add(i);
+      else n.delete(i);
       return n;
-    });
+    };
+    setAbertos((a) => com(a, abrir));
+    setFechados((f) => com(f, !abrir));
+  };
   const preenchidas = tableRows.filter((r) => r.tarefa || r.nomeAs || r.operacao || r.tipo).length;
   // Com muitos processamentos a tabela começa recolhida: a lista de tarefas fica à vista
   // e os processamentos regista-se pelo painel flutuante.
@@ -43,6 +49,14 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
   const adicionar = () => {
     focarNova.current = true;
     setAberta(true);
+    // Ao adicionar, a folha onde a linha vai cair abre-se.
+    const ultimo = blocosDaTabela([...tableRows, null]).length - 1;
+    setFechados((f) => {
+      if (!f.has(ultimo)) return f;
+      const n = new Set(f);
+      n.delete(ultimo);
+      return n;
+    });
     onAddRow();
   };
 
@@ -100,9 +114,7 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
           </TableHeader>
           <TableBody>
             {blocos.map((bloco) => {
-              const minimizado = !bloco.atual && !abertos.has(bloco.indice);
-              const cheias = bloco.linhas.filter((r) => r.tarefa || r.nomeAs || r.operacao || r.tipo).length;
-              const horas = bloco.linhas.map((r) => r.hora).filter(Boolean);
+              const minimizado = estaMinimizado(bloco.indice, bloco.atual);
               return (
                 <React.Fragment key={bloco.indice}>
                   {blocos.length > 1 && (
@@ -110,18 +122,13 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
                       <TableCell colSpan={7} className="py-1.5">
                         <button
                           type="button"
-                          onClick={() => !bloco.atual && alternarBloco(bloco.indice)}
+                          onClick={() => alternarBloco(bloco.indice, bloco.atual)}
                           aria-expanded={!minimizado}
-                          disabled={bloco.atual}
-                          className="flex w-full items-center gap-1.5 text-left text-xs font-medium text-muted-foreground enabled:hover:text-foreground"
+                          className="flex w-full items-center gap-1.5 text-left text-xs font-medium text-muted-foreground hover:text-foreground"
                         >
                           {minimizado ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
                           Folha {bloco.indice + 1} · linhas {bloco.de}–{bloco.ate}
-                          <span className="font-normal">
-                            · {cheias} processamento{cheias === 1 ? '' : 's'}
-                            {horas.length > 0 && ` · ${horas[0]}–${horas[horas.length - 1]}`}
-                          </span>
-                          {minimizado && <span className="ml-auto font-normal">mostrar</span>}
+                          <span className="ml-auto font-normal">{minimizado ? 'mostrar' : 'minimizar'}</span>
                         </button>
                       </TableCell>
                     </TableRow>
