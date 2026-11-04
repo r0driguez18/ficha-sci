@@ -8,18 +8,24 @@ export interface LinhaBruta {
   nome: string;
 }
 
-/**
- * Texto colado do Excel → linhas. As colunas (conta/NIB, valor, nome) detetam-se sozinhas, como
- * ao carregar um ficheiro; com ou sem linha de cabeçalho. Separador: tab (Excel), senão ";" ou ",".
- */
-export function parseColagem(txt: string): LinhaBruta[] {
+/** Texto colado (tab, ";" ou ",") → matriz de células. */
+export function matrizDeTexto(txt: string): string[][] {
   const linhas = txt
     .split(/\r?\n/)
     .map((l) => l.trimEnd())
     .filter((l) => l.trim() !== '');
   if (linhas.length === 0) return [];
   const sep = linhas.some((l) => l.includes('\t')) ? '\t' : linhas.some((l) => l.includes(';')) ? ';' : ',';
-  const rows = linhas.map((l) => l.split(sep).map((x) => x.trim()));
+  return linhas.map((l) => l.split(sep).map((x) => x.trim()));
+}
+
+/**
+ * Texto colado do Excel → linhas. As colunas (conta/NIB, valor, nome) detetam-se sozinhas, como
+ * ao carregar um ficheiro; com ou sem linha de cabeçalho. Separador: tab (Excel), senão ";" ou ",".
+ */
+export function parseColagem(txt: string): LinhaBruta[] {
+  const rows = matrizDeTexto(txt);
+  if (rows.length === 0) return [];
   const det = autodetectar(rows);
   const so = (r: string[], c: number, usadas: number[]) => (usadas.includes(c) ? '' : r[c] ?? '');
   return rows.slice(det.linhaInicial - 1).map((r) => ({
@@ -97,9 +103,13 @@ export function autodetectar(rows: string[][]) {
     cNome = melhor >= 0 ? melhor : cConta > 1 ? cConta - 1 : nCols > 2 ? 2 : 0;
   }
 
+  // Primeira linha de dados: conta com 8+ dígitos, ou (contas curtas, p.ex. 7 dígitos) conta com 6+
+  // dígitos e um valor ao lado. Sem isto a primeira linha era saltada quando a conta era mais curta.
+  const digitos = (v: unknown) => String(v ?? '').replace(/\D/g, '').length;
   let li = dataStart;
   for (let i = dataStart; i < rows.length; i++) {
-    if (pareceNib((rows[i] ?? [])[cConta])) {
+    const r = rows[i] ?? [];
+    if (pareceNib(r[cConta]) || (digitos(r[cConta]) >= 6 && pareceValor(r[cValor]))) {
       li = i;
       break;
     }

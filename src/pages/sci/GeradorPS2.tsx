@@ -32,7 +32,7 @@ import { adivinharFolhaDoMes } from '@/lib/planilhaMeses';
 import { guardarFicheiro } from '@/lib/guardarFicheiro';
 import { comExtensao, semExtensao } from '@/lib/nomeFicheiro';
 import { empresaSugerida } from '@/lib/empresaDoFicheiro';
-import { autodetectar, parseColagem, type LinhaBruta } from '@/lib/colagemPs2';
+import { autodetectar, matrizDeTexto, type LinhaBruta } from '@/lib/colagemPs2';
 import { DICA_TAB, tabNoCampo } from '@/lib/tabNoCampo';
 import { registarLote, sentidoPorTipo, sha256Hex } from '@/services/ps2LotesService';
 
@@ -89,7 +89,10 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
   const [prefixo, setPrefixo] = useState('Ordenado');
   const [tipo, setTipo] = useState<string>(TIPOS_OPERACAO[0]);
 
-  const [modo, setModo] = useState<'colar' | 'ficheiro'>('colar');
+  const [modo, setModo] = useState<'colar' | 'colunas' | 'ficheiro'>('colar');
+  const [colContas, setColContas] = useState('');
+  const [colValores, setColValores] = useState('');
+  const [colNomes, setColNomes] = useState('');
   const [colagem, setColagem] = useState('');
   const [modoConta, setModoConta] = useState<ModoConta>('auto');
   const [soAlertas, setSoAlertas] = useState(false);
@@ -138,6 +141,9 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
     setTipo(TIPOS_OPERACAO[0]);
     setModo('colar');
     setColagem('');
+    setColContas('');
+    setColValores('');
+    setColNomes('');
     setModoConta('auto');
     setWorkbook(null);
     setFolhasVisiveis([]);
@@ -156,24 +162,44 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
 
   const recomecar = () => {
     const temDados =
-      contaEmpresa.trim() !== '' || colagem.trim() !== '' || sheetRows.length > 0;
+      contaEmpresa.trim() !== '' || colagem.trim() !== '' || colContas.trim() !== '' || sheetRows.length > 0;
     if (temDados) setConfirmarReset(true);
     else limparTudo();
   };
 
+  // Texto colado → matriz de células: o mesmo mapeamento de colunas do ficheiro serve para a colagem.
+  const matrizColada = useMemo(() => matrizDeTexto(colagem), [colagem]);
+  const matriz = modo === 'colar' ? matrizColada : sheetRows;
+  const nCols = modo === 'colar' ? matrizColada.reduce((m, r) => Math.max(m, r.length), 0) : nColunas;
+
+  // Colunas coladas à parte: contas, valores e nomes alinhados pela ordem das linhas.
+  const separadas = useMemo(() => {
+    const parte = (t: string) => {
+      const a = t.split(/\r?\n/).map((l) => l.trim());
+      while (a.length > 0 && a[a.length - 1] === '') a.pop();
+      return a;
+    };
+    return { c: parte(colContas), v: parte(colValores), n: parte(colNomes) };
+  }, [colContas, colValores, colNomes]);
+
   const linhas: LinhaBruta[] = useMemo(() => {
-    if (modo === 'colar') return parseColagem(colagem);
     const out: LinhaBruta[] = [];
-    for (let i = Math.max(0, linhaInicial - 1); i < sheetRows.length; i++) {
-      const r = sheetRows[i] ?? [];
+    if (modo === 'colunas') {
+      const { c, v, n } = separadas;
+      const total = Math.max(c.length, v.length, n.length);
+      for (let i = 0; i < total; i++) out.push({ recebido: c[i] ?? '', valor: v[i] ?? '', nome: n[i] ?? '' });
+      return out.filter((l) => l.recebido !== '' || l.valor !== '' || l.nome !== '');
+    }
+    for (let i = Math.max(0, linhaInicial - 1); i < matriz.length; i++) {
+      const r = matriz[i] ?? [];
       out.push({
         recebido: (r[colConta] ?? '').toString().trim(),
-        valor: (r[colValor] ?? '').toString().trim(),
-        nome: (r[colNome] ?? '').toString().trim(),
+        valor: colValor === colConta ? '' : (r[colValor] ?? '').toString().trim(),
+        nome: colNome === colConta || colNome === colValor ? '' : (r[colNome] ?? '').toString().trim(),
       });
     }
     return out;
-  }, [modo, colagem, sheetRows, colConta, colValor, colNome, linhaInicial]);
+  }, [modo, separadas, matriz, colConta, colValor, colNome, linhaInicial]);
 
   const comDados = useMemo(
     () =>
@@ -407,9 +433,9 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
   };
 
   const previewFonte = soAlertas ? tratadas.filter((t) => t.estado === 'alerta') : tratadas;
-  const colOpts = Array.from({ length: Math.max(nColunas, 3) }, (_, i) => i);
+  const colOpts = Array.from({ length: Math.max(nCols, 3) }, (_, i) => i);
   const previewLinhas = previewFonte.slice(0, 400);
-  const headerRow = sheetRows[Math.max(0, linhaInicial - 2)] ?? [];
+  const headerRow = matriz[Math.max(0, linhaInicial - 2)] ?? [];
   const nomeCol = (i: number) => {
     const h = String(headerRow[i] ?? '').trim();
     return h ? `${XLSX.utils.encode_col(i)} — ${h.slice(0, 22)}` : XLSX.utils.encode_col(i);
@@ -551,6 +577,9 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
                 <Button size="sm" variant={modo === 'colar' ? 'default' : 'outline'} onClick={() => setModo('colar')}>
                   <ClipboardPaste className="h-4 w-4 mr-1" /> Colar
                 </Button>
+                <Button size="sm" variant={modo === 'colunas' ? 'default' : 'outline'} onClick={() => setModo('colunas')}>
+                  <ClipboardPaste className="h-4 w-4 mr-1" /> Colar colunas à parte
+                </Button>
                 <Button
                   size="sm"
                   variant={modo === 'ficheiro' ? 'default' : 'outline'}
@@ -612,14 +641,65 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
             <Textarea
               value={colagem}
               onChange={(e) => {
-                setColagem(e.target.value);
+                const txt = e.target.value;
+                setColagem(txt);
+                const m = matrizDeTexto(txt);
+                if (m.length > 0) {
+                  const det = autodetectar(m);
+                  setColConta(det.colConta);
+                  setColValor(det.colValor);
+                  setColNome(det.colNome);
+                  setLinhaInicial(det.linhaInicial);
+                }
                 resetLinhas();
               }}
               onKeyDown={tabNoCampo}
               placeholder={'Cola aqui as linhas do Excel: conta/NIB, valor e nome (as colunas detetam-se sozinhas, com ou sem cabeçalho)\n000300001234567810176\t108800,00\tJOÃO SILVA\n87654321\t142500\tMARIA COSTA'}
               className="min-h-[150px] font-mono text-xs"
             />
+            <p className="text-[11px] text-muted-foreground">
+              Podes colar a folha toda, com colunas a mais ou em qualquer ordem: em baixo escolhes qual é o NIB, o valor e o nome.
+            </p>
             <p className="text-[11px] text-muted-foreground">{DICA_TAB}</p>
+            </div>
+          ) : modo === 'colunas' ? (
+            <div className="space-y-2">
+              <div className="grid gap-3 sm:grid-cols-3">
+                {(
+                  [
+                    ['Contas / NIB', colContas, setColContas, separadas.c.length],
+                    ['Valores', colValores, setColValores, separadas.v.length],
+                    ['Nomes', colNomes, setColNomes, separadas.n.length],
+                  ] as const
+                ).map(([label, val, set, n]) => (
+                  <div key={label} className="space-y-1">
+                    <Label className="text-xs">
+                      {label} <span className="text-muted-foreground">({n} linha{n === 1 ? '' : 's'})</span>
+                    </Label>
+                    <Textarea
+                      value={val}
+                      onChange={(e) => {
+                        set(e.target.value);
+                        resetLinhas();
+                      }}
+                      placeholder={`Cola só a coluna: ${label.toLowerCase()}`}
+                      className="min-h-[150px] font-mono text-xs"
+                    />
+                  </div>
+                ))}
+              </div>
+              {(() => {
+                const ns = [separadas.c.length, separadas.v.length, separadas.n.length].filter((x) => x > 0);
+                return ns.length > 1 && new Set(ns).size > 1 ? (
+                  <p className="text-xs text-destructive">
+                    As colunas não têm o mesmo número de linhas ({separadas.c.length} contas, {separadas.v.length} valores, {separadas.n.length} nomes): confirma que copiaste o mesmo intervalo, senão os valores ficam na conta errada.
+                  </p>
+                ) : (
+                  <p className="text-[11px] text-muted-foreground">
+                    Copia cada coluna do Excel (o mesmo intervalo de linhas) e cola no seu campo: ficam alinhadas pela ordem. Sem cabeçalhos.
+                  </p>
+                );
+              })()}
             </div>
           ) : (
             <div className="space-y-4">
@@ -643,85 +723,86 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
                 </div>
               )}
 
-              {sheetRows.length > 0 && (
-                <div className="space-y-3">
-                  <div className="overflow-x-auto rounded-md border">
-                    <table className="text-[11px] w-full">
-                      <thead>
-                        <tr className="bg-muted/60 text-left">
-                          <th className="px-2 py-1 font-normal text-muted-foreground w-10">linha</th>
-                          {colOpts.map((i) => {
-                            const papel = i === colConta ? 'NIB' : i === colValor ? 'Valor' : i === colNome ? 'Nome' : '';
-                            const cor = i === colConta ? 'text-primary' : i === colValor ? 'text-success' : i === colNome ? 'text-foreground' : 'text-muted-foreground';
-                            return (
-                              <th key={i} className={`px-2 py-1 whitespace-nowrap font-medium ${cor}`}>
-                                {XLSX.utils.encode_col(i)}
-                                {papel && <span className="ml-1 font-normal">· {papel}</span>}
-                              </th>
-                            );
-                          })}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {sheetRows.slice(0, 8).map((r, ri) => (
-                          <tr key={ri} className={`border-t ${ri === linhaInicial - 1 ? 'border-l-2 border-l-primary' : ''} ${ri >= linhaInicial - 1 ? '' : 'opacity-45'}`}>
-                            <td className="px-2 py-1 text-muted-foreground">{ri + 1}</td>
-                            {colOpts.map((ci) => (
-                              <td key={ci} className={`px-2 py-1 max-w-[14rem] truncate ${ci === colConta ? 'text-primary font-mono' : ci === colValor ? 'text-success' : ci === colNome ? 'text-foreground' : ''}`}>
-                                {(r[ci] ?? '').toString()}
-                              </td>
-                            ))}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <div className="grid gap-3 sm:grid-cols-4">
-                    {(
-                      [
-                        ['NIB', colConta, setColConta] as const,
-                        ['Valor', colValor, setColValor] as const,
-                        ['Nome', colNome, setColNome] as const,
-                      ] as const
-                    ).map(([label, val, set]) => (
-                      <div key={label} className="space-y-1">
-                        <Label className="text-xs">Coluna do {label}</Label>
-                        <Select value={String(val)} onValueChange={(v) => set(Number(v))}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            {colOpts.map((i) => (
-                              <SelectItem key={i} value={String(i)}>{nomeCol(i)}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    ))}
-                    <div className="space-y-1">
-                      <Label className="text-xs" htmlFor="li">Dados começam na linha</Label>
-                      <Input
-                        id="li"
-                        type="number"
-                        min={1}
-                        max={sheetRows.length || undefined}
-                        value={linhaInicial}
-                        onChange={(e) =>
-                          setLinhaInicial(
-                            Math.max(1, Math.min(sheetRows.length || 1, Number(e.target.value) || 1)),
-                          )
-                        }
-                      />
-                      {sheetRows.length > 0 && linhaInicial > sheetRows.length && (
-                        <p className="text-[11px] text-destructive">
-                          Fora do intervalo — o ficheiro só tem {sheetRows.length} linha(s).
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           )}
+
+          {modo !== 'colunas' && matriz.length > 0 && (
+              <div className="space-y-3">
+                <div className="overflow-x-auto rounded-md border">
+                  <table className="text-[11px] w-full">
+                    <thead>
+                      <tr className="bg-muted/60 text-left">
+                        <th className="px-2 py-1 font-normal text-muted-foreground w-10">linha</th>
+                        {colOpts.map((i) => {
+                          const papel = i === colConta ? 'NIB' : i === colValor ? 'Valor' : i === colNome ? 'Nome' : '';
+                          const cor = i === colConta ? 'text-primary' : i === colValor ? 'text-success' : i === colNome ? 'text-foreground' : 'text-muted-foreground';
+                          return (
+                            <th key={i} className={`px-2 py-1 whitespace-nowrap font-medium ${cor}`}>
+                              {XLSX.utils.encode_col(i)}
+                              {papel && <span className="ml-1 font-normal">· {papel}</span>}
+                            </th>
+                          );
+                        })}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {matriz.slice(0, 8).map((r, ri) => (
+                        <tr key={ri} className={`border-t ${ri === linhaInicial - 1 ? 'border-l-2 border-l-primary' : ''} ${ri >= linhaInicial - 1 ? '' : 'opacity-45'}`}>
+                          <td className="px-2 py-1 text-muted-foreground">{ri + 1}</td>
+                          {colOpts.map((ci) => (
+                            <td key={ci} className={`px-2 py-1 max-w-[14rem] truncate ${ci === colConta ? 'text-primary font-mono' : ci === colValor ? 'text-success' : ci === colNome ? 'text-foreground' : ''}`}>
+                              {(r[ci] ?? '').toString()}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-4">
+                  {(
+                    [
+                      ['NIB', colConta, setColConta] as const,
+                      ['Valor', colValor, setColValor] as const,
+                      ['Nome', colNome, setColNome] as const,
+                    ] as const
+                  ).map(([label, val, set]) => (
+                    <div key={label} className="space-y-1">
+                      <Label className="text-xs">Coluna do {label}</Label>
+                      <Select value={String(val)} onValueChange={(v) => set(Number(v))}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {colOpts.map((i) => (
+                            <SelectItem key={i} value={String(i)}>{nomeCol(i)}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ))}
+                  <div className="space-y-1">
+                    <Label className="text-xs" htmlFor="li">Dados começam na linha</Label>
+                    <Input
+                      id="li"
+                      type="number"
+                      min={1}
+                      max={matriz.length || undefined}
+                      value={linhaInicial}
+                      onChange={(e) =>
+                        setLinhaInicial(
+                          Math.max(1, Math.min(matriz.length || 1, Number(e.target.value) || 1)),
+                        )
+                      }
+                    />
+                    {matriz.length > 0 && linhaInicial > matriz.length && (
+                      <p className="text-[11px] text-destructive">
+                        Fora do intervalo — o ficheiro só tem {matriz.length} linha(s).
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
 
           {tratadas.length > 0 && (
             <div className="space-y-2">
