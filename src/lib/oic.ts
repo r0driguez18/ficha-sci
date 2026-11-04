@@ -155,6 +155,11 @@ export function parseMontante(raw: unknown): number | null {
     negativo = s.startsWith('-');
     s = s.slice(1);
   }
+  // Notação científica (o Excel mostra assim os números muito grandes quando a coluna é texto).
+  if (/^\d+(?:[.,]\d+)?e[+-]?\d+$/i.test(s)) {
+    const e = Number(s.replace(',', '.'));
+    return Number.isFinite(e) ? (negativo ? -e : e) : NaN;
+  }
   if (!/^[\d.,]+$/.test(s) || !/\d/.test(s)) return NaN;
 
   const ponto = s.lastIndexOf('.');
@@ -165,9 +170,14 @@ export function parseMontante(raw: unknown): number | null {
   } else if (ponto >= 0 || virgula >= 0) {
     // Um só tipo de separador: casas decimais se aparece uma vez com 1–2 (ou 4+)
     // dígitos a seguir ("1,5", "1.50"); milhares se repete ou tem 3 dígitos ("1.234").
+    // Com 3 dígitos só é milhares se antes houver 1–3 dígitos sem zero à frente: "1234.567" e
+    // "0.500" não são agrupamentos de milhares (senão o valor saía a multiplicar por 1000).
     const sep = ponto >= 0 ? '.' : ',';
     const partes = s.split(sep);
-    if (partes.length === 2 && partes[1].length !== 3) decimal = sep;
+    if (partes.length === 2) {
+      const milhares = partes[1].length === 3 && /^[1-9]\d{0,2}$/.test(partes[0]);
+      if (!milhares) decimal = sep;
+    }
   }
 
   let numero: string;
