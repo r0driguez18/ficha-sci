@@ -11,6 +11,7 @@ import {
   type FormType,
   type MotivoDesatualizada,
 } from '@/services/taskboardService';
+import { validarDataFicha } from '@/lib/validarDataFicha';
 import { saveFileProcess } from '@/services/fileProcessService';
 import { createCobrancaRetorno } from '@/services/cobrancasRetornoService';
 import { saveExportedTaskboard, checkDuplicateOperations } from '@/services/exportedTaskboardService';
@@ -493,6 +494,29 @@ export function useTaskboard(formType: FormType) {
     if (horarioInvalido) {
       const labels: Record<TurnKey, string> = { turno1: 'Turno 1', turno2: 'Turno 2', turno3: 'Turno 3' };
       toast.error(`Entrada e saída do ${labels[horarioInvalido]} não podem ser a mesma hora.`);
+      return;
+    }
+
+    // Datas trocadas: futura bloqueia; dia que não bate com o tipo (ou muito atrasada) pede confirmação.
+    const problemasData = validarDataFicha(formType, date, todayIso());
+    const erroData = problemasData.find((p) => p.gravidade === 'erro');
+    if (erroData) {
+      toast.error(erroData.mensagem);
+      return;
+    }
+    const avisosData = problemasData.filter((p) => p.gravidade === 'aviso');
+    if (
+      avisosData.length > 0 &&
+      !window.confirm(
+        [
+          'Confirma a data da ficha antes de exportar:',
+          '',
+          ...avisosData.map((p) => `• ${p.mensagem}`),
+          '',
+          'Uma ficha exportada não se pode repetir nesse dia. Exportar mesmo assim?',
+        ].join('\n'),
+      )
+    ) {
       return;
     }
 

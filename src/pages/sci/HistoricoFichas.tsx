@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { format, parseISO } from 'date-fns';
+import { dataSuspeitaExportada } from '@/lib/validarDataFicha';
 import { ptBR } from 'date-fns/locale';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PageContainer } from '@/components/layout/PageContainer';
@@ -546,6 +547,15 @@ export default function HistoricoFichas() {
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4" />
                         {record.date}
+                        {(() => {
+                          const suspeita = dataSuspeitaExportada(record.form_type, record.date, record.exported_at || record.created_at);
+                          return suspeita ? (
+                            <Badge variant="outline" className="border-warning text-warning" title={suspeita}>
+                              <AlertTriangle className="h-3 w-3 mr-1" />
+                              Confirmar data
+                            </Badge>
+                          ) : null;
+                        })()}
                       </div>
                     </TableCell>
                     <TableCell>
