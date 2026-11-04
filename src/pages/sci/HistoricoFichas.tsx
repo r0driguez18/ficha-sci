@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { format, parseISO } from 'date-fns';
+import { fichaSemAssinaturaTapes } from '@/lib/tapesAssinatura';
 import { ptBR } from 'date-fns/locale';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PageContainer } from '@/components/layout/PageContainer';
@@ -582,6 +583,12 @@ export default function HistoricoFichas() {
                       ) : (
                         <Badge variant="outline" className="text-foreground border-warning/50">
                           Pendente
+                        </Badge>
+                      )}
+                      {fichaSemAssinaturaTapes(record.tapes_status, record.turn_data) && (
+                        <Badge variant="outline" className="mt-1 border-destructive/50 text-destructive" title="A folha de tapes foi exportada sem o nome de quem fez o display.">
+                          <AlertTriangle className="h-3 w-3 mr-1" />
+                          Sem assinatura
                         </Badge>
                       )}
                     </TableCell>

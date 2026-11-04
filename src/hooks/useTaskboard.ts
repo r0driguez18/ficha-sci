@@ -11,6 +11,7 @@ import {
   type FormType,
   type MotivoDesatualizada,
 } from '@/services/taskboardService';
+import { tapesAssinadas } from '@/lib/tapesAssinatura';
 import { saveFileProcess } from '@/services/fileProcessService';
 import { createCobrancaRetorno } from '@/services/cobrancasRetornoService';
 import { saveExportedTaskboard, checkDuplicateOperations } from '@/services/exportedTaskboardService';
@@ -496,6 +497,10 @@ export function useTaskboard(formType: FormType) {
       return;
     }
 
+    if (showTapeVerification && !tapesAssinadas(verificacaoTapes.verificadoPor)) {
+      toast.error("Preencha 'Verificado por' na folha de verificação de tapes (quem fez o display) antes de exportar.");
+      return;
+    }
     setBusy(true);
     try {
       const motivo = await verificar();

@@ -1,3 +1,4 @@
+import { tapesAssinadas } from '@/lib/tapesAssinatura';
 import React from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -69,13 +70,16 @@ export const VerificacaoTapesSection: React.FC<Props> = ({ data, operador, tapes
         </div>
         <div className="space-y-1">
           <Label htmlFor="tape-verificadoPor" className="text-xs uppercase tracking-wide text-muted-foreground">
-            Verificado por
+            Verificado por <span className="text-destructive" aria-hidden="true">*</span>
           </Label>
           <Input
             id="tape-verificadoPor"
             value={tapes.verificadoPor}
             onChange={(e) => onChange('verificadoPor', e.target.value)}
-            placeholder="Nome de quem verificou"
+            placeholder="Nome de quem fez o display (obrigatório)"
+            required
+            aria-invalid={!tapesAssinadas(tapes.verificadoPor)}
+            className={tapesAssinadas(tapes.verificadoPor) ? '' : 'border-destructive/60'}
           />
         </div>
       </div>
