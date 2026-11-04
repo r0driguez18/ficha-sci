@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { ChevronDown, ChevronRight, PlusCircle, Trash2 } from 'lucide-react';
 import { TaskTableRow } from '@/types/taskTableRow';
+import { blocosDaTabela } from '@/lib/blocosTabela';
 
 interface TableRowsSectionProps {
   tableRows: TaskTableRow[];
@@ -23,6 +24,22 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
   onInputChange,
 }) => {
   const focarNova = useRef(false);
+  // Blocos de 20 linhas (uma folha A4): os já cheios minimizam-se sozinhos; qualquer folha se abre ou minimiza à mão.
+  const blocos = blocosDaTabela(tableRows);
+  const [abertos, setAbertos] = useState<Set<number>>(new Set());
+  const [fechados, setFechados] = useState<Set<number>>(new Set());
+  const estaMinimizado = (i: number, atual: boolean) => fechados.has(i) || (!atual && !abertos.has(i));
+  const alternarBloco = (i: number, atual: boolean) => {
+    const abrir = estaMinimizado(i, atual);
+    const com = (s: Set<number>, add: boolean) => {
+      const n = new Set(s);
+      if (add) n.add(i);
+      else n.delete(i);
+      return n;
+    };
+    setAbertos((a) => com(a, abrir));
+    setFechados((f) => com(f, !abrir));
+  };
   const preenchidas = tableRows.filter((r) => r.tarefa || r.nomeAs || r.operacao || r.tipo).length;
   // Com muitos processamentos a tabela começa recolhida: a lista de tarefas fica à vista
   // e os processamentos regista-se pelo painel flutuante.
@@ -32,6 +49,14 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
   const adicionar = () => {
     focarNova.current = true;
     setAberta(true);
+    // Ao adicionar, a folha onde a linha vai cair abre-se.
+    const ultimo = blocosDaTabela([...tableRows, null]).length - 1;
+    setFechados((f) => {
+      if (!f.has(ultimo)) return f;
+      const n = new Set(f);
+      n.delete(ultimo);
+      return n;
+    });
     onAddRow();
   };
 
@@ -88,7 +113,27 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {tableRows.map((row) => (
+            {blocos.map((bloco) => {
+              const minimizado = estaMinimizado(bloco.indice, bloco.atual);
+              return (
+                <React.Fragment key={bloco.indice}>
+                  {blocos.length > 1 && (
+                    <TableRow className="bg-muted/30 hover:bg-muted/50">
+                      <TableCell colSpan={7} className="py-1.5">
+                        <button
+                          type="button"
+                          onClick={() => alternarBloco(bloco.indice, bloco.atual)}
+                          aria-expanded={!minimizado}
+                          className="flex w-full items-center gap-1.5 text-left text-xs font-medium text-muted-foreground hover:text-foreground"
+                        >
+                          {minimizado ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                          Folha {bloco.indice + 1} · linhas {bloco.de}–{bloco.ate}
+                          <span className="ml-auto font-normal">{minimizado ? 'mostrar' : 'minimizar'}</span>
+                        </button>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {!minimizado && bloco.linhas.map((row) => (
               <TableRow key={row.id} data-linha={row.id}>
                 <TableCell>
                   <Input 
@@ -176,7 +221,10 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
                   </Button>
                 </TableCell>
               </TableRow>
-            ))}
+                  ))}
+                </React.Fragment>
+              );
+            })}
           </TableBody>
         </Table>
       </div>
