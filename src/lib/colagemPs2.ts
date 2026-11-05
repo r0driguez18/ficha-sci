@@ -2,6 +2,8 @@
  * Leitura do texto colado (e deteção de colunas) do gerador PS2.
  */
 
+import { parseTabular } from './colagemTabular';
+
 export interface LinhaBruta {
   recebido: string;
   valor: string;
@@ -10,13 +12,7 @@ export interface LinhaBruta {
 
 /** Texto colado (tab, ";" ou ",") → matriz de células. */
 export function matrizDeTexto(txt: string): string[][] {
-  const linhas = txt
-    .split(/\r?\n/)
-    .map((l) => l.trimEnd())
-    .filter((l) => l.trim() !== '');
-  if (linhas.length === 0) return [];
-  const sep = linhas.some((l) => l.includes('\t')) ? '\t' : linhas.some((l) => l.includes(';')) ? ';' : ',';
-  return linhas.map((l) => l.split(sep).map((x) => x.trim()));
+  return parseTabular(txt);
 }
 
 /**

@@ -259,6 +259,12 @@ export function tratarLinhaOIC(l: LinhaBrutaOIC, descritivoPadrao = ''): LinhaTr
   // sem NIB e sem nome, ou com nome a começar por "Total", não são pagamentos.
   if (n.nib === '' && !n.temLetras && !n.perdeuDigitos && (nomeLimpo === '' || /^total/i.test(nomeLimpo))) vazia = true;
 
+  // Títulos de secção ("Outros Bancos": só texto, sem NIB nem montante nem descritivo) e cabeçalhos repetidos a meio
+  // da folha ("Beneficiário | Valor a pagar | Descritivo | Nº Conta/ NIB") não são pagamentos: ficam de fora sem erro.
+  const semDados = n.nib === '' && !n.perdeuDigitos;
+  if (semDados && !n.temLetras && montante === null && descLimpa === '') vazia = true;
+  if (semDados && n.temLetras && montante !== null && Number.isNaN(montante)) vazia = true;
+
   if (descLimpa === '') descLimpa = limparTexto(descritivoPadrao);
   // Nomes e descritivo sem acentos ("João" → "Joao"): a letra fica, o acento sai.
   const nome = paraAnsi(semAcentos(nomeLimpo));
@@ -282,7 +288,11 @@ export function tratarLinhaOIC(l: LinhaBrutaOIC, descritivoPadrao = ''): LinhaTr
     return { ...base, erro: 'NIB guardado como número no Excel (perdeu dígitos) — formata a coluna como Texto.' };
   }
   if (n.nib === '') return { ...base, erro: 'NIB obrigatório.' };
-  if (n.nib.length !== 21) return { ...base, erro: `NIB deve ter 21 dígitos (tem ${n.nib.length}).` };
+  if (n.nib.length !== 21) {
+    // 10–14 dígitos costuma ser o nº de conta do BCA (sem o prefixo do banco): vai pelo gerador PS2.
+    const dica = n.nib.length >= 10 && n.nib.length <= 14 ? ' Parece um nº de conta do BCA — esse vai pelo gerador PS2.' : '';
+    return { ...base, erro: `NIB deve ter 21 dígitos (tem ${n.nib.length}).${dica}` };
+  }
   // NIB do BCA: este gerador é só para outros bancos — a linha fica de fora (os do BCA vão pelo PS2).
   if (n.nib.startsWith('0003')) return { ...base, foraDoFicheiro: true };
 

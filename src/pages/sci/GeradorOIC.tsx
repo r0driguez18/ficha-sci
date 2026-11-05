@@ -26,6 +26,7 @@ import { COLUNAS_JUNTA, lerFolhasOIC, type FolhaIgnorada, type FolhaUsada } from
 import { guardarFicheiro } from '@/lib/guardarFicheiro';
 import { comExtensao, semExtensao } from '@/lib/nomeFicheiro';
 import { DICA_TAB, tabNoCampo } from '@/lib/tabNoCampo';
+import { parseTabular } from '@/lib/colagemTabular';
 
 const letraColuna = (i: number) => {
   let s = '';
@@ -34,12 +35,7 @@ const letraColuna = (i: number) => {
 };
 
 /** Texto colado do Excel (tabs) → matriz; mantém as linhas em branco para a numeração bater certo. */
-function paraMatriz(texto: string): unknown[][] {
-  const linhas = texto.split(/\r\n|\r|\n/);
-  while (linhas.length > 0 && linhas[linhas.length - 1].trim() === '') linhas.pop();
-  const sep = texto.includes('\t') ? '\t' : texto.includes(';') ? ';' : ',';
-  return linhas.map((l) => l.split(sep));
-}
+const paraMatriz = (texto: string): unknown[][] => parseTabular(texto, { manterVazias: true });
 
 /** Correção feita à mão numa linha (só vale para este ficheiro gerado — o Excel de origem não muda). */
 interface EdicaoLinha {
@@ -344,7 +340,7 @@ export default function GeradorOIC() {
           )}
 
           <div className="max-w-sm space-y-1">
-            <Label htmlFor="oic-desc">Descritivo geral</Label>
+            <Label htmlFor="oic-desc">Descritivo por defeito</Label>
             <Input
               id="oic-desc"
               maxLength={40}
@@ -355,7 +351,7 @@ export default function GeradorOIC() {
               }}
               placeholder="Pagamento Ordenado"
             />
-            <p className="text-xs text-muted-foreground">Vai nas linhas que não têm descritivo próprio (máx. 40 caracteres). Se o ficheiro tem uma coluna de descritivos, escolhe-a acima; qualquer linha também se corrige à mão no lápis.</p>
+            <p className="text-xs text-muted-foreground">Só para as linhas sem descritivo (máx. 40 caracteres): o do cliente, na coluna do ficheiro, tem sempre prioridade. Qualquer linha também se corrige à mão no lápis.</p>
           </div>
         </CardContent>
       </Card>
