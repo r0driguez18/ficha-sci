@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseTabular } from '../colagemTabular';
-import { autodetectar, parseColagem } from '../colagemPs2';
+import { autodetectar, linhasDaMatriz, parseColagem } from '../colagemPs2';
 import { autodetectarColunasOIC, secaoDaLinha, tratarFolhaOIC, tratarLinhaOIC } from '../oic';
 
 describe('parseTabular', () => {
@@ -180,5 +180,42 @@ describe('OIC: o bloco BCA e os NIBs do BCA não entram na lista', () => {
     expect(secaoDaLinha(['BCA Seguros', '10'])).toBeNull();
     expect(secaoDaLinha(['Ana Lima', '100', '', ''])).toBeNull();
     expect(secaoDaLinha(['TOTAL', '', '', ''])).toBeNull();
+  });
+});
+
+describe('PS2: folha Pagamento (só o bloco BCA; descritivo do cliente)', () => {
+  const matriz = parseTabular(FOLHA, { manterVazias: true });
+  const det = autodetectar(matriz);
+  const { linhas, nOutrosBlocos } = linhasDaMatriz(matriz, det);
+
+  it('deteta as colunas pelo cabeçalho, incluindo o descritivo', () => {
+    expect(det).toMatchObject({ colNome: 0, colValor: 1, colDescritivo: 2, colConta: 3 });
+  });
+
+  it('só entram as linhas do bloco BCA; as de "Outros Bancos" só se contam', () => {
+    const nomes = linhas.filter((l) => l.recebido !== '').map((l) => l.nome);
+    expect(nomes).toEqual(['Inova Assistance', 'Danilo Teste', 'Transport Teste']);
+    expect(nOutrosBlocos).toBe(3); // Roseanne, Hotel e Sem Descritivo (não o cabeçalho nem o TOTAL)
+  });
+
+  it('o descritivo do cliente vem na linha; sem ele, fica vazio (vale o prefixo)', () => {
+    expect(linhas.find((l) => l.nome === 'Inova Assistance')?.descritivo).toBe('FT/2026/CV/100');
+    expect(linhas.find((l) => l.nome === 'Danilo Teste')?.descritivo).toBe('Ajuda de custo');
+  });
+
+  it('parseColagem (texto colado) também traz o descritivo', () => {
+    const l = parseColagem(['Nome\tValor\tDescritivo\tNIB', 'Ana Lima\t1000\tSubsidio Ferias\t000300001234567810176', 'Rui Sa\t2000\t\t000300001234567810177'].join('\n'));
+    expect(l.map((x) => x.descritivo)).toEqual(['Subsidio Ferias', '']);
+  });
+
+  it('sem cabeçalho não se adivinha coluna de descritivo', () => {
+    expect(autodetectar([['000300001234567810176', '1000', 'Ana Lima', 'qualquer texto']]).colDescritivo).toBe(-1);
+  });
+
+  it('sem blocos: tudo entra', () => {
+    const r = [['Nome', 'Valor', 'NIB'], ['Ana', '100', '000300001234567810176'], ['Rui', '200', '000300001234567810177']];
+    const t = linhasDaMatriz(r, { colConta: 2, colValor: 1, colNome: 0, colDescritivo: -1, linhaInicial: 2 });
+    expect(t.linhas).toHaveLength(2);
+    expect(t.nOutrosBlocos).toBe(0);
   });
 });
