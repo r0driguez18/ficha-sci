@@ -87,6 +87,9 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
   const [data, setData] = useState(todayIso());
   const [referencia, setReferencia] = useState('Ordenado');
   const [prefixo, setPrefixo] = useState('Ordenado');
+  /** Descritivo só com o prefixo, sem o nome de cada pessoa. */
+  const [semNomes, setSemNomes] = useState(false);
+  const descritivoDe = (nome: string) => (semNomes ? prefixo.trim() : `${prefixo} ${nome}`.trim());
   const [tipo, setTipo] = useState<string>(TIPOS_OPERACAO[0]);
 
   const [modo, setModo] = useState<'colar' | 'colunas' | 'ficheiro'>('colar');
@@ -138,6 +141,7 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
     setData(todayIso());
     setReferencia('Ordenado');
     setPrefixo('Ordenado');
+    setSemNomes(false);
     setTipo(TIPOS_OPERACAO[0]);
     setModo('colar');
     setColagem('');
@@ -219,7 +223,7 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
         const ed = edicoes[l0.idx];
         const l = ed ? { ...l0, recebido: ed.recebido, nome: ed.nome, valor: ed.valor } : l0;
         const trat = tratarNib(l.recebido, NATUREZA_PADRAO, modoConta);
-        const semDescritivo = `${prefixo} ${l.nome}`.trim() === '';
+        const semDescritivo = descritivoDe(l.nome) === '';
         const vAjustado = montanteComFator(l.valor, fator);
         // O valor editado já é o final (o que se vê na coluna "Valor"): não volta a dividir por 10.
         const valorAjustado = ed ? ed.valor : vAjustado === null || vAjustado === undefined ? l.valor : String(vAjustado);
@@ -249,7 +253,7 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
           valorAjustado,
         };
       }),
-    [comDados, overrides, excluidos, edicoes, modoConta, prefixo, fator],
+    [comDados, overrides, excluidos, edicoes, modoConta, prefixo, semNomes, fator],
   );
 
   // O nº de conta da empresa é sempre escrito à mão com a natureza no fim
@@ -382,7 +386,7 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
         .map((t) => ({
           nib: t.nibFinal,
           valor: limparValor(t.valorAjustado),
-          descritivo: `${prefixo} ${t.nome}`.trim(),
+          descritivo: descritivoDe(t.nome),
         })),
     });
     setResultado(res);
@@ -524,6 +528,13 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
             <div className="space-y-1.5">
               <Label htmlFor="prefixo">Descritivo (prefixo)</Label>
               <Input id="prefixo" value={prefixo} onChange={(e) => setPrefixo(e.target.value)} placeholder="ex.: Ordenado — junta-se ao nome" />
+              <div className="mt-2 flex items-center gap-2">
+                <Checkbox id="ps2-sem-nomes" checked={semNomes} onCheckedChange={(c) => { setSemNomes(!!c); setResultado(null); }} />
+                <Label htmlFor="ps2-sem-nomes" className="cursor-pointer font-normal text-sm">
+                  Só o prefixo (sem o nome)
+                  <span className="block text-xs text-muted-foreground">O descritivo de todas as linhas fica só o prefixo; os nomes não vão no ficheiro.</span>
+                </Label>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -922,7 +933,7 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
                         }`}
                       >
                         <td className="px-2 py-1.5 text-muted-foreground">{t.idx + 1}</td>
-                        <td className="px-2 py-1.5 truncate" title={t.nome}>
+                        <td className={`px-2 py-1.5 truncate ${semNomes ? 'text-muted-foreground line-through' : ''}`} title={semNomes ? 'Não vai no ficheiro (só o prefixo)' : t.nome}>
                           {t.nome || <span className="text-muted-foreground">(sem nome)</span>}
                           {t.idx in edicoes && t.estado !== 'excluido' && (
                             <span className="ml-1 text-[10px] text-primary" title="Corrigida aqui; o Excel de origem não foi alterado">

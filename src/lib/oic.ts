@@ -383,6 +383,8 @@ export interface ColunasOIC {
   colNib: number;
   colMontante: number;
   colNome: number;
+  /** Coluna do descritivo de cada linha (só se o cabeçalho a indicar); -1 = não há (vale o descritivo geral). */
+  colDescritivo: number;
   /** 1.ª linha de dados (1 = primeira linha da folha). */
   linhaInicial: number;
   temCabecalho: boolean;
@@ -420,11 +422,13 @@ export function autodetectarColunasOIC(rows: unknown[][]): ColunasOIC {
     nibConta: /^(n\.?º?\s*conta|conta|n[uú]mero da conta)/,
     montante: /^(montante|valor|v.?s*l[ií]quido|l[ií]quido|a pagar|total)/,
     nome: /^(nome|benefici|funcion|colaborad|titular)/,
+    descritivo: /^(descritivo|descri[cç][aã]o|refer[eê]ncia|motivo|finalidade|hist[oó]rico|observa)/,
   };
   let cab = -1;
   let cNib = -1;
   let cMontante = -1;
   let cNome = -1;
+  let cDescritivo = -1;
   for (let i = 0; i < Math.min(rows.length, 40); i++) {
     const r = rows[i] ?? [];
     const acha = (re: RegExp) => r.findIndex((c) => re.test(texto(c)));
@@ -437,12 +441,14 @@ export function autodetectarColunasOIC(rows: unknown[][]): ColunasOIC {
       cNib = a;
       cMontante = b;
       cNome = c;
+      cDescritivo = acha(chaves.descritivo);
+      if (cDescritivo === a || cDescritivo === b || cDescritivo === c) cDescritivo = -1;
       break;
     }
   }
 
   const inicio = cab + 1;
-  const usadas = () => [cNib, cMontante, cNome];
+  const usadas = () => [cNib, cMontante, cNome, cDescritivo];
   const pontua = (c: number, f: (v: unknown) => boolean) => {
     let n = 0;
     for (let i = inicio; i < rows.length; i++) if (f(rows[i]?.[c])) n++;
@@ -500,6 +506,7 @@ export function autodetectarColunasOIC(rows: unknown[][]): ColunasOIC {
     colNib: cNib,
     colMontante: cMontante,
     colNome: cNome,
+    colDescritivo: cDescritivo,
     linhaInicial: linha + 1,
     temCabecalho: cab >= 0,
   };

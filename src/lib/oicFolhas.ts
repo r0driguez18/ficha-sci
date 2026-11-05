@@ -33,7 +33,7 @@ export interface FolhasLidas {
   rows: unknown[][];
 }
 
-export const COLUNAS_JUNTA = { colNib: 0, colMontante: 1, colNome: 2, linhaInicial: 1 };
+export const COLUNAS_JUNTA = { colNib: 0, colMontante: 1, colNome: 2, colDescritivo: 5, linhaInicial: 1 };
 
 const temValor = (v: unknown) => v !== null && v !== undefined && String(v).trim() !== '';
 
@@ -86,7 +86,7 @@ export function lerFolhasOIC(wb: XLSX.WorkBook): FolhasLidas {
       const montante = r[u.det.colMontante];
       const nome = r[u.det.colNome];
       if (!temValor(nib) && !temValor(montante) && !temValor(nome)) continue;
-      rows.push([nib, montante, nome, u.folha, i + 1]);
+      rows.push([nib, montante, nome, u.folha, i + 1, u.det.colDescritivo >= 0 ? r[u.det.colDescritivo] : '']);
       n += 1;
     }
     resumo.push({ folha: u.folha, linhas: n });

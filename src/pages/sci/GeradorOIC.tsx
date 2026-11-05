@@ -46,9 +46,11 @@ interface EdicaoLinha {
   nib: string;
   nome: string;
   montante: string;
+  /** Vazio = o descritivo da coluna do ficheiro, ou o geral. */
+  descritivo: string;
 }
 
-const COLUNAS_VAZIAS = { colNib: 0, colMontante: 1, colNome: 2, linhaInicial: 1 };
+const COLUNAS_VAZIAS = { colNib: 0, colMontante: 1, colNome: 2, colDescritivo: -1, linhaInicial: 1 };
 const DESCRITIVO_INICIAL = 'Pagamento Ordenado';
 
 export default function GeradorOIC() {
@@ -61,7 +63,7 @@ export default function GeradorOIC() {
   /** Linhas corrigidas à mão, por nº de linha da folha. */
   const [edicoes, setEdicoes] = useState<Record<number, EdicaoLinha>>({});
   const [editando, setEditando] = useState<number | null>(null);
-  const [rascunho, setRascunho] = useState<EdicaoLinha>({ nib: '', nome: '', montante: '' });
+  const [rascunho, setRascunho] = useState<EdicaoLinha>({ nib: '', nome: '', montante: '', descritivo: '' });
   const [resultado, setResultado] = useState<ResultadoOIC | null>(null);
   const [confirmarReset, setConfirmarReset] = useState(false);
   /** Folhas do ficheiro carregado: as usadas, as ignoradas, e se foram juntadas. */
@@ -85,6 +87,7 @@ export default function GeradorOIC() {
         colNib: d.colNib,
         colMontante: d.colMontante,
         colNome: d.colNome,
+        colDescritivo: d.colDescritivo,
         linhaInicial: d.linhaInicial,
       });
     }
@@ -125,7 +128,7 @@ export default function GeradorOIC() {
     }
   };
 
-  const nColunas = useMemo(() => Math.max(4, cols.colNib + 1, cols.colMontante + 1, cols.colNome + 1, rows.reduce((m, r) => Math.max(m, r.length), 0)), [rows, cols]);
+  const nColunas = useMemo(() => Math.max(4, cols.colNib + 1, cols.colMontante + 1, cols.colNome + 1, cols.colDescritivo + 1, rows.reduce((m, r) => Math.max(m, r.length), 0)), [rows, cols]);
 
   const tratadas = useMemo<LinhaOICComRef[]>(() => {
     const out: LinhaOICComRef[] = [];
@@ -137,7 +140,8 @@ export default function GeradorOIC() {
           nib: ed ? ed.nib : r[cols.colNib],
           montante: ed ? ed.montante : r[cols.colMontante],
           nome: ed ? ed.nome : r[cols.colNome],
-          descritivo: '',
+          // Descritivo da própria linha: o corrigido à mão, senão o da coluna do ficheiro; sem nenhum vale o geral.
+          descritivo: ed?.descritivo ? ed.descritivo : cols.colDescritivo >= 0 ? r[cols.colDescritivo] : '',
         },
         descritivo,
       );
@@ -162,6 +166,7 @@ export default function GeradorOIC() {
         nib: celulaTexto(r[cols.colNib]),
         nome: celulaTexto(r[cols.colNome]),
         montante: celulaTexto(r[cols.colMontante]),
+        descritivo: cols.colDescritivo >= 0 ? celulaTexto(r[cols.colDescritivo]) : '',
       },
     );
     setEditando(ref);
@@ -235,7 +240,7 @@ export default function GeradorOIC() {
     return mostra.join('\n');
   }, [resultado]);
 
-  const seletorColuna = (rotulo: string, chave: 'colNib' | 'colMontante' | 'colNome') => (
+  const seletorColuna = (rotulo: string, chave: 'colNib' | 'colMontante' | 'colNome' | 'colDescritivo', opcional = false) => (
     <div className="space-y-1">
       <Label>{rotulo}</Label>
       <Select
@@ -249,6 +254,7 @@ export default function GeradorOIC() {
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
+          {opcional && <SelectItem value="-1">Nenhuma (igual para todas)</SelectItem>}
           {Array.from({ length: nColunas }, (_, i) => (
             <SelectItem key={i} value={String(i)}>
               Coluna {letraColuna(i)}
@@ -317,10 +323,11 @@ export default function GeradorOIC() {
           )}
 
           {rows.length > 0 && !folhas?.junta && (
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
               {seletorColuna('NIB', 'colNib')}
               {seletorColuna('Montante', 'colMontante')}
               {seletorColuna('Nome', 'colNome')}
+              {seletorColuna('Descritivo', 'colDescritivo', true)}
               <div className="space-y-1">
                 <Label>Dados começam na linha</Label>
                 <Input
@@ -337,7 +344,7 @@ export default function GeradorOIC() {
           )}
 
           <div className="max-w-sm space-y-1">
-            <Label htmlFor="oic-desc">Descritivo (igual para todas as linhas)</Label>
+            <Label htmlFor="oic-desc">Descritivo geral</Label>
             <Input
               id="oic-desc"
               maxLength={40}
@@ -348,7 +355,7 @@ export default function GeradorOIC() {
               }}
               placeholder="Pagamento Ordenado"
             />
-            <p className="text-xs text-muted-foreground">Escreve-se uma vez; vai em todas as linhas (máx. 40 caracteres).</p>
+            <p className="text-xs text-muted-foreground">Vai nas linhas que não têm descritivo próprio (máx. 40 caracteres). Se o ficheiro tem uma coluna de descritivos, escolhe-a acima; qualquer linha também se corrige à mão no lápis.</p>
           </div>
         </CardContent>
       </Card>
@@ -439,7 +446,17 @@ export default function GeradorOIC() {
                               className="h-8 text-right tabular-nums"
                             />
                           </td>
-                          <td className="p-2 text-xs text-muted-foreground" />
+                          <td className="p-2">
+                            <Input
+                              value={rascunho.descritivo}
+                              onChange={(e) => setRascunho((d) => ({ ...d, descritivo: e.target.value }))}
+                              onKeyDown={aoTecla}
+                              aria-label="Descritivo desta linha"
+                              placeholder={descritivo || 'descritivo geral'}
+                              maxLength={40}
+                              className="h-8"
+                            />
+                          </td>
                           <td className="p-2 text-xs text-muted-foreground">Enter guarda · Esc cancela</td>
                           <td className="p-2 text-right whitespace-nowrap">
                             <Button variant="ghost" size="icon" aria-label="Guardar a correção" onClick={guardarEdicao}>

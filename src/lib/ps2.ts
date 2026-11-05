@@ -12,7 +12,7 @@
  *   PS29  rodapé     — "PS2"+"9"+tipo(2)+"00"+"0"+"000000"+nRegistos(14)+total(11)          -> 80, completa com "0"
  */
 
-import { semAcentos } from './texto';
+import { paraAscii } from './texto';
 import { parseMontante } from './oic';
 
 export interface PS2Linha {
@@ -153,7 +153,7 @@ export function gerarPS2(input: PS2Input): PS2Resultado {
   const dataProcessamento = formatarData(input.data);
   if (!dataProcessamento) erros.push('A data de processamento não é válida.');
 
-  const referenciaOrdenante = (input.referenciaOrdenante || '').trim();
+  const referenciaOrdenante = paraAscii(input.referenciaOrdenante || '');
   if (referenciaOrdenante.length === 0) erros.push('A referência do ordenante é obrigatória.');
   else if (referenciaOrdenante.length > 35)
     erros.push('A referência do ordenante não pode ter mais de 35 caracteres.');
@@ -181,8 +181,8 @@ export function gerarPS2(input: PS2Input): PS2Resultado {
       erros.push(`Erro na linha ${numLinha}: o NIB não pode ter mais de 21 dígitos.`);
       return;
     }
-    // Sem acentos ("João" → "Joao"): a letra fica, o acento sai — 1 carácter = 1 byte, colunas alinhadas.
-    const descritivo = semAcentos(String(l.descritivo ?? '')).trim();
+    // Só ASCII ("João" → "Joao", cedilha, acentos e sinais tipográficos fora) — 1 carácter = 1 byte, colunas alinhadas.
+    const descritivo = paraAscii(String(l.descritivo ?? ''));
     if (descritivo.length === 0) {
       erros.push(
         `Erro na linha ${numLinha}: o campo DESCRITIVO é obrigatório quando há NIB e valor.`,
