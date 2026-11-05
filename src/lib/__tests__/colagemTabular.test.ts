@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseTabular } from '../colagemTabular';
 import { autodetectar, parseColagem } from '../colagemPs2';
-import { autodetectarColunasOIC, tratarLinhaOIC } from '../oic';
+import { autodetectarColunasOIC, secaoDaLinha, tratarFolhaOIC, tratarLinhaOIC } from '../oic';
 
 describe('parseTabular', () => {
   it('Excel normal: tabs, células vazias mantêm a coluna', () => {
@@ -131,5 +131,54 @@ describe('OIC: folha Pagamento (descritivo do cliente + título e cabeçalho rep
     // só a conta de 13 dígitos (que o gerador diz que é do BCA e vai pelo PS2)
     expect(comErro.map((t) => t.nome)).toEqual(['Transport Teste']);
     expect(comErro[0].erro).toMatch(/21 dígitos \(tem 13\).*PS2/);
+  });
+});
+
+describe('OIC: o bloco BCA e os NIBs do BCA não entram na lista', () => {
+  const rows = parseTabular(FOLHA, { manterVazias: true });
+  const d = autodetectarColunasOIC(rows);
+  const { linhas, nBcaIgnoradas } = tratarFolhaOIC(rows, d, 'Pagamento Ordenado');
+
+  it('só ficam os pagamentos do bloco "Outros Bancos"', () => {
+    expect(linhas.map((l) => l.nome)).toEqual(['Roseanne Teste', 'Hotel Teste', 'Sem Descritivo']);
+    expect(linhas.every((l) => !l.erro && !l.foraDoFicheiro)).toBe(true);
+  });
+
+  it('as 3 linhas do bloco BCA (2 NIBs 0003 e 1 conta de 13 dígitos) só se contam, não se listam nem dão erro', () => {
+    expect(nBcaIgnoradas).toBe(3);
+  });
+
+  it('NIB 0003 fora de qualquer bloco também fica de fora', () => {
+    const r = [
+      ['Nome', 'Valor', 'NIB'],
+      ['Ana', '100', '000300001234567810176'],
+      ['Rui', '200', '000500001234567810176'],
+    ];
+    const t = tratarFolhaOIC(r, { colNib: 2, colMontante: 1, colNome: 0, colDescritivo: -1, linhaInicial: 2 }, 'Pagamento');
+    expect(t.linhas.map((l) => l.nome)).toEqual(['Rui']);
+    expect(t.nBcaIgnoradas).toBe(1);
+  });
+
+  it('uma conta curta fora do bloco BCA continua a aparecer (é um erro a ver)', () => {
+    const r = [
+      ['Nome', 'Valor', 'NIB'],
+      ['Ana', '100', '8201957610001'],
+    ];
+    const t = tratarFolhaOIC(r, { colNib: 2, colMontante: 1, colNome: 0, colDescritivo: -1, linhaInicial: 2 }, 'Pagamento');
+    expect(t.linhas).toHaveLength(1);
+    expect(t.linhas[0].erro).toMatch(/21 dígitos/);
+  });
+
+  it('as linhas mantêm o número que têm na folha', () => {
+    expect(linhas[0].ref).toBe(10);
+  });
+
+  it('secaoDaLinha', () => {
+    expect(secaoDaLinha(['BCA', '', '', ''])).toBe('bca');
+    expect(secaoDaLinha(['', 'Outros Bancos', '', ''])).toBe('outros');
+    expect(secaoDaLinha(['Interbancário'])).toBe('outros');
+    expect(secaoDaLinha(['BCA Seguros', '10'])).toBeNull();
+    expect(secaoDaLinha(['Ana Lima', '100', '', ''])).toBeNull();
+    expect(secaoDaLinha(['TOTAL', '', '', ''])).toBeNull();
   });
 });

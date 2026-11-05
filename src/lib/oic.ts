@@ -521,3 +521,69 @@ export function autodetectarColunasOIC(rows: unknown[][]): ColunasOIC {
     temCabecalho: cab >= 0,
   };
 }
+
+/**
+ * Título de secção de uma folha com vários blocos: a linha só tem uma célula com texto, e diz "BCA" (o bloco das
+ * contas do BCA, que vai pelo gerador PS2) ou "Outros Bancos" / "Interbancário" (o bloco deste gerador).
+ */
+export function secaoDaLinha(r: readonly unknown[]): 'bca' | 'outros' | null {
+  const celulas = r.map((c) => limparTexto(c)).filter((c) => c !== '');
+  if (celulas.length !== 1) return null;
+  const t = celulas[0].toLowerCase();
+  if (/^bca[\s:.-]*$/.test(t)) return 'bca';
+  if (/^(outros\s+bancos?|interbanc[aá]ri[oa]s?|outras?\s+institui)/.test(t)) return 'outros';
+  return null;
+}
+
+export interface EdicaoLinhaOIC {
+  nib: string;
+  nome: string;
+  montante: string;
+  descritivo: string;
+}
+
+/**
+ * A folha toda → linhas tratadas. O bloco "BCA" (e qualquer NIB 0003…) não é deste gerador — vai pelo PS2 —, por isso
+ * não entra na lista; só se conta quantas linhas foram ignoradas. Títulos de secção, cabeçalhos repetidos, totais e
+ * linhas em branco também ficam de fora. `ref` é o nº da linha na folha (1 = a primeira).
+ */
+export function tratarFolhaOIC(
+  rows: readonly (readonly unknown[])[],
+  cols: { colNib: number; colMontante: number; colNome: number; colDescritivo: number; linhaInicial: number },
+  descritivoPadrao: string,
+  edicoes: Readonly<Record<number, EdicaoLinhaOIC>> = {},
+): { linhas: Array<LinhaTratadaOIC & { ref: number }>; nBcaIgnoradas: number } {
+  const linhas: Array<LinhaTratadaOIC & { ref: number }> = [];
+  let nBcaIgnoradas = 0;
+  const inicio = Math.max(0, cols.linhaInicial - 1);
+  // A secção em que a primeira linha de dados está (o título "BCA" costuma estar antes do cabeçalho).
+  let secao: 'bca' | 'outros' | null = null;
+  for (let i = 0; i < inicio && i < rows.length; i++) secao = secaoDaLinha(rows[i] ?? []) ?? secao;
+
+  for (let i = inicio; i < rows.length; i++) {
+    const r = rows[i] ?? [];
+    const nova = secaoDaLinha(r);
+    if (nova) {
+      secao = nova;
+      continue;
+    }
+    const ed = edicoes[i + 1];
+    const t = tratarLinhaOIC(
+      {
+        nib: ed ? ed.nib : r[cols.colNib],
+        montante: ed ? ed.montante : r[cols.colMontante],
+        nome: ed ? ed.nome : r[cols.colNome],
+        // Descritivo da própria linha: o corrigido à mão, senão o da coluna do ficheiro; sem nenhum vale o por defeito.
+        descritivo: ed?.descritivo ? ed.descritivo : cols.colDescritivo >= 0 ? r[cols.colDescritivo] : '',
+      },
+      descritivoPadrao,
+    );
+    if (t.vazia) continue;
+    if (secao === 'bca' || t.foraDoFicheiro) {
+      nBcaIgnoradas += 1;
+      continue;
+    }
+    linhas.push({ ...t, ref: i + 1 });
+  }
+  return { linhas, nBcaIgnoradas };
+}

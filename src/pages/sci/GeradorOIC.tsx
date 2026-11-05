@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import {
   TAMANHO_LINHA,
   autodetectarColunasOIC,
+  tratarFolhaOIC,
   codificarAnsi,
   formatarCentimos,
   gerarOIC,
@@ -126,32 +127,20 @@ export default function GeradorOIC() {
 
   const nColunas = useMemo(() => Math.max(4, cols.colNib + 1, cols.colMontante + 1, cols.colNome + 1, cols.colDescritivo + 1, rows.reduce((m, r) => Math.max(m, r.length), 0)), [rows, cols]);
 
-  const tratadas = useMemo<LinhaOICComRef[]>(() => {
-    const out: LinhaOICComRef[] = [];
-    for (let i = Math.max(0, cols.linhaInicial - 1); i < rows.length; i++) {
-      const r = rows[i] ?? [];
-      const ed = edicoes[i + 1];
-      const t = tratarLinhaOIC(
-        {
-          nib: ed ? ed.nib : r[cols.colNib],
-          montante: ed ? ed.montante : r[cols.colMontante],
-          nome: ed ? ed.nome : r[cols.colNome],
-          // Descritivo da própria linha: o corrigido à mão, senão o da coluna do ficheiro; sem nenhum vale o geral.
-          descritivo: ed?.descritivo ? ed.descritivo : cols.colDescritivo >= 0 ? r[cols.colDescritivo] : '',
-        },
-        descritivo,
-      );
-      if (!t.vazia) out.push({ ...t, ref: i + 1, rotulo: folhas?.junta ? `${String(r[3])} · linha ${String(r[4])}` : undefined });
-    }
-    return out;
+  // O bloco "BCA" da folha e os NIBs 0003… não são deste gerador (vão pelo PS2): não entram na lista, só se conta quantos foram.
+  const { tratadas, nBcaIgnoradas } = useMemo(() => {
+    const r = tratarFolhaOIC(rows, cols, descritivo, edicoes);
+    const linhas: LinhaOICComRef[] = r.linhas.map((t) => ({
+      ...t,
+      rotulo: folhas?.junta ? `${String(rows[t.ref - 1]?.[3])} · linha ${String(rows[t.ref - 1]?.[4])}` : undefined,
+    }));
+    return { tratadas: linhas, nBcaIgnoradas: r.nBcaIgnoradas };
   }, [rows, cols, descritivo, folhas, edicoes]);
 
   const ativas = useMemo(() => tratadas.filter((t) => !excluidos.has(t.ref)), [tratadas, excluidos]);
   const nErros = ativas.filter((t) => t.erro).length;
-  // NIBs do BCA (0003…) ficam fora do ficheiro: não são erro nem contam para o total.
-  const nBca = ativas.filter((t) => t.foraDoFicheiro).length;
-  const nProntas = ativas.length - nErros - nBca;
-  const totalPronto = ativas.reduce((s, t) => s + (t.erro || t.foraDoFicheiro ? 0 : t.cents), 0);
+  const nProntas = ativas.length - nErros;
+  const totalPronto = ativas.reduce((s, t) => s + (t.erro ? 0 : t.cents), 0);
 
   const celulaTexto = (v: unknown) => (v === null || v === undefined ? '' : String(v));
 
@@ -370,9 +359,9 @@ export default function GeradorOIC() {
                     <AlertTriangle className="h-3 w-3 mr-1" /> {nErros} com erro
                   </Badge>
                 )}
-                {nBca > 0 && (
-                  <Badge variant="outline" title="NIBs do BCA (0003…) não vão no ficheiro OIC — usa o gerador PS2">
-                    {nBca} do BCA fora do ficheiro
+                {nBcaIgnoradas > 0 && (
+                  <Badge variant="outline" title="O bloco BCA da folha e os NIBs do BCA (0003…) não são deste gerador — vão pelo gerador PS2">
+                    {nBcaIgnoradas} do BCA ignoradas (vão pelo PS2)
                   </Badge>
                 )}
                 {Object.keys(edicoes).length > 0 && (

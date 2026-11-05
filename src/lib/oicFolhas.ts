@@ -1,5 +1,5 @@
 import type * as XLSX from 'xlsx';
-import { autodetectarColunasOIC, limparNib, pareceNibCelula } from './oic';
+import { autodetectarColunasOIC, limparNib, pareceNibCelula, secaoDaLinha } from './oic';
 import { linhasDaFolha } from './oicFolha';
 
 /**
@@ -80,8 +80,18 @@ export function lerFolhasOIC(wb: XLSX.WorkBook): FolhasLidas {
   const resumo: FolhaUsada[] = [];
   for (const u of usadas) {
     let n = 0;
-    for (let i = Math.max(0, u.det.linhaInicial - 1); i < u.linhas.length; i++) {
+    // O bloco "BCA" de uma aba (título "BCA" … "Outros Bancos") vai pelo PS2: não entra na lista juntada.
+    let secao: 'bca' | 'outros' | null = null;
+    const inicio = Math.max(0, u.det.linhaInicial - 1);
+    for (let i = 0; i < inicio; i++) secao = secaoDaLinha(u.linhas[i] ?? []) ?? secao;
+    for (let i = inicio; i < u.linhas.length; i++) {
       const r = u.linhas[i] ?? [];
+      const nova = secaoDaLinha(r);
+      if (nova) {
+        secao = nova;
+        continue;
+      }
+      if (secao === 'bca') continue;
       const nib = r[u.det.colNib];
       const montante = r[u.det.colMontante];
       const nome = r[u.det.colNome];
