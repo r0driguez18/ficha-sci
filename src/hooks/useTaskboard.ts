@@ -350,8 +350,12 @@ export function useTaskboard(formType: FormType) {
     const escrita = String(tasksRef.current.turno3[campo] ?? '');
     const hora = /^([01]\d|2[0-3]):[0-5]\d$/.test(escrita) ? escrita : horaAgora();
     const r = await enviarEventoFecho(tipo, dateRef.current, hora);
+    const nome = tipo === 'inicio' ? 'início' : 'término';
     if (r.estado === 'enviada') toast.success('Mensagem enviada para o Teams.');
     else if (r.estado === 'falha') toast.error(`Não consegui enviar a mensagem para o Teams: ${r.detalhe}`);
+    // Os dois casos "calados" também se explicam: senão parece que o clique não fez nada.
+    else if (r.estado === 'ja-enviada') toast.info(`A mensagem de ${nome} do fecho de ${dateRef.current} já foi enviada para o Teams (só vai uma por dia).`);
+    else if (r.estado === 'sem-webhook') toast.info('Não foi enviada mensagem para o Teams: ainda não há webhook configurado (Configurações → Mensagens para o Teams, só administradores).');
   }, []);
 
   const handleTaskChange = useCallback(
