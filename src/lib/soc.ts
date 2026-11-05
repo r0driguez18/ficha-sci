@@ -331,6 +331,41 @@ export function analisarSoc(linhas: LinhaSoc[], opcoes: { dominiosProprios?: str
 
 export const contarPor = (dominios: DominioSoc[], rec: Recomendacao) => dominios.filter((d) => d.recomendacao === rec).length;
 
+/** Domínios de Cabo Verde e Portugal (e os que a análise recomenda libertar ou confirmar): os que podem ir no pedido. */
+export const ehCandidato = (d: DominioSoc) =>
+  d.classe === 'cv' || d.classe === 'pt' || d.recomendacao === 'whitelist' || d.recomendacao === 'verificar-remetente';
+
+export const candidatosDe = (dominios: DominioSoc[]) => dominios.filter(ehCandidato);
+
+/**
+ * Vêm já escolhidos para o e-mail: todos os candidatos, menos os que nunca se libertam (vírus ou parecidos com o
+ * banco). Os que falham o DMARC também vão: o e-mail diz que é preciso confirmar o remetente e quem recebe decide.
+ */
+export const preSelecionados = (dominios: DominioSoc[]) => candidatosDe(dominios).filter((d) => d.recomendacao !== 'nao-libertar');
+
+/** Os cartões do resumo: ao clicar em cada um vê-se que domínios estão por trás do número. */
+export type Cartao = 'mensagens' | 'dominios' | 'antiSpam' | 'dmarcFail';
+
+export const NOME_CARTAO: Record<Cartao, string> = {
+  mensagens: 'Domínios que mais mensagens têm em quarentena',
+  dominios: 'Todos os domínios de remetentes',
+  antiSpam: 'Domínios apanhados pelo anti-spam',
+  dmarcFail: 'Domínios com falhas de DMARC',
+};
+
+/** Os domínios de um cartão, do que mais pesa para o que menos. */
+export function dominiosDoCartao(dominios: DominioSoc[], cartao: Cartao): DominioSoc[] {
+  const porMensagens = (a: DominioSoc, b: DominioSoc) => b.mensagens - a.mensagens || a.dominio.localeCompare(b.dominio);
+  switch (cartao) {
+    case 'antiSpam':
+      return dominios.filter((d) => d.antiSpam > 0).sort((a, b) => b.antiSpam - a.antiSpam || porMensagens(a, b));
+    case 'dmarcFail':
+      return dominios.filter((d) => d.dmarcFail > 0).sort((a, b) => b.dmarcFail - a.dmarcFail || porMensagens(a, b));
+    default:
+      return [...dominios].sort(porMensagens);
+  }
+}
+
 /** Um domínio por linha, pronto a colar na whitelist do ESA. */
 export function listaParaEsa(dominios: DominioSoc[]): string {
   return dominios.map((d) => d.dominio).sort().join('\n');
@@ -350,9 +385,21 @@ export function textoEmail(dominios: DominioSoc[], opcoes: { destinatario?: stri
     'Pedimos a análise e, se confirmar, a sua libertação (whitelist):',
     '',
   );
-  for (const d of dominios) {
-    linhas.push(`  • ${d.dominio} — ${d.mensagens} mensagem(ns), ${d.remetentes} remetente(s)`);
-    linhas.push(`      ${d.motivo}`);
+  const lista = (ds: DominioSoc[]) => {
+    for (const d of ds) {
+      linhas.push(`  • ${d.dominio} — ${d.mensagens} mensagem(ns), ${d.remetentes} remetente(s)`);
+      linhas.push(`      ${d.motivo}`);
+    }
+  };
+  // Quem recebe decide: os que falham o DMARC vão à parte, a pedir que se confirme o remetente antes de libertar.
+  const comFalhas = dominios.filter((d) => d.dmarcFail > 0 || d.recomendacao === 'verificar-remetente');
+  const semFalhas = dominios.filter((d) => !comFalhas.includes(d));
+  if (comFalhas.length > 0 && semFalhas.length > 0) linhas.push('Sem falhas de DMARC (libertação recomendada):');
+  lista(semFalhas);
+  if (comFalhas.length > 0) {
+    if (semFalhas.length > 0) linhas.push('');
+    linhas.push('Com falhas de DMARC (confirmar o remetente antes de libertar):');
+    lista(comFalhas);
   }
   linhas.push('', `Total: ${dominios.length} domínio(s), ${dominios.reduce((s, d) => s + d.mensagens, 0)} mensagem(ns).`);
   if (opcoes.ficheiro) linhas.push(`Relatório analisado: ${opcoes.ficheiro}`);
