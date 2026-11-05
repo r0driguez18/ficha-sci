@@ -10,7 +10,10 @@ import {
   listaParaEsa,
   mapearColunas,
   paraCsv,
+  dominiosDoCartao,
+  ehCandidato,
   pareceComPropriedade,
+  preSelecionados,
   saudacao,
   textoEmail,
   type LinhaSoc,
@@ -228,5 +231,46 @@ describe('ler o Excel do SOC', () => {
     const l = lerLinhas([['', '', '', '', '', '', '', ''], ['', 'Q', '-', 'x@bca.cv', '', '', '', '']], mapa);
     expect(l).toHaveLength(1);
     expect(l[0].origem).toBe('-');
+  });
+});
+
+describe('escolha para o e-mail e cartões do resumo', () => {
+  const r = analisarSoc([
+    linha({ origem: 'a@limpo.cv' }),
+    linha({ origem: 'a@falha.pt', dmarc: 'fail' }),
+    linha({ origem: 'b@falha.pt', dmarc: 'pass' }),
+    linha({ origem: 'a@amigo.cv', antiVirus: 'POSITIVE' }),
+    linha({ origem: 'a@gmail.com' }),
+    linha({ origem: 'a@loja.xyz', antiSpam: 'NEGATIVE', dmarc: 'fail' }),
+  ]);
+  const nomes = (ds: { dominio: string }[]) => ds.map((d) => d.dominio).sort();
+
+  it('os candidatos são os de CV/PT (e os que a análise manda libertar ou confirmar)', () => {
+    expect(nomes(r.dominios.filter(ehCandidato))).toEqual(['amigo.cv', 'falha.pt', 'limpo.cv']);
+  });
+
+  it('já vêm escolhidos: todos os candidatos, também os que falham o DMARC, menos os que nunca se libertam', () => {
+    expect(nomes(preSelecionados(r.dominios))).toEqual(['falha.pt', 'limpo.cv']);
+  });
+
+  it('cartões: anti-spam e DMARC mostram só os domínios por trás do número, do que mais pesa', () => {
+    expect(nomes(dominiosDoCartao(r.dominios, 'antiSpam'))).toEqual(['amigo.cv', 'falha.pt', 'gmail.com', 'limpo.cv']);
+    expect(nomes(dominiosDoCartao(r.dominios, 'dmarcFail'))).toEqual(['falha.pt', 'loja.xyz']);
+    expect(dominiosDoCartao(r.dominios, 'mensagens')[0].dominio).toBe('falha.pt');
+    expect(dominiosDoCartao(r.dominios, 'dominios')).toHaveLength(r.dominios.length);
+  });
+
+  it('o e-mail separa os que falham o DMARC, a pedir que se confirme o remetente', () => {
+    const t = textoEmail(preSelecionados(r.dominios), { quando: new Date(2026, 9, 5, 9, 0) });
+    expect(t).toContain('Sem falhas de DMARC (libertação recomendada):');
+    expect(t).toContain('Com falhas de DMARC (confirmar o remetente antes de libertar):');
+    expect(t.indexOf('limpo.cv')).toBeLessThan(t.indexOf('Com falhas de DMARC'));
+    expect(t.indexOf('falha.pt')).toBeGreaterThan(t.indexOf('Com falhas de DMARC'));
+    expect(t).toContain('Total: 2 domínio(s)');
+  });
+
+  it('se nenhum falha o DMARC, o e-mail fica como sempre (sem subtítulos)', () => {
+    const t = textoEmail(r.dominios.filter((d) => d.dominio === 'limpo.cv'));
+    expect(t).not.toContain('DMARC (');
   });
 });
