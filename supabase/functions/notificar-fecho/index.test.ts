@@ -12,7 +12,8 @@ function montar(opts: { url?: string; respostas?: Array<number | 'erro'>; hostsE
   const respostas = [...(opts.respostas ?? [200])];
   const fake = async (u: string, init: RequestInit = {}) => {
     if (u.endsWith('/auth/v1/user')) return new Response(JSON.stringify({ id: 'u1' }), { status: 200 });
-    if (u.includes('/rest/v1/operators')) return new Response(JSON.stringify([{ value: 'nalves', papel: 'administrador' }]), { status: 200 });
+    if (u.includes('/rest/v1/operators')) return new Response(JSON.stringify([{ value: 'nalves', nome: 'Nelson Alves', papel: 'administrador' }]), { status: 200 });
+    if (u.includes('/rest/v1/notificacoes_fecho')) return new Response(null, { status: 201 });
     if (u.includes('/rest/v1/notificacoes_config')) return new Response(JSON.stringify([{ valor: url }]), { status: 200 });
     if (u === url) {
       destino.corpos.push(JSON.parse(String(init.body)));
@@ -68,7 +69,8 @@ describe('enviar: cartão e, se o destino o recusar, texto simples', () => {
     expect(r.corpo).toEqual({ enviada: true, formato: 'texto' });
     expect(m.destino.corpos).toHaveLength(2);
     expect(m.destino.corpos[1].text).toContain('Teste do SCI');
-    expect(m.destino.corpos[1].text).toContain('nalves');
+    expect(m.destino.corpos[1].text).toContain('Nelson Alves');
+    expect(m.destino.corpos[1].text).not.toContain('nalves');
   });
 
   it('se recusa os dois formatos, diz porquê', async () => {
@@ -86,5 +88,17 @@ describe('enviar: cartão e, se o destino o recusar, texto simples', () => {
     const n = montar({ respostas: ['erro'] });
     expect((await n.pedir({ acao: 'testar' })).estado).toBe(502);
     expect(n.destino.corpos).toHaveLength(1);
+  });
+});
+
+describe('o operador aparece com o nome, não com o código', () => {
+  it('a mensagem do fecho diz "operador: Nelson Alves"', async () => {
+    const m = montar();
+    // o servidor de teste aceita a reserva do evento
+    const r = await m.pedir({ acao: 'evento', tipo: 'inicio', data: '2026-11-05', hora: '22:40' });
+    expect(r.corpo.enviada).toBe(true);
+    const txt = JSON.stringify(m.destino.corpos[0]);
+    expect(txt).toContain('operador: Nelson Alves');
+    expect(txt).not.toContain('nalves');
   });
 });
