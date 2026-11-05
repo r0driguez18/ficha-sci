@@ -24,6 +24,7 @@ import { fichaFileName } from '@/lib/fichaFileName';
 import { carregarAnexoOcorrencias } from '@/services/ocorrenciasService';
 import { avisarFichasPorFecharMudaram } from '@/services/fichasPorFecharService';
 import { enviarEventoFecho } from '@/services/notificarFechoService';
+import { CAMPO_HORA, decidirHora, horaAgora, horaValida } from '@/lib/horasAutomaticas';
 import { supabase } from '@/integrations/supabase/client';
 import { TASKBOARD_CONFIGS } from '@/lib/taskboardConfig';
 import {
@@ -39,10 +40,6 @@ import type { TaskTableRow } from '@/types/taskTableRow';
 
 const OP_LENGTH = 9;
 
-const horaAgora = () => {
-  const d = new Date();
-  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-};
 
 /** Próximo id de linha: máximo + 1 (com `length + 1` repetiam-se ids depois de remover uma linha do meio). */
 const nextRowId = (rows: TaskTableRow[]) => rows.reduce((m, r) => Math.max(m, r.id), 0) + 1;
@@ -344,11 +341,11 @@ export function useTaskboard(formType: FormType) {
   const dateRef = useRef(date);
   dateRef.current = date;
 
+  /** Horas que a própria app pôs nos campos (para só as apagar se o procedimento for desmarcado e ninguém as tiver mexido). */
+  const horasAuto = useRef<Record<string, string>>({});
+
   /** Início/término do fecho marcados → mensagem para o Teams (o servidor garante uma por dia e tipo). */
-  const avisarFecho = useCallback(async (tipo: 'inicio' | 'termino') => {
-    const campo = tipo === 'inicio' ? 'inicioFechoHora' : 'terminoFechoHora';
-    const escrita = String(tasksRef.current.turno3[campo] ?? '');
-    const hora = /^([01]\d|2[0-3]):[0-5]\d$/.test(escrita) ? escrita : horaAgora();
+  const avisarFecho = useCallback(async (tipo: 'inicio' | 'termino', hora: string) => {
     const r = await enviarEventoFecho(tipo, dateRef.current, hora);
     const nome = tipo === 'inicio' ? 'início' : 'término';
     if (r.estado === 'enviada') toast.success('Mensagem enviada para o Teams.');
@@ -360,12 +357,24 @@ export function useTaskboard(formType: FormType) {
 
   const handleTaskChange = useCallback(
     (turnKey: TurnKey, task: string, checked: boolean | string) => {
-      if (turnKey === 'turno3' && checked === true) {
-        if (task === 'inicioFecho') void avisarFecho('inicio');
-        else if (task === 'terminoFecho') void avisarFecho('termino');
+      // Procedimentos do Turno 3 com hora: ao marcar entra a hora de agora (editável); a mesma hora vai na mensagem do Teams.
+      let extra: Record<string, string> = {};
+      if (turnKey === 'turno3') {
+        const t3 = tasksRef.current.turno3 as unknown as Record<string, unknown>;
+        const agora = horaAgora();
+        const mudanca = decidirHora(task, checked === true, t3, horasAuto.current, agora);
+        if (mudanca) {
+          extra = { [mudanca.campo]: mudanca.valor };
+          if (mudanca.valor) horasAuto.current[mudanca.campo] = mudanca.valor;
+          else delete horasAuto.current[mudanca.campo];
+        }
+        if (checked === true && (task === 'inicioFecho' || task === 'terminoFecho')) {
+          const escrita = t3[CAMPO_HORA[task]];
+          void avisarFecho(task === 'inicioFecho' ? 'inicio' : 'termino', horaValida(escrita) ? escrita : agora);
+        }
       }
       setTasks((prev) => {
-        const turnTasks = { ...prev[turnKey], [task]: checked };
+        const turnTasks = { ...prev[turnKey], [task]: checked, ...extra };
         const oposto = SALDO_OPOSTO[task];
         if (oposto && checked === true) {
           (turnTasks as Record<string, unknown>)[oposto] = false;
