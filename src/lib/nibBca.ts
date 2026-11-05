@@ -100,19 +100,29 @@ export function tratarNib(
 
   if (digitos === '') return { ...vazio, motivo: 'Sem dígitos' };
 
-  // O PS2 é só para o BCA (NIB 0003…). Um NIB de outro banco — 000x com x ≠ 3, ou qualquer
-  // sequência longa (≥ 14 dígitos: mais do que conta + natureza) que não comece por 0003 —
-  // é um ERRO da linha e nunca se "arranja" (senão o início do NIB era ignorado). "0000…" é uma
-  // conta BCA com zeros à frente e segue o caminho normal.
-  const outroBanco = /^000[124-9]/.test(digitos);
-  const longoNaoBca = digitos.length >= 14 && !digitos.startsWith(BANCO_BCA) && !digitos.startsWith('0000');
-  if (outroBanco || longoNaoBca) {
+  // O PS2 é só para o BCA. Só é de outro banco (OIC) um NIB COMPLETO — 21 dígitos — que não começa por 0003
+  // (0001, 0002, 0004…0009). Tudo o resto é BCA: contas de 7 a 9 dígitos, conta + natureza (por ex. 14 dígitos),
+  // NIBs com zeros a mais ou a menos… Nada disso se manda para o OIC: ou se trata, ou fica em alerta para corrigir.
+  // "0000…" é uma conta BCA com zeros à frente.
+  if (digitos.length === 21 && /^000[124-9]/.test(digitos)) {
     return {
       ...vazio,
       estado: 'nao-bca',
-      motivo: outroBanco || digitos.startsWith('000')
-        ? `NIB de outro banco (${digitos.slice(0, 4)}…) — o PS2 é só para o BCA (0003…)`
-        : `NIB com ${digitos.length} dígitos que não começa por 0003 — não é do BCA`,
+      motivo: `NIB de outro banco (${digitos.slice(0, 4)}…) — o PS2 é só para o BCA (0003…); vai pelo gerador OIC`,
+    };
+  }
+  // Um NIB do BCA a que falta um 0 à frente ("003…" com 20 dígitos) é um erro de escrita, não outro banco.
+  if (digitos.length === 20 && digitos.startsWith('003')) {
+    return {
+      ...vazio,
+      motivo: 'NIB com 20 dígitos a começar por 003 — falta um 0 à frente? (0003…). Corrige o NIB à mão.',
+    };
+  }
+  // Começa como outro banco mas não tem 21 dígitos: não se decide sozinho.
+  if (/^000[124-9]/.test(digitos) && digitos.length >= 10) {
+    return {
+      ...vazio,
+      motivo: `Começa por ${digitos.slice(0, 4)}… (outro banco?) mas tem ${digitos.length} dígitos em vez de 21 — confirma no ficheiro`,
     };
   }
 
@@ -184,6 +194,10 @@ export function tratarNib(
       }
     }
   }
+
+  // Uma conta do BCA tem no máximo 8 dígitos: 9 dígitos a acabar em 1 é a conta (8 dígitos) com o "1" da natureza colado
+  // à frente da natureza ("93155891" + "1" + "10001"). Tira-se esse 1. (Só no modo automático.)
+  if (modo === 'auto' && frente === '' && conta.length === 9 && conta.endsWith('1')) conta = conta.slice(0, 8);
 
   const natFin = naturezaFinal(natRec, tabela) ?? natRec ?? NAT_POR_OMISSAO;
   const contaPad = conta.padStart(8, '0');

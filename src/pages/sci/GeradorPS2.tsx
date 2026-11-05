@@ -10,6 +10,8 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { linhasDaFolha } from '@/lib/oicFolha';
 import { PageContainer } from '@/components/layout/PageContainer';
 import {
   FileDown,
@@ -200,13 +202,13 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
   }, [colContas, colValores, colNomes, colDescritivos]);
 
   // O bloco "Outros Bancos" da folha não é do PS2 (vai pelo OIC): as suas linhas não entram, só se contam.
-  const { linhas, nOutrosBlocos } = useMemo(() => {
+  const { linhas, ignoradasOutros } = useMemo(() => {
     const out: LinhaBruta[] = [];
     if (modo === 'colunas') {
       const { c, v, n, d } = separadas;
       const total = Math.max(c.length, v.length, n.length, d.length);
-      for (let i = 0; i < total; i++) out.push({ recebido: c[i] ?? '', valor: v[i] ?? '', nome: n[i] ?? '', descritivo: d[i] ?? '' });
-      return { linhas: out.filter((l) => l.recebido !== '' || l.valor !== '' || l.nome !== ''), nOutrosBlocos: 0 };
+      for (let i = 0; i < total; i++) out.push({ recebido: c[i] ?? '', valor: v[i] ?? '', nome: n[i] ?? '', descritivo: d[i] ?? '', linha: i + 1 });
+      return { linhas: out.filter((l) => l.recebido !== '' || l.valor !== '' || l.nome !== ''), ignoradasOutros: [] as LinhaBruta[] };
     }
     return linhasDaMatriz(matriz, { colConta, colValor, colNome, colDescritivo, linhaInicial });
   }, [modo, separadas, matriz, colConta, colValor, colNome, colDescritivo, linhaInicial]);
@@ -268,7 +270,22 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
     () => todasTratadas.filter((t) => !(t.trat.estado === 'nao-bca' && !(overrides[t.idx] ?? '').replace(/\D/g, ''))),
     [todasTratadas, overrides],
   );
-  const nOutrosBancos = todasTratadas.length - tratadas.length + nOutrosBlocos;
+  // As linhas ignoradas, uma a uma, para se ver qual é cada uma (e a sua linha no Excel) sem a procurar na folha.
+  const ignoradas = useMemo(() => {
+    const doNib = todasTratadas
+      .filter((t) => t.trat.estado === 'nao-bca' && !(overrides[t.idx] ?? '').replace(/\D/g, ''))
+      .map((t) => ({ linha: t.linha ?? t.idx + 1, nome: t.nome, valor: t.valor, recebido: t.recebido, motivo: t.trat.motivo ?? 'NIB de outro banco' }));
+    const doBloco = ignoradasOutros.map((l) => ({
+      linha: l.linha ?? 0,
+      nome: l.nome,
+      valor: l.valor,
+      recebido: l.recebido,
+      motivo: 'Está no bloco "Outros Bancos" da folha',
+    }));
+    return [...doNib, ...doBloco].sort((a, b) => a.linha - b.linha);
+  }, [todasTratadas, overrides, ignoradasOutros]);
+  const nOutrosBancos = ignoradas.length;
+  const [verIgnoradas, setVerIgnoradas] = useState(false);
 
   // O nº de conta da empresa é sempre escrito à mão com a natureza no fim
   // (ex.: …10002). Trata-se sempre em modo "auto", independentemente do
@@ -295,7 +312,8 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
   /** Lê uma folha do workbook já carregado (chamada ao abrir o ficheiro e ao trocar de folha no seletor). */
   const carregarFolha = (wb: XLSX.WorkBook, nomeFolha: string) => {
     const ws = wb.Sheets[nomeFolha];
-    const rows = XLSX.utils.sheet_to_json<string[]>(ws, { header: 1, blankrows: false, defval: '' });
+    // Com as linhas em branco e a partir de A1: o nº de cada linha bate com o do Excel (para se encontrar lá).
+    const rows = ws ? linhasDaFolha(ws) : [];
     const norm = rows.map((r) => (Array.isArray(r) ? r.map((c) => (c ?? '').toString()) : []));
     setFolhaAtual(nomeFolha);
     setSheetRows(norm);
@@ -847,9 +865,11 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
                   </button>
                 )}
                 {nOutrosBancos > 0 && (
-                  <Badge variant="outline" title="O PS2 é só para contas do BCA (0003…): os NIBs de outros bancos e o bloco Outros Bancos da folha vão pelo gerador OIC">
-                    {nOutrosBancos} de outros bancos ignoradas (vão pelo OIC)
-                  </Badge>
+                  <button type="button" onClick={() => setVerIgnoradas(true)} title="Clica para ver quais são (e a linha de cada uma no Excel)">
+                    <Badge variant="outline" className="cursor-pointer hover:bg-muted">
+                      {nOutrosBancos} de outros bancos ignoradas (vão pelo OIC) · ver
+                    </Badge>
+                  </button>
                 )}
                 {Object.keys(edicoes).length > 0 && (
                   <Badge variant="outline" title="Corrigidas aqui; o Excel de origem não foi alterado">
@@ -1126,6 +1146,44 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
           </CardContent>
         </Card>
       )}
+
+      <Dialog open={verIgnoradas} onOpenChange={setVerIgnoradas}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Linhas ignoradas: vão pelo OIC ({ignoradas.length})</DialogTitle>
+            <DialogDescription>
+              O PS2 é só para o BCA. Só é do OIC um NIB completo de 21 dígitos que não começa por 0003. Se alguma destas devia ser do BCA, corrige o NIB na folha e volta a carregar.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[60vh] overflow-auto rounded-md border">
+            <table className="w-full text-sm">
+              <thead className="sticky top-0 bg-muted/80 text-left text-xs uppercase">
+                <tr>
+                  <th className="px-2 py-1.5">Linha</th>
+                  <th className="px-2 py-1.5">Nome</th>
+                  <th className="px-2 py-1.5 text-right">Valor</th>
+                  <th className="px-2 py-1.5">Conta / NIB na folha</th>
+                  <th className="px-2 py-1.5">Porquê</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ignoradas.map((l, i) => (
+                  <tr key={`${l.linha}-${i}`} className="border-t align-top">
+                    <td className="px-2 py-1.5 tabular-nums text-muted-foreground">{l.linha || '—'}</td>
+                    <td className="px-2 py-1.5">{l.nome || <span className="text-muted-foreground">(sem nome)</span>}</td>
+                    <td className="px-2 py-1.5 text-right tabular-nums">{l.valor ? fmtNum(l.valor) : '—'}</td>
+                    <td className="px-2 py-1.5 font-mono text-xs">{l.recebido}</td>
+                    <td className="px-2 py-1.5 text-xs text-muted-foreground">{l.motivo}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            «Linha» é o número da linha na folha (a mesma do Excel{modo === 'colar' ? ', contando a partir da primeira linha do que colaste' : ''}).
+          </p>
+        </DialogContent>
+      </Dialog>
 
       <ConfirmDialog
         open={confirmarReset}

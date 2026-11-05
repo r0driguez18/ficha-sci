@@ -11,11 +11,14 @@ export interface LinhaBruta {
   nome: string;
   /** Descritivo que o cliente pôs nesta linha (vazio = vale o por defeito: prefixo + nome). */
   descritivo?: string;
+  /** Nº da linha na folha ou no texto colado (1 = a primeira), para se encontrar a linha no Excel. */
+  linha?: number;
 }
 
 /** Texto colado (tab, ";" ou ",") → matriz de células. */
 export function matrizDeTexto(txt: string): string[][] {
-  return parseTabular(txt);
+  // As linhas em branco ficam: o nº da linha tem de bater com o do Excel.
+  return parseTabular(txt, { manterVazias: true });
 }
 
 /**
@@ -23,7 +26,7 @@ export function matrizDeTexto(txt: string): string[][] {
  * ao carregar um ficheiro; com ou sem linha de cabeçalho. Separador: tab (Excel), senão ";" ou ",".
  */
 export function parseColagem(txt: string): LinhaBruta[] {
-  const rows = matrizDeTexto(txt);
+  const rows = parseTabular(txt);
   if (rows.length === 0) return [];
   const det = autodetectar(rows);
   const so = (r: string[], c: number, usadas: number[]) => (usadas.includes(c) ? '' : r[c] ?? '');
@@ -45,7 +48,10 @@ const pareceValor = (v: unknown) => {
 export function autodetectar(rows: string[][]) {
   const nCols = rows.reduce((m, r) => Math.max(m, r.length), 0);
   let header = -1;
-  for (let i = 0; i < Math.min(rows.length, 12); i++) {
+  let vistas = 0;
+  for (let i = 0; i < Math.min(rows.length, 60); i++) {
+    if (!(rows[i] ?? []).some((c) => String(c ?? '').trim() !== '')) continue;
+    if (++vistas > 12) break;
     const txt = (rows[i] ?? []).filter(
       (c) => String(c).trim().length > 1 && Number.isNaN(Number(String(c).replace(/[.,\s]/g, ''))),
     ).length;
@@ -134,13 +140,23 @@ export function autodetectar(rows: string[][]) {
 export function linhasDaMatriz(
   matriz: readonly (readonly unknown[])[],
   cols: { colConta: number; colValor: number; colNome: number; colDescritivo: number; linhaInicial: number },
-): { linhas: LinhaBruta[]; nOutrosBlocos: number } {
+): { linhas: LinhaBruta[]; nOutrosBlocos: number; ignoradasOutros: LinhaBruta[] } {
   const txt = (v: unknown) => (v ?? '').toString().trim();
+  const linhaDe = (r: readonly unknown[], linha: number): LinhaBruta => {
+    const { colConta, colValor, colNome, colDescritivo } = cols;
+    return {
+      recebido: txt(r[colConta]),
+      valor: colValor === colConta ? '' : txt(r[colValor]),
+      nome: colNome === colConta || colNome === colValor ? '' : txt(r[colNome]),
+      descritivo: colDescritivo < 0 || [colConta, colValor, colNome].includes(colDescritivo) ? '' : txt(r[colDescritivo]),
+      linha,
+    };
+  };
   const out: LinhaBruta[] = [];
   const inicio = Math.max(0, cols.linhaInicial - 1);
   let secao: 'bca' | 'outros' | null = null;
   for (let i = 0; i < inicio && i < matriz.length; i++) secao = secaoDaLinha(matriz[i] ?? []) ?? secao;
-  let nOutrosBlocos = 0;
+  const ignoradasOutros: LinhaBruta[] = [];
   for (let i = inicio; i < matriz.length; i++) {
     const r = matriz[i] ?? [];
     const nova = secaoDaLinha(r);
@@ -150,16 +166,10 @@ export function linhasDaMatriz(
     }
     if (secao === 'outros') {
       // Só se contam os pagamentos (linhas com conta/NIB), não o cabeçalho repetido nem os totais.
-      if (pareceNib(r[cols.colConta])) nOutrosBlocos += 1;
+      if (pareceNib(r[cols.colConta])) ignoradasOutros.push(linhaDe(r, i + 1));
       continue;
     }
-    const { colConta, colValor, colNome, colDescritivo } = cols;
-    out.push({
-      recebido: txt(r[colConta]),
-      valor: colValor === colConta ? '' : txt(r[colValor]),
-      nome: colNome === colConta || colNome === colValor ? '' : txt(r[colNome]),
-      descritivo: colDescritivo < 0 || [colConta, colValor, colNome].includes(colDescritivo) ? '' : txt(r[colDescritivo]),
-    });
+    out.push(linhaDe(r, i + 1));
   }
-  return { linhas: out, nOutrosBlocos };
+  return { linhas: out, nOutrosBlocos: ignoradasOutros.length, ignoradasOutros };
 }
