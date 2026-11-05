@@ -217,7 +217,14 @@ Funções: `registar_ocorrencia`, `atualizar_ocorrencia` (qualquer operador ativ
 
 O PDF da ficha de procedimentos leva, **como anexo** (página horizontal no fim), a ficha de ocorrências desse dia quando há ocorrências ou observações. O anexo não faz parte do conteúdo assinado (selo SHA-256).
 
-### 2.8 Legado
+### 2.8 Notificações (Teams)
+
+| Tabela | Colunas principais | Regras |
+|---|---|---|
+| `notificacoes_config` | `chave` (PK, ex.: `teams_webhook`), `valor`, `atualizado_em`, `atualizado_por` | RLS ligado **sem políticas**: só a função `notificar-fecho` (chave de serviço) lê e escreve |
+| `notificacoes_fecho` | `id`, `data`, `tipo` (`inicio`/`termino`), `hora`, `operador`, `criado_em` | **UNIQUE `(data, tipo)`**: uma mensagem por dia e tipo; RLS ligado sem políticas |
+
+### 2.9 Legado
 
 - **`crc_tratamentos`**: tabela da ferramenta CRC (removida da aplicação). Mantida; decidir se se apaga.
 
@@ -293,6 +300,17 @@ Todas `SECURITY DEFINER` com `search_path` fixo; `REVOKE … FROM public, anon`;
 | `repor` | `conta` | **Senha temporária** (uma vez) + troca obrigatória; não na própria conta |
 | `papel` | `conta`, `administrador` | Torna/retira administrador; nunca deixa zero |
 | `eliminar` | `conta` | Elimina a conta; não a própria, nem a de administradores |
+
+### `notificar-fecho` — requer JWT de operador ativo
+
+| Ação | Quem | Pedido | Efeito |
+|---|---|---|---|
+| `evento` | operador | `tipo` (`inicio`/`termino`), `data`, `hora` | Reserva `(data, tipo)` e publica a mensagem no Teams; respostas `enviada`, `ja-enviada`, `sem-webhook` ou `falha` (a reserva é libertada para nova tentativa) |
+| `estado` | administrador | — | `{ configurado, anfitriao }` (nunca devolve o endereço completo) |
+| `configurar` | administrador | `url` (`""` remove) | Guarda o webhook; só aceita HTTPS em `*.logic.azure.com`, `*.powerplatform.com`, `*.webhook.office.com`, `outlook.office.com` |
+| `testar` | administrador | — | Envia uma mensagem de teste |
+
+A ficha dispara `evento` ao marcar «Início do Fecho» / «Término do Fecho» no Turno 3. O servidor precisa de saída HTTPS para o Teams.
 
 ### `repor-senha` — sem sessão
 
