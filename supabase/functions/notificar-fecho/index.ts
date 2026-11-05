@@ -150,6 +150,8 @@ function cliente(amb: Ambiente, f: FetchFn) {
 interface Quem {
   uid: string;
   codigo: string;
+  /** Nome completo do operador (o que se mostra nas mensagens); sem nome, o código. */
+  nome: string;
   administrador: boolean;
 }
 
@@ -165,13 +167,14 @@ async function identificar(req: Request, amb: Ambiente, f: FetchFn): Promise<Que
   if (!uid) throw new ErroPedido(401, 'Sessão inválida.');
 
   const q = await cliente(amb, f).pedir(
-    `/rest/v1/operators?select=value,papel&user_id=eq.${encodeURIComponent(uid)}&ativo=eq.true&limit=1`,
+    `/rest/v1/operators?select=value,nome,papel&user_id=eq.${encodeURIComponent(uid)}&ativo=eq.true&limit=1`,
   );
   if (q.estado !== 200 || !Array.isArray(q.corpo) || q.corpo.length === 0) {
     throw new ErroPedido(403, 'A conta não está ligada a um operador ativo.');
   }
   const op = q.corpo[0];
-  return { uid, codigo: String(op.value ?? ''), administrador: op.papel === 'administrador' };
+  const codigo = String(op.value ?? '');
+  return { uid, codigo, nome: String(op.nome ?? '').trim() || codigo, administrador: op.papel === 'administrador' };
 }
 
 function exigirAdmin(q: Quem) {
@@ -239,7 +242,7 @@ async function evento(quem: Quem, amb: Ambiente, f: FetchFn, corpo: Json): Promi
   if (reserva.estado === 409) return { enviada: false, motivo: 'ja-enviada' };
   if (reserva.estado !== 201 && reserva.estado !== 204) throw new ErroPedido(502, 'Não consegui registar o envio.');
 
-  const r = await enviar(url, montarMensagem(tipo, data, hora, quem.codigo), f);
+  const r = await enviar(url, montarMensagem(tipo, data, hora, quem.nome), f);
   if (!r.ok) {
     // Liberta a reserva para se poder tentar de novo.
     await c.pedir(`/rest/v1/notificacoes_fecho?data=eq.${data}&tipo=eq.${tipo}`, { method: 'DELETE' });
@@ -274,7 +277,7 @@ async function configurar(quem: Quem, amb: Ambiente, f: FetchFn, corpo: Json): P
 async function testar(quem: Quem, amb: Ambiente, f: FetchFn): Promise<Json> {
   const url = await lerWebhook(amb, f);
   if (!url) throw new ErroPedido(400, 'Ainda não há webhook configurado.');
-  const r = await enviar(url, { titulo: '✅ Teste do SCI', texto: `Mensagem de teste enviada por ${quem.codigo}.` }, f);
+  const r = await enviar(url, { titulo: '✅ Teste do SCI', texto: `Mensagem de teste enviada por ${quem.nome}.` }, f);
   if (!r.ok) throw new ErroPedido(502, r.detalhe);
   return { enviada: true, formato: r.formato };
 }
