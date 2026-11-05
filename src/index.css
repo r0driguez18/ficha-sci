@@ -4,6 +4,10 @@
 
 @layer base {
   :root {
+    /* Movimento: curvas fortes (as do CSS sao fracas demais) */
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+
     --background: 210 33% 98%;
     --foreground: 222 47% 11%;
 
@@ -285,7 +289,7 @@
   position: relative;
   display: inline-block;
   box-sizing: border-box;
-  transition: border-color ease 0.2s;
+  transition: border-color 0.12s var(--ease-out);
   cursor: pointer;
 }
 
@@ -322,10 +326,70 @@
 
 .checkbox-wrapper-19 .check-box[data-state="checked"]::after {
   height: calc(var(--checkbox-height) / 2);
-  animation: dothabottomcheck-19 0.2s ease 0s forwards;
+  animation: dothabottomcheck-19 0.1s var(--ease-out) 0s forwards;
 }
 
 .checkbox-wrapper-19 .check-box[data-state="checked"]::before {
   height: calc(var(--checkbox-height) * 1.2);
-  animation: dothatopcheck-19 0.4s ease 0s forwards;
+  animation: dothatopcheck-19 0.16s var(--ease-out) 0s forwards;
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  /* Sem desenhar o visto: aparece logo */
+  .checkbox-wrapper-19 .check-box[data-state="checked"]::after,
+  .checkbox-wrapper-19 .check-box[data-state="checked"]::before {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Movimento da ficha (so o que ajuda a perceber; o que se repete dezenas de vezes
+   por dia - ticks, gravacao automatica, teclado - fica instantaneo ou quase)
+   --------------------------------------------------------------------------- */
+
+/* Aparece algo que antes nao estava la (assinatura, aviso): sobe 4px e aparece. 180ms. */
+@keyframes ficha-entrar {
+  from { opacity: 0; transform: translateY(4px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+.anim-entrar {
+  animation: ficha-entrar 180ms var(--ease-out) both;
+}
+
+/* Linha nova da tabela: um brilho que se apaga diz onde ela caiu (o ecra pode ter deslizado ate la). */
+@keyframes ficha-linha-nova {
+  from { background-color: hsl(var(--primary) / 0.14); }
+  to { background-color: transparent; }
+}
+.linha-nova > td {
+  animation: ficha-linha-nova 700ms var(--ease-out) both;
+}
+
+/* Botao: carregar "afunda" um pouco. So em ecras com rato/caneta nao e preciso, mas o toque tambem o sente. */
+.press {
+  /* mantem as transicoes de cor do botao e junta a do "afundar" */
+  transition: transform 140ms var(--ease-out), color 150ms, background-color 150ms, border-color 150ms, box-shadow 150ms;
+}
+.press:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* Seta de recolher/abrir: roda em vez de trocar de icone. */
+.rodar-seta {
+  transition: transform 150ms var(--ease-out);
+}
+.rodar-seta[data-aberto="true"] {
+  transform: rotate(90deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-entrar { animation: ficha-entrar-suave 150ms ease both; }
+  .linha-nova > td { animation: none; }
+  .press, .rodar-seta { transition: none; }
+  .press:active:not(:disabled) { transform: none; }
+}
+@keyframes ficha-entrar-suave {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }

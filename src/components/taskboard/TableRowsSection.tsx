@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, ChevronRight, PlusCircle, Trash2 } from 'lucide-react';
+import { ChevronRight, PlusCircle, Trash2 } from 'lucide-react';
 import { TaskTableRow } from '@/types/taskTableRow';
 import { blocosDaTabela } from '@/lib/blocosTabela';
 
@@ -67,6 +67,11 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
     const linha = document.querySelector<HTMLElement>(`[data-linha="${ultima.id}"]`);
     if (!linha) return;
     linha.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    // Brilho que se apaga: mostra onde a linha nova caiu. Tira-se a classe no fim para voltar a poder repetir.
+    linha.classList.remove('linha-nova');
+    void linha.offsetWidth;
+    linha.classList.add('linha-nova');
+    window.setTimeout(() => linha.classList.remove('linha-nova'), 800);
     linha.querySelector<HTMLInputElement>('input')?.focus({ preventScroll: true });
   }, [tableRows]);
 
@@ -79,7 +84,7 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
           aria-expanded={aberta}
           className="flex items-center gap-1.5 text-base font-semibold text-foreground hover:text-primary"
         >
-          {aberta ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          <ChevronRight className="rodar-seta h-4 w-4" data-aberto={aberta} />
           Processamentos
           <span className="text-sm font-normal text-muted-foreground">({preenchidas})</span>
         </button>
@@ -126,7 +131,7 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
                           aria-expanded={!minimizado}
                           className="flex w-full items-center gap-1.5 text-left text-xs font-medium text-muted-foreground hover:text-foreground"
                         >
-                          {minimizado ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                          <ChevronRight className="rodar-seta h-3.5 w-3.5" data-aberto={!minimizado} />
                           Folha {bloco.indice + 1} · linhas {bloco.de}–{bloco.ate}
                           <span className="ml-auto font-normal">{minimizado ? 'mostrar' : 'minimizar'}</span>
                         </button>
