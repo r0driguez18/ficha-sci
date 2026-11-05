@@ -20,7 +20,7 @@ import { carregarAnexoOcorrencias } from '@/services/ocorrenciasService';
 import { appendTapesEvidencia } from '@/utils/pdf/appendTapesEvidencia';
 import { fichaFileName } from '@/lib/fichaFileName';
 import { supabase } from '@/integrations/supabase/client';
-import { getExportedTaskboards, ExportedTaskboard } from '@/services/exportedTaskboardService';
+import { getExportedTaskboards, confirmarDataFicha, ExportedTaskboard } from '@/services/exportedTaskboardService';
 import {
   addTapesEvidencia,
   removeTapesEvidencia,
@@ -118,6 +118,7 @@ const isNaoUtilType = (t: string) => t === 'dia-nao-util' || t === 'final-mes-na
 
 export default function HistoricoFichas() {
   const { operators } = useOperators();
+  const [dataTarget, setDataTarget] = useState<{ record: ExportedTaskboard; motivo: string } | null>(null);
   const [editTarget, setEditTarget] = useState<ExportedTaskboard | null>(null);
   const [edicoesTarget, setEdicoesTarget] = useState<ExportedTaskboard | null>(null);
   const [records, setRecords] = useState<ExportedTaskboard[]>([]);
@@ -560,12 +561,14 @@ export default function HistoricoFichas() {
                           </Badge>
                         )}
                         {(() => {
-                          const suspeita = (record.versao ?? 1) > 1 ? null : dataSuspeitaExportada(record.form_type, record.date, record.exported_at || record.created_at);
+                          const suspeita = (record.versao ?? 1) > 1 || record.data_confirmada_em ? null : dataSuspeitaExportada(record.form_type, record.date, record.exported_at || record.created_at);
                           return suspeita ? (
-                            <Badge variant="outline" className="border-warning text-warning" title={suspeita}>
-                              <AlertTriangle className="h-3 w-3 mr-1" />
-                              Confirmar data
-                            </Badge>
+                            <button type="button" onClick={() => setDataTarget({ record, motivo: suspeita })} title={`${suspeita} Clica para confirmar ou corrigir.`}>
+                              <Badge variant="outline" className="cursor-pointer border-warning text-warning hover:bg-warning/10">
+                                <AlertTriangle className="h-3 w-3 mr-1" />
+                                Confirmar data
+                              </Badge>
+                            </button>
                           ) : null;
                         })()}
                       </div>
@@ -691,6 +694,47 @@ export default function HistoricoFichas() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={!!dataTarget} onOpenChange={(open) => { if (!open) setDataTarget(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirmar a data — ficha de {dataTarget?.record.date}</DialogTitle>
+            <DialogDescription>{dataTarget?.motivo}</DialogDescription>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Se a data está certa, confirma e o aviso desaparece (fica registado quem confirmou e quando). Se está errada,
+            corrige-a na retificação da ficha.
+          </p>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                const r = dataTarget?.record ?? null;
+                setDataTarget(null);
+                setEditTarget(r);
+              }}
+            >
+              Corrigir a ficha
+            </Button>
+            <Button
+              onClick={async () => {
+                if (!dataTarget) return;
+                const { error } = await confirmarDataFicha(dataTarget.record.id);
+                if (error) {
+                  toast({ title: 'Erro', description: error, variant: 'destructive' });
+                  return;
+                }
+                const id = dataTarget.record.id;
+                setRecords((rs) => rs.map((x) => (x.id === id ? { ...x, data_confirmada_em: new Date().toISOString() } : x)));
+                setDataTarget(null);
+                toast({ title: 'Data confirmada', description: 'O aviso desapareceu desta ficha.' });
+              }}
+            >
+              A data está certa
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <EditarFichaDialog
         record={editTarget}

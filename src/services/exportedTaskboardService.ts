@@ -26,6 +26,9 @@ export interface ExportedTaskboard {
   versao?: number;
   editada_em?: string | null;
   editada_por_codigo?: string | null;
+  /** O aviso "Confirmar data" do Histórico foi resolvido por alguém (quem e quando). */
+  data_confirmada_em?: string | null;
+  data_confirmada_por?: string | null;
 }
 
 /**
@@ -253,4 +256,10 @@ export async function listarEdicoesFicha(fichaId: string): Promise<{ data: Edica
     .eq('ficha_id', fichaId)
     .order('editado_em', { ascending: false });
   return { data: (data ?? []) as EdicaoFicha[], error: error ? error.message : null };
+}
+
+/** Marca a data da ficha como confirmada (fica quem e quando; o aviso do Histórico desaparece). */
+export async function confirmarDataFicha(id: string): Promise<{ error: string | null }> {
+  const { error } = await (supabase as any).rpc('confirmar_data_ficha', { p_id: id });
+  return { error: error ? error.message : null };
 }
