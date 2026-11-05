@@ -2,21 +2,20 @@
  * Leitura do texto colado (e deteção de colunas) do gerador PS2.
  */
 
+import { parseTabular } from './colagemTabular';
+import { secaoDaLinha } from './oic';
+
 export interface LinhaBruta {
   recebido: string;
   valor: string;
   nome: string;
+  /** Descritivo que o cliente pôs nesta linha (vazio = vale o por defeito: prefixo + nome). */
+  descritivo?: string;
 }
 
 /** Texto colado (tab, ";" ou ",") → matriz de células. */
 export function matrizDeTexto(txt: string): string[][] {
-  const linhas = txt
-    .split(/\r?\n/)
-    .map((l) => l.trimEnd())
-    .filter((l) => l.trim() !== '');
-  if (linhas.length === 0) return [];
-  const sep = linhas.some((l) => l.includes('\t')) ? '\t' : linhas.some((l) => l.includes(';')) ? ';' : ',';
-  return linhas.map((l) => l.split(sep).map((x) => x.trim()));
+  return parseTabular(txt);
 }
 
 /**
@@ -32,6 +31,7 @@ export function parseColagem(txt: string): LinhaBruta[] {
     recebido: r[det.colConta] ?? '',
     valor: so(r, det.colValor, [det.colConta]),
     nome: so(r, det.colNome, [det.colConta, det.colValor]),
+    descritivo: det.colDescritivo >= 0 ? so(r, det.colDescritivo, [det.colConta, det.colValor, det.colNome]) : '',
   }));
 }
 
@@ -61,12 +61,16 @@ export function autodetectar(rows: string[][]) {
   let cConta = acha('nib', 'conta');
   let cValor = acha('valor', 'montante', 'líquido', 'liquido', 'a pagar', 'total');
   let cNome = acha('nome', 'benefici', 'deputado', 'funcion', 'colaborad');
+  // Descritivo do cliente: só se o cabeçalho o disser (sem cabeçalho não se adivinha).
+  let cDescr = acha('descritivo', 'descrição', 'descricao', 'referência', 'referencia', 'motivo', 'finalidade');
+  if (cDescr === cConta || cDescr === cValor || cDescr === cNome) cDescr = -1;
 
   const dataStart = header < 0 ? 0 : header + 1;
   if (cConta < 0) {
     let best = 0;
     let bestN = -1;
     for (let c = 0; c < nCols; c++) {
+      if (c === cDescr) continue;
       let n = 0;
       for (let i = dataStart; i < rows.length; i++) if (pareceNib((rows[i] ?? [])[c])) n++;
       if (n > bestN) {
@@ -80,7 +84,7 @@ export function autodetectar(rows: string[][]) {
     for (let c = nCols - 1; c >= 0; c--) {
       let n = 0;
       for (let i = dataStart; i < rows.length; i++) if (pareceValor((rows[i] ?? [])[c])) n++;
-      if (c !== cConta && n > 0) {
+      if (c !== cConta && c !== cDescr && n > 0) {
         cValor = c;
         break;
       }
@@ -92,7 +96,7 @@ export function autodetectar(rows: string[][]) {
     let melhor = -1;
     let melhorN = 0;
     for (let c = 0; c < nCols; c++) {
-      if (c === cConta || c === cValor) continue;
+      if (c === cConta || c === cValor || c === cDescr) continue;
       let n = 0;
       for (let i = dataStart; i < rows.length; i++) if (/\p{L}{2,}/u.test(String((rows[i] ?? [])[c] ?? ''))) n++;
       if (n > melhorN) {
@@ -118,6 +122,44 @@ export function autodetectar(rows: string[][]) {
     colConta: Math.max(0, cConta),
     colValor: Math.max(0, cValor),
     colNome: Math.max(0, cNome),
+    colDescritivo: cDescr,
     linhaInicial: li + 1,
   };
+}
+
+/**
+ * Linhas do PS2 a partir da matriz e das colunas escolhidas. O bloco "Outros Bancos" da folha não é do PS2 (vai pelo
+ * OIC): as suas linhas não entram, só se contam. O descritivo é o do cliente (vazio = vale o por defeito).
+ */
+export function linhasDaMatriz(
+  matriz: readonly (readonly unknown[])[],
+  cols: { colConta: number; colValor: number; colNome: number; colDescritivo: number; linhaInicial: number },
+): { linhas: LinhaBruta[]; nOutrosBlocos: number } {
+  const txt = (v: unknown) => (v ?? '').toString().trim();
+  const out: LinhaBruta[] = [];
+  const inicio = Math.max(0, cols.linhaInicial - 1);
+  let secao: 'bca' | 'outros' | null = null;
+  for (let i = 0; i < inicio && i < matriz.length; i++) secao = secaoDaLinha(matriz[i] ?? []) ?? secao;
+  let nOutrosBlocos = 0;
+  for (let i = inicio; i < matriz.length; i++) {
+    const r = matriz[i] ?? [];
+    const nova = secaoDaLinha(r);
+    if (nova) {
+      secao = nova;
+      continue;
+    }
+    if (secao === 'outros') {
+      // Só se contam os pagamentos (linhas com conta/NIB), não o cabeçalho repetido nem os totais.
+      if (pareceNib(r[cols.colConta])) nOutrosBlocos += 1;
+      continue;
+    }
+    const { colConta, colValor, colNome, colDescritivo } = cols;
+    out.push({
+      recebido: txt(r[colConta]),
+      valor: colValor === colConta ? '' : txt(r[colValor]),
+      nome: colNome === colConta || colNome === colValor ? '' : txt(r[colNome]),
+      descritivo: colDescritivo < 0 || [colConta, colValor, colNome].includes(colDescritivo) ? '' : txt(r[colDescritivo]),
+    });
+  }
+  return { linhas: out, nOutrosBlocos };
 }

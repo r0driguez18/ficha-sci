@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   TAMANHO_LINHA,
   formatarLinhaOIC,
+  autodetectarColunasOIC,
   gerarOIC,
   nomeFicheiroOIC,
   parseMontante,
@@ -139,5 +140,40 @@ describe('ficheiro OIC', () => {
 
   it('nome do ficheiro com a data', () => {
     expect(nomeFicheiroOIC(new Date(2026, 9, 16))).toBe('Interbancario_20261016.txt');
+  });
+});
+
+describe('descritivo por linha (colunas)', () => {
+  it('descobre a coluna do descritivo pelo cabeçalho', () => {
+    const rows = [
+      ['Nome', 'NIB', 'Valor', 'Descritivo'],
+      ['Ana Lima', NIB_OUTRO_BANCO, 1000, 'Pagamento Ordenado'],
+      ['Rui Sá', NIB_OUTRO_BANCO, 2000, 'Subsidio Ferias'],
+    ];
+    const d = autodetectarColunasOIC(rows);
+    expect(d.colNib).toBe(1);
+    expect(d.colMontante).toBe(2);
+    expect(d.colNome).toBe(0);
+    expect(d.colDescritivo).toBe(3);
+  });
+
+  it('aceita "Descrição", "Motivo" ou "Referência"', () => {
+    for (const titulo of ['Descrição', 'Motivo', 'Referência']) {
+      const rows = [['Nome', 'NIB', 'Valor', titulo], ['Ana Lima', NIB_OUTRO_BANCO, 1000, 'x']];
+      expect(autodetectarColunasOIC(rows).colDescritivo, titulo).toBe(3);
+    }
+  });
+
+  it('sem coluna de descritivo no cabeçalho: -1 (vale o geral)', () => {
+    const rows = [['Nome', 'NIB', 'Valor'], ['Ana Lima', NIB_OUTRO_BANCO, 1000]];
+    expect(autodetectarColunasOIC(rows).colDescritivo).toBe(-1);
+  });
+
+  it('cada linha usa o seu descritivo; sem ele, o geral', () => {
+    const a = tratarLinhaOIC({ nib: NIB_OUTRO_BANCO, montante: 1000, nome: 'Ana', descritivo: 'Subsidio Ferias' }, 'Pagamento Ordenado');
+    const b = tratarLinhaOIC({ nib: NIB_OUTRO_BANCO, montante: 1000, nome: 'Rui', descritivo: '' }, 'Pagamento Ordenado');
+    expect(a.descritivo).toBe('Subsidio Ferias');
+    expect(b.descritivo).toBe('Pagamento Ordenado');
+    expect(a.erro).toBeNull();
   });
 });

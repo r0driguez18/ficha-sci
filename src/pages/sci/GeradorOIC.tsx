@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import {
   TAMANHO_LINHA,
   autodetectarColunasOIC,
+  tratarFolhaOIC,
   codificarAnsi,
   formatarCentimos,
   gerarOIC,
@@ -26,6 +27,7 @@ import { COLUNAS_JUNTA, lerFolhasOIC, type FolhaIgnorada, type FolhaUsada } from
 import { guardarFicheiro } from '@/lib/guardarFicheiro';
 import { comExtensao, semExtensao } from '@/lib/nomeFicheiro';
 import { DICA_TAB, tabNoCampo } from '@/lib/tabNoCampo';
+import { parseTabular } from '@/lib/colagemTabular';
 
 const letraColuna = (i: number) => {
   let s = '';
@@ -34,21 +36,18 @@ const letraColuna = (i: number) => {
 };
 
 /** Texto colado do Excel (tabs) → matriz; mantém as linhas em branco para a numeração bater certo. */
-function paraMatriz(texto: string): unknown[][] {
-  const linhas = texto.split(/\r\n|\r|\n/);
-  while (linhas.length > 0 && linhas[linhas.length - 1].trim() === '') linhas.pop();
-  const sep = texto.includes('\t') ? '\t' : texto.includes(';') ? ';' : ',';
-  return linhas.map((l) => l.split(sep));
-}
+const paraMatriz = (texto: string): unknown[][] => parseTabular(texto, { manterVazias: true });
 
 /** Correção feita à mão numa linha (só vale para este ficheiro gerado — o Excel de origem não muda). */
 interface EdicaoLinha {
   nib: string;
   nome: string;
   montante: string;
+  /** Vazio = o descritivo da coluna do ficheiro, ou o geral. */
+  descritivo: string;
 }
 
-const COLUNAS_VAZIAS = { colNib: 0, colMontante: 1, colNome: 2, linhaInicial: 1 };
+const COLUNAS_VAZIAS = { colNib: 0, colMontante: 1, colNome: 2, colDescritivo: -1, linhaInicial: 1 };
 const DESCRITIVO_INICIAL = 'Pagamento Ordenado';
 
 export default function GeradorOIC() {
@@ -61,7 +60,7 @@ export default function GeradorOIC() {
   /** Linhas corrigidas à mão, por nº de linha da folha. */
   const [edicoes, setEdicoes] = useState<Record<number, EdicaoLinha>>({});
   const [editando, setEditando] = useState<number | null>(null);
-  const [rascunho, setRascunho] = useState<EdicaoLinha>({ nib: '', nome: '', montante: '' });
+  const [rascunho, setRascunho] = useState<EdicaoLinha>({ nib: '', nome: '', montante: '', descritivo: '' });
   const [resultado, setResultado] = useState<ResultadoOIC | null>(null);
   const [confirmarReset, setConfirmarReset] = useState(false);
   /** Folhas do ficheiro carregado: as usadas, as ignoradas, e se foram juntadas. */
@@ -85,6 +84,7 @@ export default function GeradorOIC() {
         colNib: d.colNib,
         colMontante: d.colMontante,
         colNome: d.colNome,
+        colDescritivo: d.colDescritivo,
         linhaInicial: d.linhaInicial,
       });
     }
@@ -125,33 +125,22 @@ export default function GeradorOIC() {
     }
   };
 
-  const nColunas = useMemo(() => Math.max(4, cols.colNib + 1, cols.colMontante + 1, cols.colNome + 1, rows.reduce((m, r) => Math.max(m, r.length), 0)), [rows, cols]);
+  const nColunas = useMemo(() => Math.max(4, cols.colNib + 1, cols.colMontante + 1, cols.colNome + 1, cols.colDescritivo + 1, rows.reduce((m, r) => Math.max(m, r.length), 0)), [rows, cols]);
 
-  const tratadas = useMemo<LinhaOICComRef[]>(() => {
-    const out: LinhaOICComRef[] = [];
-    for (let i = Math.max(0, cols.linhaInicial - 1); i < rows.length; i++) {
-      const r = rows[i] ?? [];
-      const ed = edicoes[i + 1];
-      const t = tratarLinhaOIC(
-        {
-          nib: ed ? ed.nib : r[cols.colNib],
-          montante: ed ? ed.montante : r[cols.colMontante],
-          nome: ed ? ed.nome : r[cols.colNome],
-          descritivo: '',
-        },
-        descritivo,
-      );
-      if (!t.vazia) out.push({ ...t, ref: i + 1, rotulo: folhas?.junta ? `${String(r[3])} · linha ${String(r[4])}` : undefined });
-    }
-    return out;
+  // O bloco "BCA" da folha e os NIBs 0003… não são deste gerador (vão pelo PS2): não entram na lista, só se conta quantos foram.
+  const { tratadas, nBcaIgnoradas } = useMemo(() => {
+    const r = tratarFolhaOIC(rows, cols, descritivo, edicoes);
+    const linhas: LinhaOICComRef[] = r.linhas.map((t) => ({
+      ...t,
+      rotulo: folhas?.junta ? `${String(rows[t.ref - 1]?.[3])} · linha ${String(rows[t.ref - 1]?.[4])}` : undefined,
+    }));
+    return { tratadas: linhas, nBcaIgnoradas: r.nBcaIgnoradas };
   }, [rows, cols, descritivo, folhas, edicoes]);
 
   const ativas = useMemo(() => tratadas.filter((t) => !excluidos.has(t.ref)), [tratadas, excluidos]);
   const nErros = ativas.filter((t) => t.erro).length;
-  // NIBs do BCA (0003…) ficam fora do ficheiro: não são erro nem contam para o total.
-  const nBca = ativas.filter((t) => t.foraDoFicheiro).length;
-  const nProntas = ativas.length - nErros - nBca;
-  const totalPronto = ativas.reduce((s, t) => s + (t.erro || t.foraDoFicheiro ? 0 : t.cents), 0);
+  const nProntas = ativas.length - nErros;
+  const totalPronto = ativas.reduce((s, t) => s + (t.erro ? 0 : t.cents), 0);
 
   const celulaTexto = (v: unknown) => (v === null || v === undefined ? '' : String(v));
 
@@ -162,6 +151,7 @@ export default function GeradorOIC() {
         nib: celulaTexto(r[cols.colNib]),
         nome: celulaTexto(r[cols.colNome]),
         montante: celulaTexto(r[cols.colMontante]),
+        descritivo: cols.colDescritivo >= 0 ? celulaTexto(r[cols.colDescritivo]) : '',
       },
     );
     setEditando(ref);
@@ -235,7 +225,7 @@ export default function GeradorOIC() {
     return mostra.join('\n');
   }, [resultado]);
 
-  const seletorColuna = (rotulo: string, chave: 'colNib' | 'colMontante' | 'colNome') => (
+  const seletorColuna = (rotulo: string, chave: 'colNib' | 'colMontante' | 'colNome' | 'colDescritivo', opcional = false) => (
     <div className="space-y-1">
       <Label>{rotulo}</Label>
       <Select
@@ -249,6 +239,7 @@ export default function GeradorOIC() {
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
+          {opcional && <SelectItem value="-1">Nenhuma (igual para todas)</SelectItem>}
           {Array.from({ length: nColunas }, (_, i) => (
             <SelectItem key={i} value={String(i)}>
               Coluna {letraColuna(i)}
@@ -317,10 +308,11 @@ export default function GeradorOIC() {
           )}
 
           {rows.length > 0 && !folhas?.junta && (
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
               {seletorColuna('NIB', 'colNib')}
               {seletorColuna('Montante', 'colMontante')}
               {seletorColuna('Nome', 'colNome')}
+              {seletorColuna('Descritivo', 'colDescritivo', true)}
               <div className="space-y-1">
                 <Label>Dados começam na linha</Label>
                 <Input
@@ -337,7 +329,7 @@ export default function GeradorOIC() {
           )}
 
           <div className="max-w-sm space-y-1">
-            <Label htmlFor="oic-desc">Descritivo (igual para todas as linhas)</Label>
+            <Label htmlFor="oic-desc">Descritivo por defeito</Label>
             <Input
               id="oic-desc"
               maxLength={40}
@@ -348,7 +340,7 @@ export default function GeradorOIC() {
               }}
               placeholder="Pagamento Ordenado"
             />
-            <p className="text-xs text-muted-foreground">Escreve-se uma vez; vai em todas as linhas (máx. 40 caracteres).</p>
+            <p className="text-xs text-muted-foreground">Só para as linhas sem descritivo (máx. 40 caracteres): o do cliente, na coluna do ficheiro, tem sempre prioridade. Qualquer linha também se corrige à mão no lápis.</p>
           </div>
         </CardContent>
       </Card>
@@ -367,9 +359,9 @@ export default function GeradorOIC() {
                     <AlertTriangle className="h-3 w-3 mr-1" /> {nErros} com erro
                   </Badge>
                 )}
-                {nBca > 0 && (
-                  <Badge variant="outline" title="NIBs do BCA (0003…) não vão no ficheiro OIC — usa o gerador PS2">
-                    {nBca} do BCA fora do ficheiro
+                {nBcaIgnoradas > 0 && (
+                  <Badge variant="outline" title="O bloco BCA da folha e os NIBs do BCA (0003…) não são deste gerador — vão pelo gerador PS2">
+                    {nBcaIgnoradas} do BCA ignoradas (vão pelo PS2)
                   </Badge>
                 )}
                 {Object.keys(edicoes).length > 0 && (
@@ -439,7 +431,17 @@ export default function GeradorOIC() {
                               className="h-8 text-right tabular-nums"
                             />
                           </td>
-                          <td className="p-2 text-xs text-muted-foreground" />
+                          <td className="p-2">
+                            <Input
+                              value={rascunho.descritivo}
+                              onChange={(e) => setRascunho((d) => ({ ...d, descritivo: e.target.value }))}
+                              onKeyDown={aoTecla}
+                              aria-label="Descritivo desta linha"
+                              placeholder={descritivo || 'descritivo geral'}
+                              maxLength={40}
+                              className="h-8"
+                            />
+                          </td>
                           <td className="p-2 text-xs text-muted-foreground">Enter guarda · Esc cancela</td>
                           <td className="p-2 text-right whitespace-nowrap">
                             <Button variant="ghost" size="icon" aria-label="Guardar a correção" onClick={guardarEdicao}>

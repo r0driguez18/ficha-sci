@@ -32,7 +32,7 @@ import { adivinharFolhaDoMes } from '@/lib/planilhaMeses';
 import { guardarFicheiro } from '@/lib/guardarFicheiro';
 import { comExtensao, semExtensao } from '@/lib/nomeFicheiro';
 import { empresaSugerida } from '@/lib/empresaDoFicheiro';
-import { autodetectar, matrizDeTexto, type LinhaBruta } from '@/lib/colagemPs2';
+import { autodetectar, linhasDaMatriz, matrizDeTexto, type LinhaBruta } from '@/lib/colagemPs2';
 import { DICA_TAB, tabNoCampo } from '@/lib/tabNoCampo';
 import { registarLote, sentidoPorTipo, sha256Hex } from '@/services/ps2LotesService';
 
@@ -87,12 +87,24 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
   const [data, setData] = useState(todayIso());
   const [referencia, setReferencia] = useState('Ordenado');
   const [prefixo, setPrefixo] = useState('Ordenado');
+  /** Descritivo só com o prefixo, sem o nome de cada pessoa. */
+  const [semNomes, setSemNomes] = useState(false);
+  /**
+   * O descritivo de uma linha: o do cliente (coluna do ficheiro ou corrigido à mão) manda sempre; só onde não há,
+   * vale o por defeito — o prefixo e o nome (ou só o prefixo).
+   */
+  const descritivoDe = (nome: string, proprio?: string) => {
+    const p = (proprio ?? '').trim();
+    if (p !== '') return p;
+    return semNomes ? prefixo.trim() : `${prefixo} ${nome}`.trim();
+  };
   const [tipo, setTipo] = useState<string>(TIPOS_OPERACAO[0]);
 
   const [modo, setModo] = useState<'colar' | 'colunas' | 'ficheiro'>('colar');
   const [colContas, setColContas] = useState('');
   const [colValores, setColValores] = useState('');
   const [colNomes, setColNomes] = useState('');
+  const [colDescritivos, setColDescritivos] = useState('');
   const [colagem, setColagem] = useState('');
   const [modoConta, setModoConta] = useState<ModoConta>('auto');
   const [soAlertas, setSoAlertas] = useState(false);
@@ -106,6 +118,8 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
   const [colConta, setColConta] = useState(0);
   const [colValor, setColValor] = useState(1);
   const [colNome, setColNome] = useState(2);
+  /** Coluna do descritivo do cliente (-1 = não há: vale o prefixo + nome). */
+  const [colDescritivo, setColDescritivo] = useState(-1);
   const [linhaInicial, setLinhaInicial] = useState(1);
   /** Ficheiros em que o montante vem ×10 (ex.: 173850 = 17385,00). */
   const [dividirPor10, setDividirPor10] = useState(false);
@@ -118,9 +132,9 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
   const [overrides, setOverrides] = useState<Record<number, string>>({});
   const [excluidos, setExcluidos] = useState<Set<number>>(new Set());
   /** Linhas corrigidas à mão (só valem para este ficheiro gerado — o Excel de origem não muda). */
-  const [edicoes, setEdicoes] = useState<Record<number, { recebido: string; nome: string; valor: string }>>({});
+  const [edicoes, setEdicoes] = useState<Record<number, { recebido: string; nome: string; valor: string; descritivo: string }>>({});
   const [editando, setEditando] = useState<number | null>(null);
-  const [rascunho, setRascunho] = useState({ recebido: '', nome: '', valor: '' });
+  const [rascunho, setRascunho] = useState({ recebido: '', nome: '', valor: '', descritivo: '' });
   const [resultado, setResultado] = useState<PS2Resultado | null>(null);
   const [confirmarReset, setConfirmarReset] = useState(false);
 
@@ -138,12 +152,15 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
     setData(todayIso());
     setReferencia('Ordenado');
     setPrefixo('Ordenado');
+    setSemNomes(false);
     setTipo(TIPOS_OPERACAO[0]);
     setModo('colar');
     setColagem('');
     setColContas('');
     setColValores('');
     setColNomes('');
+    setColDescritivos('');
+    setColDescritivo(-1);
     setModoConta('auto');
     setWorkbook(null);
     setFolhasVisiveis([]);
@@ -179,27 +196,20 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
       while (a.length > 0 && a[a.length - 1] === '') a.pop();
       return a;
     };
-    return { c: parte(colContas), v: parte(colValores), n: parte(colNomes) };
-  }, [colContas, colValores, colNomes]);
+    return { c: parte(colContas), v: parte(colValores), n: parte(colNomes), d: parte(colDescritivos) };
+  }, [colContas, colValores, colNomes, colDescritivos]);
 
-  const linhas: LinhaBruta[] = useMemo(() => {
+  // O bloco "Outros Bancos" da folha não é do PS2 (vai pelo OIC): as suas linhas não entram, só se contam.
+  const { linhas, nOutrosBlocos } = useMemo(() => {
     const out: LinhaBruta[] = [];
     if (modo === 'colunas') {
-      const { c, v, n } = separadas;
-      const total = Math.max(c.length, v.length, n.length);
-      for (let i = 0; i < total; i++) out.push({ recebido: c[i] ?? '', valor: v[i] ?? '', nome: n[i] ?? '' });
-      return out.filter((l) => l.recebido !== '' || l.valor !== '' || l.nome !== '');
+      const { c, v, n, d } = separadas;
+      const total = Math.max(c.length, v.length, n.length, d.length);
+      for (let i = 0; i < total; i++) out.push({ recebido: c[i] ?? '', valor: v[i] ?? '', nome: n[i] ?? '', descritivo: d[i] ?? '' });
+      return { linhas: out.filter((l) => l.recebido !== '' || l.valor !== '' || l.nome !== ''), nOutrosBlocos: 0 };
     }
-    for (let i = Math.max(0, linhaInicial - 1); i < matriz.length; i++) {
-      const r = matriz[i] ?? [];
-      out.push({
-        recebido: (r[colConta] ?? '').toString().trim(),
-        valor: colValor === colConta ? '' : (r[colValor] ?? '').toString().trim(),
-        nome: colNome === colConta || colNome === colValor ? '' : (r[colNome] ?? '').toString().trim(),
-      });
-    }
-    return out;
-  }, [modo, separadas, matriz, colConta, colValor, colNome, linhaInicial]);
+    return linhasDaMatriz(matriz, { colConta, colValor, colNome, colDescritivo, linhaInicial });
+  }, [modo, separadas, matriz, colConta, colValor, colNome, colDescritivo, linhaInicial]);
 
   const comDados = useMemo(
     () =>
@@ -213,13 +223,13 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
 
   const fator = dividirPor10 ? 10 : 1;
 
-  const tratadas: LinhaTratada[] = useMemo(
+  const todasTratadas: LinhaTratada[] = useMemo(
     () =>
       comDados.map((l0) => {
         const ed = edicoes[l0.idx];
-        const l = ed ? { ...l0, recebido: ed.recebido, nome: ed.nome, valor: ed.valor } : l0;
+        const l = ed ? { ...l0, recebido: ed.recebido, nome: ed.nome, valor: ed.valor, descritivo: ed.descritivo } : l0;
         const trat = tratarNib(l.recebido, NATUREZA_PADRAO, modoConta);
-        const semDescritivo = `${prefixo} ${l.nome}`.trim() === '';
+        const semDescritivo = descritivoDe(l.nome, l.descritivo) === '';
         const vAjustado = montanteComFator(l.valor, fator);
         // O valor editado já é o final (o que se vê na coluna "Valor"): não volta a dividir por 10.
         const valorAjustado = ed ? ed.valor : vAjustado === null || vAjustado === undefined ? l.valor : String(vAjustado);
@@ -249,8 +259,16 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
           valorAjustado,
         };
       }),
-    [comDados, overrides, excluidos, edicoes, modoConta, prefixo, fator],
+    [comDados, overrides, excluidos, edicoes, modoConta, prefixo, semNomes, fator],
   );
+
+  // O PS2 é só para contas do BCA: os NIBs de outros bancos (e o bloco "Outros Bancos" da folha) vão pelo OIC. Não entram
+  // na lista nem dão erro; só se conta quantos foram. (Um NIB corrigido à mão para o BCA, numa linha em alerta, entra.)
+  const tratadas = useMemo(
+    () => todasTratadas.filter((t) => !(t.trat.estado === 'nao-bca' && !(overrides[t.idx] ?? '').replace(/\D/g, ''))),
+    [todasTratadas, overrides],
+  );
+  const nOutrosBancos = todasTratadas.length - tratadas.length + nOutrosBlocos;
 
   // O nº de conta da empresa é sempre escrito à mão com a natureza no fim
   // (ex.: …10002). Trata-se sempre em modo "auto", independentemente do
@@ -286,6 +304,7 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
     setColConta(det.colConta);
     setColValor(det.colValor);
     setColNome(det.colNome);
+    setColDescritivo(det.colDescritivo);
     setLinhaInicial(det.linhaInicial);
     resetLinhas();
     toast.success(`Folha "${nomeFolha}": ${norm.length} linha(s) lidas — colunas detetadas.`);
@@ -331,7 +350,7 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
     });
 
   const abrirEdicao = (t: LinhaTratada) => {
-    setRascunho({ recebido: t.recebido, nome: t.nome, valor: String(t.valorAjustado ?? '') });
+    setRascunho({ recebido: t.recebido, nome: t.nome, valor: String(t.valorAjustado ?? ''), descritivo: t.descritivo ?? '' });
     setEditando(t.idx);
   };
 
@@ -360,10 +379,6 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
   };
 
   const gerar = () => {
-    if (contagem.naoBca > 0) {
-      toast.error(`${contagem.naoBca} linha(s) com NIB que não é do BCA (não começa por 0003) — o PS2 é só para contas BCA. Exclui-as (o OIC é para outros bancos).`);
-      return;
-    }
     if (contagem.alerta > 0) {
       toast.error(`${contagem.alerta} linha(s) em alerta — corrige ou exclui antes de gerar.`);
       return;
@@ -382,7 +397,7 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
         .map((t) => ({
           nib: t.nibFinal,
           valor: limparValor(t.valorAjustado),
-          descritivo: `${prefixo} ${t.nome}`.trim(),
+          descritivo: descritivoDe(t.nome, t.descritivo),
         })),
     });
     setResultado(res);
@@ -524,6 +539,13 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
             <div className="space-y-1.5">
               <Label htmlFor="prefixo">Descritivo (prefixo)</Label>
               <Input id="prefixo" value={prefixo} onChange={(e) => setPrefixo(e.target.value)} placeholder="ex.: Ordenado — junta-se ao nome" />
+              <div className="mt-2 flex items-center gap-2">
+                <Checkbox id="ps2-sem-nomes" checked={semNomes} onCheckedChange={(c) => { setSemNomes(!!c); setResultado(null); }} />
+                <Label htmlFor="ps2-sem-nomes" className="cursor-pointer font-normal text-sm">
+                  Só o prefixo (sem o nome)
+                  <span className="block text-xs text-muted-foreground">O descritivo de todas as linhas fica só o prefixo; os nomes não vão no ficheiro.</span>
+                </Label>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -649,6 +671,7 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
                   setColConta(det.colConta);
                   setColValor(det.colValor);
                   setColNome(det.colNome);
+                  setColDescritivo(det.colDescritivo);
                   setLinhaInicial(det.linhaInicial);
                 }
                 resetLinhas();
@@ -664,12 +687,13 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
             </div>
           ) : modo === 'colunas' ? (
             <div className="space-y-2">
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="grid gap-3 sm:grid-cols-4">
                 {(
                   [
                     ['Contas / NIB', colContas, setColContas, separadas.c.length],
                     ['Valores', colValores, setColValores, separadas.v.length],
                     ['Nomes', colNomes, setColNomes, separadas.n.length],
+                    ['Descritivos (opcional)', colDescritivos, setColDescritivos, separadas.d.length],
                   ] as const
                 ).map(([label, val, set, n]) => (
                   <div key={label} className="space-y-1">
@@ -734,8 +758,8 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
                       <tr className="bg-muted/60 text-left">
                         <th className="px-2 py-1 font-normal text-muted-foreground w-10">linha</th>
                         {colOpts.map((i) => {
-                          const papel = i === colConta ? 'NIB' : i === colValor ? 'Valor' : i === colNome ? 'Nome' : '';
-                          const cor = i === colConta ? 'text-primary' : i === colValor ? 'text-success' : i === colNome ? 'text-foreground' : 'text-muted-foreground';
+                          const papel = i === colConta ? 'NIB' : i === colValor ? 'Valor' : i === colNome ? 'Nome' : i === colDescritivo ? 'Descritivo' : '';
+                          const cor = i === colConta ? 'text-primary' : i === colValor ? 'text-success' : i === colNome ? 'text-foreground' : i === colDescritivo ? 'text-foreground' : 'text-muted-foreground';
                           return (
                             <th key={i} className={`px-2 py-1 whitespace-nowrap font-medium ${cor}`}>
                               {XLSX.utils.encode_col(i)}
@@ -760,12 +784,13 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
                   </table>
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-4">
+                <div className="grid gap-3 sm:grid-cols-5">
                   {(
                     [
                       ['NIB', colConta, setColConta] as const,
                       ['Valor', colValor, setColValor] as const,
                       ['Nome', colNome, setColNome] as const,
+                      ['Descritivo', colDescritivo, setColDescritivo] as const,
                     ] as const
                   ).map(([label, val, set]) => (
                     <div key={label} className="space-y-1">
@@ -773,6 +798,7 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
                       <Select value={String(val)} onValueChange={(v) => set(Number(v))}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
+                          {label === 'Descritivo' && <SelectItem value="-1">Nenhuma (prefixo + nome)</SelectItem>}
                           {colOpts.map((i) => (
                             <SelectItem key={i} value={String(i)}>{nomeCol(i)}</SelectItem>
                           ))}
@@ -820,7 +846,11 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
                     mostrar todas
                   </button>
                 )}
-                {contagem.naoBca > 0 && <Badge variant="destructive">{contagem.naoBca} com NIB que não é do BCA — erro</Badge>}
+                {nOutrosBancos > 0 && (
+                  <Badge variant="outline" title="O PS2 é só para contas do BCA (0003…): os NIBs de outros bancos e o bloco Outros Bancos da folha vão pelo gerador OIC">
+                    {nOutrosBancos} de outros bancos ignoradas (vão pelo OIC)
+                  </Badge>
+                )}
                 {Object.keys(edicoes).length > 0 && (
                   <Badge variant="outline" title="Corrigidas aqui; o Excel de origem não foi alterado">
                     {Object.keys(edicoes).length} editadas
@@ -846,6 +876,7 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
                       <th className="px-2 py-2">NIB final</th>
                       <th className="px-2 py-2 text-right">Valor</th>
                       <th className="px-2 py-2">Natureza</th>
+                      <th className="px-2 py-2">Descritivo</th>
                       <th className="px-2 py-2" />
                     </tr>
                   </thead>
@@ -894,6 +925,19 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
                           />
                         </td>
                         <td className="px-2 py-1.5 text-[10px] text-muted-foreground">Enter guarda · Esc cancela</td>
+                        <td className="px-2 py-1.5">
+                          <Input
+                            value={rascunho.descritivo}
+                            onChange={(e) => setRascunho((d) => ({ ...d, descritivo: e.target.value }))}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') guardarEdicao();
+                              if (e.key === 'Escape') setEditando(null);
+                            }}
+                            aria-label="Descritivo desta linha"
+                            placeholder={descritivoDe(rascunho.nome) || 'descritivo'}
+                            className="h-7 text-xs"
+                          />
+                        </td>
                         <td className="px-2 py-1.5 whitespace-nowrap">
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={guardarEdicao} title="Guardar a correção">
                             <Check className="h-4 w-4 text-green-600" />
@@ -922,7 +966,7 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
                         }`}
                       >
                         <td className="px-2 py-1.5 text-muted-foreground">{t.idx + 1}</td>
-                        <td className="px-2 py-1.5 truncate" title={t.nome}>
+                        <td className={`px-2 py-1.5 truncate ${semNomes ? 'text-muted-foreground line-through' : ''}`} title={semNomes ? 'Não vai no ficheiro (só o prefixo)' : t.nome}>
                           {t.nome || <span className="text-muted-foreground">(sem nome)</span>}
                           {t.idx in edicoes && t.estado !== 'excluido' && (
                             <span className="ml-1 text-[10px] text-primary" title="Corrigida aqui; o Excel de origem não foi alterado">
@@ -971,6 +1015,10 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
                             ? `${t.trat.naturezaRecebida} → ${t.trat.naturezaFinal}`
                             : '—'}
                         </td>
+                        <td className="px-2 py-1.5 text-xs" title={t.descritivo ? 'Descritivo do cliente' : 'Prefixo + nome'}>
+                          {descritivoDe(t.nome, t.descritivo) || <span className="text-muted-foreground">—</span>}
+                          {t.descritivo && <span className="ml-1 text-[10px] text-primary">cliente</span>}
+                        </td>
                         <td className="px-2 py-1.5 whitespace-nowrap">
                           {t.estado !== 'excluido' && (
                             <Button
@@ -1013,7 +1061,7 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
       </Card>
 
       <div className="flex flex-wrap items-end gap-2">
-        <Button onClick={gerar} disabled={contagem.ok === 0 || contagem.alerta > 0 || contagem.naoBca > 0}>
+        <Button onClick={gerar} disabled={contagem.ok === 0 || contagem.alerta > 0}>
           Gerar ficheiro PS2
         </Button>
         {resultado && resultado.erros.length === 0 && (

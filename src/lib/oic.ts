@@ -259,6 +259,12 @@ export function tratarLinhaOIC(l: LinhaBrutaOIC, descritivoPadrao = ''): LinhaTr
   // sem NIB e sem nome, ou com nome a começar por "Total", não são pagamentos.
   if (n.nib === '' && !n.temLetras && !n.perdeuDigitos && (nomeLimpo === '' || /^total/i.test(nomeLimpo))) vazia = true;
 
+  // Títulos de secção ("Outros Bancos": só texto, sem NIB nem montante nem descritivo) e cabeçalhos repetidos a meio
+  // da folha ("Beneficiário | Valor a pagar | Descritivo | Nº Conta/ NIB") não são pagamentos: ficam de fora sem erro.
+  const semDados = n.nib === '' && !n.perdeuDigitos;
+  if (semDados && !n.temLetras && montante === null && descLimpa === '') vazia = true;
+  if (semDados && n.temLetras && montante !== null && Number.isNaN(montante)) vazia = true;
+
   if (descLimpa === '') descLimpa = limparTexto(descritivoPadrao);
   // Nomes e descritivo sem acentos ("João" → "Joao"): a letra fica, o acento sai.
   const nome = paraAnsi(semAcentos(nomeLimpo));
@@ -282,7 +288,11 @@ export function tratarLinhaOIC(l: LinhaBrutaOIC, descritivoPadrao = ''): LinhaTr
     return { ...base, erro: 'NIB guardado como número no Excel (perdeu dígitos) — formata a coluna como Texto.' };
   }
   if (n.nib === '') return { ...base, erro: 'NIB obrigatório.' };
-  if (n.nib.length !== 21) return { ...base, erro: `NIB deve ter 21 dígitos (tem ${n.nib.length}).` };
+  if (n.nib.length !== 21) {
+    // 10–14 dígitos costuma ser o nº de conta do BCA (sem o prefixo do banco): vai pelo gerador PS2.
+    const dica = n.nib.length >= 10 && n.nib.length <= 14 ? ' Parece um nº de conta do BCA — esse vai pelo gerador PS2.' : '';
+    return { ...base, erro: `NIB deve ter 21 dígitos (tem ${n.nib.length}).${dica}` };
+  }
   // NIB do BCA: este gerador é só para outros bancos — a linha fica de fora (os do BCA vão pelo PS2).
   if (n.nib.startsWith('0003')) return { ...base, foraDoFicheiro: true };
 
@@ -383,6 +393,8 @@ export interface ColunasOIC {
   colNib: number;
   colMontante: number;
   colNome: number;
+  /** Coluna do descritivo de cada linha (só se o cabeçalho a indicar); -1 = não há (vale o descritivo geral). */
+  colDescritivo: number;
   /** 1.ª linha de dados (1 = primeira linha da folha). */
   linhaInicial: number;
   temCabecalho: boolean;
@@ -420,11 +432,13 @@ export function autodetectarColunasOIC(rows: unknown[][]): ColunasOIC {
     nibConta: /^(n\.?º?\s*conta|conta|n[uú]mero da conta)/,
     montante: /^(montante|valor|v.?s*l[ií]quido|l[ií]quido|a pagar|total)/,
     nome: /^(nome|benefici|funcion|colaborad|titular)/,
+    descritivo: /^(descritivo|descri[cç][aã]o|refer[eê]ncia|motivo|finalidade|hist[oó]rico|observa)/,
   };
   let cab = -1;
   let cNib = -1;
   let cMontante = -1;
   let cNome = -1;
+  let cDescritivo = -1;
   for (let i = 0; i < Math.min(rows.length, 40); i++) {
     const r = rows[i] ?? [];
     const acha = (re: RegExp) => r.findIndex((c) => re.test(texto(c)));
@@ -437,12 +451,14 @@ export function autodetectarColunasOIC(rows: unknown[][]): ColunasOIC {
       cNib = a;
       cMontante = b;
       cNome = c;
+      cDescritivo = acha(chaves.descritivo);
+      if (cDescritivo === a || cDescritivo === b || cDescritivo === c) cDescritivo = -1;
       break;
     }
   }
 
   const inicio = cab + 1;
-  const usadas = () => [cNib, cMontante, cNome];
+  const usadas = () => [cNib, cMontante, cNome, cDescritivo];
   const pontua = (c: number, f: (v: unknown) => boolean) => {
     let n = 0;
     for (let i = inicio; i < rows.length; i++) if (f(rows[i]?.[c])) n++;
@@ -500,7 +516,74 @@ export function autodetectarColunasOIC(rows: unknown[][]): ColunasOIC {
     colNib: cNib,
     colMontante: cMontante,
     colNome: cNome,
+    colDescritivo: cDescritivo,
     linhaInicial: linha + 1,
     temCabecalho: cab >= 0,
   };
+}
+
+/**
+ * Título de secção de uma folha com vários blocos: a linha só tem uma célula com texto, e diz "BCA" (o bloco das
+ * contas do BCA, que vai pelo gerador PS2) ou "Outros Bancos" / "Interbancário" (o bloco deste gerador).
+ */
+export function secaoDaLinha(r: readonly unknown[]): 'bca' | 'outros' | null {
+  const celulas = r.map((c) => limparTexto(c)).filter((c) => c !== '');
+  if (celulas.length !== 1) return null;
+  const t = celulas[0].toLowerCase();
+  if (/^bca[\s:.-]*$/.test(t)) return 'bca';
+  if (/^(outros\s+bancos?|interbanc[aá]ri[oa]s?|outras?\s+institui)/.test(t)) return 'outros';
+  return null;
+}
+
+export interface EdicaoLinhaOIC {
+  nib: string;
+  nome: string;
+  montante: string;
+  descritivo: string;
+}
+
+/**
+ * A folha toda → linhas tratadas. O bloco "BCA" (e qualquer NIB 0003…) não é deste gerador — vai pelo PS2 —, por isso
+ * não entra na lista; só se conta quantas linhas foram ignoradas. Títulos de secção, cabeçalhos repetidos, totais e
+ * linhas em branco também ficam de fora. `ref` é o nº da linha na folha (1 = a primeira).
+ */
+export function tratarFolhaOIC(
+  rows: readonly (readonly unknown[])[],
+  cols: { colNib: number; colMontante: number; colNome: number; colDescritivo: number; linhaInicial: number },
+  descritivoPadrao: string,
+  edicoes: Readonly<Record<number, EdicaoLinhaOIC>> = {},
+): { linhas: Array<LinhaTratadaOIC & { ref: number }>; nBcaIgnoradas: number } {
+  const linhas: Array<LinhaTratadaOIC & { ref: number }> = [];
+  let nBcaIgnoradas = 0;
+  const inicio = Math.max(0, cols.linhaInicial - 1);
+  // A secção em que a primeira linha de dados está (o título "BCA" costuma estar antes do cabeçalho).
+  let secao: 'bca' | 'outros' | null = null;
+  for (let i = 0; i < inicio && i < rows.length; i++) secao = secaoDaLinha(rows[i] ?? []) ?? secao;
+
+  for (let i = inicio; i < rows.length; i++) {
+    const r = rows[i] ?? [];
+    const nova = secaoDaLinha(r);
+    if (nova) {
+      secao = nova;
+      continue;
+    }
+    const ed = edicoes[i + 1];
+    const t = tratarLinhaOIC(
+      {
+        nib: ed ? ed.nib : r[cols.colNib],
+        montante: ed ? ed.montante : r[cols.colMontante],
+        nome: ed ? ed.nome : r[cols.colNome],
+        // Descritivo da própria linha: o corrigido à mão, senão o da coluna do ficheiro; sem nenhum vale o por defeito.
+        descritivo: ed?.descritivo ? ed.descritivo : cols.colDescritivo >= 0 ? r[cols.colDescritivo] : '',
+      },
+      descritivoPadrao,
+    );
+    if (t.vazia) continue;
+    if (secao === 'bca' || t.foraDoFicheiro) {
+      nBcaIgnoradas += 1;
+      continue;
+    }
+    linhas.push({ ...t, ref: i + 1 });
+  }
+  return { linhas, nBcaIgnoradas };
 }
