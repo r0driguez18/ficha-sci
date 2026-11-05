@@ -43,7 +43,12 @@ export const NotificacoesTeamsCard: React.FC = () => {
     const r = await testarTeams();
     setATestar(false);
     if (r.erro) toast.error(r.erro);
-    else toast.success('Mensagem de teste enviada — vê o canal do Teams.');
+    else
+      toast.success(
+        r.dados.formato === 'texto'
+          ? 'Mensagem de teste enviada em texto simples — vê o canal do Teams.'
+          : 'Mensagem de teste enviada — vê o canal do Teams.',
+      );
   };
 
   return (

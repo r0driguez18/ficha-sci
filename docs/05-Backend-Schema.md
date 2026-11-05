@@ -224,6 +224,12 @@ O PDF da ficha de procedimentos leva, **como anexo** (página horizontal no fim)
 | `notificacoes_config` | `chave` (PK, ex.: `teams_webhook`), `valor`, `atualizado_em`, `atualizado_por` | RLS ligado **sem políticas**: só a função `notificar-fecho` (chave de serviço) lê e escreve |
 | `notificacoes_fecho` | `id`, `data`, `tipo` (`inicio`/`termino`), `hora`, `operador`, `criado_em` | **UNIQUE `(data, tipo)`**: uma mensagem por dia e tipo; RLS ligado sem políticas |
 
+A função `notificar-fecho` envia um cartão adaptável (Workflows) e, se o destino o recusar (erro 4xx), repete em texto simples
+(`{ "text": … }`), dizendo qual dos formatos funcionou. O endereço do webhook só é aceite se o anfitrião for da Microsoft
+(`*.logic.azure.com`, `*.webhook.office.com`, `outlook.office.com`, `*.powerplatform.com`) ou se o nome exato estiver na
+variável de ambiente **`TEAMS_HOSTS_EXTRA`** do contentor `supabase-edge-functions` (lista separada por vírgulas) — é como se aprova,
+no servidor, um webhook de terceiros.
+
 ### 2.9 Legado
 
 - **`crc_tratamentos`**: tabela da ferramenta CRC (removida da aplicação). Mantida; decidir se se apaga.

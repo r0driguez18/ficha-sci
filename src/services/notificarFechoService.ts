@@ -52,5 +52,5 @@ export function configurarTeams(url: string) {
 }
 
 export function testarTeams() {
-  return chamar<{ enviada: boolean }>({ acao: 'testar' });
+  return chamar<{ enviada: boolean; formato?: 'cartao' | 'texto' }>({ acao: 'testar' });
 }

@@ -19,6 +19,11 @@ export interface Ambiente {
   /** URL do Supabase vista da funcao (ex.: http://kong:8000). */
   supabaseUrl: string;
   serviceKey: string;
+  /**
+   * Anfitriões extra aceites para o webhook (nome exato, ex.: o de um bot de terceiros aprovado pela TI).
+   * Vem da variável TEAMS_HOSTS_EXTRA do servidor; por defeito só se aceitam os da Microsoft.
+   */
+  hostsExtra?: string[];
 }
 
 type Json = Record<string, unknown>;
@@ -40,7 +45,7 @@ class ErroPedido extends Error {
 // ----------------------------------------------------------------- validacao (puro)
 
 /** Só aceita webhooks do Teams/Power Automate por HTTPS: a função não pode ser usada para chamar outros sítios. */
-export function validarWebhook(v: unknown): string {
+export function validarWebhook(v: unknown, hostsExtra: string[] = []): string {
   const texto = String(v ?? '').trim();
   let u: URL;
   try {
@@ -53,9 +58,10 @@ export function validarWebhook(v: unknown): string {
     h === 'outlook.office.com' ||
     h.endsWith('.webhook.office.com') ||
     h.endsWith('.logic.azure.com') ||
-    h.endsWith('.powerplatform.com');
+    h.endsWith('.powerplatform.com') ||
+    hostsExtra.some((x) => x.trim().toLowerCase() === h);
   if (u.protocol !== 'https:' || u.username || u.password || !permitido) {
-    throw new ErroPedido(400, 'O endereço tem de ser um webhook HTTPS do Teams (Workflows / Power Automate).');
+    throw new ErroPedido(400, 'O endereço tem de ser um webhook HTTPS do Teams (Workflows / Power Automate) ou de um anfitrião aprovado no servidor.');
   }
   return u.toString();
 }
@@ -81,12 +87,19 @@ export function validarHora(v: unknown): string {
   return /^([01]\d|2[0-3]):[0-5]\d$/.test(h) ? h : '';
 }
 
-/** Cartão adaptável (formato que o Workflows "Publicar num canal" espera). */
-export function montarMensagem(tipo: 'inicio' | 'termino', data: string, hora: string, operador: string): Json {
+/** O aviso (título e texto) do início ou término do fecho. */
+export function montarMensagem(tipo: 'inicio' | 'termino', data: string, hora: string, operador: string): { titulo: string; texto: string } {
   const [a, m, d] = data.split('-');
   const titulo = tipo === 'inicio' ? '🟢 Início do Fecho' : '🔴 Término do Fecho';
   const linha = `${d}/${m}/${a}${hora ? ` às ${hora}` : ''}`;
-  return cartao(titulo, operador ? `${linha} — operador: ${operador}` : linha);
+  return { titulo, texto: operador ? `${linha} — operador: ${operador}` : linha };
+}
+
+/** O mesmo aviso em texto simples: webhooks que não aceitam cartões (ex.: bots de terceiros) aceitam `{ text }`. */
+function textoSimples(titulo: string, texto: string): Json {
+  return { text: `${titulo}
+
+${texto}` };
 }
 
 function cartao(titulo: string, texto: string): Json {
@@ -171,19 +184,39 @@ async function lerWebhook(amb: Ambiente, f: FetchFn): Promise<string | null> {
   return Array.isArray(q.corpo) && q.corpo[0]?.valor ? String(q.corpo[0].valor) : null;
 }
 
-async function enviar(url: string, mensagem: Json, f: FetchFn): Promise<{ ok: boolean; detalhe: string }> {
+interface Aviso {
+  titulo: string;
+  texto: string;
+}
+
+async function postar(url: string, corpo: Json, f: FetchFn): Promise<{ ok: boolean; estado: number; detalhe: string }> {
   try {
     const r = await f(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(mensagem),
+      body: JSON.stringify(corpo),
       signal: AbortSignal.timeout(10_000),
     });
-    if (r.ok) return { ok: true, detalhe: '' };
-    return { ok: false, detalhe: `O Teams respondeu ${r.status}.` };
+    if (r.ok) return { ok: true, estado: r.status, detalhe: '' };
+    return { ok: false, estado: r.status, detalhe: `O Teams respondeu ${r.status}.` };
   } catch (e) {
-    return { ok: false, detalhe: e instanceof Error ? `Sem ligação ao Teams (${e.name}).` : 'Sem ligação ao Teams.' };
+    return { ok: false, estado: 0, detalhe: e instanceof Error ? `Sem ligação ao Teams (${e.name}).` : 'Sem ligação ao Teams.' };
   }
+}
+
+/**
+ * Envia o aviso como cartão (Workflows) e, se o destino recusar o formato (erro 4xx), repete em texto simples
+ * (bots/webhooks de terceiros). Diz qual dos formatos funcionou.
+ */
+async function enviar(url: string, aviso: Aviso, f: FetchFn): Promise<{ ok: boolean; detalhe: string; formato?: 'cartao' | 'texto' }> {
+  const c = await postar(url, cartao(aviso.titulo, aviso.texto), f);
+  if (c.ok) return { ok: true, detalhe: '', formato: 'cartao' };
+  if (c.estado >= 400 && c.estado < 500) {
+    const t = await postar(url, textoSimples(aviso.titulo, aviso.texto), f);
+    if (t.ok) return { ok: true, detalhe: '', formato: 'texto' };
+    return { ok: false, detalhe: `${c.detalhe} (também recusou texto simples: ${t.estado})` };
+  }
+  return { ok: false, detalhe: c.detalhe };
 }
 
 // ----------------------------------------------------------------- acoes
@@ -212,7 +245,7 @@ async function evento(quem: Quem, amb: Ambiente, f: FetchFn, corpo: Json): Promi
     await c.pedir(`/rest/v1/notificacoes_fecho?data=eq.${data}&tipo=eq.${tipo}`, { method: 'DELETE' });
     return { enviada: false, motivo: 'falha', detalhe: r.detalhe };
   }
-  return { enviada: true };
+  return { enviada: true, formato: r.formato };
 }
 
 async function estado(amb: Ambiente, f: FetchFn): Promise<Json> {
@@ -228,7 +261,7 @@ async function configurar(quem: Quem, amb: Ambiente, f: FetchFn, corpo: Json): P
     if (d.estado >= 300) throw new ErroPedido(502, 'Não consegui remover a configuração.');
     return { configurado: false };
   }
-  const url = validarWebhook(corpo.url);
+  const url = validarWebhook(corpo.url, amb.hostsExtra);
   const g = await c.pedir('/rest/v1/notificacoes_config?on_conflict=chave', {
     method: 'POST',
     headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
@@ -241,9 +274,9 @@ async function configurar(quem: Quem, amb: Ambiente, f: FetchFn, corpo: Json): P
 async function testar(quem: Quem, amb: Ambiente, f: FetchFn): Promise<Json> {
   const url = await lerWebhook(amb, f);
   if (!url) throw new ErroPedido(400, 'Ainda não há webhook configurado.');
-  const r = await enviar(url, cartao('✅ Teste do SCI', `Mensagem de teste enviada por ${quem.codigo}.`), f);
+  const r = await enviar(url, { titulo: '✅ Teste do SCI', texto: `Mensagem de teste enviada por ${quem.codigo}.` }, f);
   if (!r.ok) throw new ErroPedido(502, r.detalhe);
-  return { enviada: true };
+  return { enviada: true, formato: r.formato };
 }
 
 // ----------------------------------------------------------------- entrada
@@ -292,6 +325,7 @@ if (typeof Deno !== 'undefined' && typeof Deno.serve === 'function') {
     manipular(req, {
       supabaseUrl: Deno.env.get('SUPABASE_URL') ?? '',
       serviceKey: Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      hostsExtra: (Deno.env.get('TEAMS_HOSTS_EXTRA') ?? '').split(',').map((x: string) => x.trim()).filter(Boolean),
     }),
   );
 }
