@@ -35,7 +35,7 @@ export const FormActions: React.FC<FormActionsProps> = ({
         onClick={() => setConfirmReset(true)}
         disabled={isSigned || busy}
         title={isSigned ? 'Remove a assinatura antes de limpar' : undefined}
-        className="flex items-center gap-2"
+        className="press flex items-center gap-2"
       >
         <RotateCcw className="h-4 w-4" />
         Limpar
@@ -44,7 +44,7 @@ export const FormActions: React.FC<FormActionsProps> = ({
       <Button
         onClick={onExportPDF}
         disabled={busy}
-        className="flex items-center gap-2 px-6"
+        className="press flex items-center gap-2 px-6"
       >
         {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
         Exportar e guardar

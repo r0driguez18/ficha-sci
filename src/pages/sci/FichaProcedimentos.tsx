@@ -155,7 +155,7 @@ export default function FichaProcedimentos({ formType }: FichaProcedimentosProps
         </CardHeader>
         <CardContent className="pt-6">
           {tb.desatualizada && (
-            <Alert variant="destructive" className="mb-6">
+            <Alert variant="destructive" className="anim-entrar mb-6">
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle>Esta ficha está desatualizada</AlertTitle>
               <AlertDescription>

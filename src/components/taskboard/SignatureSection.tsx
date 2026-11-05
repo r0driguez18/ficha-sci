@@ -127,7 +127,7 @@ export const SignatureSection: React.FC<SignatureSectionProps> = ({
         )}
 
         {signed ? (
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-md border border-success/30 bg-success/10 p-3">
+          <div className="anim-entrar mt-3 flex flex-wrap items-center justify-between gap-3 rounded-md border border-success/30 bg-success/10 p-3">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 text-success" />
               <div className="flex flex-col">
