@@ -25,20 +25,18 @@ export interface MudancaHora {
 /**
  * O que fazer à hora quando um procedimento é marcado ou desmarcado.
  *  • Marcar: se o campo não tem hora válida, entra a de agora; se já tem (escrita à mão, ou de antes), fica como está.
- *  • Desmarcar: só se apaga a hora que a própria app pôs e ninguém mexeu (`auto` guarda essas); uma hora escrita à
- *    mão nunca se apaga sozinha.
+ *  • Desmarcar: a hora desaparece, tenha sido posta pela app ou escrita à mão — um procedimento por fazer não tem hora.
  * Devolve null quando não há nada a mudar.
  */
 export function decidirHora(
   procedimento: string,
   marcado: boolean,
   turno3: Record<string, unknown>,
-  auto: Readonly<Record<string, string>>,
   agora: string,
 ): MudancaHora | null {
   const campo = CAMPO_HORA[procedimento];
   if (!campo) return null;
   const atual = turno3[campo];
   if (marcado) return horaValida(atual) ? null : { campo, valor: agora };
-  return typeof atual === 'string' && atual !== '' && atual === auto[campo] ? { campo, valor: '' } : null;
+  return typeof atual === 'string' && atual !== '' ? { campo, valor: '' } : null;
 }

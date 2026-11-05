@@ -341,9 +341,6 @@ export function useTaskboard(formType: FormType) {
   const dateRef = useRef(date);
   dateRef.current = date;
 
-  /** Horas que a própria app pôs nos campos (para só as apagar se o procedimento for desmarcado e ninguém as tiver mexido). */
-  const horasAuto = useRef<Record<string, string>>({});
-
   /** Início/término do fecho marcados → mensagem para o Teams (o servidor garante uma por dia e tipo). */
   const avisarFecho = useCallback(async (tipo: 'inicio' | 'termino', hora: string) => {
     const r = await enviarEventoFecho(tipo, dateRef.current, hora);
@@ -357,17 +354,13 @@ export function useTaskboard(formType: FormType) {
 
   const handleTaskChange = useCallback(
     (turnKey: TurnKey, task: string, checked: boolean | string) => {
-      // Procedimentos do Turno 3 com hora: ao marcar entra a hora de agora (editável); a mesma hora vai na mensagem do Teams.
+      // Procedimentos do Turno 3 com hora: ao marcar entra a hora de agora (editável) e ao desmarcar desaparece; a mesma hora vai na mensagem do Teams.
       let extra: Record<string, string> = {};
       if (turnKey === 'turno3') {
         const t3 = tasksRef.current.turno3 as unknown as Record<string, unknown>;
         const agora = horaAgora();
-        const mudanca = decidirHora(task, checked === true, t3, horasAuto.current, agora);
-        if (mudanca) {
-          extra = { [mudanca.campo]: mudanca.valor };
-          if (mudanca.valor) horasAuto.current[mudanca.campo] = mudanca.valor;
-          else delete horasAuto.current[mudanca.campo];
-        }
+        const mudanca = decidirHora(task, checked === true, t3, agora);
+        if (mudanca) extra = { [mudanca.campo]: mudanca.valor };
         if (checked === true && (task === 'inicioFecho' || task === 'terminoFecho')) {
           const escrita = t3[CAMPO_HORA[task]];
           void avisarFecho(task === 'inicioFecho' ? 'inicio' : 'termino', horaValida(escrita) ? escrita : agora);

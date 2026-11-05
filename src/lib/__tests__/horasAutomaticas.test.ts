@@ -18,30 +18,31 @@ describe('horas automáticas do Turno 3', () => {
   });
 
   it('marcar com o campo vazio: entra a hora de agora', () => {
-    expect(decidirHora('inicioFecho', true, t3(), {}, '22:40')).toEqual({ campo: 'inicioFechoHora', valor: '22:40' });
-    expect(decidirHora('abrirRealTime', true, t3(), {}, '04:02')).toEqual({ campo: 'abrirRealTimeHora', valor: '04:02' });
-    expect(decidirHora('interromperRealTime', true, t3(), {}, '23:10')?.campo).toBe('interromperRealTimeHora');
-    expect(decidirHora('terminoFecho', true, t3(), {}, '05:15')?.campo).toBe('terminoFechoHora');
+    expect(decidirHora('inicioFecho', true, t3(), '22:40')).toEqual({ campo: 'inicioFechoHora', valor: '22:40' });
+    expect(decidirHora('abrirRealTime', true, t3(), '04:02')).toEqual({ campo: 'abrirRealTimeHora', valor: '04:02' });
+    expect(decidirHora('interromperRealTime', true, t3(), '23:10')?.campo).toBe('interromperRealTimeHora');
+    expect(decidirHora('terminoFecho', true, t3(), '05:15')?.campo).toBe('terminoFechoHora');
   });
 
   it('marcar com uma hora já escrita (à mão ou de antes): fica como está', () => {
-    expect(decidirHora('inicioFecho', true, t3({ inicioFechoHora: '22:15' }), {}, '22:40')).toBeNull();
+    expect(decidirHora('inicioFecho', true, t3({ inicioFechoHora: '22:15' }), '22:40')).toBeNull();
   });
 
   it('uma hora inválida conta como vazia', () => {
-    expect(decidirHora('inicioFecho', true, t3({ inicioFechoHora: '99:99' }), {}, '22:40')).toEqual({ campo: 'inicioFechoHora', valor: '22:40' });
+    expect(decidirHora('inicioFecho', true, t3({ inicioFechoHora: '99:99' }), '22:40')).toEqual({ campo: 'inicioFechoHora', valor: '22:40' });
   });
 
-  it('desmarcar apaga só a hora que a app pôs e que ninguém mexeu', () => {
-    expect(decidirHora('inicioFecho', false, t3({ inicioFechoHora: '22:40' }), { inicioFechoHora: '22:40' }, '23:00')).toEqual({ campo: 'inicioFechoHora', valor: '' });
-    // editada à mão depois: não se apaga
-    expect(decidirHora('inicioFecho', false, t3({ inicioFechoHora: '22:15' }), { inicioFechoHora: '22:40' }, '23:00')).toBeNull();
-    // escrita à mão desde o início (a app não pôs nada)
-    expect(decidirHora('inicioFecho', false, t3({ inicioFechoHora: '22:15' }), {}, '23:00')).toBeNull();
+  it('desmarcar apaga a hora, seja a automática ou a escrita à mão', () => {
+    expect(decidirHora('inicioFecho', false, t3({ inicioFechoHora: '22:40' }), '23:00')).toEqual({ campo: 'inicioFechoHora', valor: '' });
+    expect(decidirHora('abrirRealTime', false, t3({ abrirRealTimeHora: '04:02' }), '23:00')).toEqual({ campo: 'abrirRealTimeHora', valor: '' });
+  });
+
+  it('desmarcar com o campo já vazio: nada a fazer', () => {
+    expect(decidirHora('inicioFecho', false, t3(), '23:00')).toBeNull();
   });
 
   it('outros procedimentos não levam hora', () => {
-    expect(decidirHora('datacenter', true, t3(), {}, '22:40')).toBeNull();
-    expect(decidirHora('datacenter', false, t3(), {}, '22:40')).toBeNull();
+    expect(decidirHora('datacenter', true, t3(), '22:40')).toBeNull();
+    expect(decidirHora('datacenter', false, t3(), '22:40')).toBeNull();
   });
 });
