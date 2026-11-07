@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { AlertTriangle, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { contaENatureza } from '@/lib/nibBca';
+import { contaComNatureza } from '@/lib/nibBca';
 import { usePaginacao } from '@/hooks/usePaginacao';
 import { Paginacao } from '@/components/ui/paginacao';
 import { listarLotes, marcarVerificado, renomearLote, type Ps2Lote } from '@/services/ps2LotesService';
@@ -27,9 +27,8 @@ const valorParaCopiar = (n: number) => {
   return dec === 0 ? String(inteiro) : `${inteiro},${String(dec).padStart(2, '0')}`;
 };
 
-/** A conta da empresa como se digita no core: a conta (8 dígitos) e, à parte, a natureza (10001, 10002…). */
-const contaCurta = (nib: string) => contaENatureza(nib).conta;
-const naturezaDe = (nib: string) => contaENatureza(nib).natureza;
+/** A conta da empresa como se cola no core: conta + natureza juntas, com a natureza como no ficheiro (10001, 10002…). */
+const contaCurta = (nib: string) => contaComNatureza(nib);
 
 const dataHora = (iso: string | null) =>
   iso ? new Date(iso).toLocaleString('pt-PT', { dateStyle: 'short', timeStyle: 'short' }) : '';
@@ -82,8 +81,7 @@ export default function VerificacaoFicheiros() {
           !t ||
           l.nome_ficheiro.toLowerCase().includes(t) ||
           l.conta_empresa.includes(t) ||
-          contaCurta(l.conta_empresa).includes(t) ||
-          naturezaDe(l.conta_empresa).includes(t),
+          contaCurta(l.conta_empresa).includes(t),
       );
     if (soPorVerificar) return todos;
     // Histórico: o dia em que se verificou (não o do ficheiro), e quem verificou.
@@ -168,8 +166,8 @@ export default function VerificacaoFicheiros() {
             value={pesquisa}
             onChange={(e) => setPesquisa(e.target.value)}
             className="max-w-sm"
-            placeholder="Procurar por ficheiro, empresa, conta ou natureza"
-            aria-label="Procurar por ficheiro, empresa, conta ou natureza"
+            placeholder="Procurar por ficheiro, empresa ou conta"
+            aria-label="Procurar por ficheiro, empresa ou conta"
           />
           {!soPorVerificar && (
             <>
@@ -228,8 +226,7 @@ export default function VerificacaoFicheiros() {
                 <TableHead title="O que o core deve mostrar na conta da empresa: um débito (salários, pagamentos) ou um crédito (cobranças)">
                   Na conta da empresa
                 </TableHead>
-                <TableHead>Conta</TableHead>
-                <TableHead title="Como se digita no core, depois da conta">Natureza</TableHead>
+                <TableHead title="Conta e natureza juntas, como se colam no core">Conta</TableHead>
                 <TableHead className="text-right">Valor</TableHead>
                 <TableHead>Quem verificou</TableHead>
               </TableRow>
@@ -237,14 +234,14 @@ export default function VerificacaoFicheiros() {
             <TableBody>
               {q.isLoading && (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-sm text-muted-foreground">
+                  <TableCell colSpan={7} className="text-sm text-muted-foreground">
                     A carregar…
                   </TableCell>
                 </TableRow>
               )}
               {!q.isLoading && lotes.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="py-8 text-center text-sm text-muted-foreground">
+                  <TableCell colSpan={7} className="py-8 text-center text-sm text-muted-foreground">
                     {soPorVerificar
                       ? 'Nada por verificar. Os ficheiros aparecem aqui quando são guardados no gerador PS2; depois de verificados ficam no Histórico.'
                       : 'Nenhum ficheiro verificado com estes filtros.'}
@@ -297,25 +294,11 @@ export default function VerificacaoFicheiros() {
                       <button
                         type="button"
                         className="inline-flex items-center gap-1 font-mono text-xs hover:text-primary"
-                        title={`NIB ${l.conta_empresa} — clica para copiar a conta`}
-                        onClick={() => copiar(contaCurta(l.conta_empresa), 'Conta')}
+                        title={`NIB ${l.conta_empresa} — clica para copiar a conta com a natureza`}
+                        onClick={() => copiar(contaCurta(l.conta_empresa), 'Conta com natureza')}
                       >
                         {contaCurta(l.conta_empresa)} <Copy className="h-3 w-3" />
                       </button>
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap">
-                      {naturezaDe(l.conta_empresa) ? (
-                        <button
-                          type="button"
-                          className="inline-flex items-center gap-1 font-mono text-xs hover:text-primary"
-                          title={`Natureza ${naturezaDe(l.conta_empresa)} (no NIB: ${contaENatureza(l.conta_empresa).naturezaFinal}) — clica para copiar`}
-                          onClick={() => copiar(naturezaDe(l.conta_empresa), 'Natureza')}
-                        >
-                          {naturezaDe(l.conta_empresa)} <Copy className="h-3 w-3" />
-                        </button>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-right">
                       <button

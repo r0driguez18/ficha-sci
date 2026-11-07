@@ -249,3 +249,12 @@ export function contaENatureza(nib: string): { conta: string; natureza: string; 
   const naturezaFinal = d.slice(16);
   return { conta: d.slice(8, 16), natureza: naturezaCurta(naturezaFinal) ?? naturezaFinal, naturezaFinal };
 }
+
+/**
+ * A conta da empresa como se cola no core: conta (8 dígitos) e natureza juntas, com a natureza escrita como no
+ * ficheiro (10001 em vez de 10176) — "9341234510001". O que não for um NIB de 21 dígitos devolve-se como veio.
+ */
+export function contaComNatureza(nib: string): string {
+  const c = contaENatureza(nib);
+  return c.natureza ? `${c.conta}${c.natureza}` : (nib ?? '');
+}
