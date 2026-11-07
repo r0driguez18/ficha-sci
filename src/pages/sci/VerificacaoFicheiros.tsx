@@ -12,6 +12,8 @@ import { AlertTriangle, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { contaENatureza } from '@/lib/nibBca';
+import { usePaginacao } from '@/hooks/usePaginacao';
+import { Paginacao } from '@/components/ui/paginacao';
 import { listarLotes, marcarVerificado, renomearLote, type Ps2Lote } from '@/services/ps2LotesService';
 
 const fmtValor = (n: number) =>
@@ -91,6 +93,8 @@ export default function VerificacaoFicheiros() {
       .filter((l) => !quem || l.verificado_por_codigo === quem)
       .sort((x, y) => (y.verificado_em ?? '').localeCompare(x.verificado_em ?? ''));
   }, [q.data, pesquisa, soPorVerificar, marcadosAgora, de, ate, quem]);
+
+  const pag = usePaginacao(lotes, { chave: `${separador}|${pesquisa}|${de}|${ate}|${quem}` });
 
   const nPorVerificar = useMemo(() => (q.data ?? []).filter((l) => l.estado !== 'verificado').length, [q.data]);
   const nHistorico = useMemo(() => (q.data ?? []).filter((l) => l.estado === 'verificado').length, [q.data]);
@@ -247,7 +251,7 @@ export default function VerificacaoFicheiros() {
                   </TableCell>
                 </TableRow>
               )}
-              {lotes.map((l) => {
+              {pag.itens.map((l) => {
                 const feito = l.estado === 'verificado';
                 return (
                   <TableRow key={l.id} className={feito ? 'bg-muted/30' : undefined}>
@@ -338,6 +342,7 @@ export default function VerificacaoFicheiros() {
           </Table>
         </CardContent>
       </Card>
+      <Paginacao p={pag} />
     </PageContainer>
   );
 }

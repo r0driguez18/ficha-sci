@@ -1,3 +1,5 @@
+import { usePaginacao } from '@/hooks/usePaginacao';
+import { Paginacao } from '@/components/ui/paginacao';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -104,6 +106,7 @@ export default function Ocorrencias() {
           (o.sistema ?? '').toLowerCase().includes(t)),
     );
   }, [todas, estado, categoria, pesquisa]);
+  const pagHistorico = usePaginacao(listaHistorico, { chave: String(pesquisa) });
 
   const recarregar = async () => {
     await queryClient.invalidateQueries({ queryKey: ['ocorrencias'] });
@@ -447,7 +450,7 @@ export default function Ocorrencias() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {listaHistorico.map((o) => (
+                  {pagHistorico.itens.map((o) => (
                     <TableRow key={o.id}>
                       <TableCell className="whitespace-nowrap text-sm">{dataCurta(o.data)}</TableCell>
                       <TableCell className="font-mono text-sm">{o.n_avaria ?? ''}</TableCell>
@@ -480,6 +483,9 @@ export default function Ocorrencias() {
                   ))}
                 </TableBody>
               </Table>
+              <div className="px-3 pb-3">
+                <Paginacao p={pagHistorico} />
+              </div>
             </div>
           )}
         </TabsContent>

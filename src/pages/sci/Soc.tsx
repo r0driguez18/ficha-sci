@@ -33,6 +33,8 @@ import {
   type ResultadoSoc,
 } from '@/lib/soc';
 import { lerFicheiroSoc } from '@/lib/socFicheiro';
+import { usePaginacao } from '@/hooks/usePaginacao';
+import { Paginacao } from '@/components/ui/paginacao';
 
 const COR: Record<Recomendacao, string> = {
   whitelist: 'border-green-600 text-green-700 dark:text-green-400',
@@ -145,6 +147,9 @@ export default function Soc() {
     if (!foco) return [];
     return foco.tipo === 'cartao' ? dominiosDoCartao(dominios, foco.cartao) : dominios.filter((d) => d.recomendacao === foco.rec);
   }, [foco, dominios]);
+  const pagFoco = usePaginacao(doFoco, { chave: JSON.stringify(foco) });
+  const pagTodos = usePaginacao(todos, { chave: `${filtroRec}|${pesquisa}` });
+  const pagCandidatos = usePaginacao(candidatos, { chave: String(dominios.length) });
   const tituloFoco = foco ? (foco.tipo === 'cartao' ? NOME_CARTAO[foco.cartao] : NOME_RECOMENDACAO[foco.rec]) : '';
 
   // Ao clicar num cartão, o painel aparece e leva-se o ecrã até ele.
@@ -172,7 +177,7 @@ export default function Soc() {
     : [];
 
   /** Tabela de domínios com a escolha para o e-mail e o detalhe ao clicar. */
-  const tabelaDominios = (lista: DominioSoc[], limite = 300) => (
+  const tabelaDominios = (lista: DominioSoc[]) => (
     <Table>
       <TableHeader>
         <TableRow>
@@ -193,7 +198,7 @@ export default function Soc() {
             </TableCell>
           </TableRow>
         )}
-        {lista.slice(0, limite).map((d) => (
+        {lista.map((d) => (
           <TableRow key={d.dominio}>
             <TableCell>
               {podeIrNoPedido(d) && (
@@ -351,8 +356,10 @@ export default function Soc() {
                     </Button>
                   </CardHeader>
                   <CardContent className="p-0">
-                    <div className="max-h-[28rem] overflow-y-auto">{tabelaDominios(doFoco)}</div>
-                    {doFoco.length > 300 && <p className="p-3 text-xs text-muted-foreground">A mostrar os 300 primeiros.</p>}
+                    <div className="max-h-[28rem] overflow-y-auto">{tabelaDominios(pagFoco.itens)}</div>
+                    <div className="px-4 pb-3">
+                      <Paginacao p={pagFoco} />
+                    </div>
                   </CardContent>
                 </Card>
               </div>
@@ -429,7 +436,7 @@ export default function Soc() {
                       </TableCell>
                     </TableRow>
                   )}
-                  {candidatos.map((d) => (
+                  {pagCandidatos.itens.map((d) => (
                     <TableRow key={d.dominio}>
                       <TableCell>
                         <Checkbox
@@ -458,6 +465,7 @@ export default function Soc() {
                 </TableBody>
               </Table>
             </div>
+            <Paginacao p={pagCandidatos} />
           </TabsContent>
 
           <TabsContent value="todos" className="space-y-3">
@@ -483,8 +491,9 @@ export default function Soc() {
                 Descarregar CSV ({todos.length})
               </Button>
             </div>
-            <div className="rounded-lg border">{tabelaDominios(todos)}</div>
-            {todos.length > 300 && <p className="text-xs text-muted-foreground">A mostrar os 300 primeiros; o CSV leva todos.</p>}
+            <div className="rounded-lg border">{tabelaDominios(pagTodos.itens)}</div>
+            <Paginacao p={pagTodos} />
+            <p className="text-xs text-muted-foreground">O CSV leva todos os {todos.length} domínios, não só os desta página.</p>
           </TabsContent>
 
           <TabsContent value="email" className="space-y-3">

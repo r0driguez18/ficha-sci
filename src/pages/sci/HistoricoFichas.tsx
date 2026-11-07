@@ -27,6 +27,8 @@ import {
   downloadTapesEvidencia,
 } from '@/services/tapesEvidenciaService';
 import { useOperators } from '@/hooks/useOperators';
+import { usePaginacao } from '@/hooks/usePaginacao';
+import { Paginacao } from '@/components/ui/paginacao';
 import { EditarFichaDialog } from '@/components/historico/EditarFichaDialog';
 import { HistoricoEdicoesDialog } from '@/components/historico/HistoricoEdicoesDialog';
 import { isSigned } from '@/types/signature';
@@ -132,6 +134,7 @@ export default function HistoricoFichas() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [attachTarget, setAttachTarget] = useState<ExportedTaskboard | null>(null);
   const { toast } = useToast();
+  const pag = usePaginacao(filteredRecords, { chave: `${searchTerm}|${formTypeFilter}|${signerFilter}|${tapesFilter}` });
 
   useEffect(() => {
     loadRecords();
@@ -531,6 +534,7 @@ export default function HistoricoFichas() {
               }
             />
           ) : (
+            <>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -544,7 +548,7 @@ export default function HistoricoFichas() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredRecords.map((record) => (
+                {pag.itens.map((record) => (
                   <TableRow key={record.id}>
                     <TableCell>
                       <Badge className={colorForType(record.form_type)}>
@@ -691,6 +695,8 @@ export default function HistoricoFichas() {
                 ))}
               </TableBody>
             </Table>
+            <Paginacao p={pag} />
+            </>
           )}
         </CardContent>
       </Card>

@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { usePaginacao } from '@/hooks/usePaginacao';
+import { Paginacao } from '@/components/ui/paginacao';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -75,6 +77,8 @@ export default function RetornosCobrancas() {
 
   const pendingReturns = useMemo(() => returns.filter((r) => !r.retorno_enviado), [returns]);
   const sentReturns = useMemo(() => returns.filter((r) => r.retorno_enviado), [returns]);
+  const pagPendentes = usePaginacao(pendingReturns);
+  const pagEnviados = usePaginacao(sentReturns);
 
   const counts = useMemo(() => {
     const c = { urgente: 0, atrasado: 0, due: 0, pendente: 0 };
@@ -205,6 +209,7 @@ export default function RetornosCobrancas() {
                   hint="Todos os retornos de cobrança foram enviados."
                 />
               ) : (
+                <>
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -223,7 +228,7 @@ export default function RetornosCobrancas() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {pendingReturns.map((retorno) => (
+                    {pagPendentes.itens.map((retorno) => (
                       <TableRow key={retorno.id} data-state={selectedIds.has(retorno.id) ? 'selected' : undefined}>
                         <TableCell>
                           <Checkbox
@@ -259,6 +264,13 @@ export default function RetornosCobrancas() {
                     ))}
                   </TableBody>
                 </Table>
+                <Paginacao p={pagPendentes} />
+                {pendingReturns.length > pagPendentes.tamanho && (
+                  <p className="text-xs text-muted-foreground">
+                    «Selecionar todos» marca os {pendingReturns.length} pendentes, não só os desta página.
+                  </p>
+                )}
+                </>
               )}
             </CardContent>
           </Card>
@@ -275,6 +287,7 @@ export default function RetornosCobrancas() {
                   hint="Os retornos que marcares como enviados aparecem aqui."
                 />
               ) : (
+                <>
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -286,7 +299,7 @@ export default function RetornosCobrancas() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {sentReturns.map((retorno) => (
+                    {pagEnviados.itens.map((retorno) => (
                       <TableRow key={retorno.id}>
                         <TableCell className="font-medium">{retorno.ficheiro_nome}</TableCell>
                         <TableCell>{fmt(retorno.data_aplicacao)}</TableCell>
@@ -297,6 +310,8 @@ export default function RetornosCobrancas() {
                     ))}
                   </TableBody>
                 </Table>
+                <Paginacao p={pagEnviados} />
+                </>
               )}
             </CardContent>
           </Card>
