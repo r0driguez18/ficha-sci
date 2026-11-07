@@ -10,6 +10,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertTriangle, Copy } from 'lucide-react';
 import { toast } from 'sonner';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { contaENatureza } from '@/lib/nibBca';
 import { listarLotes, marcarVerificado, renomearLote, type Ps2Lote } from '@/services/ps2LotesService';
 
 const fmtValor = (n: number) =>
@@ -23,8 +25,9 @@ const valorParaCopiar = (n: number) => {
   return dec === 0 ? String(inteiro) : `${inteiro},${String(dec).padStart(2, '0')}`;
 };
 
-/** A conta como o operador a conhece: o NIB sem o banco/balcão ("00030000" + conta + natureza). */
-const contaCurta = (nib: string) => (nib.length === 21 ? nib.slice(8) : nib);
+/** A conta da empresa como se digita no core: a conta (8 dígitos) e, à parte, a natureza (10001, 10002…). */
+const contaCurta = (nib: string) => contaENatureza(nib).conta;
+const naturezaDe = (nib: string) => contaENatureza(nib).natureza;
 
 const dataHora = (iso: string | null) =>
   iso ? new Date(iso).toLocaleString('pt-PT', { dateStyle: 'short', timeStyle: 'short' }) : '';
@@ -43,8 +46,12 @@ async function copiar(texto: string, rotulo: string) {
 
 export default function VerificacaoFicheiros() {
   const queryClient = useQueryClient();
-  const [soPorVerificar, setSoPorVerificar] = useState(true);
+  const [separador, setSeparador] = useState<'por-verificar' | 'historico'>('por-verificar');
   const [pesquisa, setPesquisa] = useState('');
+  const [de, setDe] = useState('');
+  const [ate, setAte] = useState('');
+  const [quem, setQuem] = useState('');
+  const soPorVerificar = separador === 'por-verificar';
   /** Ficheiros marcados nesta sessão: ficam visíveis (esbatidos) até se recarregar a página. */
   const [marcadosAgora, setMarcadosAgora] = useState<Set<string>>(new Set());
   const [aGravar, setAGravar] = useState<string | null>(null);
@@ -52,25 +59,41 @@ export default function VerificacaoFicheiros() {
   const q = useQuery({
     queryKey: ['ps2-lotes'],
     queryFn: async () => {
-      const r = await listarLotes({ limite: 300 });
+      const r = await listarLotes({ limite: 1000 });
       if (r.erro) throw new Error(r.erro);
       return r.lotes;
     },
     refetchInterval: 60_000,
   });
 
+  const verificadores = useMemo(
+    () => [...new Set((q.data ?? []).map((l) => l.verificado_por_codigo).filter((x): x is string => !!x))].sort(),
+    [q.data],
+  );
+
   const lotes = useMemo(() => {
     const t = pesquisa.trim().toLowerCase();
-    return (q.data ?? [])
-      .filter((l) => !soPorVerificar || l.estado !== 'verificado' || marcadosAgora.has(l.id))
+    const todos = (q.data ?? [])
+      .filter((l) => (soPorVerificar ? l.estado !== 'verificado' || marcadosAgora.has(l.id) : l.estado === 'verificado'))
       .filter(
         (l) =>
           !t ||
           l.nome_ficheiro.toLowerCase().includes(t) ||
           l.conta_empresa.includes(t) ||
-          contaCurta(l.conta_empresa).includes(t),
+          contaCurta(l.conta_empresa).includes(t) ||
+          naturezaDe(l.conta_empresa).includes(t),
       );
-  }, [q.data, pesquisa, soPorVerificar, marcadosAgora]);
+    if (soPorVerificar) return todos;
+    // Histórico: o dia em que se verificou (não o do ficheiro), e quem verificou.
+    return todos
+      .filter((l) => !de || (l.verificado_em ?? '').slice(0, 10) >= de)
+      .filter((l) => !ate || (l.verificado_em ?? '').slice(0, 10) <= ate)
+      .filter((l) => !quem || l.verificado_por_codigo === quem)
+      .sort((x, y) => (y.verificado_em ?? '').localeCompare(x.verificado_em ?? ''));
+  }, [q.data, pesquisa, soPorVerificar, marcadosAgora, de, ate, quem]);
+
+  const nPorVerificar = useMemo(() => (q.data ?? []).filter((l) => l.estado !== 'verificado').length, [q.data]);
+  const nHistorico = useMemo(() => (q.data ?? []).filter((l) => l.estado === 'verificado').length, [q.data]);
 
   const repetidos = useMemo(() => {
     const cont = new Map<string, number>();
@@ -128,22 +151,48 @@ export default function VerificacaoFicheiros() {
         confirma que há <strong>um</strong> movimento com o valor (dois é duplicado) e marca o ficheiro como verificado.
       </p>
 
+      <Tabs value={separador} onValueChange={(v) => setSeparador(v as 'por-verificar' | 'historico')} className="mb-4">
+        <TabsList>
+          <TabsTrigger value="por-verificar">Por verificar ({nPorVerificar})</TabsTrigger>
+          <TabsTrigger value="historico">Histórico ({nHistorico})</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       <Card className="mb-4">
-        <CardContent className="flex flex-wrap items-center gap-4 pt-6">
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id="so-por-verificar"
-              checked={soPorVerificar}
-              onCheckedChange={(v) => setSoPorVerificar(v === true)}
-            />
-            <Label htmlFor="so-por-verificar">Só por verificar</Label>
-          </div>
+        <CardContent className="flex flex-wrap items-end gap-4 pt-6">
           <Input
             value={pesquisa}
             onChange={(e) => setPesquisa(e.target.value)}
             className="max-w-sm"
-            aria-label="Procurar por ficheiro ou conta"
+            placeholder="Procurar por ficheiro, empresa, conta ou natureza"
+            aria-label="Procurar por ficheiro, empresa, conta ou natureza"
           />
+          {!soPorVerificar && (
+            <>
+              <div className="space-y-1">
+                <Label htmlFor="hist-de" className="text-xs">Verificado de</Label>
+                <Input id="hist-de" type="date" value={de} onChange={(e) => setDe(e.target.value)} className="w-40" />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="hist-ate" className="text-xs">até</Label>
+                <Input id="hist-ate" type="date" value={ate} onChange={(e) => setAte(e.target.value)} className="w-40" />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="hist-quem" className="text-xs">Quem verificou</Label>
+                <select
+                  id="hist-quem"
+                  value={quem}
+                  onChange={(e) => setQuem(e.target.value)}
+                  className="h-10 rounded-md border border-input bg-background px-2 text-sm"
+                >
+                  <option value="">Todos</option>
+                  {verificadores.map((v) => (
+                    <option key={v} value={v}>{v}</option>
+                  ))}
+                </select>
+              </div>
+            </>
+          )}
           <span className="text-xs text-muted-foreground">{lotes.length} ficheiro(s)</span>
         </CardContent>
       </Card>
@@ -169,13 +218,14 @@ export default function VerificacaoFicheiros() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-24">Verificado</TableHead>
-                <TableHead>Data</TableHead>
+                <TableHead className="w-24">{soPorVerificar ? 'Verificado' : 'Desfazer'}</TableHead>
+                <TableHead>{soPorVerificar ? 'Data' : 'Data do ficheiro'}</TableHead>
                 <TableHead>Empresa / ficheiro</TableHead>
                 <TableHead title="O que o core deve mostrar na conta da empresa: um débito (salários, pagamentos) ou um crédito (cobranças)">
                   Na conta da empresa
                 </TableHead>
                 <TableHead>Conta</TableHead>
+                <TableHead title="Como se digita no core, depois da conta">Natureza</TableHead>
                 <TableHead className="text-right">Valor</TableHead>
                 <TableHead>Quem verificou</TableHead>
               </TableRow>
@@ -183,17 +233,17 @@ export default function VerificacaoFicheiros() {
             <TableBody>
               {q.isLoading && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-sm text-muted-foreground">
+                  <TableCell colSpan={8} className="text-sm text-muted-foreground">
                     A carregar…
                   </TableCell>
                 </TableRow>
               )}
               {!q.isLoading && lotes.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="py-8 text-center text-sm text-muted-foreground">
+                  <TableCell colSpan={8} className="py-8 text-center text-sm text-muted-foreground">
                     {soPorVerificar
-                      ? 'Nada por verificar. Os ficheiros aparecem aqui quando são guardados no gerador PS2.'
-                      : 'Ainda não há ficheiros registados.'}
+                      ? 'Nada por verificar. Os ficheiros aparecem aqui quando são guardados no gerador PS2; depois de verificados ficam no Histórico.'
+                      : 'Nenhum ficheiro verificado com estes filtros.'}
                   </TableCell>
                 </TableRow>
               )}
@@ -206,7 +256,7 @@ export default function VerificacaoFicheiros() {
                         checked={feito}
                         disabled={aGravar === l.id}
                         onCheckedChange={() => alternar(l)}
-                        aria-label={`Verificado: ${l.nome_ficheiro}`}
+                        aria-label={`${soPorVerificar ? 'Verificado' : 'Desfazer a verificação'}: ${l.nome_ficheiro}`}
                         className="h-5 w-5"
                       />
                     </TableCell>
@@ -248,6 +298,20 @@ export default function VerificacaoFicheiros() {
                       >
                         {contaCurta(l.conta_empresa)} <Copy className="h-3 w-3" />
                       </button>
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {naturezaDe(l.conta_empresa) ? (
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-1 font-mono text-xs hover:text-primary"
+                          title={`Natureza ${naturezaDe(l.conta_empresa)} (no NIB: ${contaENatureza(l.conta_empresa).naturezaFinal}) — clica para copiar`}
+                          onClick={() => copiar(naturezaDe(l.conta_empresa), 'Natureza')}
+                        >
+                          {naturezaDe(l.conta_empresa)} <Copy className="h-3 w-3" />
+                        </button>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-right">
                       <button

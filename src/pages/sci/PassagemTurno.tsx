@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useOperators } from '@/hooks/useOperators';
 import { todayIso } from '@/lib/taskboardDefaults';
+import { CONFIRMACOES_NECESSARIAS, confirmacoes, estadoDaNota, paraTurnos } from '@/lib/passagemTurno';
 import type { TurnKey } from '@/types/taskboard';
 import {
   HISTORICO_POR_PAGINA,
@@ -76,15 +77,32 @@ interface EntradaCardProps {
 
 function EntradaCard({ entrada: e, userId, labelOf, busy, onConfirmar, onArquivar }: EntradaCardProps) {
   const jaLi = e.leituras.some((l) => l.user_id === userId);
+  const souAutor = !!userId && e.autor_user_id === userId;
+  const estado = estadoDaNota(e);
+  const destinos = paraTurnos(e.turno).map((t) => LABEL_TURNO[t]);
   return (
-    <li className={`rounded-md border p-3 space-y-2 ${e.arquivada_em ? 'bg-muted/40' : ''}`}>
+    <li className={`rounded-md border p-3 space-y-2 ${e.arquivada_em || estado.tipo === 'arquivada-sozinha' ? 'bg-muted/40' : ''}`}>
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
         <span>
           <strong className="text-foreground">{LABEL_TURNO[e.turno]}</strong> · {fmtDia(e.date)} ·{' '}
           {e.autor_nome ?? labelOf(e.autor_user_id)} · {fmt(e.created_at)}
         </span>
-        <span className="flex items-center gap-2">
-          {e.leituras.length === 0 && <Badge variant="outline">Por ler</Badge>}
+        <span className="flex flex-wrap items-center gap-2">
+          <Badge variant="outline" title="Os turnos que vêem esta nota">Para {destinos.join(' e ')}</Badge>
+          {estado.tipo === 'por-ler' && <Badge variant="outline">Por ler</Badge>}
+          {estado.tipo === 'a-meio' && (
+            <Badge variant="outline" title={`A nota sai das ativas 24 h depois da ${CONFIRMACOES_NECESSARIAS}.ª confirmação`}>
+              {estado.confirmacoes} de {CONFIRMACOES_NECESSARIAS} confirmações
+            </Badge>
+          )}
+          {estado.tipo === 'a-sair' && (
+            <Badge variant="secondary" title="Duas pessoas confirmaram: a nota fica 24 h e depois vai para o histórico">
+              Sai das ativas em {estado.horasRestantes} h
+            </Badge>
+          )}
+          {estado.tipo === 'arquivada-sozinha' && (
+            <Badge variant="secondary">Arquivada automaticamente · {fmt(e.arquivar_apos)}</Badge>
+          )}
           {e.arquivada_em && (
             <Badge variant="secondary">
               Arquivada por {e.arquivada_por_nome ?? '—'} · {fmt(e.arquivada_em)}
@@ -100,7 +118,7 @@ function EntradaCard({ entrada: e, userId, labelOf, busy, onConfirmar, onArquiva
             Lida por {l.user_nome ?? labelOf(l.user_id)} · {fmt(l.lida_em)}
           </Badge>
         ))}
-        {onConfirmar && !jaLi && (
+        {onConfirmar && !jaLi && !souAutor && (
           <Button size="sm" variant="outline" onClick={() => onConfirmar(e)} disabled={busy === `leitura-${e.id}`}>
             {busy === `leitura-${e.id}` ? (
               <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
@@ -109,6 +127,9 @@ function EntradaCard({ entrada: e, userId, labelOf, busy, onConfirmar, onArquiva
             )}
             Confirmar leitura
           </Button>
+        )}
+        {onConfirmar && souAutor && (
+          <span className="text-xs text-muted-foreground">Deixaste tu esta nota: quem confirma são os outros turnos.</span>
         )}
         {onArquivar && (
           <Button size="sm" variant="ghost" onClick={() => onArquivar(e)} disabled={busy === `arq-${e.id}`}>
@@ -200,7 +221,7 @@ export default function PassagemTurno() {
     else setAArquivar(lista);
   };
 
-  const porLer = useMemo(() => atuais.filter((e) => e.leituras.length === 0).length, [atuais]);
+  const porLer = useMemo(() => atuais.filter((e) => confirmacoes(e) === 0).length, [atuais]);
   const paraArquivarPorLer = (aArquivar ?? []).filter((e) => e.leituras.length === 0).length;
 
   // ---------- Histórico
@@ -238,7 +259,7 @@ export default function PassagemTurno() {
     <PageContainer size="default">
       <PageHeader
         title="Passagem de Turno"
-        subtitle="Quem sai deixa notas; quem entra confirma a leitura de cada uma. Tudo fica registado no histórico."
+        subtitle="Quem sai deixa notas, vistas pelos dois turnos seguintes. Com duas confirmações de leitura a nota fica mais 24 h e vai para o histórico."
       />
 
       <Tabs value={separador} onValueChange={setSeparador} className="space-y-4">
