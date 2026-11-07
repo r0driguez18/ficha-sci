@@ -227,3 +227,25 @@ export function tratarNib(
     estado: 'ok',
   };
 }
+
+/**
+ * A natureza como o operador a escreve no core: o inverso da conversão (10176 → 10001, 10273 → 10002 … 10952 → 10009).
+ * null quando a natureza não é uma das nove da tabela (fica como está).
+ */
+export function naturezaCurta(final: string, tabela: NaturezaRegra[] = NATUREZA_PADRAO): string | null {
+  const f = (final ?? '').replace(/\D/g, '');
+  const regra = tabela.find((r) => r.final === f);
+  const n = regra ? Number(regra.recebida.replace(/\D/g, '')) : NaN;
+  return Number.isInteger(n) && n >= 1 && n <= 9 ? String(10000 + n) : null;
+}
+
+/**
+ * Um NIB do BCA (21 dígitos) como se digita no core: a conta (8 dígitos) e, depois, a natureza (10001, 10002…).
+ * O que não for um NIB de 21 dígitos devolve-se inteiro em `conta`, sem natureza.
+ */
+export function contaENatureza(nib: string): { conta: string; natureza: string; naturezaFinal: string } {
+  const d = (nib ?? '').replace(/\D/g, '');
+  if (d.length !== 21) return { conta: nib ?? '', natureza: '', naturezaFinal: '' };
+  const naturezaFinal = d.slice(16);
+  return { conta: d.slice(8, 16), natureza: naturezaCurta(naturezaFinal) ?? naturezaFinal, naturezaFinal };
+}

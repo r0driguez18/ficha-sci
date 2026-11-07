@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { tratarNib } from '../nibBca';
+import { contaENatureza, naturezaCurta, tratarNib } from '../nibBca';
 import { autodetectar, linhasDaMatriz } from '../colagemPs2';
 
 describe('PS2: só é OIC um NIB completo (21 dígitos) que não começa por 0003', () => {
@@ -97,5 +97,41 @@ describe('PS2: linhas e número da linha no Excel', () => {
     const t = linhasDaMatriz(m, { colConta: 3, colValor: 2, colNome: 1, colDescritivo: -1, linhaInicial: 2 });
     expect(t.ignoradasOutros.map((l) => [l.nome, l.linha])).toEqual([['Rui', 5]]);
     expect(t.nOutrosBlocos).toBe(1);
+  });
+});
+
+describe('natureza como se digita no core', () => {
+  it('10176 → 10001 … 10952 → 10009 (o inverso da conversão)', () => {
+    expect(naturezaCurta('10176')).toBe('10001');
+    expect(naturezaCurta('10273')).toBe('10002');
+    expect(naturezaCurta('10370')).toBe('10003');
+    expect(naturezaCurta('10467')).toBe('10004');
+    expect(naturezaCurta('10564')).toBe('10005');
+    expect(naturezaCurta('10661')).toBe('10006');
+    expect(naturezaCurta('10758')).toBe('10007');
+    expect(naturezaCurta('10855')).toBe('10008');
+    expect(naturezaCurta('10952')).toBe('10009');
+  });
+
+  it('uma natureza que não é das nove fica sem conversão', () => {
+    expect(naturezaCurta('12345')).toBeNull();
+    expect(naturezaCurta('')).toBeNull();
+  });
+
+  it('de ida e volta: o que se converte ao gerar volta como estava no ficheiro', () => {
+    for (const n of ['1', '2', '3', '4', '5', '6', '7', '8', '9']) {
+      const gerado = tratarNib(`93412345 1000${n}`).nib;
+      expect(contaENatureza(gerado).natureza).toBe(`1000${n}`);
+    }
+  });
+
+  it('conta e natureza de um NIB do BCA', () => {
+    expect(contaENatureza('000300009341234510176')).toEqual({ conta: '93412345', natureza: '10001', naturezaFinal: '10176' });
+    expect(contaENatureza('000300009341234510273').natureza).toBe('10002');
+  });
+
+  it('o que não é um NIB de 21 dígitos devolve-se inteiro, sem natureza', () => {
+    expect(contaENatureza('123')).toEqual({ conta: '123', natureza: '', naturezaFinal: '' });
+    expect(contaENatureza('')).toEqual({ conta: '', natureza: '', naturezaFinal: '' });
   });
 });
