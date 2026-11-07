@@ -12,6 +12,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { linhasDaFolha } from '@/lib/oicFolha';
+import { usePaginacao } from '@/hooks/usePaginacao';
+import { Paginacao } from '@/components/ui/paginacao';
 import { PageContainer } from '@/components/layout/PageContainer';
 import {
   FileDown,
@@ -467,7 +469,8 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
 
   const previewFonte = soAlertas ? tratadas.filter((t) => t.estado === 'alerta') : tratadas;
   const colOpts = Array.from({ length: Math.max(nCols, 3) }, (_, i) => i);
-  const previewLinhas = previewFonte.slice(0, 400);
+  const pagPrevia = usePaginacao(previewFonte, { tamanho: 50, chave: `${soAlertas}|${tratadas.length}` });
+  const previewLinhas = pagPrevia.itens;
   const headerRow = matriz[Math.max(0, linhaInicial - 2)] ?? [];
   const nomeCol = (i: number) => {
     const h = String(headerRow[i] ?? '').trim();
@@ -1070,11 +1073,7 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
                   </tbody>
                 </table>
               </div>
-              {previewFonte.length > previewLinhas.length && (
-                <p className="text-xs text-muted-foreground">
-                  Mostra as primeiras {previewLinhas.length} de {previewFonte.length}.
-                </p>
-              )}
+              <Paginacao p={pagPrevia} />
             </div>
           )}
         </CardContent>

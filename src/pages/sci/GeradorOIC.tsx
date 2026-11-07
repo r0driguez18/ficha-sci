@@ -28,6 +28,8 @@ import { guardarFicheiro } from '@/lib/guardarFicheiro';
 import { comExtensao, semExtensao } from '@/lib/nomeFicheiro';
 import { DICA_TAB, tabNoCampo } from '@/lib/tabNoCampo';
 import { parseTabular } from '@/lib/colagemTabular';
+import { usePaginacao } from '@/hooks/usePaginacao';
+import { Paginacao } from '@/components/ui/paginacao';
 
 const letraColuna = (i: number) => {
   let s = '';
@@ -137,6 +139,7 @@ export default function GeradorOIC() {
     return { tratadas: linhas, nBcaIgnoradas: r.nBcaIgnoradas };
   }, [rows, cols, descritivo, folhas, edicoes]);
 
+  const pagOic = usePaginacao(tratadas, { tamanho: 50, chave: String(rows.length) });
   const ativas = useMemo(() => tratadas.filter((t) => !excluidos.has(t.ref)), [tratadas, excluidos]);
   const nErros = ativas.filter((t) => t.erro).length;
   const nProntas = ativas.length - nErros;
@@ -389,7 +392,7 @@ export default function GeradorOIC() {
                   </tr>
                 </thead>
                 <tbody>
-                  {tratadas.map((t) => {
+                  {pagOic.itens.map((t) => {
                     const excl = excluidos.has(t.ref);
                     const emEdicao = editando === t.ref;
                     const editada = t.ref in edicoes;
@@ -527,6 +530,7 @@ export default function GeradorOIC() {
                 </tbody>
               </table>
             </div>
+            <Paginacao p={pagOic} />
 
             <div className="flex flex-wrap items-center gap-3">
               <Button onClick={gerar} disabled={nErros > 0 || nProntas === 0}>

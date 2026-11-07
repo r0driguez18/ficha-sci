@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { RefreshCw, FileSpreadsheet, FileText, BarChart3 } from 'lucide-react';
+import { RefreshCw, FileSpreadsheet, FileText, BarChart3, ChevronRight } from 'lucide-react';
 import { LoadingState } from '@/components/ui/loading-state';
 import { EmptyState } from '@/components/ui/empty-state';
 import { toast } from 'sonner';
@@ -16,13 +16,16 @@ import { useOperators } from '@/hooks/useOperators';
 import ProcessesTable from '@/components/charts/ProcessesTable';
 import ProcessesBarChart from '@/components/charts/ProcessesBarChart';
 
-type TabKey = 'all' | 'salary' | 'cobrancas' | 'compensacao';
+type TabKey = 'all' | 'salary' | 'cobrancas' | 'compensacao' | 'outros';
+const TABS: TabKey[] = ['all', 'salary', 'cobrancas', 'compensacao', 'outros'];
+const TIPOS_CONHECIDOS = ['salario', 'cobrancas', 'compensacao'];
 
 const TAB_TITLES: Record<TabKey, string> = {
   all: 'Todos os Processamentos',
   salary: 'Processamentos de Salário',
   cobrancas: 'Cobranças',
   compensacao: 'Compensação',
+  outros: 'Outros',
 };
 
 const EasyVistaEstatisticas = () => {
@@ -32,10 +35,11 @@ const EasyVistaEstatisticas = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [range, setRange] = useState(() => defaultRange());
   const [activeTab, setActiveTab] = useState<TabKey>('all');
+  const detalheRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const hash = window.location.hash.replace('#', '');
-    if (['all', 'salary', 'cobrancas', 'compensacao'].includes(hash)) {
+    if (TABS.includes(hash as TabKey)) {
       setActiveTab(hash as TabKey);
     }
   }, []);
@@ -82,9 +86,12 @@ const EasyVistaEstatisticas = () => {
     }
   };
 
-  const salaryProcesses = useMemo(() => allProcesses.filter((p) => p.tipo === 'salario'), [allProcesses]);
-  const cobrancasProcesses = useMemo(() => allProcesses.filter((p) => p.tipo === 'cobrancas'), [allProcesses]);
-  const compensacaoProcesses = useMemo(() => allProcesses.filter((p) => p.tipo === 'compensacao'), [allProcesses]);
+  // As listas do detalhe respeitam o intervalo escolhido: o número do cartão e as linhas da tabela são os mesmos.
+  const noPeriodo = useMemo(() => filterByRange(allProcesses, range.from, range.to), [allProcesses, range.from, range.to]);
+  const salaryProcesses = useMemo(() => noPeriodo.filter((p) => p.tipo === 'salario'), [noPeriodo]);
+  const cobrancasProcesses = useMemo(() => noPeriodo.filter((p) => p.tipo === 'cobrancas'), [noPeriodo]);
+  const compensacaoProcesses = useMemo(() => noPeriodo.filter((p) => p.tipo === 'compensacao'), [noPeriodo]);
+  const outrosProcesses = useMemo(() => noPeriodo.filter((p) => !TIPOS_CONHECIDOS.includes(p.tipo ?? '')), [noPeriodo]);
 
   const monthly = useMemo(
     () => buildMonthlyStats(allProcesses, range.from, range.to),
@@ -100,24 +107,29 @@ const EasyVistaEstatisticas = () => {
           salario: acc.salario + m.salario,
           cobrancas: acc.cobrancas + m.cobrancas,
           compensacao: acc.compensacao + m.compensacao,
+          outros: acc.outros + m.outros,
         }),
-        { total: 0, salario: 0, cobrancas: 0, compensacao: 0 },
+        { total: 0, salario: 0, cobrancas: 0, compensacao: 0, outros: 0 },
       ),
     [monthly],
   );
 
   const tabData: Record<TabKey, FileProcess[]> = {
-    all: allProcesses,
+    all: noPeriodo,
     salary: salaryProcesses,
     cobrancas: cobrancasProcesses,
     compensacao: compensacaoProcesses,
+    outros: outrosProcesses,
   };
-  const currentList = tabData[activeTab];
   const currentTitle = TAB_TITLES[activeTab];
-  const exportList = useMemo(
-    () => filterByRange(currentList, range.from, range.to),
-    [currentList, range.from, range.to],
-  );
+  // A exportação leva o que se está a ver: o separador escolhido, dentro do intervalo.
+  const exportList = tabData[activeTab];
+
+  /** Clicar num cartão mostra por baixo os processamentos que o compõem. */
+  const abrirDetalhe = (tab: TabKey) => {
+    handleTabChange(tab);
+    window.requestAnimationFrame(() => detalheRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  };
 
   return (
     <PageContainer size="wide" className="space-y-6">
@@ -204,50 +216,60 @@ const EasyVistaEstatisticas = () => {
             </CardContent>
           </Card>
 
-          {/* Cartões de contagem (no período) */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { label: 'Total no período', value: periodTotals.total },
-              { label: 'Salário', value: periodTotals.salario },
-              { label: 'Cobranças', value: periodTotals.cobrancas },
-              { label: 'Compensação', value: periodTotals.compensacao },
-            ].map((c) => (
-              <Card key={c.label} className="bg-muted/50">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">{c.label}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold tabular-nums">{c.value}</p>
-                </CardContent>
-              </Card>
-            ))}
+          {/* Cartões de contagem (no período): clicar mostra os processamentos por baixo */}
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+            {([
+              { tab: 'all', label: 'Total no período', value: periodTotals.total },
+              { tab: 'salary', label: 'Salário', value: periodTotals.salario },
+              { tab: 'cobrancas', label: 'Cobranças', value: periodTotals.cobrancas },
+              { tab: 'compensacao', label: 'Compensação', value: periodTotals.compensacao },
+              { tab: 'outros', label: 'Outros', value: periodTotals.outros },
+            ] as Array<{ tab: TabKey; label: string; value: number }>).map((c) => {
+              const ativo = activeTab === c.tab;
+              return (
+                <button
+                  key={c.tab}
+                  type="button"
+                  aria-pressed={ativo}
+                  onClick={() => abrirDetalhe(c.tab)}
+                  title={`Ver ${c.label === 'Total no período' ? 'todos os processamentos' : c.label.toLowerCase()} do período`}
+                  className={`rounded-lg border bg-muted/50 text-left shadow-sm transition-colors hover:border-primary/60 hover:bg-muted ${ativo ? 'border-primary ring-2 ring-primary/40' : ''}`}
+                >
+                  <CardHeader className="pb-2">
+                    <CardTitle className="flex items-center justify-between text-sm font-medium text-muted-foreground">
+                      {c.label}
+                      <ChevronRight className={`h-4 w-4 transition-transform ${ativo ? 'rotate-90' : ''}`} />
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-3xl font-bold tabular-nums">{c.value}</p>
+                  </CardContent>
+                </button>
+              );
+            })}
           </div>
 
           {/* Gráfico de evolução mensal */}
           <ProcessesBarChart data={monthly} title="Processamentos por mês" />
 
-          {/* Detalhe (lista completa, por tipo) */}
-          <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
-            <TabsList className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              <TabsTrigger value="all">Todos</TabsTrigger>
-              <TabsTrigger value="salary">Salário</TabsTrigger>
-              <TabsTrigger value="cobrancas">Cobranças</TabsTrigger>
-              <TabsTrigger value="compensacao">Compensação</TabsTrigger>
-            </TabsList>
+          {/* Detalhe (por tipo, dentro do intervalo escolhido) */}
+          <div ref={detalheRef} className="scroll-mt-4">
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
+              <TabsList className="grid grid-cols-2 gap-2 md:grid-cols-5">
+                <TabsTrigger value="all">Todos ({noPeriodo.length})</TabsTrigger>
+                <TabsTrigger value="salary">Salário ({salaryProcesses.length})</TabsTrigger>
+                <TabsTrigger value="cobrancas">Cobranças ({cobrancasProcesses.length})</TabsTrigger>
+                <TabsTrigger value="compensacao">Compensação ({compensacaoProcesses.length})</TabsTrigger>
+                <TabsTrigger value="outros">Outros ({outrosProcesses.length})</TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="all">
-              <ProcessesTable processes={allProcesses} title="Todos os Processamentos" />
-            </TabsContent>
-            <TabsContent value="salary">
-              <ProcessesTable processes={salaryProcesses} title="Processamentos de Salário" />
-            </TabsContent>
-            <TabsContent value="cobrancas">
-              <ProcessesTable processes={cobrancasProcesses} title="Cobranças" />
-            </TabsContent>
-            <TabsContent value="compensacao">
-              <ProcessesTable processes={compensacaoProcesses} title="Compensação" />
-            </TabsContent>
-          </Tabs>
+              {TABS.map((t) => (
+                <TabsContent key={t} value={t}>
+                  <ProcessesTable processes={tabData[t]} title={`${TAB_TITLES[t]} (no período)`} />
+                </TabsContent>
+              ))}
+            </Tabs>
+          </div>
         </div>
       )}
     </PageContainer>

@@ -1,7 +1,8 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
+import { usePaginacao } from '@/hooks/usePaginacao';
+import { Paginacao } from '@/components/ui/paginacao';
 import { format } from 'date-fns';
 import { FileProcess } from '@/services/fileProcessService';
 import { useOperators } from '@/hooks/useOperators';
@@ -10,8 +11,6 @@ interface ProcessesTableProps {
   processes: FileProcess[];
   title?: string;
 }
-
-const PAGE_SIZE = 25;
 
 const TIPO: Record<string, { label: string; classes: string }> = {
   salario: { label: 'Salário', classes: 'bg-warning/20 text-foreground' },
@@ -27,21 +26,8 @@ function typeBadge(process: FileProcess) {
 
 const ProcessesTable: React.FC<ProcessesTableProps> = ({ processes, title = 'Últimos Processamentos' }) => {
   const { labelOf } = useOperators();
-  const [page, setPage] = useState(0);
-  const pageCount = Math.max(1, Math.ceil(processes.length / PAGE_SIZE));
-
-  // Se a lista encolher (mudança de filtro), não ficar numa página inexistente.
-  useEffect(() => {
-    setPage(0);
-  }, [processes]);
-
-  const rows = useMemo(
-    () => processes.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE),
-    [processes, page],
-  );
-
-  const from = processes.length === 0 ? 0 : page * PAGE_SIZE + 1;
-  const to = Math.min(processes.length, (page + 1) * PAGE_SIZE);
+  const pag = usePaginacao(processes);
+  const rows = pag.itens;
 
   return (
     <Card>
@@ -100,34 +86,7 @@ const ProcessesTable: React.FC<ProcessesTableProps> = ({ processes, title = 'Úl
           </Table>
         </div>
 
-        {processes.length > PAGE_SIZE && (
-          <div className="flex items-center justify-between pt-4 text-sm">
-            <span className="text-muted-foreground tabular-nums">
-              {from}–{to} de {processes.length}
-            </span>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => Math.max(0, p - 1))}
-                disabled={page === 0}
-              >
-                Anterior
-              </Button>
-              <span className="tabular-nums text-muted-foreground">
-                {page + 1} / {pageCount}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
-                disabled={page >= pageCount - 1}
-              >
-                Seguinte
-              </Button>
-            </div>
-          </div>
-        )}
+        <Paginacao p={pag} />
       </CardContent>
     </Card>
   );
