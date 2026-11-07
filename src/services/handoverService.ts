@@ -25,6 +25,8 @@ export interface HandoverEntrada {
   created_at: string;
   arquivada_em: string | null;
   arquivada_por_nome: string | null;
+  /** Instante em que sai das ativas (24 h depois da 2.ª confirmação); null enquanto não houver 2. */
+  arquivar_apos: string | null;
   leituras: HandoverLeitura[];
 }
 
@@ -45,6 +47,8 @@ export async function getHandoverAtuais(): Promise<{ data: HandoverEntrada[] | n
     .from('handover_entries')
     .select(SELECT_ENTRADA)
     .is('arquivada_em', null)
+    // Com 2 confirmações a nota sai das ativas 24 h depois (fica no histórico).
+    .or(`arquivar_apos.is.null,arquivar_apos.gt.${new Date().toISOString()}`)
     .order('created_at', { ascending: false })
     .limit(300);
   if (error || !data) return { data: null, error };
