@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { contaENatureza, naturezaCurta, tratarNib } from '../nibBca';
+import { contaComNatureza, contaENatureza, naturezaCurta, tratarNib } from '../nibBca';
 import { autodetectar, linhasDaMatriz } from '../colagemPs2';
 
 describe('PS2: só é OIC um NIB completo (21 dígitos) que não começa por 0003', () => {
@@ -133,5 +133,17 @@ describe('natureza como se digita no core', () => {
   it('o que não é um NIB de 21 dígitos devolve-se inteiro, sem natureza', () => {
     expect(contaENatureza('123')).toEqual({ conta: '123', natureza: '', naturezaFinal: '' });
     expect(contaENatureza('')).toEqual({ conta: '', natureza: '', naturezaFinal: '' });
+  });
+});
+
+describe('conta e natureza juntas (para colar no core)', () => {
+  it('conta + natureza como no ficheiro, numa só cadeia', () => {
+    expect(contaComNatureza('000300009341234510176')).toBe('9341234510001');
+    expect(contaComNatureza('000300001234567810273')).toBe('1234567810002');
+    expect(contaComNatureza('000300000765432110952')).toBe('0765432110009');
+  });
+  it('sem natureza reconhecida fica a final; e o que não é NIB de 21 dígitos fica como veio', () => {
+    expect(contaComNatureza('000300009341234512345')).toBe('9341234512345');
+    expect(contaComNatureza('12345')).toBe('12345');
   });
 });
