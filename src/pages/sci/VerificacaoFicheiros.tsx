@@ -9,6 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertTriangle, Copy } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { coincidenciasDosLotes, JANELAS_DIAS, JANELA_PADRAO } from '@/lib/coincidenciasLotes';
 import { toast } from 'sonner';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { contaComNatureza } from '@/lib/nibBca';
@@ -52,6 +54,13 @@ export default function VerificacaoFicheiros() {
   const [de, setDe] = useState('');
   const [ate, setAte] = useState('');
   const [quem, setQuem] = useState('');
+  const [geradoDe, setGeradoDe] = useState('');
+  const [geradoAte, setGeradoAte] = useState('');
+  const [quemGerou, setQuemGerou] = useState('');
+  const [sentido, setSentido] = useState('');
+  const [soCoincidem, setSoCoincidem] = useState(false);
+  const [janela, setJanela] = useState<number>(JANELA_PADRAO);
+  const [verCoincidencias, setVerCoincidencias] = useState<Ps2Lote | null>(null);
   const soPorVerificar = separador === 'por-verificar';
   /** Ficheiros marcados nesta sessão: ficam visíveis (esbatidos) até se recarregar a página. */
   const [marcadosAgora, setMarcadosAgora] = useState<Set<string>>(new Set());
@@ -72,10 +81,23 @@ export default function VerificacaoFicheiros() {
     [q.data],
   );
 
+  const geradores = useMemo(
+    () => [...new Set((q.data ?? []).map((l) => l.gerado_por_codigo).filter((x): x is string => !!x))].sort(),
+    [q.data],
+  );
+
+  /** Coincidências sobre TODOS os ficheiros (também os já verificados): o mesmo salário repetido poucos dias depois. */
+  const coincidencias = useMemo(() => coincidenciasDosLotes(q.data ?? [], janela), [q.data, janela]);
+
   const lotes = useMemo(() => {
     const t = pesquisa.trim().toLowerCase();
     const todos = (q.data ?? [])
       .filter((l) => (soPorVerificar ? l.estado !== 'verificado' || marcadosAgora.has(l.id) : l.estado === 'verificado'))
+      .filter((l) => !geradoDe || l.created_at.slice(0, 10) >= geradoDe)
+      .filter((l) => !geradoAte || l.created_at.slice(0, 10) <= geradoAte)
+      .filter((l) => !quemGerou || l.gerado_por_codigo === quemGerou)
+      .filter((l) => !sentido || l.sentido === sentido)
+      .filter((l) => !soCoincidem || coincidencias.has(l.id))
       .filter(
         (l) =>
           !t ||
@@ -90,18 +112,18 @@ export default function VerificacaoFicheiros() {
       .filter((l) => !ate || (l.verificado_em ?? '').slice(0, 10) <= ate)
       .filter((l) => !quem || l.verificado_por_codigo === quem)
       .sort((x, y) => (y.verificado_em ?? '').localeCompare(x.verificado_em ?? ''));
-  }, [q.data, pesquisa, soPorVerificar, marcadosAgora, de, ate, quem]);
+  }, [q.data, pesquisa, soPorVerificar, marcadosAgora, de, ate, quem, geradoDe, geradoAte, quemGerou, sentido, soCoincidem, coincidencias]);
 
-  const pag = usePaginacao(lotes, { chave: `${separador}|${pesquisa}|${de}|${ate}|${quem}` });
+  const pag = usePaginacao(lotes, { chave: `${separador}|${pesquisa}|${de}|${ate}|${quem}|${geradoDe}|${geradoAte}|${quemGerou}|${sentido}|${soCoincidem}|${janela}` });
 
   const nPorVerificar = useMemo(() => (q.data ?? []).filter((l) => l.estado !== 'verificado').length, [q.data]);
   const nHistorico = useMemo(() => (q.data ?? []).filter((l) => l.estado === 'verificado').length, [q.data]);
 
-  const repetidos = useMemo(() => {
-    const cont = new Map<string, number>();
-    for (const l of q.data ?? []) cont.set(l.hash_ficheiro, (cont.get(l.hash_ficheiro) ?? 0) + 1);
-    return new Set([...cont.entries()].filter(([, n]) => n > 1).map(([h]) => h));
-  }, [q.data]);
+  /** Quantos ficheiros por verificar têm coincidências. */
+  const nComCoincidencia = useMemo(
+    () => (q.data ?? []).filter((l) => l.estado !== 'verificado' && coincidencias.has(l.id)).length,
+    [q.data, coincidencias],
+  );
 
   const recarregar = async () => {
     await queryClient.invalidateQueries({ queryKey: ['ps2-lotes'] });
@@ -169,6 +191,43 @@ export default function VerificacaoFicheiros() {
             placeholder="Procurar por ficheiro, empresa ou conta"
             aria-label="Procurar por ficheiro, empresa ou conta"
           />
+          <div className="space-y-1">
+            <Label htmlFor="ger-de" className="text-xs">Gerado de</Label>
+            <Input id="ger-de" type="date" value={geradoDe} onChange={(e) => setGeradoDe(e.target.value)} className="w-40" />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="ger-ate" className="text-xs">até</Label>
+            <Input id="ger-ate" type="date" value={geradoAte} onChange={(e) => setGeradoAte(e.target.value)} className="w-40" />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="ger-quem" className="text-xs">Quem gerou</Label>
+            <select id="ger-quem" value={quemGerou} onChange={(e) => setQuemGerou(e.target.value)} className="h-10 rounded-md border border-input bg-background px-2 text-sm">
+              <option value="">Todos</option>
+              {geradores.map((v) => (
+                <option key={v} value={v}>{v}</option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="ger-sentido" className="text-xs">Na conta</Label>
+            <select id="ger-sentido" value={sentido} onChange={(e) => setSentido(e.target.value)} className="h-10 rounded-md border border-input bg-background px-2 text-sm">
+              <option value="">Débito e crédito</option>
+              <option value="debito">Débito</option>
+              <option value="credito">Crédito</option>
+            </select>
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="ger-janela" className="text-xs" title="Mesmo valor na mesma conta gerado com até estes dias de diferença">Coincidência em até</Label>
+            <select id="ger-janela" value={janela} onChange={(e) => setJanela(Number(e.target.value))} className="h-10 rounded-md border border-input bg-background px-2 text-sm">
+              {JANELAS_DIAS.map((d) => (
+                <option key={d} value={d}>{d} {d === 1 ? 'dia' : 'dias'}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-center gap-2 pb-2">
+            <Checkbox id="so-coincidem" checked={soCoincidem} onCheckedChange={(v) => setSoCoincidem(v === true)} />
+            <Label htmlFor="so-coincidem" className="cursor-pointer text-xs font-normal">Só os que coincidem</Label>
+          </div>
           {!soPorVerificar && (
             <>
               <div className="space-y-1">
@@ -199,12 +258,16 @@ export default function VerificacaoFicheiros() {
         </CardContent>
       </Card>
 
-      {repetidos.size > 0 && (
-        <Alert className="mb-4">
+      {nComCoincidencia > 0 && (
+        <Alert className="mb-4 border-amber-500/50">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            Há ficheiros guardados mais de uma vez com exatamente o mesmo conteúdo (marcados "repetido"). Confirma que
-            só foram aplicados uma vez.
+            <strong>{nComCoincidencia}</strong> ficheiro(s) por verificar têm o mesmo valor, na mesma conta, de outro ficheiro
+            gerado há {janela} dia(s) ou menos (ou têm exatamente o mesmo conteúdo). Uma folha igual mês após mês é normal;
+            poucos dias depois pode ser um ficheiro aplicado duas vezes.{' '}
+            <button type="button" className="text-primary underline" onClick={() => { setSoCoincidem(true); setSeparador('por-verificar'); }}>
+              Ver só estes
+            </button>
           </AlertDescription>
         </Alert>
       )}
@@ -221,7 +284,8 @@ export default function VerificacaoFicheiros() {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-24">{soPorVerificar ? 'Verificado' : 'Desfazer'}</TableHead>
-                <TableHead>{soPorVerificar ? 'Data' : 'Data do ficheiro'}</TableHead>
+                <TableHead title="Data de processamento dentro do ficheiro">Data do ficheiro</TableHead>
+                <TableHead title="Quando e por quem o ficheiro foi gerado">Gerado em</TableHead>
                 <TableHead>Empresa / ficheiro</TableHead>
                 <TableHead title="O que o core deve mostrar na conta da empresa: um débito (salários, pagamentos) ou um crédito (cobranças)">
                   Na conta da empresa
@@ -234,14 +298,14 @@ export default function VerificacaoFicheiros() {
             <TableBody>
               {q.isLoading && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-sm text-muted-foreground">
+                  <TableCell colSpan={8} className="text-sm text-muted-foreground">
                     A carregar…
                   </TableCell>
                 </TableRow>
               )}
               {!q.isLoading && lotes.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="py-8 text-center text-sm text-muted-foreground">
+                  <TableCell colSpan={8} className="py-8 text-center text-sm text-muted-foreground">
                     {soPorVerificar
                       ? 'Nada por verificar. Os ficheiros aparecem aqui quando são guardados no gerador PS2; depois de verificados ficam no Histórico.'
                       : 'Nenhum ficheiro verificado com estes filtros.'}
@@ -262,6 +326,10 @@ export default function VerificacaoFicheiros() {
                       />
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-xs">{l.data_processamento}</TableCell>
+                    <TableCell className="whitespace-nowrap text-xs">
+                      {dataHora(l.created_at)}
+                      <div className="text-[10px] text-muted-foreground">{l.gerado_por_codigo ?? '—'}</div>
+                    </TableCell>
                     <TableCell>
                       {feito ? (
                         <div className="font-mono text-sm font-medium text-muted-foreground">
@@ -282,10 +350,17 @@ export default function VerificacaoFicheiros() {
                       )}
                       <div className="text-[10px] text-muted-foreground">
                         {l.tipo_operacao} · {l.n_registos} registos
-                        {repetidos.has(l.hash_ficheiro) && (
-                          <span className="ml-2 text-amber-600">repetido: mesmo conteúdo guardado antes</span>
-                        )}
                       </div>
+                      {coincidencias.has(l.id) && (
+                        <button
+                          type="button"
+                          onClick={() => setVerCoincidencias(l)}
+                          className="mt-1 inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 text-[11px] font-medium text-amber-900 hover:bg-amber-200 dark:bg-amber-900/40 dark:text-amber-200"
+                        >
+                          <AlertTriangle className="h-3 w-3" />
+                          Coincide com {coincidencias.get(l.id)!.length} ficheiro(s) — ver
+                        </button>
+                      )}
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-sm">
                       {l.sentido === 'credito' ? 'Crédito' : 'Débito'}
@@ -326,6 +401,61 @@ export default function VerificacaoFicheiros() {
         </CardContent>
       </Card>
       <Paginacao p={pag} />
+
+      <Dialog open={verCoincidencias !== null} onOpenChange={(o) => !o && setVerCoincidencias(null)}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Ficheiros que coincidem</DialogTitle>
+            <DialogDescription>
+              {verCoincidencias && (
+                <>
+                  <span className="font-mono">{nomeSemExtensao(verCoincidencias.nome_ficheiro)}</span> · {fmtValor(verCoincidencias.total)} CVE ·
+                  conta {contaCurta(verCoincidencias.conta_empresa)} · gerado em {dataHora(verCoincidencias.created_at)}
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[60vh] overflow-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Ficheiro</TableHead>
+                  <TableHead>Gerado em</TableHead>
+                  <TableHead>Diferença</TableHead>
+                  <TableHead className="text-right">Valor</TableHead>
+                  <TableHead>Estado</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(verCoincidencias ? coincidencias.get(verCoincidencias.id) ?? [] : []).map((c) => (
+                  <TableRow key={c.lote.id}>
+                    <TableCell>
+                      <div className="font-mono text-xs">{nomeSemExtensao(c.lote.nome_ficheiro)}</div>
+                      <div className="text-[10px] text-muted-foreground">
+                        {c.lote.tipo_operacao} · {c.lote.n_registos} registos{c.mesmosRegistos ? ' (mesmo nº)' : ''}
+                      </div>
+                      {c.motivo === 'mesmo-conteudo' && <div className="text-[10px] text-amber-700">exatamente o mesmo conteúdo</div>}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-xs">
+                      {dataHora(c.lote.created_at)}
+                      <div className="text-[10px] text-muted-foreground">{c.lote.gerado_por_codigo ?? '—'}</div>
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-xs">
+                      {c.diasDeDiferenca === 0 ? 'no mesmo dia' : `${c.diasDeDiferenca} dia(s)`}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-right tabular-nums">{fmtValor(c.lote.total)}</TableCell>
+                    <TableCell className="text-xs">
+                      {c.lote.estado === 'verificado'
+                        ? `Verificado${c.lote.verificado_por_codigo ? ' por ' + c.lote.verificado_por_codigo : ''} · ${dataHora(c.lote.verificado_em)}`
+                        : 'Por verificar'}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </DialogContent>
+      </Dialog>
     </PageContainer>
   );
 }
