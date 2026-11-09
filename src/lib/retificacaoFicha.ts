@@ -4,6 +4,8 @@
 import type { FichaSignature } from '@/types/signature';
 
 export interface ConteudoFicha {
+  /** dia-util | dia-nao-util (só conta no diff quando vem nos dois lados). */
+  form_type?: string;
   date: string;
   turn_data: Record<string, unknown>;
   tasks: Record<string, unknown>;
@@ -59,6 +61,8 @@ export function diffFicha(antes: ConteudoFicha, depois: ConteudoFicha): Diferenc
     if (!iguais(de, para)) out.push({ campo, de: texto(de), para: texto(para) });
   };
 
+  const TIPO: Record<string, string> = { 'dia-util': 'Dia Útil', 'dia-nao-util': 'Dia Não Útil' };
+  if (antes.form_type && depois.form_type) push('Tipo da ficha', TIPO[antes.form_type] ?? antes.form_type, TIPO[depois.form_type] ?? depois.form_type);
   push('Data da ficha', antes.date, depois.date);
 
   // Turnos (e a folha de tapes, que vai dentro de turn_data.verificacaoTapes)

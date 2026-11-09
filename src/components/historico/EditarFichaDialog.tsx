@@ -51,6 +51,7 @@ function Editor({ record, onClose, onSaved }: { record: ExportedTaskboard; onClo
   const { user } = useAuth();
   const operador = useCurrentOperator();
   const [date, setDate] = useState(record.date);
+  const [formType, setFormType] = useState<string>(record.form_type);
   const [turnData, setTurnData] = useState<Obj>(() => clone(record.turn_data as Obj));
   const [tasks, setTasks] = useState<Obj>(() => clone(record.tasks as Obj));
   const [rows, setRows] = useState<Obj[]>(() => clone(record.table_rows as unknown as Obj[]));
@@ -65,13 +66,34 @@ function Editor({ record, onClose, onSaved }: { record: ExportedTaskboard; onClo
   const assinado = sigUrl === 'pin' && !!signerName && !!token;
 
   const antes: ConteudoFicha = useMemo(
-    () => ({ date: record.date, turn_data: record.turn_data as Obj, tasks: record.tasks as Obj, table_rows: record.table_rows as unknown as Obj[] }),
+    () => ({ form_type: record.form_type, date: record.date, turn_data: record.turn_data as Obj, tasks: record.tasks as Obj, table_rows: record.table_rows as unknown as Obj[] }),
     [record],
   );
   const mudancas = useMemo(
-    () => diffFicha(antes, { date, turn_data: turnData, tasks, table_rows: rows }),
-    [antes, date, turnData, tasks, rows],
+    () => diffFicha(antes, { form_type: formType, date, turn_data: turnData, tasks, table_rows: rows }),
+    [antes, formType, date, turnData, tasks, rows],
   );
+
+  const naoUtil = formType === 'dia-nao-util';
+  const turnosVisiveis = naoUtil ? ['turno3'] : ['turno1', 'turno2', 'turno3'];
+
+  /** Dia útil <-> dia não útil. Para dia não útil a ficha só fica com o turno 3 (o original fica guardado). */
+  const mudarTipo = (novo: string) => {
+    setFormType(novo);
+    if (novo === 'dia-nao-util') {
+      setTurnData((d) => {
+        const { turno1: _t1, turno2: _t2, ...resto } = d;
+        return resto;
+      });
+      setTasks((d) => {
+        const { turno1: _t1, turno2: _t2, ...resto } = d;
+        return resto;
+      });
+    } else {
+      setTurnData(clone(record.turn_data as Obj));
+      setTasks(clone(record.tasks as Obj));
+    }
+  };
 
   const setTurno = (t: string, campo: string, v: string) =>
     setTurnData((d) => ({ ...d, [t]: { ...d[t], [campo]: v } }));
@@ -94,7 +116,7 @@ function Editor({ record, onClose, onSaved }: { record: ExportedTaskboard; onClo
       const { verificacaoTapes, ...turnosSemTapes } = turnData;
       const hash = await computeFichaHash({
         date,
-        formType: record.form_type,
+        formType,
         turnData: turnosSemTapes,
         tasks,
         tableRows: rows,
@@ -118,6 +140,7 @@ function Editor({ record, onClose, onSaved }: { record: ExportedTaskboard; onClo
         tableRows: rows,
         assinatura,
         motivo: motivo.trim(),
+        formType: formType !== record.form_type ? formType : undefined,
       });
       if (error) {
         toast.error(error);
@@ -128,6 +151,7 @@ function Editor({ record, onClose, onSaved }: { record: ExportedTaskboard; onClo
       toast.success(`Ficha retificada (versão ${versao}). O original ficou guardado no histórico.`);
       onSaved({
         ...record,
+        form_type: formType,
         date,
         turn_data: turnData as never,
         tasks: tasks as never,
@@ -165,7 +189,28 @@ function Editor({ record, onClose, onSaved }: { record: ExportedTaskboard; onClo
             <Label htmlFor="ret-data">Data da ficha</Label>
             <Input id="ret-data" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           </div>
-          {['turno1', 'turno2', 'turno3'].map((t) => (
+          {(record.form_type === 'dia-util' || record.form_type === 'dia-nao-util') && (
+            <div className="max-w-md space-y-1">
+              <Label htmlFor="ret-tipo">Tipo da ficha</Label>
+              <select
+                id="ret-tipo"
+                value={formType}
+                onChange={(e) => mudarTipo(e.target.value)}
+                className="h-10 w-full rounded-md border border-input bg-background px-2 text-sm"
+              >
+                <option value="dia-util">Dia Útil (3 turnos)</option>
+                <option value="dia-nao-util">Dia Não Útil (só o turno 3)</option>
+              </select>
+              {formType !== record.form_type && (
+                <p className="text-xs text-muted-foreground">
+                  {naoUtil
+                    ? 'Os turnos 1 e 2 saem da ficha (ficam no original guardado no histórico).'
+                    : 'Volta a ficha original, com os 3 turnos.'}
+                </p>
+              )}
+            </div>
+          )}
+          {turnosVisiveis.map((t) => (
             <div key={t} className="grid gap-3 rounded-md border p-3 sm:grid-cols-4">
               <p className="text-sm font-semibold sm:col-span-4">{NOME_TURNO[t]}</p>
               <div className="space-y-1">

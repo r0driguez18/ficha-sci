@@ -569,19 +569,25 @@ export function useTaskboard(formType: FormType) {
       return;
     }
     const avisosData = problemasData.filter((p) => p.gravidade === 'aviso');
-    if (
-      avisosData.length > 0 &&
-      !window.confirm(
+    // A data não bate com o tipo (ou está atrasada): só se exporta com um motivo escrito, que fica na ficha.
+    let confirmacaoData: { motivo: string; avisos: string[] } | undefined;
+    if (avisosData.length > 0) {
+      const resposta = window.prompt(
         [
-          'Confirma a data da ficha antes de exportar:',
+          'A data da ficha precisa de confirmação:',
           '',
           ...avisosData.map((p) => `• ${p.mensagem}`),
           '',
-          'Uma ficha exportada não se pode repetir nesse dia. Exportar mesmo assim?',
+          'Se estiver mesmo certa, escreve o motivo (mínimo 10 caracteres). Uma ficha exportada não se pode repetir nesse dia.',
+          'Se escolheste a ficha errada, cancela e usa a ficha do tipo certo.',
         ].join('\n'),
-      )
-    ) {
-      return;
+      );
+      if (resposta === null) return;
+      if (resposta.trim().length < 10) {
+        toast.error('Sem um motivo (pelo menos 10 caracteres) a ficha não é exportada.');
+        return;
+      }
+      confirmacaoData = { motivo: resposta.trim(), avisos: avisosData.map((p) => p.mensagem) };
     }
 
     if (showTapeVerification && !tapesAssinadas(verificacaoTapes.verificadoPor)) {
@@ -668,6 +674,7 @@ export function useTaskboard(formType: FormType) {
         signedAt: new Date().toISOString(),
         contentHash,
         imageDataUrl: null,
+        ...(confirmacaoData ? { confirmacaoData: { ...confirmacaoData, por: signerName, em: new Date().toISOString() } } : {}),
       };
 
       const tapesForExport = showTapeVerification ? verificacaoTapes : undefined;
