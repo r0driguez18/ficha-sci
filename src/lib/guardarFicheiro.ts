@@ -11,6 +11,8 @@
  * Devolve true se gravou, false se a pessoa cancelou o diálogo (não é erro).
  */
 
+import { toast } from 'sonner';
+
 export interface OpcoesGuardar {
   /** Nome sugerido (pré-preenchido no diálogo "Guardar como" e usado tal qual no download clássico). */
   sugestaoNome: string;
@@ -54,15 +56,35 @@ export async function guardarFicheiro(
       return true;
     } catch (e) {
       if (e instanceof DOMException && e.name === 'AbortError') return false; // cancelou o diálogo
-      // Qualquer outro erro (ex.: permissão): cai no download clássico em baixo.
+      // Qualquer outro erro (ficheiro aberto noutro programa, pasta sem permissão, diálogo bloqueado…): cai no download
+      // clássico, mas avisa, para ninguém ficar à procura de um ficheiro que não está onde escolheu.
+      const motivo = e instanceof DOMException && e.name === 'NoModificationAllowedError'
+        ? 'o ficheiro está aberto noutro programa (fecha-o) ou a pasta não deixa gravar'
+        : e instanceof Error ? `${e.name}: ${e.message}` : 'erro desconhecido';
+      toast.warning(`Não foi possível gravar na pasta escolhida (${motivo}). O ficheiro foi descarregado para a pasta de Descarregamentos do browser.`, { duration: 10000 });
     }
   }
 
+  descarregarClassico(blob, opcoes.sugestaoNome);
+  return true;
+}
+
+/**
+ * Download clássico. A ligação vai para o documento (o Firefox ignora cliques em ligações soltas) e o endereço do
+ * ficheiro só é libertado passado um tempo: libertá-lo logo a seguir ao clique cancela o descarregamento em alguns
+ * browsers, sobretudo com o Edge/Chrome com o antivírus a analisar.
+ */
+function descarregarClassico(blob: Blob, nome: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = opcoes.sugestaoNome;
+  a.download = nome;
+  a.rel = 'noopener';
+  a.style.display = 'none';
+  document.body.appendChild(a);
   a.click();
-  URL.revokeObjectURL(url);
-  return true;
+  setTimeout(() => {
+    a.remove();
+    URL.revokeObjectURL(url);
+  }, 60_000);
 }
