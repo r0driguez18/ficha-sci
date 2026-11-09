@@ -35,6 +35,25 @@ interface JanelaComSaveFilePicker {
   }>;
 }
 
+const CHAVE_BLOQUEADO = 'guardar-ficheiro:gravacao-bloqueada';
+
+/** O browser deste computador já recusou gravar na pasta escolhida (política, permissões…): vai-se direto ao download. */
+function gravacaoBloqueada(): boolean {
+  try {
+    return localStorage.getItem(CHAVE_BLOQUEADO) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function marcarGravacaoBloqueada() {
+  try {
+    localStorage.setItem(CHAVE_BLOQUEADO, '1');
+  } catch {
+    /* sem armazenamento: tenta-se de novo da próxima vez */
+  }
+}
+
 export async function guardarFicheiro(
   dados: Blob | Uint8Array | string,
   opcoes: OpcoesGuardar,
@@ -42,7 +61,7 @@ export async function guardarFicheiro(
   const blob = dados instanceof Blob ? dados : new Blob([dados], opcoes.tipoMime ? { type: opcoes.tipoMime } : undefined);
 
   const picker = (window as unknown as JanelaComSaveFilePicker).showSaveFilePicker;
-  if (typeof picker === 'function') {
+  if (typeof picker === 'function' && !gravacaoBloqueada()) {
     try {
       const handle = await picker({
         suggestedName: opcoes.sugestaoNome,
@@ -56,8 +75,15 @@ export async function guardarFicheiro(
       return true;
     } catch (e) {
       if (e instanceof DOMException && e.name === 'AbortError') return false; // cancelou o diálogo
-      // Qualquer outro erro (ficheiro aberto noutro programa, pasta sem permissão, diálogo bloqueado…): cai no download
-      // clássico, mas avisa, para ninguém ficar à procura de um ficheiro que não está onde escolheu.
+      if (e instanceof DOMException && (e.name === 'NotAllowedError' || e.name === 'SecurityError')) {
+        // O browser (ou uma política do computador) não deixa a página gravar em pastas: é assim neste posto, não é um
+        // erro do ficheiro. Lembra-se disso e passa a descarregar logo, sem abrir um «Guardar como» que não grava.
+        marcarGravacaoBloqueada();
+        descarregarClassico(blob, opcoes.sugestaoNome);
+        toast.info(`Ficheiro descarregado para a pasta de Descarregamentos do browser (${opcoes.sugestaoNome}).`, { duration: 8000 });
+        return true;
+      }
+      // Outros erros (ficheiro aberto noutro programa, disco…): cai no download, mas avisa.
       const motivo = e instanceof DOMException && e.name === 'NoModificationAllowedError'
         ? 'o ficheiro está aberto noutro programa (fecha-o) ou a pasta não deixa gravar'
         : e instanceof Error ? `${e.name}: ${e.message}` : 'erro desconhecido';
