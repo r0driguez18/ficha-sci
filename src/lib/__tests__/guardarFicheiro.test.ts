@@ -9,7 +9,7 @@ function simularBrowser(picker?: unknown) {
   const ligacao = { href: '', download: '', rel: '', style: {} as Record<string, string>, click: vi.fn(), remove: vi.fn() };
   const noDocumento = vi.fn();
   const memoria = new Map<string, string>();
-  vi.stubGlobal('localStorage', { getItem: (k: string) => memoria.get(k) ?? null, setItem: (k: string, v: string) => memoria.set(k, v) });
+  vi.stubGlobal('sessionStorage', { getItem: (k: string) => memoria.get(k) ?? null, setItem: (k: string, v: string) => memoria.set(k, v) });
   vi.stubGlobal('window', { showSaveFilePicker: picker });
   vi.stubGlobal('document', { createElement: () => ligacao, body: { appendChild: noDocumento } });
   vi.stubGlobal('URL', { createObjectURL: vi.fn(() => 'blob:x'), revokeObjectURL: vi.fn() });
@@ -63,5 +63,14 @@ describe('guardarFicheiro', () => {
     expect(await guardarFicheiro('x', { sugestaoNome: 'a.txt' })).toBe(true);
     expect(picker).toHaveBeenCalledOnce();
     expect(ligacao.click).toHaveBeenCalledTimes(2);
+  });
+
+  it('cada tipo de ficheiro pede ao browser a sua própria pasta (id)', async () => {
+    const picker = vi.fn().mockResolvedValue({ createWritable: async () => ({ write: vi.fn(), close: vi.fn() }) });
+    simularBrowser(picker);
+    await guardarFicheiro('x', { sugestaoNome: 'a.txt', idPasta: 'ps2' });
+    await guardarFicheiro('x', { sugestaoNome: 'b.txt', idPasta: 'oic' });
+    expect(picker.mock.calls[0][0].id).toBe('ps2');
+    expect(picker.mock.calls[1][0].id).toBe('oic');
   });
 });

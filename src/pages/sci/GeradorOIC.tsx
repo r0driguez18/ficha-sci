@@ -203,6 +203,7 @@ export default function GeradorOIC() {
       sugestaoNome: comExtensao(nomeBase, '.txt'),
       extensao: '.txt',
       descricaoTipo: 'Ficheiro OIC',
+      idPasta: 'oic',
     });
     if (guardou) toast.success('Ficheiro guardado.');
   };
