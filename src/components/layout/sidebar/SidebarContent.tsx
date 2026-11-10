@@ -33,6 +33,7 @@ import { getPendingTapesEvidencia } from '@/services/exportedTaskboardService';
 import { contarEmCurso } from '@/services/ocorrenciasService';
 import { useFichasPorFechar } from '@/services/fichasPorFecharService';
 import { listarLotes } from '@/services/ps2LotesService';
+import { contarNotasPorLer } from '@/services/handoverService';
 
 export const SidebarContent = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -44,6 +45,7 @@ export const SidebarContent = () => {
   const [tapesBadge, setTapesBadge] = useState<number>(0);
   const [verificacaoBadge, setVerificacaoBadge] = useState<number>(0);
   const [ocorrenciasBadge, setOcorrenciasBadge] = useState<number>(0);
+  const [notasBadge, setNotasBadge] = useState<number>(0);
   const fichasPorFechar = useFichasPorFechar();
 
   // Atalho ⌘K / Ctrl+K abre a paleta de comandos.
@@ -97,16 +99,33 @@ export const SidebarContent = () => {
       }
     };
 
+    const fetchNotas = async () => {
+      try {
+        const n = await contarNotasPorLer();
+        if (isMounted) setNotasBadge(n);
+      } catch (error) {
+        console.error('Failed to load unread handover notes count:', error);
+      }
+    };
+    // Quem entra de turno vê logo as notas novas, sem esperar pelos 5 minutos.
+    const aoVoltar = () => {
+      if (document.visibilityState === 'visible') fetchNotas();
+    };
+
     fetchCounts();
     fetchTapes();
     fetchVerificacao();
     fetchOcorrencias();
+    fetchNotas();
     const interval = setInterval(() => {
       fetchCounts();
       fetchTapes();
       fetchVerificacao();
       fetchOcorrencias();
+      fetchNotas();
     }, 5 * 60 * 1000);
+    document.addEventListener('visibilitychange', aoVoltar);
+    window.addEventListener('update-passagem-badge', fetchNotas);
 
     window.addEventListener('update-returns-badge', fetchCounts);
     window.addEventListener('update-tapes-badge', fetchTapes);
@@ -119,6 +138,8 @@ export const SidebarContent = () => {
       window.removeEventListener('update-tapes-badge', fetchTapes);
       window.removeEventListener('update-verificacao-badge', fetchVerificacao);
       window.removeEventListener('update-ocorrencias-badge', fetchOcorrencias);
+      window.removeEventListener('update-passagem-badge', fetchNotas);
+      document.removeEventListener('visibilitychange', aoVoltar);
     };
   }, [user]);
 
@@ -175,7 +196,7 @@ export const SidebarContent = () => {
             <SidebarItem icon={ClipboardCheck} label="Ficha de Procedimentos" to="/sci/procedimentos" badge={fichasPorFechar.length} />
             <SidebarItem icon={Archive} label="Histórico de Fichas" to="/sci/historico-fichas" badge={tapesBadge} />
             <SidebarItem icon={Undo2} label="Retornos de Cobranças" to="/sci/retornos-cobrancas" badge={retornosBadge} />
-            <SidebarItem icon={ArrowRightLeft} label="Passagem de Turno" to="/sci/passagem-turno" />
+            <SidebarItem icon={ArrowRightLeft} label="Passagem de Turno" to="/sci/passagem-turno" badge={notasBadge} />
             <SidebarItem icon={AlertTriangle} label="Ocorrências" to="/sci/ocorrencias" badge={ocorrenciasBadge} />
             <SidebarItem icon={ShieldCheck} label="Verificar Débitos/Créditos" to="/sci/verificacao-ficheiros" badge={verificacaoBadge} />
           </SidebarMenu>

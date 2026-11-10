@@ -833,6 +833,18 @@ export type Database = {
         Args: { p_ids: string[] }
         Returns: number
       }
+      fixar_entrada_passagem_turno: {
+        Args: { p_id: string; p_ate?: string | null }
+        Returns: Json
+      }
+      desafixar_entrada_passagem_turno: {
+        Args: { p_id: string }
+        Returns: Json
+      }
+      contar_passagem_turno_por_ler: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       adicionar_entrada_passagem_turno: {
         Args: { p_date: string; p_turno: string; p_texto: string }
         Returns: {
