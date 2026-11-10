@@ -15,6 +15,8 @@ export interface FichaSignature {
   contentHash?: string;
   method?: 'pin' | 'legacy';
   /** Presente quando um administrador retificou a ficha depois de exportada (ver `editar_ficha_exportada`). */
+  /** Quem exportou apesar de a data não bater com o tipo da ficha (ou estar atrasada), e porquê. Fora do selo. */
+  confirmacaoData?: { motivo: string; avisos: string[]; por: string; em: string };
   retificacao?: { versao: number; por: string; porUserId: string; em: string; motivo: string };
 }
 

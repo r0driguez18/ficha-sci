@@ -565,7 +565,7 @@ export default function HistoricoFichas() {
                           </Badge>
                         )}
                         {(() => {
-                          const suspeita = (record.versao ?? 1) > 1 || record.data_confirmada_em ? null : dataSuspeitaExportada(record.form_type, record.date, record.exported_at || record.created_at);
+                          const suspeita = (record.versao ?? 1) > 1 || record.data_confirmada_em || (record.pdf_signature as { confirmacaoData?: unknown } | null)?.confirmacaoData ? null : dataSuspeitaExportada(record.form_type, record.date, record.exported_at || record.created_at);
                           return suspeita ? (
                             <button type="button" onClick={() => setDataTarget({ record, motivo: suspeita })} title={`${suspeita} Clica para confirmar ou corrigir.`}>
                               <Badge variant="outline" className="cursor-pointer border-warning text-warning hover:bg-warning/10">

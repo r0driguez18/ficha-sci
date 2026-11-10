@@ -23,6 +23,7 @@ import { SyncStatusBadge } from '@/components/taskboard/SyncStatusBadge';
 import { FichasPorFecharAviso } from '@/components/taskboard/FichasPorFecharAviso';
 import { useTaskboard } from '@/hooks/useTaskboard';
 import { isoDateOffset } from '@/lib/taskboardDefaults';
+import { diaNaoUtil } from '@/lib/validarDataFicha';
 import type { FormType } from '@/services/taskboardService';
 import type { TurnKey } from '@/types/taskboard';
 
@@ -183,6 +184,27 @@ export default function FichaProcedimentos({ formType }: FichaProcedimentosProps
                       Recarregar ficha
                     </Button>
                   )}
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
+          {(formType === 'dia-util' || formType === 'dia-nao-util') && (formType === 'dia-nao-util') !== diaNaoUtil(tb.date) && (
+            <Alert variant="destructive" className="anim-entrar mb-6">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Esta não é a ficha certa para {tb.date}</AlertTitle>
+              <AlertDescription>
+                <p>
+                  {formType === 'dia-util'
+                    ? `${tb.date} é um dia não útil (fim de semana ou feriado): só há o turno 3, na ficha de Dia Não Útil.`
+                    : `${tb.date} é um dia útil: a ficha tem os 3 turnos, na ficha de Dia Útil.`}{' '}
+                  Se estiver certo (por exemplo, um feriado local), podes continuar, mas ao exportar terás de escrever o motivo.
+                </p>
+                <div className="mt-3">
+                  <Button size="sm" asChild>
+                    <Link to={formType === 'dia-util' ? '/sci/taskboard-dia-nao-util' : '/sci/taskboard'}>
+                      Ir para a ficha de {formType === 'dia-util' ? 'Dia Não Útil' : 'Dia Útil'}
+                    </Link>
+                  </Button>
                 </div>
               </AlertDescription>
             </Alert>

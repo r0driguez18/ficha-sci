@@ -220,8 +220,8 @@ export interface EdicaoFicha {
   editado_por_codigo: string | null;
   editado_em: string;
   motivo: string;
-  antes: { date: string; turn_data: Record<string, unknown>; tasks: Record<string, unknown>; table_rows: Array<Record<string, unknown>> };
-  depois: { date: string; turn_data: Record<string, unknown>; tasks: Record<string, unknown>; table_rows: Array<Record<string, unknown>> };
+  antes: { form_type?: string; date: string; turn_data: Record<string, unknown>; tasks: Record<string, unknown>; table_rows: Array<Record<string, unknown>> };
+  depois: { form_type?: string; date: string; turn_data: Record<string, unknown>; tasks: Record<string, unknown>; table_rows: Array<Record<string, unknown>> };
 }
 
 /** Grava a retificação: o servidor guarda o conteúdo anterior, gasta o token do PIN e sobe a versão. */
@@ -234,6 +234,8 @@ export async function editarFichaExportada(args: {
   tableRows: unknown;
   assinatura: unknown;
   motivo: string;
+  /** Só se o tipo da ficha muda (dia útil <-> dia não útil). */
+  formType?: string;
 }): Promise<{ versao: number | null; error: string | null }> {
   const { data, error } = await (supabase as any).rpc('editar_ficha_exportada', {
     p_id: args.id,
@@ -244,6 +246,7 @@ export async function editarFichaExportada(args: {
     p_table_rows: args.tableRows,
     p_assinatura: args.assinatura,
     p_motivo: args.motivo,
+    p_form_type: args.formType ?? null,
   });
   return { versao: (data as number | null) ?? null, error: error ? error.message : null };
 }
