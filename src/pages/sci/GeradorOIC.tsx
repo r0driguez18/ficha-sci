@@ -199,11 +199,13 @@ export default function GeradorOIC() {
     if (!resultado || resultado.erros.length > 0) return;
     // ANSI (Windows-1252), como o ficheiro que a macro gera: cada carácter = 1 byte, linhas de 135.
     const blob = new Blob([codificarAnsi(resultado.conteudo)], { type: 'text/plain;charset=windows-1252' });
-    await guardarFicheiro(blob, {
+    const guardou = await guardarFicheiro(blob, {
       sugestaoNome: comExtensao(nomeBase, '.txt'),
       extensao: '.txt',
       descricaoTipo: 'Ficheiro OIC',
+      idPasta: 'oic',
     });
+    if (guardou) toast.success('Ficheiro guardado.');
   };
 
   const limparTudo = () => {

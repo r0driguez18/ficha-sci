@@ -432,6 +432,7 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
       sugestaoNome: comExtensao(nomeBase, '.txt'),
       extensao: '.txt',
       descricaoTipo: 'Ficheiro PS2',
+      idPasta: 'ps2',
     });
     if (!guardou) return;
 
