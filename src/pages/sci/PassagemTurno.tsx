@@ -11,18 +11,21 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-import { Archive, CheckCircle2, ChevronLeft, ChevronRight, Loader2, Send } from 'lucide-react';
+import { Archive, CheckCircle2, ChevronLeft, ChevronRight, Loader2, Pin, PinOff, Send } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useOperators } from '@/hooks/useOperators';
 import { todayIso } from '@/lib/taskboardDefaults';
-import { CONFIRMACOES_NECESSARIAS, confirmacoes, estadoDaNota, paraTurnos } from '@/lib/passagemTurno';
+import { CONFIRMACOES_NECESSARIAS, estaFixada, estadoDaNota, paraTurnos, porLerPor } from '@/lib/passagemTurno';
 import type { TurnKey } from '@/types/taskboard';
 import {
   HISTORICO_POR_PAGINA,
   adicionarEntradaHandover,
   arquivarEntradasHandover,
   confirmarLeituraEntradaHandover,
+  desafixarEntradaHandover,
+  fixarEntradaHandover,
   getHandoverAtuais,
   getHandoverHistorico,
   type FiltrosHistorico,
@@ -53,6 +56,9 @@ const fmt = (iso?: string | null) => {
   }
 };
 
+/** AAAA-MM-DD (data limite da fixação) como dd/mm/aaaa. */
+const fmtData = (iso: string) => iso.split('-').reverse().join('/');
+
 const fmtDia = (iso: string) => {
   try {
     return new Date(`${iso}T12:00:00`).toLocaleDateString('pt-PT', {
@@ -73,15 +79,18 @@ interface EntradaCardProps {
   busy: string | null;
   onConfirmar?: (e: HandoverEntrada) => void;
   onArquivar?: (e: HandoverEntrada) => void;
+  onFixar?: (e: HandoverEntrada) => void;
+  onDesafixar?: (e: HandoverEntrada) => void;
 }
 
-function EntradaCard({ entrada: e, userId, labelOf, busy, onConfirmar, onArquivar }: EntradaCardProps) {
+function EntradaCard({ entrada: e, userId, labelOf, busy, onConfirmar, onArquivar, onFixar, onDesafixar }: EntradaCardProps) {
   const jaLi = e.leituras.some((l) => l.user_id === userId);
   const souAutor = !!userId && e.autor_user_id === userId;
   const estado = estadoDaNota(e);
   const destinos = paraTurnos(e.turno).map((t) => LABEL_TURNO[t]);
+  const fixada = estado.tipo === 'fixada';
   return (
-    <li className={`rounded-md border p-3 space-y-2 ${e.arquivada_em || estado.tipo === 'arquivada-sozinha' ? 'bg-muted/40' : ''}`}>
+    <li className={`rounded-md border p-3 space-y-2 ${e.arquivada_em || estado.tipo === 'arquivada-sozinha' ? 'bg-muted/40' : ''} ${fixada ? 'border-primary/50 bg-primary/5' : ''}`}>
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
         <span>
           <strong className="text-foreground">{LABEL_TURNO[e.turno]}</strong> · {fmtDia(e.date)} ·{' '}
@@ -89,6 +98,15 @@ function EntradaCard({ entrada: e, userId, labelOf, busy, onConfirmar, onArquiva
         </span>
         <span className="flex flex-wrap items-center gap-2">
           <Badge variant="outline" title="Os turnos que vêem esta nota">Para {destinos.join(' e ')}</Badge>
+          {estado.tipo === 'fixada' && (
+            <Badge
+              variant="default"
+              title={`Fixada${e.fixada_por_nome ? ` por ${e.fixada_por_nome}` : ''}: não sai das ativas nem se arquiva até ser desafixada${estado.ate ? ` (ou até ${fmtData(estado.ate)})` : ''}`}
+            >
+              <Pin className="h-3 w-3 mr-1" />
+              {estado.ate ? `Fixada até ${fmtData(estado.ate)}` : 'Fixada'}
+            </Badge>
+          )}
           {estado.tipo === 'por-ler' && <Badge variant="outline">Por ler</Badge>}
           {estado.tipo === 'a-meio' && (
             <Badge variant="outline" title={`A nota sai das ativas 24 h depois da ${CONFIRMACOES_NECESSARIAS}.ª confirmação`}>
@@ -131,7 +149,19 @@ function EntradaCard({ entrada: e, userId, labelOf, busy, onConfirmar, onArquiva
         {onConfirmar && souAutor && (
           <span className="text-xs text-muted-foreground">Deixaste tu esta nota: quem confirma são os outros turnos.</span>
         )}
-        {onArquivar && (
+        {onFixar && !fixada && (
+          <Button size="sm" variant="ghost" onClick={() => onFixar(e)} title="A nota fica sempre visível, sem sair pelo prazo">
+            <Pin className="h-4 w-4 mr-1.5" />
+            Fixar
+          </Button>
+        )}
+        {onDesafixar && fixada && (
+          <Button size="sm" variant="ghost" onClick={() => onDesafixar(e)} disabled={busy === `fix-${e.id}`}>
+            <PinOff className="h-4 w-4 mr-1.5" />
+            Desafixar
+          </Button>
+        )}
+        {onArquivar && !fixada && (
           <Button size="sm" variant="ghost" onClick={() => onArquivar(e)} disabled={busy === `arq-${e.id}`}>
             <Archive className="h-4 w-4 mr-1.5" />
             Arquivar
@@ -153,12 +183,16 @@ export default function PassagemTurno() {
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
   const [aArquivar, setAArquivar] = useState<HandoverEntrada[] | null>(null);
+  const [aFixar, setAFixar] = useState<HandoverEntrada | null>(null);
+  const [fixarAte, setFixarAte] = useState('');
 
   const load = useCallback(async () => {
     const { data, error } = await getHandoverAtuais();
     if (error) toast.error('Erro ao carregar as notas de passagem de turno.');
     setAtuais(data ?? []);
     setLoading(false);
+    // O número ao lado de «Passagem de Turno» no menu acompanha o que acabou de mudar aqui.
+    window.dispatchEvent(new Event('update-passagem-badge'));
   }, []);
 
   useEffect(() => {
@@ -215,13 +249,51 @@ export default function PassagemTurno() {
     }
   };
 
-  /** Uma nota lida arquiva-se logo; uma por ler pede confirmação. */
-  const pedirArquivo = (lista: HandoverEntrada[]) => {
+  const fixar = async () => {
+    if (!aFixar) return;
+    setBusy(`fix-${aFixar.id}`);
+    try {
+      const { error } = await fixarEntradaHandover(aFixar.id, fixarAte || null);
+      if (error) {
+        toast.error(error.message || 'Não foi possível fixar a nota.');
+        return;
+      }
+      setAFixar(null);
+      await load();
+      toast.success(fixarAte ? `Nota fixada até ${fmtData(fixarAte)}.` : 'Nota fixada.');
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const desafixar = async (entrada: HandoverEntrada) => {
+    setBusy(`fix-${entrada.id}`);
+    try {
+      const { error } = await desafixarEntradaHandover(entrada.id);
+      if (error) {
+        toast.error('Não foi possível desafixar a nota.');
+        return;
+      }
+      await load();
+      toast.success('Nota desafixada.');
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  /** Uma nota lida arquiva-se logo; uma por ler pede confirmação. As fixadas ficam de fora (desafixa-se primeiro). */
+  const pedirArquivo = (todas: HandoverEntrada[]) => {
+    const lista = todas.filter((e) => !estaFixada(e));
+    if (lista.length === 0) {
+      toast.info('As notas fixadas não se arquivam: desafixa-as primeiro.');
+      return;
+    }
     if (lista.length === 1 && lista[0].leituras.length > 0) void arquivar(lista);
     else setAArquivar(lista);
   };
 
-  const porLer = useMemo(() => atuais.filter((e) => confirmacoes(e) === 0).length, [atuais]);
+  const porLer = useMemo(() => atuais.filter((e) => porLerPor(e, user?.id)).length, [atuais, user?.id]);
+  const fixadas = useMemo(() => atuais.filter((e) => estaFixada(e)).length, [atuais]);
   const paraArquivarPorLer = (aArquivar ?? []).filter((e) => e.leituras.length === 0).length;
 
   // ---------- Histórico
@@ -259,7 +331,7 @@ export default function PassagemTurno() {
     <PageContainer size="default">
       <PageHeader
         title="Passagem de Turno"
-        subtitle="Quem sai deixa notas, vistas pelos dois turnos seguintes. Com duas confirmações de leitura a nota fica mais 24 h e vai para o histórico."
+        subtitle="Quem sai deixa notas, vistas pelos dois turnos seguintes. Com duas confirmações de leitura a nota fica mais 24 h e vai para o histórico — a não ser que esteja fixada."
       />
 
       <Tabs value={separador} onValueChange={setSeparador} className="space-y-4">
@@ -318,14 +390,20 @@ export default function PassagemTurno() {
                 <CardTitle className="text-base">Notas ativas</CardTitle>
                 {!loading && (
                   <Badge variant={porLer > 0 ? 'destructive' : 'secondary'}>
-                    {porLer > 0 ? `${porLer} por ler` : 'todas lidas'}
+                    {porLer > 0 ? `${porLer} por ler` : 'tudo lido'}
+                  </Badge>
+                )}
+                {!loading && fixadas > 0 && (
+                  <Badge variant="outline">
+                    <Pin className="h-3 w-3 mr-1" />
+                    {fixadas} fixada{fixadas === 1 ? '' : 's'}
                   </Badge>
                 )}
               </div>
               {atuais.length > 0 && (
                 <Button size="sm" variant="outline" onClick={() => pedirArquivo(atuais)} disabled={busy === 'arq-todas'}>
                   <Archive className="h-4 w-4 mr-1.5" />
-                  Arquivar tudo (limpar)
+                  Arquivar tudo (limpar){fixadas > 0 ? (fixadas === 1 ? ' — menos a fixada' : ` — menos as ${fixadas} fixadas`) : ''}
                 </Button>
               )}
             </CardHeader>
@@ -347,6 +425,11 @@ export default function PassagemTurno() {
                       busy={busy}
                       onConfirmar={confirmarLeitura}
                       onArquivar={(x) => pedirArquivo([x])}
+                      onFixar={(x) => {
+                        setFixarAte('');
+                        setAFixar(x);
+                      }}
+                      onDesafixar={desafixar}
                     />
                   ))}
                 </ul>
@@ -459,6 +542,39 @@ export default function PassagemTurno() {
           )}
         </TabsContent>
       </Tabs>
+
+      <Dialog open={aFixar !== null} onOpenChange={(o) => !o && setAFixar(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Fixar esta nota</DialogTitle>
+            <DialogDescription>
+              Uma nota fixada fica sempre no topo das ativas: não sai pelo prazo de 24 h depois das confirmações e não se
+              arquiva enquanto estiver fixada. Cada pessoa continua a confirmar a leitura.
+            </DialogDescription>
+          </DialogHeader>
+          {aFixar && <p className="whitespace-pre-wrap rounded-md border bg-muted/40 p-2 text-sm">{aFixar.texto}</p>}
+          <div className="space-y-1">
+            <Label htmlFor="fixar-ate">Fixar até (opcional)</Label>
+            <Input id="fixar-ate" type="date" min={todayIso()} value={fixarAte} onChange={(e) => setFixarAte(e.target.value)} />
+            <p className="text-xs text-muted-foreground">
+              Sem data, fica fixada até alguém a desafixar. Com data, vale até ao fim desse dia e depois volta às regras normais.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAFixar(null)}>
+              Cancelar
+            </Button>
+            <Button onClick={fixar} disabled={!aFixar || busy === `fix-${aFixar.id}`}>
+              {aFixar && busy === `fix-${aFixar.id}` ? (
+                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+              ) : (
+                <Pin className="h-4 w-4 mr-1.5" />
+              )}
+              Fixar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <ConfirmDialog
         open={aArquivar !== null}
