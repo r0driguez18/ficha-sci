@@ -11,13 +11,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-import { Archive, CheckCircle2, ChevronLeft, ChevronRight, Loader2, Pin, PinOff, Send } from 'lucide-react';
+import { Archive, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Loader2, Pencil, Pin, PinOff, Save, Send } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useOperators } from '@/hooks/useOperators';
 import { todayIso } from '@/lib/taskboardDefaults';
-import { CONFIRMACOES_NECESSARIAS, estaFixada, estadoDaNota, paraTurnos, porLerPor } from '@/lib/passagemTurno';
+import { CONFIRMACOES_NECESSARIAS, ehNotaExtensa, estaFixada, estadoDaNota, paraTurnos, podeEditarNota, porLerPor } from '@/lib/passagemTurno';
 import type { TurnKey } from '@/types/taskboard';
 import {
   HISTORICO_POR_PAGINA,
@@ -25,6 +25,7 @@ import {
   arquivarEntradasHandover,
   confirmarLeituraEntradaHandover,
   desafixarEntradaHandover,
+  editarEntradaHandover,
   fixarEntradaHandover,
   getHandoverAtuais,
   getHandoverHistorico,
@@ -81,9 +82,18 @@ interface EntradaCardProps {
   onArquivar?: (e: HandoverEntrada) => void;
   onFixar?: (e: HandoverEntrada) => void;
   onDesafixar?: (e: HandoverEntrada) => void;
+  /** Só passa quando a nota se pode editar (o autor, enquanto não está arquivada). Devolve true se gravou. */
+  onEditar?: (e: HandoverEntrada, texto: string) => Promise<boolean>;
 }
 
-function EntradaCard({ entrada: e, userId, labelOf, busy, onConfirmar, onArquivar, onFixar, onDesafixar }: EntradaCardProps) {
+function EntradaCard({ entrada: e, userId, labelOf, busy, onConfirmar, onArquivar, onFixar, onDesafixar, onEditar }: EntradaCardProps) {
+  const [expandida, setExpandida] = useState(false);
+  const [editando, setEditando] = useState(false);
+  const [rascunho, setRascunho] = useState('');
+  const extensa = ehNotaExtensa(e.texto);
+  const guardarEdicao = async () => {
+    if (onEditar && (await onEditar(e, rascunho))) setEditando(false);
+  };
   const jaLi = e.leituras.some((l) => l.user_id === userId);
   const souAutor = !!userId && e.autor_user_id === userId;
   const estado = estadoDaNota(e);
@@ -107,6 +117,11 @@ function EntradaCard({ entrada: e, userId, labelOf, busy, onConfirmar, onArquiva
               {estado.ate ? `Fixada até ${fmtData(estado.ate)}` : 'Fixada'}
             </Badge>
           )}
+          {e.editada_em && (
+            <Badge variant="outline" title={`Editada pelo autor em ${fmt(e.editada_em)}. Texto original: ${e.texto_original ?? ''}`}>
+              Editada · {fmt(e.editada_em)}
+            </Badge>
+          )}
           {estado.tipo === 'por-ler' && <Badge variant="outline">Por ler</Badge>}
           {estado.tipo === 'a-meio' && (
             <Badge variant="outline" title={`A nota sai das ativas 24 h depois da ${CONFIRMACOES_NECESSARIAS}.ª confirmação`}>
@@ -128,7 +143,56 @@ function EntradaCard({ entrada: e, userId, labelOf, busy, onConfirmar, onArquiva
           )}
         </span>
       </div>
-      <p className="whitespace-pre-wrap text-sm">{e.texto}</p>
+      {editando ? (
+        <div className="space-y-2">
+          <Textarea
+            value={rascunho}
+            onChange={(ev) => setRascunho(ev.target.value)}
+            maxLength={4000}
+            className="min-h-[110px]"
+            autoFocus
+          />
+          <div className="flex flex-wrap items-center gap-2">
+            <Button size="sm" onClick={guardarEdicao} disabled={rascunho.trim() === '' || rascunho.trim() === e.texto || busy === `edit-${e.id}`}>
+              {busy === `edit-${e.id}` ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Save className="h-4 w-4 mr-1.5" />}
+              Guardar
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setEditando(false)}>
+              Cancelar
+            </Button>
+            <span className="text-xs text-muted-foreground">Fica marcada como «Editada», com o texto original guardado.</span>
+          </div>
+        </div>
+      ) : (
+        <div>
+          <p
+            className={`whitespace-pre-wrap break-words text-sm ${extensa && !expandida ? 'line-clamp-4' : ''}`}
+          >
+            {e.texto}
+          </p>
+          {extensa && (
+            <Button
+              size="sm"
+              variant="link"
+              className="h-auto px-0 pt-1"
+              onClick={() => setExpandida((v) => !v)}
+              aria-expanded={expandida}
+            >
+              {expandida ? (
+                <>
+                  <ChevronUp className="h-4 w-4 mr-1" />
+                  Ver menos
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="h-4 w-4 mr-1" />
+                  Ver a nota completa
+                </>
+              )}
+            </Button>
+          )}
+        </div>
+      )}
       <div className="flex flex-wrap items-center gap-2">
         {e.leituras.map((l) => (
           <Badge key={l.id} variant="secondary" className="bg-success/15 text-success">
@@ -148,6 +212,21 @@ function EntradaCard({ entrada: e, userId, labelOf, busy, onConfirmar, onArquiva
         )}
         {onConfirmar && souAutor && (
           <span className="text-xs text-muted-foreground">Deixaste tu esta nota: quem confirma são os outros turnos.</span>
+        )}
+        {onEditar && !editando && (
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              setRascunho(e.texto);
+              setEditando(true);
+              setExpandida(true);
+            }}
+            title="Corrigir o texto da tua nota"
+          >
+            <Pencil className="h-4 w-4 mr-1.5" />
+            Editar
+          </Button>
         )}
         {onFixar && !fixada && (
           <Button size="sm" variant="ghost" onClick={() => onFixar(e)} title="A nota fica sempre visível, sem sair pelo prazo">
@@ -246,6 +325,22 @@ export default function PassagemTurno() {
     } finally {
       setBusy(null);
       setAArquivar(null);
+    }
+  };
+
+  const editar = async (entrada: HandoverEntrada, texto: string): Promise<boolean> => {
+    setBusy(`edit-${entrada.id}`);
+    try {
+      const { error } = await editarEntradaHandover(entrada.id, texto);
+      if (error) {
+        toast.error(error.message || 'Não foi possível editar a nota.');
+        return false;
+      }
+      await load();
+      toast.success('Nota editada.');
+      return true;
+    } finally {
+      setBusy(null);
     }
   };
 
@@ -378,7 +473,7 @@ export default function PassagemTurno() {
                   Deixar nota
                 </Button>
                 <span className="text-xs text-muted-foreground">
-                  As notas não se editam nem se apagam: para corrigir, deixa uma nova.
+                  As notas não se apagam. Se escreveres algo errado, podes editar a tua nota (fica marcada como editada).
                 </span>
               </div>
             </CardContent>
@@ -430,6 +525,7 @@ export default function PassagemTurno() {
                         setAFixar(x);
                       }}
                       onDesafixar={desafixar}
+                      onEditar={podeEditarNota(e, user?.id) ? editar : undefined}
                     />
                   ))}
                 </ul>

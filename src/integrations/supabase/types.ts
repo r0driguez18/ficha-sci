@@ -833,6 +833,10 @@ export type Database = {
         Args: { p_ids: string[] }
         Returns: number
       }
+      editar_entrada_passagem_turno: {
+        Args: { p_id: string; p_texto: string }
+        Returns: Json
+      }
       fixar_entrada_passagem_turno: {
         Args: { p_id: string; p_ate?: string | null }
         Returns: Json

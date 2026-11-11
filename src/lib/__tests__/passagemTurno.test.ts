@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { confirmacoes, estaAtiva, estadoDaNota, estaFixada, hojeCaboVerde, ordenarAtivas, paraTurnos, porLerPor } from '../passagemTurno';
+import { confirmacoes, ehNotaExtensa, estaAtiva, estadoDaNota, estaFixada, hojeCaboVerde, ordenarAtivas, paraTurnos, podeEditarNota, porLerPor } from '../passagemTurno';
 
 const agora = new Date('2026-11-07T12:00:00Z');
 const nota = (extra: Record<string, unknown> = {}) => ({
@@ -90,5 +90,23 @@ describe('notas fixadas', () => {
       { ...nota(), id: 'c', created_at: '2026-11-07T11:00:00Z' },
     ];
     expect(ordenarAtivas(lista, agora).map((x) => x.id)).toEqual(['b', 'c', 'a']);
+  });
+});
+
+describe('editar e expandir', () => {
+  it('só o autor edita, e só enquanto a nota não está arquivada', () => {
+    expect(podeEditarNota(nota(), 'autor', agora)).toBe(true);
+    expect(podeEditarNota(nota(), 'outro', agora)).toBe(false);
+    expect(podeEditarNota(nota(), undefined, agora)).toBe(false);
+    expect(podeEditarNota(nota({ arquivada_em: '2026-11-07T10:00:00Z' }), 'autor', agora)).toBe(false);
+    expect(podeEditarNota(nota({ arquivar_apos: '2026-11-07T11:00:00Z' }), 'autor', agora)).toBe(false);
+  });
+
+  it('nota extensa: muitos caracteres ou muitas linhas', () => {
+    expect(ehNotaExtensa('curta')).toBe(false);
+    expect(ehNotaExtensa('x'.repeat(300))).toBe(false);
+    expect(ehNotaExtensa('x'.repeat(301))).toBe(true);
+    expect(ehNotaExtensa('1\n2\n3\n4\n5')).toBe(false);
+    expect(ehNotaExtensa('1\n2\n3\n4\n5\n6')).toBe(true);
   });
 });
