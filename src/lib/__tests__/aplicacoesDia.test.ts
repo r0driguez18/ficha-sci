@@ -8,6 +8,7 @@ import {
   lerExcelAplicacoes,
   lerOperacoes,
   nomeExcelAplicacoes,
+  situacaoDoPedido,
   type LinhaBruta,
 } from '../aplicacoesDia';
 
@@ -83,5 +84,26 @@ describe('aplicações do dia', () => {
     expect(lido.colunas).toEqual(colunas);
     expect(lido.linhas).toHaveLength(3);
     expect(lerOperacoes(lido.linhas, '2026-11-11').operacoes).toHaveLength(2);
+  });
+});
+
+describe('situação do pedido', () => {
+  const agora = new Date('2026-11-12T10:00:00Z').getTime();
+  const pedido = (estado: 'pendente' | 'a-correr' | 'concluido' | 'erro', pedidoEm: string, iniciadoEm: string | null = null) => ({ estado, pedido_em: pedidoEm, iniciado_em: iniciadoEm });
+
+  it('pendente recente espera pelo worker; passados 3 min é sem resposta (não fica preso para sempre)', () => {
+    expect(situacaoDoPedido(pedido('pendente', '2026-11-12T09:59:30Z'), agora)).toBe('a-esperar-worker');
+    expect(situacaoDoPedido(pedido('pendente', '2026-11-12T09:56:00Z'), agora)).toBe('sem-resposta');
+    expect(situacaoDoPedido(pedido('pendente', '2026-11-11T09:56:00Z'), agora)).toBe('sem-resposta'); // de ontem, após logoff
+  });
+
+  it('a-correr conta desde que o worker começou', () => {
+    expect(situacaoDoPedido(pedido('a-correr', '2026-11-12T09:50:00Z', '2026-11-12T09:59:50Z'), agora)).toBe('worker-a-ler');
+    expect(situacaoDoPedido(pedido('a-correr', '2026-11-12T09:50:00Z', '2026-11-12T09:55:00Z'), agora)).toBe('sem-resposta');
+  });
+
+  it('concluído e erro não dependem do tempo', () => {
+    expect(situacaoDoPedido(pedido('concluido', '2026-11-01T09:00:00Z'), agora)).toBe('concluido');
+    expect(situacaoDoPedido(pedido('erro', '2026-11-01T09:00:00Z'), agora)).toBe('erro');
   });
 });
