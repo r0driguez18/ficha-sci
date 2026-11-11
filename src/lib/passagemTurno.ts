@@ -71,6 +71,16 @@ export const estaAtiva = (e: EntradaMinima, agora: Date = new Date()) => {
 export const porLerPor = (e: EntradaMinima, userId: string | undefined, agora: Date = new Date()) =>
   !!userId && estaAtiva(e, agora) && e.autor_user_id !== userId && !e.leituras.some((l) => l.user_id === userId);
 
+/** Uma nota «extensa» mostra só o início, com um botão para ver tudo. */
+export const NOTA_LINHAS_MAX = 5;
+export const NOTA_CARACTERES_MAX = 300;
+export const ehNotaExtensa = (texto: string) =>
+  texto.length > NOTA_CARACTERES_MAX || texto.split('\n').length > NOTA_LINHAS_MAX;
+
+/** Só quem deixou a nota a edita, e só enquanto não está arquivada. */
+export const podeEditarNota = (e: EntradaMinima, userId: string | undefined, agora: Date = new Date()) =>
+  !!userId && e.autor_user_id === userId && estaAtiva(e, agora);
+
 /** Fixadas primeiro, depois as mais recentes. */
 export function ordenarAtivas<T extends EntradaMinima & { created_at: string }>(lista: T[], agora: Date = new Date()): T[] {
   return [...lista].sort((a, b) => {

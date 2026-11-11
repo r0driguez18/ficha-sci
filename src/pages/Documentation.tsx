@@ -81,7 +81,8 @@ const SECCOES: Seccao[] = [
       'Cada pessoa confirma a leitura de cada nota — fica registado quem leu e a que horas; o dia mostra quantas notas estão por ler.',
       'Separador Atual: as notas ativas. "Arquivar" (uma a uma, ou "Arquivar tudo" para limpar) tira-as da lista sem as perder.',
       'Separador Histórico: todas as notas, arquivadas incluídas, com filtros por data, turno e texto, paginado.',
-      'As notas não se editam nem se apagam: para corrigir, deixa uma nova.',
+      'Uma nota fixada fica no topo das ativas, sem sair pelo prazo de 24 h nem se arquivar, até à data limite que definires (ou até ser desafixada). O menu mostra quantas notas ativas ainda não leste.',
+      'Só quem deixou a nota a pode editar (enquanto não está arquivada): fica marcada como «Editada», com o texto original guardado. As notas não se apagam. As notas compridas mostram só o início, com um botão para ver a nota completa.',
     ],
   },
   {

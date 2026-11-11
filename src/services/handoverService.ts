@@ -32,6 +32,9 @@ export interface HandoverEntrada {
   fixada_em: string | null;
   fixada_por_nome: string | null;
   fixada_ate: string | null;
+  /** Preenchidos quando o autor corrige a nota: o texto da 1.ª versão e quando foi editada. */
+  texto_original: string | null;
+  editada_em: string | null;
   leituras: HandoverLeitura[];
 }
 
@@ -68,6 +71,12 @@ export async function contarNotasPorLer(): Promise<number> {
   const { data, error } = await supabase.rpc('contar_passagem_turno_por_ler');
   if (error) throw error;
   return Number(data ?? 0);
+}
+
+/** O autor corrige o texto da própria nota (o servidor recusa a quem não a deixou). */
+export async function editarEntradaHandover(id: string, texto: string): Promise<{ error: PostgrestError | null }> {
+  const { error } = await supabase.rpc('editar_entrada_passagem_turno', { p_id: id, p_texto: texto });
+  return { error };
 }
 
 /** Fixa a nota; `ate` (AAAA-MM-DD, inclusive) opcional — sem ele fica até ser desafixada. */
