@@ -327,6 +327,81 @@ export type Database = {
         }
         Relationships: []
       }
+      aplicacoes_dia: {
+        Row: {
+          colunas: Json
+          data: string
+          gerado_em: string
+          gerado_por: string | null
+          gerado_por_nome: string | null
+          id: string
+          linhas: Json
+          n_linhas: number
+          origem: string
+        }
+        Insert: {
+          colunas: Json
+          data: string
+          gerado_em?: string
+          gerado_por?: string | null
+          gerado_por_nome?: string | null
+          id?: string
+          linhas: Json
+          n_linhas?: number
+          origem: string
+        }
+        Update: {
+          colunas?: Json
+          data?: string
+          gerado_em?: string
+          gerado_por?: string | null
+          gerado_por_nome?: string | null
+          id?: string
+          linhas?: Json
+          n_linhas?: number
+          origem?: string
+        }
+        Relationships: []
+      }
+      pedidos_aplicacoes: {
+        Row: {
+          aplicacao_id: string | null
+          concluido_em: string | null
+          data: string
+          erro: string | null
+          estado: string
+          id: string
+          iniciado_em: string | null
+          pedido_em: string
+          pedido_por: string | null
+          pedido_por_nome: string | null
+        }
+        Insert: {
+          aplicacao_id?: string | null
+          concluido_em?: string | null
+          data: string
+          erro?: string | null
+          estado?: string
+          id?: string
+          iniciado_em?: string | null
+          pedido_em?: string
+          pedido_por?: string | null
+          pedido_por_nome?: string | null
+        }
+        Update: {
+          aplicacao_id?: string | null
+          concluido_em?: string | null
+          data?: string
+          erro?: string | null
+          estado?: string
+          id?: string
+          iniciado_em?: string | null
+          pedido_em?: string
+          pedido_por?: string | null
+          pedido_por_nome?: string | null
+        }
+        Relationships: []
+      }
       handover_reads: {
         Row: {
           entry_id: string
@@ -832,6 +907,18 @@ export type Database = {
       arquivar_entradas_passagem_turno: {
         Args: { p_ids: string[] }
         Returns: number
+      }
+      pedir_aplicacoes_dia: {
+        Args: { p_data: string }
+        Returns: Json
+      }
+      registar_aplicacoes_manual: {
+        Args: { p_data: string; p_colunas: Json; p_linhas: Json }
+        Returns: Json
+      }
+      criar_token_worker: {
+        Args: { p_nome: string }
+        Returns: string
       }
       editar_entrada_passagem_turno: {
         Args: { p_id: string; p_texto: string }

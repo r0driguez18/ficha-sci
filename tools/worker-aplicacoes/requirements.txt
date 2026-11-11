@@ -1,0 +1,4 @@
+requests>=2.31
+pyodbc>=5.0
+# só para o modo de teste --simular
+openpyxl>=3.1

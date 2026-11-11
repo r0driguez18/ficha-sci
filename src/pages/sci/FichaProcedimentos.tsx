@@ -17,6 +17,7 @@ import { VerificacaoTapesSection } from '@/components/tasks/VerificacaoTapesSect
 import { TurnInfoSection } from '@/components/taskboard/TurnInfoSection';
 import { TableRowsSection } from '@/components/taskboard/TableRowsSection';
 import { AdicionarProcessamento } from '@/components/taskboard/AdicionarProcessamento';
+import { AplicacoesDiaCard } from '@/components/taskboard/AplicacoesDiaCard';
 import { FormActions } from '@/components/taskboard/FormActions';
 import { SignatureSection } from '@/components/taskboard/SignatureSection';
 import { SyncStatusBadge } from '@/components/taskboard/SyncStatusBadge';
@@ -275,6 +276,8 @@ export default function FichaProcedimentos({ formType }: FichaProcedimentosProps
             onRemoveRow={tb.removeTableRow}
             onInputChange={tb.handleInputChange}
           />
+
+          <AplicacoesDiaCard data={tb.date} disabled={!!tb.desatualizada} />
 
           {tb.showTapeVerification && (
             <VerificacaoTapesSection
