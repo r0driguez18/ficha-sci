@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { guardarFicheiro } from '@/lib/guardarFicheiro';
-import { excelDasAplicacoes, lerExcelAplicacoes, lerOperacoes, nomeExcelAplicacoes } from '@/lib/aplicacoesDia';
+import { excelDasAplicacoes, lerExcelAplicacoes, lerOperacoes, nomeExcelAplicacoes, situacaoDoPedido } from '@/lib/aplicacoesDia';
 import {
   getAplicacoesDia,
   getUltimoPedido,
@@ -24,8 +24,6 @@ const fmt = (iso?: string | null) => {
   }
 };
 
-const MAX_ESPERA_MS = 3 * 60 * 1000;
-
 /**
  * Aplicações do dia (core bancário) para a data da ficha: um botão pede ao worker que corra a query; o resultado fica
  * guardado, com o Excel para descarregar e a lista das operações reconhecidas. Sem worker, dá para carregar à mão o
@@ -34,11 +32,10 @@ const MAX_ESPERA_MS = 3 * 60 * 1000;
 export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean }> = ({ data, disabled }) => {
   const [aplicacao, setAplicacao] = useState<AplicacoesDia | null>(null);
   const [pedido, setPedido] = useState<PedidoAplicacoes | null>(null);
-  const [aEsperar, setAEsperar] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [aberta, setAberta] = useState(false);
-  const inicioEspera = useRef(0);
   const input = useRef<HTMLInputElement>(null);
+  const estadoAnterior = useRef<string | null>(null);
 
   const carregar = useCallback(async () => {
     const [a, p] = await Promise.all([getAplicacoesDia(data), getUltimoPedido(data)]);
@@ -50,29 +47,31 @@ export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean }> =
   useEffect(() => {
     setAplicacao(null);
     setPedido(null);
-    setAEsperar(false);
+    estadoAnterior.current = null;
     void carregar();
   }, [carregar]);
 
-  // Enquanto o worker não responde, vai-se perguntando (de 2 em 2 s, no máximo 3 min).
+  const situacao = pedido ? situacaoDoPedido(pedido) : null;
+  const aCorrer = situacao === 'a-esperar-worker' || situacao === 'worker-a-ler';
+  const semResposta = situacao === 'sem-resposta' && (!aplicacao || (pedido?.pedido_em ?? '') > aplicacao.gerado_em);
+
+  // Enquanto há um pedido à espera do worker, vai-se perguntando de 2 em 2 s (também depois de sair e entrar de novo).
+  // Pára sozinho quando o pedido termina ou passa o prazo (3 min), e o botão volta a estar disponível.
   useEffect(() => {
-    if (!aEsperar) return;
-    const t = setInterval(async () => {
-      const r = await carregar();
-      const p = r.pedido;
-      if (Date.now() - inicioEspera.current > MAX_ESPERA_MS) {
-        setAEsperar(false);
-        toast.error('O worker não respondeu. Confirma que está ligado (ou carrega o Excel à mão).');
-      } else if (p && p.estado === 'concluido') {
-        setAEsperar(false);
-        toast.success('Aplicações do dia recebidas.');
-      } else if (p && p.estado === 'erro') {
-        setAEsperar(false);
-        toast.error(p.erro || 'O worker não conseguiu ler o core.');
-      }
-    }, 2000);
+    if (!aCorrer) return;
+    const t = setInterval(() => void carregar(), 2000);
     return () => clearInterval(t);
-  }, [aEsperar, carregar]);
+  }, [aCorrer, carregar]);
+
+  // Avisos quando o pedido muda de estado (só se o víamos a correr).
+  useEffect(() => {
+    if (!pedido) return;
+    const antes = estadoAnterior.current;
+    estadoAnterior.current = pedido.estado;
+    if (antes !== 'pendente' && antes !== 'a-correr') return;
+    if (pedido.estado === 'concluido') toast.success('Aplicações do dia recebidas.');
+    else if (pedido.estado === 'erro') toast.error(pedido.erro || 'O worker não conseguiu ler o core.');
+  }, [pedido]);
 
   const gerar = async () => {
     setBusy('gerar');
@@ -82,9 +81,8 @@ export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean }> =
         toast.error(error?.message || 'Não foi possível pedir as aplicações.');
         return;
       }
+      estadoAnterior.current = p.estado;
       setPedido(p);
-      inicioEspera.current = Date.now();
-      setAEsperar(true);
     } finally {
       setBusy(null);
     }
@@ -133,7 +131,6 @@ export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean }> =
   };
 
   const leitura = useMemo(() => (aplicacao ? lerOperacoes(aplicacao.linhas, data) : null), [aplicacao, data]);
-  const aCorrer = aEsperar || pedido?.estado === 'pendente' || pedido?.estado === 'a-correr';
   const pedidoComErro = pedido?.estado === 'erro' && (!aplicacao || pedido.pedido_em > aplicacao.gerado_em);
 
   return (
@@ -171,7 +168,16 @@ export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean }> =
       {aCorrer && (
         <p className="mb-2 flex items-center gap-2 text-sm text-muted-foreground" role="status">
           <Loader2 className="h-4 w-4 animate-spin" />
-          {pedido?.estado === 'a-correr' ? 'O worker está a ler o core…' : 'À espera do worker (costuma demorar poucos segundos)…'}
+          {situacao === 'worker-a-ler' ? 'O worker está a ler o core…' : 'À espera do worker (costuma demorar poucos segundos; desiste ao fim de 3 min)…'}
+        </p>
+      )}
+      {semResposta && (
+        <p className="mb-2 flex items-start gap-2 text-sm text-destructive" role="alert">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>
+            Ninguém respondeu ao pedido de {fmt(pedido?.pedido_em)}: o worker não está a correr (ou não chega à app). Vê se o
+            programa está ligado no PC (ficheiro worker.log), ou usa «Carregar Excel». Podes voltar a carregar em «Gerar».
+          </span>
         </p>
       )}
       {pedidoComErro && (

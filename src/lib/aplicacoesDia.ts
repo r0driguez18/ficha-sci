@@ -156,3 +156,20 @@ export async function lerExcelAplicacoes(ficheiro: ArrayBuffer): Promise<{ colun
     .filter((l) => l.some((c) => texto(c) !== ''));
   return { colunas, linhas };
 }
+
+/** Quanto tempo se espera pelo worker antes de dar o pedido por perdido (a leitura do core demora segundos). */
+export const PRAZO_PEDIDO_MS = 3 * 60 * 1000;
+
+export type SituacaoPedido = 'a-esperar-worker' | 'worker-a-ler' | 'sem-resposta' | 'concluido' | 'erro';
+
+/** Em que ponto está um pedido; um pendente/a-correr há mais de 3 min é «sem resposta» (worker desligado ou sem rede). */
+export function situacaoDoPedido(
+  p: { estado: 'pendente' | 'a-correr' | 'concluido' | 'erro'; pedido_em: string; iniciado_em: string | null },
+  agora: number = Date.now(),
+): SituacaoPedido {
+  if (p.estado === 'concluido') return 'concluido';
+  if (p.estado === 'erro') return 'erro';
+  const desde = new Date(p.estado === 'a-correr' ? (p.iniciado_em ?? p.pedido_em) : p.pedido_em).getTime();
+  if (agora - desde > PRAZO_PEDIDO_MS) return 'sem-resposta';
+  return p.estado === 'a-correr' ? 'worker-a-ler' : 'a-esperar-worker';
+}
