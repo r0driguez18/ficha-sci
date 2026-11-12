@@ -132,8 +132,9 @@ export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean; ope
   };
 
   const leitura = useMemo(() => (aplicacao ? lerOperacoes(aplicacao.linhas) : null), [aplicacao, data]);
-  // Só as operações da janela da ficha (07:00 → 07:00) e dos operadores (SISP e quem não é operador não entram no Excel).
-  const { selecionadas: filtradas, deOutros, foraDaJanela, aviso: avisoJanela } = useMemo(
+  // Só as operações da janela da ficha (07:00 → 07:00), dos operadores e já aplicadas (SISP, quem não é operador e as
+  // validações — 0 aplicados — não entram no Excel).
+  const { selecionadas: filtradas, deOutros, validacoes, foraDaJanela, aviso: avisoJanela } = useMemo(
     () => selecionarOperacoes(leitura?.operacoes ?? [], data, operadores),
     [leitura, data, operadores],
   );
@@ -207,6 +208,11 @@ export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean; ope
         <p className="mb-2 flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400" role="alert">
           <AlertTriangle className="h-4 w-4 shrink-0" />
           {avisoJanela}
+        </p>
+      )}
+      {validacoes.length > 0 && (
+        <p className="mb-2 text-xs text-muted-foreground">
+          {validacoes.length} validaç{validacoes.length === 1 ? 'ão' : 'ões'} (nada aplicado) não entra{validacoes.length === 1 ? '' : 'm'} no Excel: só a aplicação real de cada ficheiro.
         </p>
       )}
       {foraDaJanela.length > 0 && (

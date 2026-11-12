@@ -140,14 +140,14 @@ describe('só as operações dos operadores', () => {
     expect(l[2]).toBe('ORD_PS2_01'); // tarefa
     expect(l[3]).toBe('SACERM11A'); // ficheiro
     expect(l[5]).toBe('NALVES');
-    expect(l[6]).toBe('T');
-    expect(l[7]).toBe(23); // movimentos
+    expect(l[6]).toBe(0); // total a débito
+    expect(l[7]).toBe(385000); // total a crédito
   });
 });
 
 describe('janela da ficha: 07:00 do dia → 07:00 do dia seguinte', () => {
   const op = (data: string, hora: number, user = 'NALVES') =>
-    registo({ ACEMP: 'TEIS', ACSITU: 'T', ACFILE: 'F', ACHORA: hora, ACDTIN: Number(data.replace(/-/g, '')), ACNOPR: hora + 1, ACUSER: user });
+    registo({ ACEMP: 'TEIS', ACSITU: 'T', ACFILE: 'F', ACHORA: hora, ACDTIN: Number(data.replace(/-/g, '')), ACNOPR: hora + 1, ACUSER: user, ACNMOV: 5, ACTAPL: 5 });
   const ops = lerOperacoes([
     CODIGOS,
     op('2026-11-11', 25932), // 02:59 de 11 -> ficha de 10
@@ -184,5 +184,40 @@ describe('janela da ficha: 07:00 do dia → 07:00 do dia seguinte', () => {
     const r = selecionarOperacoes(ops, '2026-11-20', ['nalves']);
     expect(r.selecionadas).toEqual([]);
     expect(r.aviso).toContain('2026-11-20 07:00');
+  });
+});
+
+describe('validações (0 aplicados) ficam de fora', () => {
+  const op = (hora: number, mov: number, apl: number, pnd = 0, extra: Record<string, number> = {}) =>
+    registo({ ACEMP: 'ORD_PS2_01', ACSITU: 'T', ACFILE: 'SACERM11A', ACHORA: hora, ACDTIN: 20261111, ACNOPR: hora, ACUSER: 'NALVES', ACNMOV: mov, ACTAPL: apl, ACTPND: pnd, ...extra });
+  const dia = '2026-11-11';
+
+  it('de cada par validação + aplicação só fica a aplicação', () => {
+    const ops = lerOperacoes([CODIGOS, op(103752, 23, 0), op(103825, 23, 23)]).operacoes;
+    const r = selecionarOperacoes(ops, dia, ['nalves']);
+    expect(r.selecionadas.map((o) => o.hora)).toEqual(['10:38']);
+    expect(r.validacoes.map((o) => o.hora)).toEqual(['10:37']);
+  });
+
+  it('uma aplicação com pendentes conta (ex.: 242 aplicados e 18 pendentes)', () => {
+    const ops = lerOperacoes([CODIGOS, op(90606, 260, 242, 18)]).operacoes;
+    expect(selecionarOperacoes(ops, dia, ['nalves']).selecionadas).toHaveLength(1);
+  });
+
+  it('tudo para pendentes (0 aplicados mas 18 pendentes) também é uma aplicação', () => {
+    const ops = lerOperacoes([CODIGOS, op(90606, 18, 0, 18)]).operacoes;
+    expect(selecionarOperacoes(ops, dia, ['nalves']).selecionadas).toHaveLength(1);
+  });
+
+  it('tudo devolvido ou em trânsito também não é uma validação', () => {
+    const ops = lerOperacoes([CODIGOS, op(90606, 4, 0, 0, { ACTDEV: 4 }), op(90700, 4, 0, 0, { ACTTRT: 4 })]).operacoes;
+    expect(selecionarOperacoes(ops, dia, ['nalves']).selecionadas).toHaveLength(2);
+  });
+
+  it('uma validação sem aplicação a seguir também sai (nada foi aplicado)', () => {
+    const ops = lerOperacoes([CODIGOS, op(104248, 18, 0)]).operacoes;
+    const r = selecionarOperacoes(ops, dia, ['nalves']);
+    expect(r.selecionadas).toEqual([]);
+    expect(r.validacoes).toHaveLength(1);
   });
 });
