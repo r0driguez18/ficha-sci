@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { guardarFicheiro } from '@/lib/guardarFicheiro';
 import { ZonaLargarFicheiro } from '@/components/ZonaLargarFicheiro';
-import { excelDasOperacoes, filtrarPorOperadores, lerExcelAplicacoes, lerOperacoes, nomeExcelAplicacoes, situacaoDoPedido } from '@/lib/aplicacoesDia';
+import { excelDasOperacoes, janelaDaFicha, lerExcelAplicacoes, lerOperacoes, nomeExcelAplicacoes, selecionarOperacoes, situacaoDoPedido } from '@/lib/aplicacoesDia';
 import {
   getAplicacoesDia,
   getUltimoPedido,
@@ -94,7 +94,7 @@ export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean; ope
     setBusy('excel');
     try {
       const { colunas, linhas } = await lerExcelAplicacoes(await f.arrayBuffer());
-      const lido = lerOperacoes(linhas, data);
+      const lido = lerOperacoes(linhas);
       if (lido.operacoes.length === 0) {
         toast.error(lido.avisos[0] ?? 'Este ficheiro não tem aplicações do core.');
         return;
@@ -131,11 +131,11 @@ export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean; ope
     }
   };
 
-  const leitura = useMemo(() => (aplicacao ? lerOperacoes(aplicacao.linhas, data) : null), [aplicacao, data]);
-  // Só as operações dos operadores (os outros utilizadores do core — SISP, quem não é operador — não entram no Excel).
-  const { dosOperadores: filtradas, deOutros } = useMemo(
-    () => filtrarPorOperadores(leitura?.operacoes ?? [], operadores),
-    [leitura, operadores],
+  const leitura = useMemo(() => (aplicacao ? lerOperacoes(aplicacao.linhas) : null), [aplicacao, data]);
+  // Só as operações da janela da ficha (07:00 → 07:00) e dos operadores (SISP e quem não é operador não entram no Excel).
+  const { selecionadas: filtradas, deOutros, foraDaJanela, aviso: avisoJanela } = useMemo(
+    () => selecionarOperacoes(leitura?.operacoes ?? [], data, operadores),
+    [leitura, data, operadores],
   );
   const pedidoComErro = pedido?.estado === 'erro' && (!aplicacao || pedido.pedido_em > aplicacao.gerado_em);
 
@@ -202,6 +202,18 @@ export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean; ope
         </p>
       ) : (
         !aCorrer && <p className="text-sm text-muted-foreground">Ainda não há aplicações para {data}.</p>
+      )}
+      {avisoJanela && (
+        <p className="mb-2 flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400" role="alert">
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          {avisoJanela}
+        </p>
+      )}
+      {foraDaJanela.length > 0 && (
+        <p className="mb-2 text-xs text-muted-foreground">
+          {foraDaJanela.length} operaç{foraDaJanela.length === 1 ? 'ão' : 'ões'} fora da janela desta ficha ({janelaDaFicha(data).inicio} a{' '}
+          {janelaDaFicha(data).fim}) não entram: são de outra ficha.
+        </p>
       )}
       {leitura?.avisos.map((a) => (
         <p key={a} className="mb-2 flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400" role="alert">

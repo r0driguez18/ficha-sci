@@ -6,6 +6,8 @@ import {
   excelDasAplicacoes,
   excelDasOperacoes,
   filtrarPorOperadores,
+  janelaDaFicha,
+  selecionarOperacoes,
   horaDoCore,
   indicesDosCampos,
   lerExcelAplicacoes,
@@ -59,7 +61,7 @@ describe('aplicações do dia', () => {
   });
 
   it('só as operações reais, por hora; ignora códigos, pendentes a zeros e documentação', () => {
-    const { operacoes, avisos } = lerOperacoes([CODIGOS, ...OPERACOES], '2026-11-11');
+    const { operacoes, avisos } = lerOperacoes([CODIGOS, ...OPERACOES]);
     expect(avisos).toEqual([]);
     expect(operacoes.map((o) => [o.hora, o.ficheiro, o.nOperacao, o.utilizador])).toEqual([
       ['02:59', 'EDST111101', '583510366', 'SISP'],
@@ -68,9 +70,8 @@ describe('aplicações do dia', () => {
     expect(operacoes[1]).toMatchObject({ empresa: 'ORD_PS2_01', seq: 2, situacao: 'T', movimentos: 23, aplicados: 23, totalCredito: 385000, data: '2026-11-11' });
   });
 
-  it('avisa quando os dados são de outro dia que o da ficha', () => {
-    const { avisos } = lerOperacoes([CODIGOS, ...OPERACOES], '2026-11-12');
-    expect(avisos[0]).toContain('2026-11-11');
+  it('já não avisa de «outro dia»: a ficha cobre duas datas (07:00 → 07:00)', () => {
+    expect(lerOperacoes([CODIGOS, ...OPERACOES]).avisos).toEqual([]);
   });
 
   it('avisa quando a estrutura da tabela mudou', () => {
@@ -86,7 +87,7 @@ describe('aplicações do dia', () => {
     const lido = await lerExcelAplicacoes(await blob.arrayBuffer());
     expect(lido.colunas).toEqual(colunas);
     expect(lido.linhas).toHaveLength(3);
-    expect(lerOperacoes(lido.linhas, '2026-11-11').operacoes).toHaveLength(2);
+    expect(lerOperacoes(lido.linhas).operacoes).toHaveLength(2);
   });
 });
 
@@ -141,5 +142,47 @@ describe('só as operações dos operadores', () => {
     expect(l[5]).toBe('NALVES');
     expect(l[6]).toBe('Terminada');
     expect(l[7]).toBe(23); // movimentos
+  });
+});
+
+describe('janela da ficha: 07:00 do dia → 07:00 do dia seguinte', () => {
+  const op = (data: string, hora: number, user = 'NALVES') =>
+    registo({ ACEMP: 'TEIS', ACSITU: 'T', ACFILE: 'F', ACHORA: hora, ACDTIN: Number(data.replace(/-/g, '')), ACNOPR: hora + 1, ACUSER: user });
+  const ops = lerOperacoes([
+    CODIGOS,
+    op('2026-11-11', 25932), // 02:59 de 11 -> ficha de 10
+    op('2026-11-11', 70000), // 07:00 de 11 -> entra na ficha de 11 (início incluído)
+    op('2026-11-11', 85702), // 08:57
+    op('2026-11-11', 235900), // 23:59
+    op('2026-11-12', 15000), // 01:50 de 12 -> ainda é a ficha de 11 (madrugada)
+    op('2026-11-12', 65959), // 06:59 de 12 -> ainda de 11
+    op('2026-11-12', 70000), // 07:00 de 12 -> já é da ficha de 12 (fim excluído)
+    op('2026-11-11', 90000, 'SISP'),
+  ]).operacoes;
+
+  it('a janela vai das 07:00 de D às 07:00 de D+1', () => {
+    expect(janelaDaFicha('2026-11-11')).toEqual({ inicio: '2026-11-11 07:00', fim: '2026-11-12 07:00' });
+    expect(janelaDaFicha('2026-12-31').fim).toBe('2027-01-01 07:00');
+  });
+
+  it('fica com manhã, tarde, noite e madrugada da ficha, e põe o resto fora', () => {
+    const r = selecionarOperacoes(ops, '2026-11-11', ['nalves']);
+    expect(r.selecionadas.map((o) => `${o.data} ${o.hora}`).sort()).toEqual([
+      '2026-11-11 07:00', '2026-11-11 08:57', '2026-11-11 23:59', '2026-11-12 01:50', '2026-11-12 06:59',
+    ]);
+    expect(r.foraDaJanela.map((o) => `${o.data} ${o.hora}`).sort()).toEqual(['2026-11-11 02:59', '2026-11-12 07:00']);
+    expect(r.deOutros.map((o) => o.utilizador)).toEqual(['SISP']);
+    expect(r.aviso).toBeNull();
+  });
+
+  it('a mesma lista dá outra ficha noutra data', () => {
+    const r = selecionarOperacoes(ops, '2026-11-10', ['nalves']);
+    expect(r.selecionadas.map((o) => o.hora)).toEqual(['02:59']);
+  });
+
+  it('avisa quando nada cai na janela', () => {
+    const r = selecionarOperacoes(ops, '2026-11-20', ['nalves']);
+    expect(r.selecionadas).toEqual([]);
+    expect(r.aviso).toContain('2026-11-20 07:00');
   });
 });
