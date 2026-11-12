@@ -214,10 +214,6 @@ export const COLUNAS_EXCEL_OPERACOES = [
   'Ficheiro Externo', // ACFILE
   'Nº da Operação', // ACNOPR
   'Utilizador do Pedido', // ACUSER
-  'Situação', // ACSITU (T = terminada, P = com pendentes)
-  'Total de Movimentos', // ACNMOV
-  'Total de Aplicados', // ACTAPL
-  'Total de Pendentes', // ACTPND
   'Total a Débito', // ACTDEB
   'Total a Crédito', // ACTCRE
 ] as const;
@@ -226,11 +222,10 @@ export const COLUNAS_EXCEL_OPERACOES = [
 export async function excelDasOperacoes(operacoes: OperacaoAplicada[]): Promise<Blob> {
   const XLSX = await import('xlsx');
   const linhas = operacoes.map((o) => [
-    o.data, o.hora, o.empresa, o.ficheiro, o.nOperacao, o.utilizador, o.situacao,
-    o.movimentos, o.aplicados, o.pendentes, o.totalDebito, o.totalCredito,
+    o.data, o.hora, o.empresa, o.ficheiro, o.nOperacao, o.utilizador, o.totalDebito, o.totalCredito,
   ]);
   const ws = XLSX.utils.aoa_to_sheet([[...COLUNAS_EXCEL_OPERACOES], ...linhas]);
-  ws['!cols'] = [22, 22, 14, 16, 14, 20, 9, 18, 18, 18, 16, 16].map((wch) => ({ wch }));
+  ws['!cols'] = [22, 22, 14, 16, 14, 20, 16, 16].map((wch) => ({ wch }));
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Aplicações');
   const bytes: ArrayBuffer = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });

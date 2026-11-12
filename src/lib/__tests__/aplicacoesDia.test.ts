@@ -140,8 +140,8 @@ describe('só as operações dos operadores', () => {
     expect(l[2]).toBe('ORD_PS2_01'); // tarefa
     expect(l[3]).toBe('SACERM11A'); // ficheiro
     expect(l[5]).toBe('NALVES');
-    expect(l[6]).toBe('T');
-    expect(l[7]).toBe(23); // movimentos
+    expect(l[6]).toBe(0); // total a débito
+    expect(l[7]).toBe(385000); // total a crédito
   });
 });
 
