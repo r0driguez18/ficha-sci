@@ -2,8 +2,20 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { VitePWA } from "vite-plugin-pwa";
+import { execSync } from "node:child_process";
+
+/** Versão que fica visível na app: commit (e «-dirty» se houver alterações por commitar) e data do build. */
+function versaoDoBuild(): string {
+  try {
+    const git = (c: string) => execSync(`git ${c}`, { stdio: ["ignore", "pipe", "ignore"] }).toString().trim();
+    return `${git("describe --always --dirty")} · ${git("log -1 --format=%cd --date=short")}`;
+  } catch {
+    return "sem versão";
+  }
+}
 
 export default defineConfig(({ mode }) => ({
+  define: { __APP_VERSAO__: JSON.stringify(versaoDoBuild()) },
   server: {
     host: "::",
     port: 8080,

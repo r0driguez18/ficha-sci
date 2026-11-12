@@ -13,6 +13,8 @@ export const SidebarFooter = () => {
   const userName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'User';
   const userInitial = userName ? userName[0].toUpperCase() : 'U';
   
+  const versao = typeof __APP_VERSAO__ === 'string' ? __APP_VERSAO__ : '';
+
   const avatar = (
     <div className="h-9 w-9 rounded-full bg-sidebar-primary/25 flex items-center justify-center text-sidebar-primary-foreground font-semibold text-sm shrink-0">
       {userInitial}
@@ -39,6 +41,11 @@ export const SidebarFooter = () => {
           <p className="text-xs text-sidebar-foreground/70 truncate">{userEmail}</p>
         </div>
       </div>
+      {versao && (
+        <p className="mt-2 text-[10px] text-sidebar-foreground/50 truncate" title="Versão da aplicação (commit · data)">
+          Versão {versao}
+        </p>
+      )}
     </div>
   );
 };
