@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { guardarFicheiro } from '@/lib/guardarFicheiro';
 import { ZonaLargarFicheiro } from '@/components/ZonaLargarFicheiro';
-import { excelDasAplicacoes, lerExcelAplicacoes, lerOperacoes, nomeExcelAplicacoes, situacaoDoPedido } from '@/lib/aplicacoesDia';
+import { excelDasOperacoes, filtrarPorOperadores, lerExcelAplicacoes, lerOperacoes, nomeExcelAplicacoes, situacaoDoPedido } from '@/lib/aplicacoesDia';
 import {
   getAplicacoesDia,
   getUltimoPedido,
@@ -30,7 +30,7 @@ const fmt = (iso?: string | null) => {
  * guardado, com o Excel para descarregar e a lista das operações reconhecidas. Sem worker, dá para carregar à mão o
  * Excel que o script gera. (Por agora só mostra: a tabela de Processamentos continua a ser preenchida como até aqui.)
  */
-export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean }> = ({ data, disabled }) => {
+export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean; operadores?: string[] }> = ({ data, disabled, operadores }) => {
   const [aplicacao, setAplicacao] = useState<AplicacoesDia | null>(null);
   const [pedido, setPedido] = useState<PedidoAplicacoes | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -118,7 +118,7 @@ export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean }> =
     if (!aplicacao) return;
     setBusy('baixar');
     try {
-      const blob = await excelDasAplicacoes(aplicacao.colunas, aplicacao.linhas);
+      const blob = await excelDasOperacoes(filtradas);
       await guardarFicheiro(blob, {
         sugestaoNome: nomeExcelAplicacoes(data),
         tipoMime: blob.type,
@@ -132,6 +132,11 @@ export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean }> =
   };
 
   const leitura = useMemo(() => (aplicacao ? lerOperacoes(aplicacao.linhas, data) : null), [aplicacao, data]);
+  // Só as operações dos operadores (os outros utilizadores do core — SISP, quem não é operador — não entram no Excel).
+  const { dosOperadores: filtradas, deOutros } = useMemo(
+    () => filtrarPorOperadores(leitura?.operacoes ?? [], operadores),
+    [leitura, operadores],
+  );
   const pedidoComErro = pedido?.estado === 'erro' && (!aplicacao || pedido.pedido_em > aplicacao.gerado_em);
 
   return (
@@ -146,7 +151,7 @@ export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean }> =
         >
           <ChevronRight className="rodar-seta h-4 w-4" data-aberto={aberta} />
           Aplicações do dia (core)
-          {leitura && <span className="text-sm font-normal text-muted-foreground">({leitura.operacoes.length} operações)</span>}
+          {leitura && <span className="text-sm font-normal text-muted-foreground">({filtradas.length} operações)</span>}
         </button>
         <div className="flex flex-wrap items-center gap-2">
           <Button type="button" size="sm" onClick={gerar} disabled={disabled || aCorrer || busy === 'gerar'} className="gap-1.5">
@@ -159,7 +164,7 @@ export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean }> =
           </Button>
           <input ref={input} type="file" accept=".xlsx" className="hidden" onChange={(e) => void carregarExcel(e.target.files?.[0])} />
           {aplicacao && (
-            <Button type="button" size="sm" variant="outline" onClick={descarregar} disabled={busy === 'baixar'} className="gap-1.5">
+            <Button type="button" size="sm" variant="outline" onClick={descarregar} disabled={busy === 'baixar' || filtradas.length === 0} className="gap-1.5">
               <Download className="h-4 w-4" />
               Descarregar Excel
             </Button>
@@ -205,7 +210,13 @@ export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean }> =
         </p>
       ))}
 
-      {aberta && leitura && leitura.operacoes.length > 0 && (
+      {deOutros.length > 0 && (
+        <p className="mb-2 text-xs text-muted-foreground">
+          {deOutros.length} operaç{deOutros.length === 1 ? 'ão' : 'ões'} de outros utilizadores do core (
+          {[...new Set(deOutros.map((o) => o.utilizador))].join(', ')}) não entram no Excel nem na lista.
+        </p>
+      )}
+      {aberta && leitura && filtradas.length > 0 && (
         <div className="overflow-x-auto rounded-lg border">
           <Table>
             <TableHeader>
@@ -221,7 +232,7 @@ export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean }> =
               </TableRow>
             </TableHeader>
             <TableBody>
-              {leitura.operacoes.map((o) => (
+              {filtradas.map((o) => (
                 <TableRow key={o.nOperacao}>
                   <TableCell className="tabular-nums">{o.hora}</TableCell>
                   <TableCell>

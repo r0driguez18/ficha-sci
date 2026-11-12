@@ -126,6 +126,45 @@ export function lerOperacoes(linhas: LinhaBruta[], dataFicha?: string): Resultad
   return { operacoes, avisos };
 }
 
+/**
+ * Só as operações dos operadores da app (o `value` do operador, ex. «nalves», é o mesmo utilizador do core, ex. «NALVES»).
+ * Ficam de fora as de outros utilizadores (sistema, SISP, quem não é operador). Sem lista de operadores não se filtra.
+ */
+export function filtrarPorOperadores(
+  operacoes: OperacaoAplicada[],
+  operadores: string[] | undefined,
+): { dosOperadores: OperacaoAplicada[]; deOutros: OperacaoAplicada[] } {
+  const validos = new Set((operadores ?? []).map((o) => o.trim().toUpperCase()).filter(Boolean));
+  if (validos.size === 0) return { dosOperadores: operacoes, deOutros: [] };
+  const dosOperadores: OperacaoAplicada[] = [];
+  const deOutros: OperacaoAplicada[] = [];
+  for (const o of operacoes) (validos.has(o.utilizador.trim().toUpperCase()) ? dosOperadores : deOutros).push(o);
+  return { dosOperadores, deOutros };
+}
+
+/** As colunas que interessam do Excel tratado (as outras ~40 do core não são precisas). */
+export const COLUNAS_EXCEL_OPERACOES = [
+  'Data', 'Hora', 'Tarefa', 'Ficheiro', 'Nº operação', 'Utilizador', 'Situação',
+  'Movimentos', 'Aplicados', 'Pendentes', 'Total débito', 'Total crédito',
+] as const;
+
+const SITUACAO: Record<string, string> = { T: 'Terminada', P: 'Com pendentes' };
+
+/** O Excel tratado: só as operações que se passam e só as colunas úteis, por ordem de hora. */
+export async function excelDasOperacoes(operacoes: OperacaoAplicada[]): Promise<Blob> {
+  const XLSX = await import('xlsx');
+  const linhas = operacoes.map((o) => [
+    o.data, o.hora, o.empresa, o.ficheiro, o.nOperacao, o.utilizador, SITUACAO[o.situacao] ?? o.situacao,
+    o.movimentos, o.aplicados, o.pendentes, o.totalDebito, o.totalCredito,
+  ]);
+  const ws = XLSX.utils.aoa_to_sheet([[...COLUNAS_EXCEL_OPERACOES], ...linhas]);
+  ws['!cols'] = [12, 7, 14, 16, 12, 12, 14, 11, 10, 10, 16, 16].map((wch) => ({ wch }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Aplicações');
+  const bytes: ArrayBuffer = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
+  return new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+}
+
 /** Aplicacoes_ddmmaaaa.xlsx (o nome que o script usa). */
 export function nomeExcelAplicacoes(dataIso: string): string {
   const [a, m, d] = dataIso.split('-');

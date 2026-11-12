@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   CODIGOS_APLICACAO,
+  COLUNAS_EXCEL_OPERACOES,
   dataDoCore,
   excelDasAplicacoes,
+  excelDasOperacoes,
+  filtrarPorOperadores,
   horaDoCore,
   indicesDosCampos,
   lerExcelAplicacoes,
@@ -105,5 +108,38 @@ describe('situação do pedido', () => {
   it('concluído e erro não dependem do tempo', () => {
     expect(situacaoDoPedido(pedido('concluido', '2026-11-01T09:00:00Z'), agora)).toBe('concluido');
     expect(situacaoDoPedido(pedido('erro', '2026-11-01T09:00:00Z'), agora)).toBe('erro');
+  });
+});
+
+describe('só as operações dos operadores', () => {
+  const ops = lerOperacoes([CODIGOS, ...OPERACOES]).operacoes; // NALVES e SISP
+
+  it('fica com os operadores (sem distinguir maiúsculas) e põe os outros à parte', () => {
+    const r = filtrarPorOperadores(ops, ['nalves', 'etavares']);
+    expect(r.dosOperadores.map((o) => o.utilizador)).toEqual(['NALVES']);
+    expect(r.deOutros.map((o) => o.utilizador)).toEqual(['SISP']);
+  });
+
+  it('sem lista de operadores não filtra (para não esconder tudo se ainda não carregou)', () => {
+    expect(filtrarPorOperadores(ops, undefined).dosOperadores).toHaveLength(2);
+    expect(filtrarPorOperadores(ops, []).dosOperadores).toHaveLength(2);
+  });
+
+  it('operador desconhecido deixa tudo de fora', () => {
+    expect(filtrarPorOperadores(ops, ['ninguem']).dosOperadores).toHaveLength(0);
+  });
+
+  it('o Excel tratado só tem as colunas úteis e as operações dadas', async () => {
+    const { dosOperadores } = filtrarPorOperadores(ops, ['nalves']);
+    const lido = await lerExcelAplicacoes(await (await excelDasOperacoes(dosOperadores)).arrayBuffer());
+    expect(lido.colunas).toEqual([...COLUNAS_EXCEL_OPERACOES]);
+    expect(lido.linhas).toHaveLength(1);
+    const l = lido.linhas[0];
+    expect(l[1]).toBe('10:38'); // hora
+    expect(l[2]).toBe('ORD_PS2_01'); // tarefa
+    expect(l[3]).toBe('SACERM11A'); // ficheiro
+    expect(l[5]).toBe('NALVES');
+    expect(l[6]).toBe('Terminada');
+    expect(l[7]).toBe(23); // movimentos
   });
 });

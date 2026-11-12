@@ -277,7 +277,7 @@ export default function FichaProcedimentos({ formType }: FichaProcedimentosProps
             onInputChange={tb.handleInputChange}
           />
 
-          <AplicacoesDiaCard data={tb.date} disabled={!!tb.desatualizada} />
+          <AplicacoesDiaCard data={tb.date} disabled={!!tb.desatualizada} operadores={operatorsList.map((o) => o.value)} />
 
           {tb.showTapeVerification && (
             <VerificacaoTapesSection
