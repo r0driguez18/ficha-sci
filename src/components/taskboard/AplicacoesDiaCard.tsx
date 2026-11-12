@@ -30,11 +30,11 @@ const fmt = (iso?: string | null) => {
  * guardado, com o Excel para descarregar e a lista das operações reconhecidas. Sem worker, dá para carregar à mão o
  * Excel que o script gera. (Por agora só mostra: a tabela de Processamentos continua a ser preenchida como até aqui.)
  */
-export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean; operadores?: string[]; embutido?: boolean }> = ({ data, disabled, operadores, embutido }) => {
+export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean; operadores?: string[] }> = ({ data, disabled, operadores }) => {
   const [aplicacao, setAplicacao] = useState<AplicacoesDia | null>(null);
   const [pedido, setPedido] = useState<PedidoAplicacoes | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
-  const [aberta, setAberta] = useState(!!embutido); // embutido numa janela (Histórico): já vem aberto
+  const [aberta, setAberta] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const estadoAnterior = useRef<string | null>(null);
 
@@ -141,8 +141,8 @@ export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean; ope
   const pedidoComErro = pedido?.estado === 'erro' && (!aplicacao || pedido.pedido_em > aplicacao.gerado_em);
 
   return (
-    <ZonaLargarFicheiro extensoes={['.xlsx']} disabled={disabled || busy === 'excel'} onFicheiros={([f]) => void carregarExcel(f)} texto="Larga aqui o Excel das aplicações" className={embutido ? undefined : 'mt-8'}>
-    <div className={embutido ? undefined : 'border-t pt-6'}>
+    <ZonaLargarFicheiro extensoes={['.xlsx']} disabled={disabled || busy === 'excel'} onFicheiros={([f]) => void carregarExcel(f)} texto="Larga aqui o Excel das aplicações" className="mt-8">
+    <div className="border-t pt-6">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <button
           type="button"

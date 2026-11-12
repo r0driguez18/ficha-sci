@@ -76,7 +76,7 @@ venv\Scripts\python worker.py --datas
 | `SUPABASE_ANON_KEY` | A chave `anon` (a mesma `VITE_SUPABASE_PUBLISHABLE_KEY` da app; não é secreta) |
 | `WORKER_TOKEN` | O token do passo 4 |
 | `CORE_SISTEMA`, `CORE_UTILIZADOR`, `CORE_SENHA` | Ligação ao core |
-| `CORE_QUERY` | Opcional. Por omissão o worker pede ao core as linhas da data da ficha e do dia seguinte (`... WHERE ACDTIN IN (AAAAMMDD, AAAAMMDD)`), porque a ficha cobre das 07:00 de D às 07:00 de D+1. Se o definires, corre-se essa query tal e qual, sem filtrar por data |
+| `CORE_QUERY` | Opcional; por omissão `SELECT * from GBANCA0003.GBAPL` |
 | `CA_BUNDLE` | Opcional: `.pem` da empresa, se o servidor usa certificado interno (com o IP/nome no certificado) |
 | `SERVER_CERT_SHA256` | Opcional: impressão digital SHA-256 do certificado do servidor, para certificados autoassinados só com `CN=IP` (erro `IP address mismatch`). Só aceita esse certificado exato. Calcula-a assim, na pasta do worker: `venv\Scripts\python -c "import ssl,hashlib; print(hashlib.sha256(ssl.PEM_cert_to_DER_cert(ssl.get_server_certificate(('IP_DO_SERVIDOR',8443)))).hexdigest())"` |
 

@@ -79,23 +79,6 @@ def json_seguro(v):
     return str(v)
 
 
-def consulta_do_pedido(data_iso: str | None, personalizada: str = '') -> tuple[str, str | None]:
-    """A query a correr para um pedido, e (se for por datas) a descrição dos dias para as mensagens.
-
-    A ficha do dia D cobre das 07:00 de D às 07:00 de D+1, por isso pedem-se as linhas de D e de D+1 (ACDTIN = AAAAMMDD).
-    Com CORE_QUERY definida corre-se essa query tal e qual (sem filtrar por data).
-    """
-    if personalizada.strip():
-        return personalizada.strip(), None
-    try:
-        d1 = dt.date.fromisoformat(str(data_iso)[:10])
-    except ValueError:
-        return 'SELECT * from GBANCA0003.GBAPL', None
-    d2 = d1 + dt.timedelta(days=1)
-    q = f"SELECT * from GBANCA0003.GBAPL WHERE ACDTIN IN ({d1:%Y%m%d}, {d2:%Y%m%d})"
-    return q, f'{d1.isoformat()} e {d2.isoformat()}'
-
-
 def ler_core(query: str) -> tuple[list[str], list[list]]:
     """Corre a query no core (o mesmo que o script antigo) e devolve (colunas, linhas)."""
     import pyodbc  # só é preciso para o core real
@@ -192,17 +175,12 @@ class App:
         )
 
 
-def tratar_pedido(app: App, pedido: dict, ler, log: logging.Logger, dias: str | None = None) -> None:
+def tratar_pedido(app: App, pedido: dict, ler, log: logging.Logger) -> None:
     pid = pedido['id']
     log.info('Pedido %s (ficha de %s) de %s', pid, pedido.get('data'), pedido.get('pedido_por_nome'))
     try:
-        colunas, linhas = ler(pedido)
+        colunas, linhas = ler()
         log.info('Core devolveu %d registos, %d colunas', len(linhas), len(colunas))
-        if not linhas and dias:
-            # Nada para esses dias: avisa em vez de entregar vazio (que substituiria um Excel bom já guardado para a data).
-            app.entregar(pid, [], [], f'O core não tem aplicações para {dias} (a tabela só guarda o que ainda não foi limpo). Usa «Carregar Excel».')
-            log.info('Sem registos para %s: pedido terminado com aviso.', dias)
-            return
         app.entregar(pid, colunas, linhas, None)
         log.info('Entregue.')
     except Exception as e:  # noqa: BLE001 — qualquer falha vai como erro para a ficha, sem expor a palavra-passe
@@ -231,17 +209,16 @@ def main() -> None:
         return
     log = configurar_log()
     app = App()
-    personalizada = os.environ.get('CORE_QUERY', '')
+    query = os.environ.get('CORE_QUERY', 'SELECT * from GBANCA0003.GBAPL')
     intervalo = max(1, int(os.environ.get('POLL_SEGUNDOS', '3')))
-    ler = (lambda p: ler_excel(args.simular)) if args.simular else (lambda p: ler_core(consulta_do_pedido(p.get('data'), personalizada)[0]))
+    ler = (lambda: ler_excel(args.simular)) if args.simular else (lambda: ler_core(query))
     log.info('Worker a correr (%s). Intervalo %ss.', 'SIMULADO' if args.simular else 'core real', intervalo)
 
     while True:
         try:
             pedido = app.reclamar()
             if pedido:
-                dias = None if args.simular else consulta_do_pedido(pedido.get('data'), personalizada)[1]
-                tratar_pedido(app, pedido, ler, log, dias)
+                tratar_pedido(app, pedido, ler, log)
         except Exception:  # noqa: BLE001 — rede em baixo, servidor a reiniciar…: tenta de novo
             log.exception('Erro a falar com a app')
         if args.uma_vez:
