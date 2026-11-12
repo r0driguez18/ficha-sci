@@ -26,6 +26,8 @@ import time
 from pathlib import Path
 
 import requests
+import urllib3
+from requests.adapters import HTTPAdapter
 
 AQUI = Path(__file__).resolve().parent
 
@@ -118,6 +120,22 @@ def ler_excel(caminho: str) -> tuple[list[str], list[list]]:
     return colunas, linhas
 
 
+class _AdaptadorImpressao(HTTPAdapter):
+    """Só aceita o servidor cujo certificado tem esta impressão digital (SHA-256).
+
+    Serve para certificados autoassinados sem «subjectAltName» (só CN=IP), que o Python recusa por nome: em vez de
+    desligar a verificação, fica-se preso a ESTE certificado exato. Se o certificado do servidor mudar, volta a falhar.
+    """
+
+    def __init__(self, impressao: str, **kw) -> None:
+        self._impressao = impressao
+        super().__init__(**kw)
+
+    def init_poolmanager(self, *a, **kw):
+        kw['assert_fingerprint'] = self._impressao
+        super().init_poolmanager(*a, **kw)
+
+
 class App:
     """Fala com a app (Supabase) só pelas 2 funções worker_*, com o token. Sem conta e sem chave de serviço."""
 
@@ -128,8 +146,15 @@ class App:
         chave = exigir('SUPABASE_ANON_KEY')
         self.http = requests.Session()
         self.http.headers.update({'apikey': chave, 'Authorization': f'Bearer {chave}', 'Content-Type': 'application/json'})
+        impressao = os.environ.get('SERVER_CERT_SHA256', '').replace(':', '').strip()
         ca = os.environ.get('CA_BUNDLE', '').strip()
-        self.http.verify = ca if ca else True  # certificado interno: aponta CA_BUNDLE para o .pem da empresa
+        if impressao:
+            # A cadeia não é validada pelo nome; quem decide é a impressão digital do certificado.
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+            self.http.verify = False
+            self.http.mount('https://', _AdaptadorImpressao(impressao))
+        else:
+            self.http.verify = ca if ca else True  # certificado interno: aponta CA_BUNDLE para o .pem da empresa
 
     def chamar(self, funcao: str, corpo: dict):
         r = self.http.post(self.url + funcao, json=corpo, timeout=30)

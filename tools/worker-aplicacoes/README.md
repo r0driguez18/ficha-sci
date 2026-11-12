@@ -69,7 +69,8 @@ de um PC, o mesmo worker passa para o servidor (precisa do driver ODBC do IBM i 
 | `WORKER_TOKEN` | O token do passo 4 |
 | `CORE_SISTEMA`, `CORE_UTILIZADOR`, `CORE_SENHA` | Ligação ao core |
 | `CORE_QUERY` | Opcional; por omissão `SELECT * from GBANCA0003.GBAPL` |
-| `CA_BUNDLE` | Opcional: `.pem` da empresa, se o servidor usa certificado interno |
+| `CA_BUNDLE` | Opcional: `.pem` da empresa, se o servidor usa certificado interno (com o IP/nome no certificado) |
+| `SERVER_CERT_SHA256` | Opcional: impressão digital SHA-256 do certificado do servidor, para certificados autoassinados só com `CN=IP` (erro `IP address mismatch`). Só aceita esse certificado exato. Calcula-a assim, na pasta do worker: `venv\Scripts\python -c "import ssl,hashlib; print(hashlib.sha256(ssl.PEM_cert_to_DER_cert(ssl.get_server_certificate(('IP_DO_SERVIDOR',8443)))).hexdigest())"` |
 
 ## Se algo falhar
 
