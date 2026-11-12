@@ -17,8 +17,15 @@ O worker **não tem conta nem chave de serviço**: só pode chamar duas funçõe
 
 Requisitos: Windows com o **iSeries Access ODBC Driver** (o mesmo que o script antigo usa) e Python 3.10+.
 
-1. Copia a pasta `tools/worker-aplicacoes` para o PC (ex.: `C:\worker-aplicacoes`).
-2. Abre a pasta numa linha de comandos e instala as dependências:
+1. A pasta já vem com o projeto. No PC do core, no clone do projeto (ex.: `C:\fichas\ficha-sci`), atualiza e entra nela:
+
+   ```bat
+   cd C:\fichas\ficha-sci
+   git pull
+   cd tools\worker-aplicacoes
+   ```
+
+2. Nessa pasta, instala as dependências:
 
    ```bat
    python -m venv venv
@@ -47,10 +54,10 @@ Requisitos: Windows com o **iSeries Access ODBC Driver** (o mesmo que o script a
 Para correr sempre que o PC arranca a sessão, sem janela:
 
 ```bat
-schtasks /Create /SC ONLOGON /TN "Worker Aplicacoes" /TR "C:\worker-aplicacoes\venv\Scripts\pythonw.exe C:\worker-aplicacoes\worker.py" /F
+schtasks /Create /SC ONLOGON /TN "Worker Aplicacoes" /TR "C:\fichas\ficha-sci\tools\worker-aplicacoes\venv\Scripts\pythonw.exe C:\fichas\ficha-sci\tools\worker-aplicacoes\worker.py" /F
 ```
 
-O registo fica em `worker.log` (ao lado do `worker.py`). O PC tem de estar ligado e com sessão iniciada; para não depender
+O registo fica em `worker.log`, ao lado do `worker.py` (ex.: `C:\fichas\ficha-sci\tools\worker-aplicacoes\worker.log`), no PC onde o worker corre — não no servidor. O PC tem de estar ligado e com sessão iniciada; para não depender
 de um PC, o mesmo worker passa para o servidor (precisa do driver ODBC do IBM i para Linux e de chegar ao core).
 
 ## `.env`
