@@ -38,6 +38,8 @@ export interface OperacaoAplicada {
   movimentos: number;
   aplicados: number;
   pendentes: number;
+  devolvidos: number;
+  emTransito: number;
   totalDebito: number;
   totalCredito: number;
 }
@@ -113,6 +115,8 @@ export function lerOperacoes(linhas: LinhaBruta[]): ResultadoLeitura {
       movimentos: numero(g(l, 'ACNMOV')),
       aplicados: numero(g(l, 'ACTAPL')),
       pendentes: numero(g(l, 'ACTPND')),
+      devolvidos: numero(g(l, 'ACTDEV')),
+      emTransito: numero(g(l, 'ACTTRT')),
       totalDebito: numero(g(l, 'ACTDEB')),
       totalCredito: numero(g(l, 'ACTCRE')),
     });
@@ -144,17 +148,27 @@ export function dentroDaJanela(o: OperacaoAplicada, dataFicha: string): boolean 
   return quando >= inicio && quando < fim;
 }
 
+/**
+ * Validação: a passagem do ficheiro que ainda não aplicou nada (0 aplicados, 0 pendentes, 0 devolvidos, 0 em trânsito).
+ * Cada ficheiro costuma aparecer duas vezes — primeiro a validação, depois a aplicação real — e só a real conta.
+ */
+export function ehValidacao(o: OperacaoAplicada): boolean {
+  return o.aplicados === 0 && o.pendentes === 0 && o.devolvidos === 0 && o.emTransito === 0;
+}
+
 export interface OperacoesSelecionadas {
-  /** As que entram no Excel e na lista: dentro da janela da ficha e de operadores da app. */
+  /** As que entram no Excel e na lista: dentro da janela da ficha, de operadores da app e já aplicadas (não validações). */
   selecionadas: OperacaoAplicada[];
   /** Dentro da janela mas de outros utilizadores do core (SISP, quem não é operador). */
   deOutros: OperacaoAplicada[];
+  /** Dentro da janela e de operadores, mas só validações (nada aplicado). */
+  validacoes: OperacaoAplicada[];
   /** Fora da janela 07:00 → 07:00 (são de outra ficha). */
   foraDaJanela: OperacaoAplicada[];
   aviso: string | null;
 }
 
-/** Janela da ficha primeiro, operadores depois. */
+/** Janela da ficha primeiro, operadores depois, e por fim as validações ficam de fora. */
 export function selecionarOperacoes(
   operacoes: OperacaoAplicada[],
   dataFicha: string,
@@ -168,7 +182,9 @@ export function selecionarOperacoes(
     dentro.length === 0 && operacoes.length > 0
       ? `Há ${operacoes.length} operações, mas nenhuma entre ${inicio} e ${fim} (a janela desta ficha): confirma que é o dia certo.`
       : null;
-  return { selecionadas: dosOperadores, deOutros, foraDaJanela, aviso };
+  const validacoes = dosOperadores.filter(ehValidacao);
+  const selecionadas = dosOperadores.filter((o) => !ehValidacao(o));
+  return { selecionadas, deOutros, validacoes, foraDaJanela, aviso };
 }
 
 /**
