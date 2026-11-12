@@ -187,23 +187,34 @@ export function filtrarPorOperadores(
   return { dosOperadores, deOutros };
 }
 
-/** As colunas que interessam do Excel tratado (as outras ~40 do core não são precisas). */
+/**
+ * As colunas que interessam do Excel tratado (as outras ~40 do core não são precisas), com os títulos que o core dá a cada
+ * uma (sem os espaços de enchimento nem os acentos estragados que o ODBC por vezes devolve).
+ */
 export const COLUNAS_EXCEL_OPERACOES = [
-  'Data', 'Hora', 'Tarefa', 'Ficheiro', 'Nº operação', 'Utilizador', 'Situação',
-  'Movimentos', 'Aplicados', 'Pendentes', 'Total débito', 'Total crédito',
+  'Data Início de Execução', // ACDTIN
+  'Hora Início de Execução', // ACHORA
+  'Empresa', // ACEMP
+  'Ficheiro Externo', // ACFILE
+  'Nº da Operação', // ACNOPR
+  'Utilizador do Pedido', // ACUSER
+  'Situação', // ACSITU (T = terminada, P = com pendentes)
+  'Total de Movimentos', // ACNMOV
+  'Total de Aplicados', // ACTAPL
+  'Total de Pendentes', // ACTPND
+  'Total a Débito', // ACTDEB
+  'Total a Crédito', // ACTCRE
 ] as const;
-
-const SITUACAO: Record<string, string> = { T: 'Terminada', P: 'Com pendentes' };
 
 /** O Excel tratado: só as operações que se passam e só as colunas úteis, por ordem de hora. */
 export async function excelDasOperacoes(operacoes: OperacaoAplicada[]): Promise<Blob> {
   const XLSX = await import('xlsx');
   const linhas = operacoes.map((o) => [
-    o.data, o.hora, o.empresa, o.ficheiro, o.nOperacao, o.utilizador, SITUACAO[o.situacao] ?? o.situacao,
+    o.data, o.hora, o.empresa, o.ficheiro, o.nOperacao, o.utilizador, o.situacao,
     o.movimentos, o.aplicados, o.pendentes, o.totalDebito, o.totalCredito,
   ]);
   const ws = XLSX.utils.aoa_to_sheet([[...COLUNAS_EXCEL_OPERACOES], ...linhas]);
-  ws['!cols'] = [12, 7, 14, 16, 12, 12, 14, 11, 10, 10, 16, 16].map((wch) => ({ wch }));
+  ws['!cols'] = [22, 22, 14, 16, 14, 20, 9, 18, 18, 18, 16, 16].map((wch) => ({ wch }));
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Aplicações');
   const bytes: ArrayBuffer = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
