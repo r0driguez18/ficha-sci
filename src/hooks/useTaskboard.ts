@@ -198,7 +198,7 @@ export function useTaskboard(formType: FormType) {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, formType]);
+  }, [user?.id, formType]);
 
   // ---------- Ficha desatualizada ----------
   const verificar = useCallback(async (): Promise<MotivoDesatualizada | null> => {
