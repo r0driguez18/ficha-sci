@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
+import { ZonaLargarFicheiro } from '@/components/ZonaLargarFicheiro';
 import { generateTaskboardPDF } from '@/utils/pdfGenerator';
 import { carregarAnexoOcorrencias } from '@/services/ocorrenciasService';
 import { appendTapesEvidencia } from '@/utils/pdf/appendTapesEvidencia';
@@ -761,6 +762,7 @@ export default function HistoricoFichas() {
           </DialogHeader>
 
           {attachTarget && (
+            <ZonaLargarFicheiro extensoes={['.pdf', '.txt']} varios disabled={busyId === attachTarget.id} onFicheiros={(fs) => handleAttachFiles(attachTarget, fs)} texto="Larga aqui o PDF/TXT dos tapes">
             <div className="space-y-4">
               <div className="rounded border divide-y">
                 {(attachTarget.tapes_evidencia ?? []).length === 0 ? (
@@ -821,6 +823,7 @@ export default function HistoricoFichas() {
                 </Button>
               </div>
             </div>
+            </ZonaLargarFicheiro>
           )}
         </DialogContent>
       </Dialog>

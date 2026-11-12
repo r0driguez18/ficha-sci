@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { FileDown, AlertTriangle, Upload, CheckCircle2, Trash2, Undo2, Pencil, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { ZonaLargarFicheiro } from '@/components/ZonaLargarFicheiro';
 import {
   TAMANHO_LINHA,
   autodetectarColunasOIC,
@@ -98,10 +99,13 @@ export default function GeradorOIC() {
     carregar(valor.trim() === '' ? [] : paraMatriz(valor), 'texto colado');
   };
 
-  const aoEscolherFicheiro = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const aoEscolherFicheiro = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     e.target.value = '';
-    if (!f) return;
+    if (f) void carregarFicheiro(f);
+  };
+
+  const carregarFicheiro = async (f: File) => {
     try {
       const buf = await f.arrayBuffer();
       // raw: números ficam números, para se detetar um NIB que o Excel guardou como número.
@@ -263,6 +267,7 @@ export default function GeradorOIC() {
         </Button>
       </div>
 
+      <ZonaLargarFicheiro extensoes={['.xlsx', '.xlsm', '.xls', '.csv']} onFicheiros={([f]) => void carregarFicheiro(f)}>
       <Card>
         <CardHeader>
           <CardTitle>1. Folha de pagamentos</CardTitle>
@@ -284,7 +289,7 @@ export default function GeradorOIC() {
               <Upload className="h-4 w-4 mr-1" /> Carregar ficheiro
             </Button>
             <span className="text-sm text-muted-foreground">
-              {origem && origem !== 'texto colado' ? origem : '.xlsx, .xlsm, .xls ou .csv — ou cola em baixo'}
+              {origem && origem !== 'texto colado' ? origem : '.xlsx, .xlsm, .xls ou .csv — ou larga o ficheiro aqui, ou cola em baixo'}
             </span>
           </div>
 
@@ -349,6 +354,7 @@ export default function GeradorOIC() {
           </div>
         </CardContent>
       </Card>
+      </ZonaLargarFicheiro>
 
       {tratadas.length > 0 && (
         <Card>
