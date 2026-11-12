@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { guardarFicheiro } from '@/lib/guardarFicheiro';
+import { ZonaLargarFicheiro } from '@/components/ZonaLargarFicheiro';
 import { excelDasAplicacoes, lerExcelAplicacoes, lerOperacoes, nomeExcelAplicacoes, situacaoDoPedido } from '@/lib/aplicacoesDia';
 import {
   getAplicacoesDia,
@@ -134,7 +135,8 @@ export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean }> =
   const pedidoComErro = pedido?.estado === 'erro' && (!aplicacao || pedido.pedido_em > aplicacao.gerado_em);
 
   return (
-    <div className="mt-8 border-t pt-6">
+    <ZonaLargarFicheiro extensoes={['.xlsx']} disabled={disabled || busy === 'excel'} onFicheiros={([f]) => void carregarExcel(f)} texto="Larga aqui o Excel das aplicações" className="mt-8">
+    <div className="border-t pt-6">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <button
           type="button"
@@ -238,5 +240,6 @@ export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean }> =
         </div>
       )}
     </div>
+    </ZonaLargarFicheiro>
   );
 };

@@ -29,6 +29,7 @@ import {
   X,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ZonaLargarFicheiro } from '@/components/ZonaLargarFicheiro';
 import { gerarPS2, nomeFicheiroPS2, valorEmEscudos, foiArredondado, TIPOS_OPERACAO, type PS2Resultado } from '@/lib/ps2';
 import { tratarNib, NATUREZA_PADRAO, type NibTratado, type ModoConta } from '@/lib/nibBca';
 import { montanteComFator } from '@/lib/oic';
@@ -608,6 +609,7 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
       </div>
 
       {/* Beneficiários */}
+      <ZonaLargarFicheiro extensoes={['.xlsx', '.xls', '.csv']} onFicheiros={([f]) => void carregarFicheiro(f)}>
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-base">Beneficiários</CardTitle>
@@ -1079,6 +1081,7 @@ export default function GeradorPS2({ embedded = false }: { embedded?: boolean } 
           )}
         </CardContent>
       </Card>
+      </ZonaLargarFicheiro>
 
       <div className="flex flex-wrap items-end gap-2">
         <Button onClick={gerar} disabled={contagem.ok === 0 || contagem.alerta > 0}>

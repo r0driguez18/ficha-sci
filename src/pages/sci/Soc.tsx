@@ -14,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ChevronRight, ClipboardCopy, FileDown, FileSpreadsheet, Lock, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { ZonaLargarFicheiro } from '@/components/ZonaLargarFicheiro';
 import {
   NOME_CARTAO,
   NOME_CLASSE,
@@ -234,6 +235,7 @@ export default function Soc() {
         subtitle="Descobre que remetentes legítimos de Cabo Verde e Portugal o Cisco ESA está a bloquear, e prepara o pedido de libertação"
       />
 
+      <ZonaLargarFicheiro extensoes={['.xlsx', '.xls']} onFicheiros={([f]) => void abrir(f)} texto="Larga aqui o relatório do SOC">
       <Card className="mb-4">
         <CardContent className="flex flex-wrap items-center justify-between gap-3 pt-6">
           <div className="text-sm text-muted-foreground">
@@ -261,6 +263,7 @@ export default function Soc() {
           </div>
         </CardContent>
       </Card>
+      </ZonaLargarFicheiro>
 
       {erro && (
         <Alert variant="destructive" className="mb-4">

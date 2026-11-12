@@ -22,6 +22,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ZonaLargarFicheiro } from '@/components/ZonaLargarFicheiro';
 import {
   LIMITE_LOTE,
   COLUNAS_RESULTADO,
@@ -597,6 +598,7 @@ export default function RenovacaoCartoes() {
       )}
 
       {mostrarUpload && (
+        <ZonaLargarFicheiro extensoes={['.xlsx', '.xls', '.csv']} onFicheiros={([f]) => void carregarFicheiro(f)}>
         <Card>
           <CardHeader>
             <CardTitle className="text-base">
@@ -716,6 +718,7 @@ export default function RenovacaoCartoes() {
             </Button>
           </CardContent>
         </Card>
+        </ZonaLargarFicheiro>
       )}
 
       <ConfirmDialog
