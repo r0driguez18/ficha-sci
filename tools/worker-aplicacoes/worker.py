@@ -11,6 +11,7 @@ token do worker NUNCA vão para o código nem para o repositório.
   python worker.py                       corre sempre (fica a perguntar de 3 em 3 s)
   python worker.py --uma-vez             pergunta uma só vez e sai (para testar)
   python worker.py --simular ficheiro.xlsx   em vez do core, lê este Excel (para testar sem core)
+  python worker.py --datas               só mostra que dias há na tabela do core e quantos registos (não entrega nada)
 """
 from __future__ import annotations
 
@@ -195,9 +196,17 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument('--uma-vez', action='store_true', help='pergunta uma vez e sai')
     ap.add_argument('--simular', metavar='XLSX', help='em vez do core, lê este Excel')
+    ap.add_argument('--datas', action='store_true', help='mostra os dias que a tabela do core tem (diagnóstico)')
     args = ap.parse_args()
 
     carregar_env()
+    if args.datas:
+        # Só leitura: que dias (ACDTIN, AAAAMMDD) há na tabela e quantos registos cada um. Não fala com a app.
+        _, linhas = ler_core('SELECT ACDTIN, COUNT(*) FROM GBANCA0003.GBAPL GROUP BY ACDTIN ORDER BY ACDTIN')
+        print('Data (ACDTIN)   Registos')
+        for d, n in linhas:
+            print(f'{str(d):<15} {n}')
+        return
     log = configurar_log()
     app = App()
     query = os.environ.get('CORE_QUERY', 'SELECT * from GBANCA0003.GBAPL')

@@ -60,6 +60,14 @@ schtasks /Create /SC ONLOGON /TN "Worker Aplicacoes" /TR "C:\fichas\ficha-sci\to
 O registo fica em `worker.log`, ao lado do `worker.py` (ex.: `C:\fichas\ficha-sci\tools\worker-aplicacoes\worker.log`), no PC onde o worker corre — não no servidor. O PC tem de estar ligado e com sessão iniciada; para não depender
 de um PC, o mesmo worker passa para o servidor (precisa do driver ODBC do IBM i para Linux e de chegar ao core).
 
+## Ver que dias tem a tabela do core
+
+Diagnóstico só de leitura (não entrega nada à app): mostra os dias (`ACDTIN`) que a tabela do core tem e quantos registos cada um.
+
+```bat
+venv\Scripts\python worker.py --datas
+```
+
 ## `.env`
 
 | Variável | O quê |

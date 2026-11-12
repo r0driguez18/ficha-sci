@@ -81,9 +81,10 @@ export interface ResultadoLeitura {
 
 /**
  * Operações reais do dia: as que têm nº de operação. Ficam de fora o registo de códigos, as linhas de documentação e os
- * pendentes a zeros (OUTROS, CAIXAS…). Se `dataFicha` vier, avisa quando os dados são de outro dia.
+ * pendentes a zeros (OUTROS, CAIXAS…). A janela da ficha (07:00 → 07:00) e os operadores aplicam-se depois, em
+ * `selecionarOperacoes`.
  */
-export function lerOperacoes(linhas: LinhaBruta[], dataFicha?: string): ResultadoLeitura {
+export function lerOperacoes(linhas: LinhaBruta[]): ResultadoLeitura {
   const avisos: string[] = [];
   const { indices, origem } = indicesDosCampos(linhas);
   const falta = ['ACEMP', 'ACHORA', 'ACFILE', 'ACNOPR', 'ACUSER'].filter((c) => !(c in indices));
@@ -119,11 +120,94 @@ export function lerOperacoes(linhas: LinhaBruta[], dataFicha?: string): Resultad
   operacoes.sort((a, b) => a.hora.localeCompare(b.hora) || a.nOperacao.localeCompare(b.nOperacao));
 
   if (operacoes.length === 0) avisos.push('Não há operações com número de operação neste ficheiro.');
-  const dias = [...new Set(operacoes.map((o) => o.data).filter(Boolean))];
-  if (dataFicha && dias.length > 0 && dias.some((d) => d !== dataFicha)) {
-    avisos.push(`Os dados do core são de ${dias.sort().join(' e ')} e a ficha é de ${dataFicha}: confirma que é o dia certo.`);
-  }
   return { operacoes, avisos };
+}
+
+/** A ficha do dia D cobre das 07:00 de D às 07:00 de D+1 (manhã, tarde, noite e madrugada): é o que se valida no dia seguinte. */
+export const HORA_INICIO_FICHA = 7;
+
+function diaSeguinte(iso: string): string {
+  const [a, m, d] = iso.split('-').map(Number);
+  return new Date(Date.UTC(a, m - 1, d + 1)).toISOString().slice(0, 10);
+}
+
+/** [inicio, fim[ da ficha, em 'AAAA-MM-DD HH:MM' (compara-se como texto). */
+export function janelaDaFicha(dataFicha: string): { inicio: string; fim: string } {
+  const hh = `${String(HORA_INICIO_FICHA).padStart(2, '0')}:00`;
+  return { inicio: `${dataFicha} ${hh}`, fim: `${diaSeguinte(dataFicha)} ${hh}` };
+}
+
+export function dentroDaJanela(o: OperacaoAplicada, dataFicha: string): boolean {
+  if (!o.data) return true; // sem data não dá para a pôr fora: não se esconde
+  const quando = `${o.data} ${o.hora || '00:00'}`;
+  const { inicio, fim } = janelaDaFicha(dataFicha);
+  return quando >= inicio && quando < fim;
+}
+
+export interface OperacoesSelecionadas {
+  /** As que entram no Excel e na lista: dentro da janela da ficha e de operadores da app. */
+  selecionadas: OperacaoAplicada[];
+  /** Dentro da janela mas de outros utilizadores do core (SISP, quem não é operador). */
+  deOutros: OperacaoAplicada[];
+  /** Fora da janela 07:00 → 07:00 (são de outra ficha). */
+  foraDaJanela: OperacaoAplicada[];
+  aviso: string | null;
+}
+
+/** Janela da ficha primeiro, operadores depois. */
+export function selecionarOperacoes(
+  operacoes: OperacaoAplicada[],
+  dataFicha: string,
+  operadores: string[] | undefined,
+): OperacoesSelecionadas {
+  const dentro = operacoes.filter((o) => dentroDaJanela(o, dataFicha));
+  const foraDaJanela = operacoes.filter((o) => !dentroDaJanela(o, dataFicha));
+  const { dosOperadores, deOutros } = filtrarPorOperadores(dentro, operadores);
+  const { inicio, fim } = janelaDaFicha(dataFicha);
+  const aviso =
+    dentro.length === 0 && operacoes.length > 0
+      ? `Há ${operacoes.length} operações, mas nenhuma entre ${inicio} e ${fim} (a janela desta ficha): confirma que é o dia certo.`
+      : null;
+  return { selecionadas: dosOperadores, deOutros, foraDaJanela, aviso };
+}
+
+/**
+ * Só as operações dos operadores da app (o `value` do operador, ex. «nalves», é o mesmo utilizador do core, ex. «NALVES»).
+ * Ficam de fora as de outros utilizadores (sistema, SISP, quem não é operador). Sem lista de operadores não se filtra.
+ */
+export function filtrarPorOperadores(
+  operacoes: OperacaoAplicada[],
+  operadores: string[] | undefined,
+): { dosOperadores: OperacaoAplicada[]; deOutros: OperacaoAplicada[] } {
+  const validos = new Set((operadores ?? []).map((o) => o.trim().toUpperCase()).filter(Boolean));
+  if (validos.size === 0) return { dosOperadores: operacoes, deOutros: [] };
+  const dosOperadores: OperacaoAplicada[] = [];
+  const deOutros: OperacaoAplicada[] = [];
+  for (const o of operacoes) (validos.has(o.utilizador.trim().toUpperCase()) ? dosOperadores : deOutros).push(o);
+  return { dosOperadores, deOutros };
+}
+
+/** As colunas que interessam do Excel tratado (as outras ~40 do core não são precisas). */
+export const COLUNAS_EXCEL_OPERACOES = [
+  'Data', 'Hora', 'Tarefa', 'Ficheiro', 'Nº operação', 'Utilizador', 'Situação',
+  'Movimentos', 'Aplicados', 'Pendentes', 'Total débito', 'Total crédito',
+] as const;
+
+const SITUACAO: Record<string, string> = { T: 'Terminada', P: 'Com pendentes' };
+
+/** O Excel tratado: só as operações que se passam e só as colunas úteis, por ordem de hora. */
+export async function excelDasOperacoes(operacoes: OperacaoAplicada[]): Promise<Blob> {
+  const XLSX = await import('xlsx');
+  const linhas = operacoes.map((o) => [
+    o.data, o.hora, o.empresa, o.ficheiro, o.nOperacao, o.utilizador, SITUACAO[o.situacao] ?? o.situacao,
+    o.movimentos, o.aplicados, o.pendentes, o.totalDebito, o.totalCredito,
+  ]);
+  const ws = XLSX.utils.aoa_to_sheet([[...COLUNAS_EXCEL_OPERACOES], ...linhas]);
+  ws['!cols'] = [12, 7, 14, 16, 12, 12, 14, 11, 10, 10, 16, 16].map((wch) => ({ wch }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Aplicações');
+  const bytes: ArrayBuffer = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
+  return new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 }
 
 /** Aplicacoes_ddmmaaaa.xlsx (o nome que o script usa). */
