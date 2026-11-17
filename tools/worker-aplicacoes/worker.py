@@ -11,7 +11,7 @@ token do worker NUNCA vão para o código nem para o repositório.
   python worker.py                       corre sempre (fica a perguntar de 3 em 3 s)
   python worker.py --uma-vez             pergunta uma só vez e sai (para testar)
   python worker.py --simular ficheiro.xlsx   em vez do core, lê este Excel (para testar sem core)
-  python worker.py --datas               só mostra que dias há na tabela do core e quantos registos (não entrega nada)
+  python worker.py --datas               só mostra que dias há no registo do core e quantos registos (não entrega nada)
 """
 from __future__ import annotations
 
@@ -79,25 +79,36 @@ def json_seguro(v):
     return str(v)
 
 
+TABELA_LOG = 'PROMOF0003.$PLOGITF'  # Log de ficheiros processados (guarda o histórico, ao contrário da GBAPL)
+
+
 def consulta_do_pedido(data_iso: str | None, personalizada: str = '') -> tuple[str, str | None]:
     """A query a correr para um pedido, e (se for por datas) a descrição dos dias para as mensagens.
 
-    A ficha do dia D cobre das 07:00 de D às 07:00 de D+1, por isso pedem-se as linhas de D e de D+1 (ACDTIN = AAAAMMDD).
-    Com CORE_QUERY definida corre-se essa query tal e qual (sem filtrar por data).
+    A ficha do dia D cobre das 07:00 de D às 07:00 de D+1, por isso pedem-se os registos de D e de D+1
+    ($PLODTPR = AAAAMMDD, a data do processamento). Com CORE_QUERY definida corre-se essa query tal e qual.
+    Um pedido sem data válida é um erro (não se lê a tabela inteira por engano: cresce todos os dias).
     """
     if personalizada.strip():
         return personalizada.strip(), None
     try:
         d1 = dt.date.fromisoformat(str(data_iso)[:10])
     except ValueError:
-        return 'SELECT * from GBANCA0003.GBAPL', None
+        raise ValueError('O pedido não tem uma data válida.') from None
     d2 = d1 + dt.timedelta(days=1)
-    q = f"SELECT * from GBANCA0003.GBAPL WHERE ACDTIN IN ({d1:%Y%m%d}, {d2:%Y%m%d})"
+    q = f"SELECT * FROM {TABELA_LOG} WHERE $PLODTPR IN ({d1:%Y%m%d}, {d2:%Y%m%d})"
     return q, f'{d1.isoformat()} e {d2.isoformat()}'
 
 
+def ler_do_pedido(pedido: dict, personalizada: str = '') -> tuple[list[str], list[list], str | None]:
+    """Corre no core a query do pedido e devolve (colunas, linhas, dias)."""
+    query, dias = consulta_do_pedido(pedido.get('data'), personalizada)
+    colunas, linhas = ler_core(query)
+    return colunas, linhas, dias
+
+
 def ler_core(query: str) -> tuple[list[str], list[list]]:
-    """Corre a query no core (o mesmo que o script antigo) e devolve (colunas, linhas)."""
+    """Corre a query no core e devolve (colunas, linhas)."""
     import pyodbc  # só é preciso para o core real
 
     ligacao = pyodbc.connect(
@@ -192,11 +203,11 @@ class App:
         )
 
 
-def tratar_pedido(app: App, pedido: dict, ler, log: logging.Logger, dias: str | None = None) -> None:
+def tratar_pedido(app: App, pedido: dict, ler, log: logging.Logger) -> None:
     pid = pedido['id']
     log.info('Pedido %s (ficha de %s) de %s', pid, pedido.get('data'), pedido.get('pedido_por_nome'))
     try:
-        colunas, linhas = ler(pedido)
+        colunas, linhas, dias = ler(pedido)
         log.info('Core devolveu %d registos, %d colunas', len(linhas), len(colunas))
         if not linhas and dias:
             # Nada para esses dias: avisa em vez de entregar vazio (que substituiria um Excel bom já guardado para a data).
@@ -218,30 +229,30 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument('--uma-vez', action='store_true', help='pergunta uma vez e sai')
     ap.add_argument('--simular', metavar='XLSX', help='em vez do core, lê este Excel')
-    ap.add_argument('--datas', action='store_true', help='mostra os dias que a tabela do core tem (diagnóstico)')
+    ap.add_argument('--datas', action='store_true', help='mostra os dias que o registo do core tem (diagnóstico)')
     args = ap.parse_args()
 
     carregar_env()
     if args.datas:
-        # Só leitura: que dias (ACDTIN, AAAAMMDD) há na tabela e quantos registos cada um. Não fala com a app.
-        _, linhas = ler_core('SELECT ACDTIN, COUNT(*) FROM GBANCA0003.GBAPL GROUP BY ACDTIN ORDER BY ACDTIN')
-        print('Data (ACDTIN)   Registos')
-        for d, n in linhas:
-            print(f'{str(d):<15} {n}')
+        # Só leitura: que dias ($PLODTPR, AAAAMMDD) há no registo e quantos registos cada um. Não fala com a app.
+        _, linhas = ler_core(f'SELECT $PLODTPR, COUNT(*) FROM {TABELA_LOG} GROUP BY $PLODTPR ORDER BY $PLODTPR')
+        print(f'{len(linhas)} dias no registo, de {linhas[0][0] if linhas else "-"} a {linhas[-1][0] if linhas else "-"}. Os últimos 15:')
+        print('Data ($PLODTPR)  Registos')
+        for d, n in linhas[-15:]:
+            print(f'{str(d):<16} {n}')
         return
     log = configurar_log()
     app = App()
     personalizada = os.environ.get('CORE_QUERY', '')
     intervalo = max(1, int(os.environ.get('POLL_SEGUNDOS', '3')))
-    ler = (lambda p: ler_excel(args.simular)) if args.simular else (lambda p: ler_core(consulta_do_pedido(p.get('data'), personalizada)[0]))
+    ler = (lambda p: (*ler_excel(args.simular), None)) if args.simular else (lambda p: ler_do_pedido(p, personalizada))
     log.info('Worker a correr (%s). Intervalo %ss.', 'SIMULADO' if args.simular else 'core real', intervalo)
 
     while True:
         try:
             pedido = app.reclamar()
             if pedido:
-                dias = None if args.simular else consulta_do_pedido(pedido.get('data'), personalizada)[1]
-                tratar_pedido(app, pedido, ler, log, dias)
+                tratar_pedido(app, pedido, ler, log)
         except Exception:  # noqa: BLE001 — rede em baixo, servidor a reiniciar…: tenta de novo
             log.exception('Erro a falar com a app')
         if args.uma_vez:
