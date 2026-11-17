@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { UploadCloud } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { ficheirosDe, filtrarFicheiros, mensagemTipoErrado } from '@/lib/largarFicheiros';
+import { ficheirosColados, ficheirosDe, filtrarFicheiros, mensagemTipoErrado } from '@/lib/largarFicheiros';
 
 interface Props {
   /** Extensões aceites, com ponto (ex.: ['.xlsx', '.xls']). */
@@ -46,7 +46,7 @@ export function ZonaLargarFicheiro({ extensoes, onFicheiros, varios = false, dis
       const alvo = e.target as Node | null;
       // Foco dentro da zona, ou na página sem nenhum campo em foco (o normal depois de copiar um anexo).
       if (!alvo || (alvo !== document.body && !ref.current?.contains(alvo))) return;
-      const ficheiros = ficheirosDe(e.clipboardData);
+      const ficheiros = ficheirosColados(e.clipboardData);
       if (ficheiros.length === 0) return;
       e.preventDefault();
       entregar(ficheiros);

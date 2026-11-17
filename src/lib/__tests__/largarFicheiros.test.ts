@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { extensaoDe, filtrarFicheiros, ficheirosDe, mensagemTipoErrado } from '../largarFicheiros';
+import { extensaoDe, filtrarFicheiros, ficheirosDe, ficheirosColados, mensagemTipoErrado } from '../largarFicheiros';
 
 const f = (nome: string) => new File(['x'], nome);
 
@@ -37,5 +37,16 @@ describe('largarFicheiros', () => {
     const item = { kind: 'file', getAsFile: () => f('b.xlsx') };
     const dt = { files: [], items: [item, { kind: 'string', getAsFile: () => null }] } as unknown as DataTransfer;
     expect(ficheirosDe(dt).map((x) => x.name)).toEqual(['b.xlsx']);
+  });
+
+  it('ficheirosColados: células copiadas do Excel (imagem + texto/HTML) não contam como ficheiro', () => {
+    const dt = { types: ['text/plain', 'text/html', 'Files'], files: [f('image.png')], items: [] } as unknown as DataTransfer;
+    expect(ficheirosColados(dt)).toEqual([]);
+  });
+
+  it('ficheirosColados: um ficheiro copiado (só Files) conta', () => {
+    const dt = { types: ['Files'], files: [f('a.xlsx')], items: [] } as unknown as DataTransfer;
+    expect(ficheirosColados(dt).map((x) => x.name)).toEqual(['a.xlsx']);
+    expect(ficheirosColados(null)).toEqual([]);
   });
 });
