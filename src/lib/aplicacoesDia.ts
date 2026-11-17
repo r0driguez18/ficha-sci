@@ -82,7 +82,7 @@ export interface ResultadoLeitura {
 export function lerOperacoes(linhas: LinhaBruta[]): ResultadoLeitura {
   const avisos: string[] = [];
   // Dados da tabela antiga (GBAPL, 54 colunas, códigos AC…): já não se usam.
-  if (linhas.some((l) => texto(l[0]) === 'ACEMP' && texto(l[1]) === 'ACSQAP')) {
+  if (linhas.some((l) => (texto(l[0]) === 'ACEMP' && texto(l[1]) === 'ACSQAP') || l.length === 54)) {
     return {
       operacoes: [],
       avisos: ['Estes dados são do formato antigo (tabela GBAPL). Gera de novo, ou carrega o Excel do registo de ficheiros processados (PLOGITF).'],

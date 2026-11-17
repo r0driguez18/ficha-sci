@@ -112,6 +112,13 @@ describe('registo de ficheiros processados (PLOGITF)', () => {
     expect(r.avisos[0]).toContain('formato antigo');
   });
 
+  it('54 colunas sem a linha de códigos (consulta antiga por data) também é formato antigo', () => {
+    const r = lerOperacoes([Array.from({ length: 54 }, (_, i) => (i === 0 ? 'TEIS' : i))]);
+    expect(r.operacoes).toEqual([]);
+    expect(r.avisos).toHaveLength(1);
+    expect(r.avisos[0]).toContain('formato antigo');
+  });
+
   it('se faltar uma coluna importante, avisa que a estrutura mudou', () => {
     const r = lerOperacoes([CODIGOS.filter((c) => c !== '$PLOHOPR')]);
     expect(r.operacoes).toEqual([]);
