@@ -103,6 +103,7 @@ def consulta_do_pedido(data_iso: str | None, personalizada: str = '') -> tuple[s
 def ler_do_pedido(pedido: dict, personalizada: str = '') -> tuple[list[str], list[list], str | None]:
     """Corre no core a query do pedido e devolve (colunas, linhas, dias)."""
     query, dias = consulta_do_pedido(pedido.get('data'), personalizada)
+    logging.getLogger('worker').info('Consulta: %s', query)
     colunas, linhas = ler_core(query)
     return colunas, linhas, dias
 
@@ -246,7 +247,8 @@ def main() -> None:
     personalizada = os.environ.get('CORE_QUERY', '')
     intervalo = max(1, int(os.environ.get('POLL_SEGUNDOS', '3')))
     ler = (lambda p: (*ler_excel(args.simular), None)) if args.simular else (lambda p: ler_do_pedido(p, personalizada))
-    log.info('Worker a correr (%s). Intervalo %ss.', 'SIMULADO' if args.simular else 'core real', intervalo)
+    log.info('Worker a correr (%s). Intervalo %ss. Tabela: %s%s', 'SIMULADO' if args.simular else 'core real', intervalo, TABELA_LOG,
+             ' (CORE_QUERY definida: ignora a data)' if personalizada.strip() else '')
 
     while True:
         try:
