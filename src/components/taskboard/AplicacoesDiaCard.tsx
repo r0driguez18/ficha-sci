@@ -159,7 +159,7 @@ export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean; ope
             {aCorrer || busy === 'gerar' ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
             {aCorrer ? 'A gerar…' : aplicacao ? 'Gerar de novo' : 'Gerar aplicações do dia'}
           </Button>
-          <Button type="button" size="sm" variant="outline" onClick={() => input.current?.click()} disabled={disabled || busy === 'excel'} className="gap-1.5" title="Sem worker: carrega o Excel que o script gera">
+          <Button type="button" size="sm" variant="outline" onClick={() => input.current?.click()} disabled={disabled || busy === 'excel'} className="gap-1.5" title="Sem worker: carrega o Excel do registo de ficheiros processados">
             {busy === 'excel' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
             Carregar Excel
           </Button>
@@ -212,7 +212,7 @@ export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean; ope
       )}
       {validacoes.length > 0 && (
         <p className="mb-2 text-xs text-muted-foreground">
-          {validacoes.length} validaç{validacoes.length === 1 ? 'ão' : 'ões'} (nada aplicado) não entra{validacoes.length === 1 ? '' : 'm'} no Excel: só a aplicação real de cada ficheiro.
+          {validacoes.length} ficheiro{validacoes.length === 1 ? '' : 's'} só validado{validacoes.length === 1 ? '' : 's'} (sem aplicar) não entra{validacoes.length === 1 ? '' : 'm'} no Excel: só as aplicações.
         </p>
       )}
       {foraDaJanela.length > 0 && (
@@ -239,29 +239,25 @@ export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean; ope
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50">
+                <TableHead className="text-xs uppercase">Data</TableHead>
                 <TableHead className="text-xs uppercase">Hora</TableHead>
-                <TableHead className="text-xs uppercase">Empresa</TableHead>
                 <TableHead className="text-xs uppercase">Nome AS400</TableHead>
-                <TableHead className="text-xs uppercase">Nº Operação</TableHead>
-                <TableHead className="text-xs uppercase">Pedido por</TableHead>
-                <TableHead className="text-right text-xs uppercase">Mov.</TableHead>
-                <TableHead className="text-right text-xs uppercase">Aplic.</TableHead>
-                <TableHead className="text-right text-xs uppercase">Pend.</TableHead>
+                <TableHead className="text-xs uppercase">Referência</TableHead>
+                <TableHead className="text-xs uppercase">Módulo</TableHead>
+                <TableHead className="text-xs uppercase">Processado por</TableHead>
+                <TableHead className="text-xs uppercase">Nº ordem</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtradas.map((o) => (
-                <TableRow key={o.nOperacao}>
+                <TableRow key={o.nOrdem}>
+                  <TableCell className="tabular-nums">{o.data}</TableCell>
                   <TableCell className="tabular-nums">{o.hora}</TableCell>
-                  <TableCell>
-                    {o.empresa} <span className="text-xs text-muted-foreground">#{o.seq}</span>
-                  </TableCell>
-                  <TableCell className="font-mono text-xs">{o.ficheiro}</TableCell>
-                  <TableCell className="font-mono text-xs">{o.nOperacao}</TableCell>
+                  <TableCell className="font-mono text-xs">{o.ficheiro || '—'}</TableCell>
+                  <TableCell>{o.referencia}</TableCell>
+                  <TableCell>{o.modulo}</TableCell>
                   <TableCell>{o.utilizador}</TableCell>
-                  <TableCell className="text-right tabular-nums">{o.movimentos}</TableCell>
-                  <TableCell className="text-right tabular-nums">{o.aplicados}</TableCell>
-                  <TableCell className={`text-right tabular-nums ${o.pendentes > 0 ? 'font-semibold text-amber-600' : ''}`}>{o.pendentes}</TableCell>
+                  <TableCell className="font-mono text-xs">{o.nOrdem}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
