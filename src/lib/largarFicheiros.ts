@@ -24,6 +24,18 @@ export function mensagemTipoErrado(recusados: File[], extensoes: string[]): stri
   return `«${nomes}» não é um tipo aceite aqui. Aceita: ${extensoes.join(', ')}.`;
 }
 
+/**
+ * Ficheiros a tratar num Ctrl+V. Copiar células do Excel (ou texto de uma página) põe na área de transferência uma imagem
+ * de pré-visualização *e* o texto/HTML: isso não é um ficheiro copiado, por isso ignora-se (sem aviso). Um ficheiro copiado
+ * do Explorador ou um anexo do Outlook chega só como ficheiro.
+ */
+export function ficheirosColados(dt: DataTransfer | null | undefined): File[] {
+  if (!dt) return [];
+  const tipos = Array.from(dt.types ?? []);
+  if (tipos.includes('text/plain') || tipos.includes('text/html')) return [];
+  return ficheirosDe(dt);
+}
+
 /** Os itens de um DataTransfer que são ficheiros (um anexo do Outlook chega como ficheiro, não como texto). */
 export function ficheirosDe(dt: DataTransfer | null | undefined): File[] {
   if (!dt) return [];
