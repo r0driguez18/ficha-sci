@@ -15,6 +15,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
+import { AplicacoesDiaCard } from '@/components/taskboard/AplicacoesDiaCard';
+import { listOperators } from '@/services/operatorService';
 import { ZonaLargarFicheiro } from '@/components/ZonaLargarFicheiro';
 import { generateTaskboardPDF } from '@/utils/pdfGenerator';
 import { carregarAnexoOcorrencias } from '@/services/ocorrenciasService';
@@ -49,6 +51,7 @@ import {
   User,
   CheckCircle,
   Paperclip,
+  FileSpreadsheet,
   AlertTriangle,
   Trash2,
   Loader2
@@ -134,11 +137,14 @@ export default function HistoricoFichas() {
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [attachTarget, setAttachTarget] = useState<ExportedTaskboard | null>(null);
+  const [aplicacoesTarget, setAplicacoesTarget] = useState<ExportedTaskboard | null>(null);
+  const [operadores, setOperadores] = useState<string[]>([]);
   const { toast } = useToast();
   const pag = usePaginacao(filteredRecords, { chave: `${searchTerm}|${formTypeFilter}|${signerFilter}|${tapesFilter}` });
 
   useEffect(() => {
     loadRecords();
+    listOperators().then((o) => setOperadores(o.map((x) => x.value)));
   }, []);
 
   useEffect(() => {
@@ -648,6 +654,15 @@ export default function HistoricoFichas() {
                         <Button
                           variant="outline"
                           size="sm"
+                          onClick={() => setAplicacoesTarget(record)}
+                          aria-label={`Aplicações do dia da ficha de ${record.date}`}
+                          title="Aplicações do dia (Excel do core)"
+                        >
+                          <FileSpreadsheet className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => setEditTarget(record)}
                           aria-label={`Retificar a ficha de ${record.date}`}
                           title="Retificar ficha"
@@ -751,6 +766,18 @@ export default function HistoricoFichas() {
       <HistoricoEdicoesDialog record={edicoesTarget} onClose={() => setEdicoesTarget(null)} />
 
       {/* Anexar display de tapes */}
+      <Dialog open={!!aplicacoesTarget} onOpenChange={(open) => { if (!open) setAplicacoesTarget(null); }}>
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Aplicações do dia — ficha de {aplicacoesTarget?.date}</DialogTitle>
+            <DialogDescription>
+              Gera as aplicações desta data a partir do core, ou carrega o Excel à mão se o core já não tiver esse dia.
+            </DialogDescription>
+          </DialogHeader>
+          {aplicacoesTarget && <AplicacoesDiaCard data={aplicacoesTarget.date} operadores={operadores} embutido />}
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={!!attachTarget} onOpenChange={(open) => { if (!open) setAttachTarget(null); }}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
