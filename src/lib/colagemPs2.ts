@@ -44,9 +44,8 @@ const pareceValor = (v: unknown) => {
   return s.length > 0 && !Number.isNaN(Number(s)) && Number(s) > 0;
 };
 
-/** Adivinha as colunas (NIB / valor / nome) e a linha onde começam os dados. */
-export function autodetectar(rows: string[][]) {
-  const nCols = rows.reduce((m, r) => Math.max(m, r.length), 0);
+/** Índice da linha do cabeçalho (-1 se não houver): a 1.ª, nas primeiras linhas, com 2+ textos e sem nenhum NIB/conta. */
+function acharCabecalho(rows: readonly (readonly unknown[])[]): number {
   let header = -1;
   let vistas = 0;
   for (let i = 0; i < Math.min(rows.length, 60); i++) {
@@ -62,9 +61,32 @@ export function autodetectar(rows: string[][]) {
       break;
     }
   }
+  return header;
+}
+
+/**
+ * Colunas candidatas à conta, por ordem de prioridade: NIB > conta com natureza > conta simples (só pelo cabeçalho).
+ * A coluna «Natureza» sozinha não é lida. As que não têm nenhum número nos dados ficam para o fim.
+ */
+function colunasDeConta(rows: readonly (readonly unknown[])[], header: number): number[] {
+  const heads = (header >= 0 ? rows[header] ?? [] : []).map((c) => String(c ?? '').toLowerCase());
+  const candidatas = [
+    heads.findIndex((h) => h.includes('nib')),
+    heads.findIndex((h) => h.includes('conta') && h.includes('nat')),
+    heads.findIndex((h) => h.includes('conta')),
+  ].filter((c, i, todas) => c >= 0 && todas.indexOf(c) === i);
+  const inicio = header < 0 ? 0 : header + 1;
+  const temNumeros = (c: number) => rows.slice(inicio).some((r) => pareceNib((r ?? [])[c]));
+  return [...candidatas.filter(temNumeros), ...candidatas.filter((c) => !temNumeros(c))];
+}
+
+/** Adivinha as colunas (NIB / valor / nome) e a linha onde começam os dados. */
+export function autodetectar(rows: string[][]) {
+  const nCols = rows.reduce((m, r) => Math.max(m, r.length), 0);
+  const header = acharCabecalho(rows);
   const heads = (header >= 0 ? rows[header] ?? [] : []).map((c) => String(c ?? '').toLowerCase());
   const acha = (...keys: string[]) => heads.findIndex((h) => keys.some((k) => h.includes(k)));
-  let cConta = acha('nib', 'conta');
+  let cConta = colunasDeConta(rows, header)[0] ?? -1;
   let cValor = acha('valor', 'montante', 'líquido', 'liquido', 'a pagar', 'total');
   let cNome = acha('nome', 'benefici', 'deputado', 'funcion', 'colaborad');
   // Descritivo do cliente: só se o cabeçalho o disser (sem cabeçalho não se adivinha).
@@ -142,10 +164,20 @@ export function linhasDaMatriz(
   cols: { colConta: number; colValor: number; colNome: number; colDescritivo: number; linhaInicial: number },
 ): { linhas: LinhaBruta[]; nOutrosBlocos: number; ignoradasOutros: LinhaBruta[] } {
   const txt = (v: unknown) => (v ?? '').toString().trim();
+  // Se a coluna escolhida é uma das candidatas (NIB, conta com natureza, conta), uma célula vazia cai para a seguinte
+  // dessa ordem: um NIB em branco não faz a linha desaparecer quando a conta está preenchida.
+  const candidatas = colunasDeConta(matriz, acharCabecalho(matriz));
+  const recurso = candidatas.includes(cols.colConta) ? candidatas.filter((c) => c !== cols.colConta) : [];
+  const contaDe = (r: readonly unknown[]) => {
+    const proprio = txt(r[cols.colConta]);
+    if (proprio !== '') return proprio;
+    for (const c of recurso) if (txt(r[c]) !== '') return txt(r[c]);
+    return '';
+  };
   const linhaDe = (r: readonly unknown[], linha: number): LinhaBruta => {
     const { colConta, colValor, colNome, colDescritivo } = cols;
     return {
-      recebido: txt(r[colConta]),
+      recebido: contaDe(r),
       valor: colValor === colConta ? '' : txt(r[colValor]),
       nome: colNome === colConta || colNome === colValor ? '' : txt(r[colNome]),
       descritivo: colDescritivo < 0 || [colConta, colValor, colNome].includes(colDescritivo) ? '' : txt(r[colDescritivo]),
@@ -166,7 +198,7 @@ export function linhasDaMatriz(
     }
     if (secao === 'outros') {
       // Só se contam os pagamentos (linhas com conta/NIB), não o cabeçalho repetido nem os totais.
-      if (pareceNib(r[cols.colConta])) ignoradasOutros.push(linhaDe(r, i + 1));
+      if (pareceNib(contaDe(r))) ignoradasOutros.push(linhaDe(r, i + 1));
       continue;
     }
     out.push(linhaDe(r, i + 1));

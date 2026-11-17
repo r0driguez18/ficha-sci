@@ -71,9 +71,18 @@ describe('PS2: linhas e número da linha no Excel', () => {
     ['9', 'Banco Outro', '2026-10-30', 'FATURA', '500', '000500001234567810176', ''],
   ];
 
-  it('acha o cabeçalho mesmo depois de linhas em branco; a coluna da conta é a primeira com "conta"', () => {
+  it('acha o cabeçalho mesmo depois de linhas em branco; com NIB e CONTA, o NIB tem prioridade', () => {
     const d = autodetectar(folha);
-    expect(d).toMatchObject({ colNome: 1, colValor: 4, colDescritivo: 3, colConta: 5, linhaInicial: 7 });
+    expect(d).toMatchObject({ colNome: 1, colValor: 4, colDescritivo: 3, colConta: 6, linhaInicial: 7 });
+  });
+
+  it('NIB em branco numa linha: cai para a coluna da conta (a linha não desaparece)', () => {
+    const d = autodetectar(folha);
+    const { linhas } = linhasDaMatriz(folha, d);
+    expect(linhas.find((l) => l.nome === 'Banco Outro')?.recebido).toBe('000500001234567810176');
+    // e se a coluna escolhida à mão não é candidata (ex.: o nome), não há recurso
+    const manual = linhasDaMatriz(folha, { ...d, colConta: 3 });
+    expect(manual.linhas.some((l) => l.recebido === '000500001234567810176')).toBe(false);
   });
 
   it('cada linha leva o seu nº na folha (a mesma do Excel)', () => {
