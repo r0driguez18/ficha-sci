@@ -475,6 +475,8 @@ export function useTaskboard(formType: FormType) {
   /** Uma linha da tabela conta como processamento a registar? */
   const isSavableRow = (row: (typeof tableRows)[number]) => {
     const common = row.hora.trim() !== '' && row.executado.trim() !== '';
+    // As linhas vindas do core não têm «Tarefa» (e as compensações não têm nº de operação): contam na mesma.
+    if (common && row.origem === 'core' && row.tipo.trim() !== '') return true;
     const taskOnly = common && row.tarefa.trim() !== '';
     const asWithOp = common && row.nomeAs.trim() !== '' && row.operacao.trim() !== '';
     return taskOnly || asWithOp;

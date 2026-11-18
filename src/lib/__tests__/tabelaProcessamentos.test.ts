@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { linhasParaTabela, tarefaDaOperacao } from '../tabelaProcessamentos';
+import { linhasParaTabela } from '../tabelaProcessamentos';
 import type { OperacaoAplicada } from '../aplicacoesDia';
 import type { TaskTableRow } from '@/types/taskTableRow';
 
@@ -15,7 +15,7 @@ describe('das aplicações para a tabela de Processamentos', () => {
   it('uma operação nova vira uma linha completa, com o tipo e o executante certos', () => {
     const { novas, jaExistiam } = linhasParaTabela([op()], [], OPERADORES);
     expect(jaExistiam).toBe(0);
-    expect(novas).toEqual([{ hora: '14:39', tarefa: 'Aplicação INP2611181', nomeAs: 'INP2611181', operacao: '584447214', executado: 'nalves', tipo: 'cobrancas' }]);
+    expect(novas).toEqual([{ hora: '14:39', tarefa: '', nomeAs: 'INP2611181', operacao: '584447214', executado: 'nalves', tipo: 'cobrancas', origem: 'core' }]);
   });
 
   it('o tipo vem da regra: SP é SISP, TE/CD é compensação, DC fora da lista é salário', () => {
@@ -63,8 +63,9 @@ describe('das aplicações para a tabela de Processamentos', () => {
     expect(novas.map((n) => n.nomeAs)).toEqual(['A', 'B']);
   });
 
-  it('sem nome de ficheiro, a tarefa usa a referência', () => {
-    expect(tarefaDaOperacao(op({ ficheiro: '', referencia: 'BEN' }))).toBe('Aplicação BEN');
+  it('a «Tarefa» fica sempre vazia nas linhas do core', () => {
+    const { novas } = linhasParaTabela([op(), doLog({ ficheiro: '', referencia: 'BEN', modulo: 'EC', nOrdem: '7' })], [], OPERADORES);
+    expect(novas.every((n) => n.tarefa === '' && n.origem === 'core')).toBe(true);
   });
 
   it('um executante que não está na lista fica em minúsculas', () => {
