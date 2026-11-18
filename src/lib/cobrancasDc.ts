@@ -7,7 +7,7 @@ import type { OperacaoAplicada } from './aplicacoesDia';
 export const EMPRESAS_COBRANCAS = [
   'IMPAR', 'GARANTIA', 'P_COM_SISP', 'CHIPOWER', 'ELECTRA', 'ELECTRA1', 'DIRECTEL',
   'CVT_CIRCUI', 'CVT_FIXO', 'CVT_INTERN', 'CVT_MOVEL', 'CVT_PACOTE', 'CVT_PESSOL', 'CVT_RESI', 'CVT_ZAPTV',
-  'QUOTAS2', 'QUOTAS1', 'SINDICATO',
+  'QUOTAS2', 'QUOTAS1', 'SINDICATO', 'INPS',
 ] as const;
 
 /** Os três tipos de processamento da ficha. */
