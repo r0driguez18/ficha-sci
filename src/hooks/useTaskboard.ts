@@ -18,6 +18,8 @@ import { saveFileProcess } from '@/services/fileProcessService';
 import { createCobrancaRetorno } from '@/services/cobrancasRetornoService';
 import { saveExportedTaskboard, checkDuplicateOperations } from '@/services/exportedTaskboardService';
 import { consumirTokenAssinatura } from '@/services/operatorPinService';
+import { getAplicacoesDia } from '@/services/aplicacoesDiaService';
+import { geracaoRecente, VALIDADE_GERACAO_MIN } from '@/lib/aplicacoesDia';
 import { generateTaskboardPDF } from '@/utils/pdfGenerator';
 import { computeFichaHash } from '@/lib/signatureHash';
 import { fichaFileName } from '@/lib/fichaFileName';
@@ -617,6 +619,37 @@ export function useTaskboard(formType: FormType) {
     }
     setBusy(true);
     try {
+      // Aplicações do dia (core): é ao gerá-las que a tabela de Processamentos se preenche, por isso é obrigatório gerar antes
+      // de exportar (há pouco: o que se fez depois não estaria lá). Se o worker não está a funcionar e a tabela foi
+      // preenchida à mão, exporta-se na mesma, com um motivo escrito (fica na ficha, como nas datas a confirmar).
+      const geracao = await getAplicacoesDia(date);
+      if (geracao.error) {
+        toast.error('Não foi possível verificar se as aplicações do dia foram geradas — tenta novamente.');
+        return;
+      }
+      if (!geracaoRecente(geracao.data?.gerado_em)) {
+        const resposta = window.prompt(
+          [
+            geracao.data
+              ? `As aplicações do dia só foram geradas há mais de ${VALIDADE_GERACAO_MIN} minutos.`
+              : 'As aplicações do dia ainda não foram geradas.',
+            '',
+            "Cancela e carrega em 'Gerar aplicações do dia' (na ficha) antes de exportar: é assim que a tabela de Processamentos fica completa.",
+            '',
+            'Só se o worker não estiver a funcionar e a tabela estiver preenchida à mão: escreve o motivo (mínimo 10 caracteres) para exportar sem gerar.',
+          ].join('\n'),
+        );
+        if (resposta === null) return;
+        if (resposta.trim().length < 10) {
+          toast.error('Sem gerar as aplicações do dia, a ficha só se exporta com um motivo (pelo menos 10 caracteres).');
+          return;
+        }
+        const aviso = 'As aplicações do dia não foram geradas antes de exportar.';
+        confirmacaoData = confirmacaoData
+          ? { motivo: `${confirmacaoData.motivo} | ${resposta.trim()}`, avisos: [...confirmacaoData.avisos, aviso] }
+          : { motivo: resposta.trim(), avisos: [aviso] };
+      }
+
       const motivo = await verificar();
       if (motivo) {
         toast.error(

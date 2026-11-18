@@ -12,8 +12,10 @@ import {
   janelaDaFicha,
   lerExcelAplicacoes,
   lerOperacoes,
+  geracaoRecente,
   juntarOperacoes,
   nomeExcelAplicacoes,
+  VALIDADE_GERACAO_MIN,
   operacoesDeDc,
   selecionarOperacoes,
   situacaoDoPedido,
@@ -381,5 +383,23 @@ describe('DC: vêm da cópia da GBAPL (com nº de operação), não do log', () 
     expect(r).toHaveLength(2);
     expect(r.find((o) => o.tipo === 'A')?.empresa).toBe('TEIS');
     expect(r.find((o) => o.tipo === 'V')?.empresa).toBeUndefined();
+  });
+});
+
+describe('gerar as aplicações antes de exportar', () => {
+  const agora = Date.parse('2026-11-19T08:00:00Z');
+  const ha = (min: number) => new Date(agora - min * 60 * 1000).toISOString();
+
+  it('sem geração não passa', () => {
+    expect(geracaoRecente(null, agora)).toBe(false);
+    expect(geracaoRecente(undefined, agora)).toBe(false);
+    expect(geracaoRecente('lixo', agora)).toBe(false);
+  });
+
+  it('uma geração recente passa; uma antiga (passado o prazo) não', () => {
+    expect(geracaoRecente(ha(1), agora)).toBe(true);
+    expect(geracaoRecente(ha(VALIDADE_GERACAO_MIN), agora)).toBe(true); // no limite ainda passa
+    expect(geracaoRecente(ha(VALIDADE_GERACAO_MIN + 1), agora)).toBe(false);
+    expect(geracaoRecente(ha(600), agora)).toBe(false);
   });
 });
