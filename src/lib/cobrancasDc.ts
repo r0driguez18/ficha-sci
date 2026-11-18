@@ -11,12 +11,13 @@ export const EMPRESAS_COBRANCAS = [
 ] as const;
 
 /** Os três tipos de processamento da ficha. */
-export type TipoProcessamento = 'compensacao' | 'cobrancas' | 'salario';
+export type TipoProcessamento = 'compensacao' | 'cobrancas' | 'salario' | 'sisp';
 
 export const ROTULO_TIPO: Record<TipoProcessamento, string> = {
   compensacao: 'Compensação',
   cobrancas: 'Cobranças',
   salario: 'Salário',
+  sisp: 'SISP',
 };
 
 const normaliza = (s: string) => s.trim().toUpperCase();
@@ -43,11 +44,13 @@ export function cobrancasParaRetorno(operacoes: OperacaoAplicada[]): string[] {
 
 /**
  * Em que tipo cai uma operação:
- *  - fora do módulo DC (cheques, transferências, SISP…, vindos do registo de ficheiros processados): Compensação;
+ *  - módulo SP (interface com o SISP): SISP (não é compensação);
+ *  - fora do módulo DC e do SP (cheques, transferências…, vindos do registo de ficheiros processados): Compensação;
  *  - DC de uma empresa de cobrança (lista acima): Cobranças;
  *  - qualquer outro DC (débitos/créditos por lotes): Salário.
  */
 export function tipoDaOperacao(o: Pick<OperacaoAplicada, 'modulo' | 'empresa'>): TipoProcessamento {
+  if (o.modulo === 'SP') return 'sisp';
   if (o.modulo !== 'DC') return 'compensacao';
   return ehEmpresaDeCobranca(o.empresa) ? 'cobrancas' : 'salario';
 }

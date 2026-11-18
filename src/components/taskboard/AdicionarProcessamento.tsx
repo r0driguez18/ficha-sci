@@ -138,6 +138,7 @@ export const AdicionarProcessamento: React.FC<AdicionarProcessamentoProps> = ({
                 <SelectItem value="salario">Salário</SelectItem>
                 <SelectItem value="cobrancas">Cobranças</SelectItem>
                 <SelectItem value="compensacao">Compensação</SelectItem>
+                <SelectItem value="sisp">SISP</SelectItem>
               </SelectContent>
             </Select>
           </div>

@@ -1,7 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, ChevronRight, Download, FileSpreadsheet, Loader2, RefreshCw, Upload } from 'lucide-react';
+import { AlertTriangle, ChevronRight, Download, FileSpreadsheet, ListPlus, Loader2, RefreshCw, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { linhasParaTabela } from '@/lib/tabelaProcessamentos';
+import type { TaskTableRow } from '@/types/taskTableRow';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { guardarFicheiro } from '@/lib/guardarFicheiro';
@@ -46,7 +48,18 @@ const fmt = (iso?: string | null) => {
  * guardado, com o Excel para descarregar e a lista das operações reconhecidas. Sem worker, dá para carregar à mão o
  * Excel que o script gera. (Por agora só mostra: a tabela de Processamentos continua a ser preenchida como até aqui.)
  */
-export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean; operadores?: string[]; embutido?: boolean }> = ({ data, disabled, operadores, embutido }) => {
+interface Props {
+  data: string;
+  disabled?: boolean;
+  operadores?: string[];
+  embutido?: boolean;
+  /** As linhas que a tabela de Processamentos já tem (para não repetir o que está escrito à mão). */
+  tabela?: TaskTableRow[];
+  /** Acrescenta linhas à tabela de Processamentos da ficha. Sem isto o cartão só mostra (como no Histórico). */
+  onPreencherTabela?: (linhas: Omit<TaskTableRow, 'id'>[]) => void;
+}
+
+export const AplicacoesDiaCard: React.FC<Props> = ({ data, disabled, operadores, embutido, tabela, onPreencherTabela }) => {
   const [aplicacao, setAplicacao] = useState<AplicacoesDia | null>(null);
   const [pedido, setPedido] = useState<PedidoAplicacoes | null>(null);
   const { user } = useAuth();
@@ -167,11 +180,30 @@ export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean; ope
     () => selecionarOperacoes(todas, data, operadores),
     [todas, data, operadores],
   );
+  /** Junta à tabela de Processamentos as operações que ainda lá não estão (o que foi escrito à mão não se repete). */
+  const preencherTabela = useCallback(
+    (silencioso: boolean) => {
+      if (!onPreencherTabela) return;
+      const { novas, jaExistiam } = linhasParaTabela(filtradas, tabela ?? [], operadores ?? []);
+      if (novas.length > 0) onPreencherTabela(novas);
+      if (novas.length > 0) {
+        toast.success(
+          `${novas.length} processamento${novas.length === 1 ? '' : 's'} acrescentado${novas.length === 1 ? '' : 's'} à tabela de Processamentos` +
+            (jaExistiam > 0 ? ` (${jaExistiam} já lá estava${jaExistiam === 1 ? '' : 'm'}).` : '.'),
+        );
+      } else if (!silencioso) {
+        toast.info(filtradas.length === 0 ? 'Não há processamentos para acrescentar.' : 'A tabela já tem todos estes processamentos.');
+      }
+    },
+    [filtradas, tabela, operadores, onPreencherTabela],
+  );
+
   // Cobranças aplicadas (empresas da lista; validações não): criam o retorno logo que aparecem, sem esperar pela exportação
   // da ficha. Repetir não duplica: a base de dados só aceita um retorno por ficheiro e data.
   useEffect(() => {
     if (!criarRetornos) return;
     setCriarRetornos(false);
+    preencherTabela(true);
     const nomes = cobrancasParaRetorno(filtradas);
     if (nomes.length === 0 || !user?.id) return;
     void (async () => {
@@ -192,7 +224,7 @@ export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean; ope
       }
       if (falhas > 0) toast.error(`${falhas} retorno(s) de cobrança não foram registados — confirma em Retornos de Cobranças.`);
     })();
-  }, [criarRetornos, filtradas, user?.id, data]);
+  }, [criarRetornos, filtradas, user?.id, data, preencherTabela]);
 
   const pedidoComErro = pedido?.estado === 'erro' && (!aplicacao || pedido.pedido_em > aplicacao.gerado_em);
 
@@ -220,6 +252,12 @@ export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean; ope
             Carregar Excel
           </Button>
           <input ref={input} type="file" accept=".xlsx" className="hidden" onChange={(e) => void carregarExcel(e.target.files?.[0])} />
+          {temDados && onPreencherTabela && !disabled && (
+            <Button type="button" size="sm" variant="outline" onClick={() => preencherTabela(false)} disabled={filtradas.length === 0} className="gap-1.5" title="Acrescenta à tabela de Processamentos o que ainda lá não está">
+              <ListPlus className="h-4 w-4" />
+              Preencher tabela
+            </Button>
+          )}
           {temDados && (
             <Button type="button" size="sm" variant="outline" onClick={descarregar} disabled={busy === 'baixar' || filtradas.length === 0} className="gap-1.5">
               <Download className="h-4 w-4" />
