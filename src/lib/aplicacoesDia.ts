@@ -27,6 +27,8 @@ export const CODIGOS_GBAPL = [
   'ACTCST', 'ACSCST', 'ACTIVA', 'ACDMVE', 'ACDMVM', 'ACFRES', 'ACMOED',
 ] as const;
 
+import { ROTULO_TIPO, tipoDaOperacao } from './cobrancasDc';
+
 export type Celula = string | number | boolean | null;
 export type LinhaBruta = Celula[];
 
@@ -189,14 +191,41 @@ export function operacoesDeDc(registos: RegistoDc[]): OperacaoAplicada[] {
   return out;
 }
 
-/** Chave única de uma operação (para a lista): os DC pelo nº de operação, os outros pelo nº de ordem. */
+/** Chave única de uma operação (para a lista): as do log pelo nº de ordem, os DC pelo nº de operação. */
 export function chaveDaOperacao(o: OperacaoAplicada): string {
-  return o.nOperacao ? `dc-${o.empresa ?? ''}-${o.nOperacao}` : `log-${o.nOrdem}`;
+  return o.nOrdem ? `log-${o.nOrdem}` : `dc-${o.empresa ?? ''}-${o.nOperacao ?? ''}`;
 }
 
-/** As duas fontes juntas, por data e hora. */
+/**
+ * As duas fontes juntas, por data e hora, SEM duplicados. A tabela das aplicações em curso (GBAPL) também tem ficheiros que
+ * não são DC (os de compensação: RTR, RCT, RCB…), e esses já vêm do registo de ficheiros processados: quando o mesmo
+ * ficheiro (na mesma data) está nos dois, fica só a linha do registo (com o módulo certo) e passa a levar também a empresa, o
+ * nº de operação e os movimentos da GBAPL.
+ */
 export function juntarOperacoes(log: OperacaoAplicada[], dc: OperacaoAplicada[]): OperacaoAplicada[] {
-  return [...log, ...dc].sort(
+  const doLog = log.map((o) => ({ ...o }));
+  const gemeos = new Map<string, OperacaoAplicada[]>();
+  for (const o of doLog) {
+    if (!o.ficheiro) continue;
+    const k = `${o.data}|${o.ficheiro}`;
+    gemeos.set(k, [...(gemeos.get(k) ?? []), o]);
+  }
+  for (const lista of gemeos.values()) lista.sort((a, b) => Number(a.tipo === 'V') - Number(b.tipo === 'V')); // as aplicações primeiro
+  const usados = new Map<string, number>();
+  const soDc: OperacaoAplicada[] = [];
+  for (const d of dc) {
+    const k = `${d.data}|${d.ficheiro}`;
+    const lista = d.ficheiro ? gemeos.get(k) : undefined;
+    if (!lista) {
+      soDc.push(d);
+      continue;
+    }
+    const i = usados.get(k) ?? 0;
+    usados.set(k, i + 1);
+    const alvo = lista[i];
+    if (alvo) Object.assign(alvo, { empresa: d.empresa, nOperacao: d.nOperacao, movimentos: d.movimentos, aplicados: d.aplicados });
+  }
+  return [...doLog, ...soDc].sort(
     (a, b) => a.data.localeCompare(b.data) || a.hora.localeCompare(b.hora) || chaveDaOperacao(a).localeCompare(chaveDaOperacao(b), undefined, { numeric: true }),
   );
 }
@@ -233,6 +262,7 @@ export const COLUNAS_EXCEL_OPERACOES = [
   'Nº operação', // ACNOPR (só nos DC)
   'Movimentos', // ACNMOV (só nos DC)
   'Aplicados', // ACTAPL (só nos DC)
+  'Tipo', // Compensação / Cobranças / Salário
 ] as const;
 
 /** O Excel tratado: só os processamentos que se passam e só as colunas úteis, por ordem de hora. */
@@ -242,9 +272,10 @@ export async function excelDasOperacoes(operacoes: OperacaoAplicada[]): Promise<
     o.data, o.hora, o.ficheiro, o.referencia, o.modulo, o.utilizador,
     o.nOrdem ? Number(o.nOrdem) : null,
     o.empresa ?? null, o.nOperacao ? Number(o.nOperacao) : null, o.movimentos ?? null, o.aplicados ?? null,
+    ROTULO_TIPO[tipoDaOperacao(o)],
   ]);
   const ws = XLSX.utils.aoa_to_sheet([[...COLUNAS_EXCEL_OPERACOES], ...linhas]);
-  ws['!cols'] = [18, 16, 16, 24, 10, 24, 14, 14, 14, 12, 12].map((wch) => ({ wch }));
+  ws['!cols'] = [18, 16, 16, 24, 10, 24, 14, 14, 14, 12, 12, 14].map((wch) => ({ wch }));
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Processamentos');
   const bytes: ArrayBuffer = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });

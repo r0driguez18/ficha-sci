@@ -6,14 +6,13 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { guardarFicheiro } from '@/lib/guardarFicheiro';
 import { useAuth } from '@/components/auth/AuthProvider';
-import { cobrancasParaRetorno } from '@/lib/cobrancasDc';
+import { cobrancasParaRetorno, ROTULO_TIPO, tipoDaOperacao } from '@/lib/cobrancasDc';
 import { createCobrancaRetorno } from '@/services/cobrancasRetornoService';
 import { ZonaLargarFicheiro } from '@/components/ZonaLargarFicheiro';
 import {
   chaveDaOperacao,
   diaSeguinte,
   excelDasOperacoes,
-  janelaDaFicha,
   juntarOperacoes,
   lerExcelAplicacoes,
   lerOperacoes,
@@ -164,7 +163,7 @@ export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean; ope
   const dcDoDia = dc.filter((r) => r.data === data).length;
   // Só as operações da janela da ficha (07:00 → 07:00), dos operadores e já aplicadas (SISP, quem não é operador e as
   // validações — 0 aplicados — não entram no Excel).
-  const { selecionadas: filtradas, deOutros, validacoes, foraDaJanela, aviso: avisoJanela } = useMemo(
+  const { selecionadas: filtradas, aviso: avisoJanela } = useMemo(
     () => selecionarOperacoes(todas, data, operadores),
     [todas, data, operadores],
   );
@@ -276,17 +275,6 @@ export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean; ope
           {avisoJanela}
         </p>
       )}
-      {validacoes.length > 0 && (
-        <p className="mb-2 text-xs text-muted-foreground">
-          {validacoes.length} ficheiro{validacoes.length === 1 ? '' : 's'} só validado{validacoes.length === 1 ? '' : 's'} (sem aplicar) não entra{validacoes.length === 1 ? '' : 'm'} no Excel: só as aplicações.
-        </p>
-      )}
-      {foraDaJanela.length > 0 && (
-        <p className="mb-2 text-xs text-muted-foreground">
-          {foraDaJanela.length} operaç{foraDaJanela.length === 1 ? 'ão' : 'ões'} fora da janela desta ficha ({janelaDaFicha(data).inicio} a{' '}
-          {janelaDaFicha(data).fim}) não entram: são de outra ficha.
-        </p>
-      )}
       {leitura?.avisos.map((a) => (
         <p key={a} className="mb-2 flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400" role="alert">
           <AlertTriangle className="h-4 w-4 shrink-0" />
@@ -294,12 +282,6 @@ export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean; ope
         </p>
       ))}
 
-      {deOutros.length > 0 && (
-        <p className="mb-2 text-xs text-muted-foreground">
-          {deOutros.length} operaç{deOutros.length === 1 ? 'ão' : 'ões'} de outros utilizadores do core (
-          {[...new Set(deOutros.map((o) => o.utilizador))].join(', ')}) não entram no Excel nem na lista.
-        </p>
-      )}
       {aberta && temDados && filtradas.length > 0 && (
         <div className="overflow-x-auto rounded-lg border">
           <Table>
@@ -311,10 +293,9 @@ export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean; ope
                 <TableHead className="text-xs uppercase">Referência</TableHead>
                 <TableHead className="text-xs uppercase">Módulo</TableHead>
                 <TableHead className="text-xs uppercase">Processado por</TableHead>
-                <TableHead className="text-xs uppercase">Nº ordem</TableHead>
                 <TableHead className="text-xs uppercase">Empresa</TableHead>
                 <TableHead className="text-xs uppercase">Nº operação</TableHead>
-                <TableHead className="text-right text-xs uppercase">Mov. / aplic.</TableHead>
+                <TableHead className="text-xs uppercase">Tipo</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -326,10 +307,9 @@ export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean; ope
                   <TableCell>{o.referencia}</TableCell>
                   <TableCell>{o.modulo}</TableCell>
                   <TableCell>{o.utilizador}</TableCell>
-                  <TableCell className="font-mono text-xs">{o.nOrdem || '—'}</TableCell>
                   <TableCell>{o.empresa || '—'}</TableCell>
                   <TableCell className="font-mono text-xs">{o.nOperacao || '—'}</TableCell>
-                  <TableCell className="text-right tabular-nums">{o.nOperacao ? `${o.movimentos ?? 0} / ${o.aplicados ?? 0}` : '—'}</TableCell>
+                  <TableCell>{ROTULO_TIPO[tipoDaOperacao(o)]}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

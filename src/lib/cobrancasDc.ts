@@ -7,8 +7,17 @@ import type { OperacaoAplicada } from './aplicacoesDia';
 export const EMPRESAS_COBRANCAS = [
   'IMPAR', 'GARANTIA', 'P_COM_SISP', 'CHIPOWER', 'ELECTRA', 'ELECTRA1', 'DIRECTEL',
   'CVT_CIRCUI', 'CVT_FIXO', 'CVT_INTERN', 'CVT_MOVEL', 'CVT_PACOTE', 'CVT_PESSOL', 'CVT_RESI', 'CVT_ZAPTV',
-  'QUOTAS2', 'QUOTAS1', 'SINDICATO',
+  'QUOTAS2', 'QUOTAS1', 'SINDICATO', 'INPS',
 ] as const;
+
+/** Os três tipos de processamento da ficha. */
+export type TipoProcessamento = 'compensacao' | 'cobrancas' | 'salario';
+
+export const ROTULO_TIPO: Record<TipoProcessamento, string> = {
+  compensacao: 'Compensação',
+  cobrancas: 'Cobranças',
+  salario: 'Salário',
+};
 
 const normaliza = (s: string) => s.trim().toUpperCase();
 const CONJUNTO = new Set<string>(EMPRESAS_COBRANCAS.map(normaliza));
@@ -30,4 +39,15 @@ export function cobrancasParaRetorno(operacoes: OperacaoAplicada[]): string[] {
     if (nome && !nomes.includes(nome)) nomes.push(nome);
   }
   return nomes;
+}
+
+/**
+ * Em que tipo cai uma operação:
+ *  - fora do módulo DC (cheques, transferências, SISP…, vindos do registo de ficheiros processados): Compensação;
+ *  - DC de uma empresa de cobrança (lista acima): Cobranças;
+ *  - qualquer outro DC (débitos/créditos por lotes): Salário.
+ */
+export function tipoDaOperacao(o: Pick<OperacaoAplicada, 'modulo' | 'empresa'>): TipoProcessamento {
+  if (o.modulo !== 'DC') return 'compensacao';
+  return ehEmpresaDeCobranca(o.empresa) ? 'cobrancas' : 'salario';
 }

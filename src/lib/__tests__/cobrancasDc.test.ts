@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cobrancasParaRetorno, EMPRESAS_COBRANCAS, ehEmpresaDeCobranca } from '../cobrancasDc';
+import { cobrancasParaRetorno, EMPRESAS_COBRANCAS, ehEmpresaDeCobranca, ROTULO_TIPO, tipoDaOperacao } from '../cobrancasDc';
 import type { OperacaoAplicada } from '../aplicacoesDia';
 
 const dc = (c: Partial<OperacaoAplicada> = {}): OperacaoAplicada => ({
@@ -8,8 +8,8 @@ const dc = (c: Partial<OperacaoAplicada> = {}): OperacaoAplicada => ({
 });
 
 describe('cobranças dentro dos DC', () => {
-  it('são 18 empresas', () => {
-    expect(EMPRESAS_COBRANCAS).toHaveLength(18);
+  it('são 19 empresas', () => {
+    expect(EMPRESAS_COBRANCAS).toHaveLength(19);
   });
 
   it('reconhece as empresas da lista, sem distinguir maiúsculas nem espaços', () => {
@@ -37,5 +37,17 @@ describe('cobranças dentro dos DC', () => {
 
   it('o que não é DC não conta, mesmo com o nome igual', () => {
     expect(cobrancasParaRetorno([dc({ modulo: 'TE', empresa: 'IMPAR' })])).toEqual([]);
+  });
+
+  it('tipo: fora do DC é Compensação; DC de empresa de cobrança é Cobranças; os outros DC são Salário', () => {
+    expect(tipoDaOperacao({ modulo: 'TE' })).toBe('compensacao');
+    expect(tipoDaOperacao({ modulo: 'CD', empresa: 'IMPAR' })).toBe('compensacao'); // o módulo manda
+    expect(tipoDaOperacao({ modulo: 'DC', empresa: 'CVT_MOVEL' })).toBe('cobrancas');
+    expect(tipoDaOperacao({ modulo: 'DC', empresa: 'ORD_PS2_01' })).toBe('salario');
+    expect(tipoDaOperacao({ modulo: 'DC' })).toBe('salario');
+    expect(tipoDaOperacao({ modulo: 'DC', empresa: 'INPS' })).toBe('cobrancas');
+    expect(tipoDaOperacao({ modulo: 'DC', empresa: 'GARANTIA_F' })).toBe('salario'); // é pagamento; só «GARANTIA» é cobrança
+    expect(tipoDaOperacao({ modulo: 'DC', empresa: 'GARANTIA' })).toBe('cobrancas');
+    expect(ROTULO_TIPO.compensacao).toBe('Compensação');
   });
 });
