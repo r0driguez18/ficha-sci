@@ -37,7 +37,7 @@ export const Turno1TasksComponent: React.FC<Turno1TasksProps> = ({
       
       <div className="flex items-start space-x-2">
         <Checkbox id="abrirServidores" checked={tasks.abrirServidores} onCheckedChange={(c) => onTaskChange('abrirServidores', !!c)} />
-        <Label htmlFor="abrirServidores" className="cursor-pointer text-foreground">Abrir Servidores (OPDIF, SWIFT, CDPFS, CDGOV, TRMSG, AML)</Label>
+        <Label htmlFor="abrirServidores" className="cursor-pointer text-foreground">Abrir Servidores (OPDIF, SWIFT, CDPFS, CDGOV, TRMSG, AML, XCORE)</Label>
       </div>
       
       <div className="flex items-start space-x-2">

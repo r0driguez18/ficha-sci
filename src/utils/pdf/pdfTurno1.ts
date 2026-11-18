@@ -22,7 +22,7 @@ export const renderTurno1Tasks = (
     {key: 'datacenter', text: "Verificar Alarmes e Sistemas/Climatização DATA CENTER"},
     {key: 'sistemas', text: "Verificar Sistemas: BCACV1 / BCACV2"},
     {key: 'servicos', text: "Verificar Serviços Vinti4/BCADirecto/Replicação/ Servidor MIA"},
-    {key: 'abrirServidores', text: "Abrir Servidores (OPDIF, SWIFT, CDPFS, CDGOV, TRMSG, AML)"},
+    {key: 'abrirServidores', text: "Abrir Servidores (OPDIF, SWIFT, CDPFS, CDGOV, TRMSG, AML, XCORE)"},
     {key: 'percurso76931', text: "Percurso 76931 - Atualiza os alertas nos clientes com dados desatualizados"},
     {key: 'percurso76857', text: "Percurso 76857 -"},
     {key: 'enviar', text: "Enviar:"},
