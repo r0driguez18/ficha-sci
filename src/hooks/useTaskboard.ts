@@ -413,6 +413,14 @@ export function useTaskboard(formType: FormType) {
     });
   }, []);
 
+  /** Tira as linhas acrescentadas a partir do core (as escritas à mão ficam). */
+  const removeCoreRows = useCallback(() => {
+    setTableRows((rows) => {
+      const resto = rows.filter((r) => r.origem !== 'core');
+      return resto.length > 0 ? resto : [emptyTableRow(1, currentOperator?.value ?? '')];
+    });
+  }, [currentOperator?.value]);
+
   const removeTableRow = useCallback((id: number) => {
     setTableRows((rows) => (rows.length > 1 ? rows.filter((r) => r.id !== id) : rows));
   }, []);
@@ -835,6 +843,7 @@ export function useTaskboard(formType: FormType) {
     addTableRowWith,
     addTableRowsWith,
     removeTableRow,
+    removeCoreRows,
     handleInputChange,
     exportToPDF,
     resetForm,

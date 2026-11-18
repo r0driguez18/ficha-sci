@@ -71,4 +71,31 @@ describe('das aplicações para a tabela de Processamentos', () => {
   it('um executante que não está na lista fica em minúsculas', () => {
     expect(linhasParaTabela([op({ utilizador: 'XPTO' })], [], OPERADORES).novas[0].executado).toBe('xpto');
   });
+
+  it('o nome do ficheiro escrito na «Tarefa» também conta (é onde se escreve à mão)', () => {
+    const manual = [linha({ tarefa: 'ECI2611181', tipo: '' }), linha({ id: 2, tarefa: 'Aplicação ERI2611181 (ok)' })];
+    const ops = [doLog({ modulo: 'SP', ficheiro: 'ECI2611181', nOrdem: '1' }), doLog({ modulo: 'CD', ficheiro: 'ERI2611181', nOrdem: '2' }), doLog({ modulo: 'TE', ficheiro: 'ETR2611182', nOrdem: '3' })];
+    const r = linhasParaTabela(ops, manual, OPERADORES);
+    expect(r.jaExistiam).toBe(2);
+    expect(r.novas.map((n) => n.nomeAs)).toEqual(['ETR2611182']);
+    expect(r.manuaisSemCorrespondencia).toBe(0);
+  });
+
+  it('um ficheiro com o nome parecido na Tarefa não conta (só a palavra inteira)', () => {
+    const r = linhasParaTabela([doLog({ modulo: 'SP', ficheiro: 'ECI261118', nOrdem: '1' })], [linha({ tarefa: 'ECI2611181' })], OPERADORES);
+    expect(r.novas).toHaveLength(1);
+    expect(r.manuaisSemCorrespondencia).toBe(1);
+  });
+
+  it('conta as linhas à mão sem correspondência (e não as do core nem as vazias)', () => {
+    const existentes = [
+      linha({ id: 1, tarefa: 'Envio de impostos', tipo: 'salario' }), // à mão, sem ficheiro do core
+      linha({ id: 2, nomeAs: 'INP2611181', operacao: '584447214' }), // corresponde
+      linha({ id: 3, nomeAs: 'X', origem: 'core' }), // veio do core: não conta
+      linha({ id: 4 }), // vazia: não conta
+    ];
+    const r = linhasParaTabela([op()], existentes, OPERADORES);
+    expect(r.jaExistiam).toBe(1);
+    expect(r.manuaisSemCorrespondencia).toBe(1);
+  });
 });
