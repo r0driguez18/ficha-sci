@@ -54,24 +54,43 @@ export default function RetornosCobrancas() {
   const [observacoes, setObservacoes] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const fetchReturns = async () => {
+  // `silencioso`: atualização em segundo plano (sem o ecrã de «a carregar», sem limpar a seleção, sem avisos de erro).
+  const fetchReturns = async (silencioso = false) => {
     if (!user?.id) return;
-    setLoading(true);
+    if (!silencioso) setLoading(true);
     try {
       const { data, error } = await getAllReturns();
       if (error) throw error;
       setReturns(data || []);
-      setSelectedIds(new Set());
+      if (!silencioso) setSelectedIds(new Set());
     } catch (error) {
       console.error('Error fetching returns:', error);
-      toast({ title: 'Erro', description: 'Erro ao carregar retornos de cobranças', variant: 'destructive' });
+      if (!silencioso) toast({ title: 'Erro', description: 'Erro ao carregar retornos de cobranças', variant: 'destructive' });
     } finally {
-      setLoading(false);
+      if (!silencioso) setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchReturns();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
+  // Os retornos novos (criados na ficha por outro turno, ou ao gerar as aplicações) aparecem sem carregar em F5: ao voltar
+  // ao separador, quando a app avisa que há retornos novos, e de 30 em 30 segundos com o separador à vista.
+  useEffect(() => {
+    if (!user?.id) return;
+    const atualizar = () => {
+      if (!document.hidden) void fetchReturns(true);
+    };
+    const t = setInterval(atualizar, 30000);
+    document.addEventListener('visibilitychange', atualizar);
+    window.addEventListener('update-returns-badge', atualizar);
+    return () => {
+      clearInterval(t);
+      document.removeEventListener('visibilitychange', atualizar);
+      window.removeEventListener('update-returns-badge', atualizar);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
