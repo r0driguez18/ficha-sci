@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, ChevronRight, Download, FileSpreadsheet, ListPlus, Loader2, RefreshCw, Upload } from 'lucide-react';
+import { AlertTriangle, ChevronRight, Download, FileSpreadsheet, ListPlus, Loader2, RefreshCw, Trash2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { linhasParaTabela } from '@/lib/tabelaProcessamentos';
@@ -57,9 +57,11 @@ interface Props {
   tabela?: TaskTableRow[];
   /** Acrescenta linhas à tabela de Processamentos da ficha. Sem isto o cartão só mostra (como no Histórico). */
   onPreencherTabela?: (linhas: Omit<TaskTableRow, 'id'>[]) => void;
+  /** Tira da tabela as linhas acrescentadas a partir do core (as escritas à mão ficam). */
+  onRemoverDoCore?: () => void;
 }
 
-export const AplicacoesDiaCard: React.FC<Props> = ({ data, disabled, operadores, embutido, tabela, onPreencherTabela }) => {
+export const AplicacoesDiaCard: React.FC<Props> = ({ data, disabled, operadores, embutido, tabela, onPreencherTabela, onRemoverDoCore }) => {
   const [aplicacao, setAplicacao] = useState<AplicacoesDia | null>(null);
   const [pedido, setPedido] = useState<PedidoAplicacoes | null>(null);
   const { user } = useAuth();
@@ -184,13 +186,22 @@ export const AplicacoesDiaCard: React.FC<Props> = ({ data, disabled, operadores,
   const preencherTabela = useCallback(
     (silencioso: boolean) => {
       if (!onPreencherTabela) return;
-      const { novas, jaExistiam } = linhasParaTabela(filtradas, tabela ?? [], operadores ?? []);
+      const { novas, jaExistiam, manuaisSemCorrespondencia } = linhasParaTabela(filtradas, tabela ?? [], operadores ?? []);
       if (novas.length > 0) onPreencherTabela(novas);
+      // Linhas escritas à mão que não são nenhum ficheiro do core: podem ser outras tarefas, ou o mesmo trabalho escrito de
+      // outra forma (aí ficam repetidas). Diz-se, para a pessoa confirmar na tabela.
+      const aviso =
+        manuaisSemCorrespondencia > 0
+          ? `Há ${manuaisSemCorrespondencia} linha${manuaisSemCorrespondencia === 1 ? '' : 's'} escrita${manuaisSemCorrespondencia === 1 ? '' : 's'} à mão sem ficheiro do core correspondente: confirma que não estão repetidas.`
+          : undefined;
       if (novas.length > 0) {
         toast.success(
           `${novas.length} processamento${novas.length === 1 ? '' : 's'} acrescentado${novas.length === 1 ? '' : 's'} à tabela de Processamentos` +
             (jaExistiam > 0 ? ` (${jaExistiam} já lá estava${jaExistiam === 1 ? '' : 'm'}).` : '.'),
+          { description: aviso },
         );
+      } else if (aviso) {
+        toast.info(aviso);
       } else if (!silencioso) {
         toast.info(filtradas.length === 0 ? 'Não há processamentos para acrescentar.' : 'A tabela já tem todos estes processamentos.');
       }
@@ -256,6 +267,22 @@ export const AplicacoesDiaCard: React.FC<Props> = ({ data, disabled, operadores,
             <Button type="button" size="sm" variant="outline" onClick={() => preencherTabela(false)} disabled={filtradas.length === 0} className="gap-1.5" title="Acrescenta à tabela de Processamentos o que ainda lá não está">
               <ListPlus className="h-4 w-4" />
               Preencher tabela
+            </Button>
+          )}
+          {onRemoverDoCore && !disabled && (tabela ?? []).some((r) => r.origem === 'core') && (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                const n = (tabela ?? []).filter((r) => r.origem === 'core').length;
+                if (window.confirm(`Remover as ${n} linhas acrescentadas a partir do core? As escritas à mão ficam.`)) onRemoverDoCore();
+              }}
+              className="gap-1.5"
+              title="Tira da tabela só as linhas que o core acrescentou (as escritas à mão ficam)"
+            >
+              <Trash2 className="h-4 w-4" />
+              Remover as do core
             </Button>
           )}
           {temDados && (

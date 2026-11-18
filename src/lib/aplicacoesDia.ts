@@ -373,6 +373,20 @@ export function selecionarOperacoes(
   return { selecionadas, deOutros, validacoes, foraDaJanela, aviso };
 }
 
+/**
+ * Antes de exportar a ficha, as aplicações do dia têm de ter sido geradas há pouco: é aí que a tabela de Processamentos se
+ * preenche. Mais antigas que isto podem ter ficado para trás operações feitas depois, por isso pede-se para gerar de novo.
+ */
+export const VALIDADE_GERACAO_MIN = 60;
+
+/** A última geração (instante ISO) é recente o bastante para exportar? Sem geração, não. */
+export function geracaoRecente(geradoEm: string | null | undefined, agora: number = Date.now()): boolean {
+  if (!geradoEm) return false;
+  const t = new Date(geradoEm).getTime();
+  if (Number.isNaN(t)) return false;
+  return agora - t <= VALIDADE_GERACAO_MIN * 60 * 1000;
+}
+
 /** Quanto tempo se espera pelo worker antes de dar o pedido por perdido (a leitura do core demora segundos). */
 export const PRAZO_PEDIDO_MS = 3 * 60 * 1000;
 

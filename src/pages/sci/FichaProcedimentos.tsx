@@ -283,6 +283,7 @@ export default function FichaProcedimentos({ formType }: FichaProcedimentosProps
             operadores={operatorsList.map((o) => o.value)}
             tabela={tb.tableRows}
             onPreencherTabela={tb.addTableRowsWith}
+            onRemoverDoCore={tb.removeCoreRows}
           />
 
           {tb.showTapeVerification && (
