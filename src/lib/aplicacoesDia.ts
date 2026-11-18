@@ -1,6 +1,9 @@
 /**
- * Processamentos do dia vindos do core bancário: o registo de ficheiros processados (biblioteca PROMOF0003, objeto
- * $PLOGITF — «Log de ficheiros processados»).
+ * Processamentos do dia vindos do core bancário, de DUAS fontes:
+ *  - o registo de ficheiros processados (biblioteca PROMOF0003, objeto $PLOGITF — «Log de ficheiros processados»): tudo
+ *    menos os DC (cheques, transferências, SISP…);
+ *  - a cópia da tabela das aplicações em curso (GBAPL): só os DC (débitos/créditos por lotes), com o nº de operação, a
+ *    empresa e os movimentos. A GBAPL só guarda o dia atual, por isso o worker copia-a de 10 em 10 minutos.
  *
  * Ao contrário da tabela antiga das aplicações (GBAPL, que se esvaziava à meia-noite), este registo guarda o histórico,
  * por isso dá para pedir um dia qualquer. O worker (ou o Excel carregado à mão) entrega as linhas em bruto: `colunas` (os
@@ -13,6 +16,15 @@
 export const CODIGOS_PLOGITF = [
   '$PLOFILE', '$PLOLIB', '$PLOMBR', '$PLOREFT', '$PLOAPLPR', '$PLOUSPR', '$PLODTPR', '$PLODTAPPR', '$PLOHOPR', '$PLOUSAP',
   '$PLODTAP', '$PLODTAPAP', '$PLOHOAP', '$PLOTIPR', '$PLOAPTR', '$PLONORD', '$PLOMOD', '$PLOBUFFER',
+] as const;
+
+/** Campos da GBAPL pela ordem em que o core os devolve (é a ordem em que o worker guarda cada registo). */
+export const CODIGOS_GBAPL = [
+  'ACEMP', 'ACSQAP', 'ACNLOT', 'ACSITU', 'GBACREFEF', 'ACFILI', 'ACFILY', 'ACLIBE', 'ACFILE', 'ACMBR', 'ACTDEB', 'ACTCRE',
+  'ACTMVD', 'ACTMVC', 'ACTSER', 'ACCOPD', 'ACCOPC', 'ACHORA', 'ACDTIN', 'ACHORF', 'ACDATF', 'ACSEQF', 'ACREFC', 'ACNMOV',
+  'ACTAPL', 'ACTPND', 'ACTDEV', 'ACTTRT', 'ACEXCT', 'ACTLAY', 'ACCODC', 'ACCOAP', 'ACVAUD', 'ACFACT', 'ACDLIM', 'ACCNLE',
+  'ACCNLM', 'GBACTPNTE', 'GBACTPNTM', 'ACDSNE', 'ACDSNM', 'ACUSER', 'ACBYPA', 'ACNOPR', 'ACPRCP', 'ACBALM', 'ACCOMS',
+  'ACTCST', 'ACSCST', 'ACTIVA', 'ACDMVE', 'ACDMVM', 'ACFRES', 'ACMOED',
 ] as const;
 
 export type Celula = string | number | boolean | null;
@@ -34,8 +46,15 @@ export interface OperacaoAplicada {
   utilizador: string;
   /** V = só validado; A = aplicado. */
   tipo: string;
-  /** Número de ordem do registo. */
+  /** Número de ordem do registo (do log; os DC não o têm). */
   nOrdem: string;
+  /** Só nos DC (vêm da cópia da GBAPL): empresa/serviço (ex.: ORD_PS2_01, MSCC, TELECOMP). */
+  empresa?: string;
+  /** Só nos DC: nº da operação (9 dígitos). */
+  nOperacao?: string;
+  /** Só nos DC: movimentos e aplicados do lote. */
+  movimentos?: number;
+  aplicados?: number;
 }
 
 const texto = (v: Celula | undefined) => (v === null || v === undefined ? '' : String(v).trim());
@@ -73,6 +92,8 @@ export interface ResultadoLeitura {
   operacoes: OperacaoAplicada[];
   /** Coisas a ver: estrutura diferente, dados do formato antigo… */
   avisos: string[];
+  /** Registos DC que vinham no log e se ignoraram (os DC vêm da cópia da GBAPL, que tem o nº de operação). */
+  dcIgnorados?: number;
 }
 
 /**
@@ -100,11 +121,17 @@ export function lerOperacoes(linhas: LinhaBruta[]): ResultadoLeitura {
   const g = (l: LinhaBruta, c: string) => l[indices[c]];
 
   const operacoes: OperacaoAplicada[] = [];
+  let dcIgnorados = 0;
   for (const l of linhas) {
     const data = dataDoCore(g(l, '$PLODTPR'));
     const nOrdem = texto(g(l, '$PLONORD'));
     // só registos reais: data de 8 dígitos e nº de ordem numérico > 0 (exclui o registo de códigos e linhas vazias)
     if (!data || !/^\d+$/.test(nOrdem) || Number(nOrdem) <= 0) continue;
+    // Os DC (módulo DC) vêm da cópia da GBAPL, que tem o nº de operação e a empresa: aqui não entram.
+    if (texto(g(l, '$PLOMOD')).toUpperCase() === 'DC') {
+      dcIgnorados++;
+      continue;
+    }
     operacoes.push({
       data,
       hora: horaDoCore(g(l, '$PLOHOPR')),
@@ -120,8 +147,58 @@ export function lerOperacoes(linhas: LinhaBruta[]): ResultadoLeitura {
     (a, b) => a.data.localeCompare(b.data) || a.hora.localeCompare(b.hora) || a.nOrdem.localeCompare(b.nOrdem, undefined, { numeric: true }),
   );
 
-  if (operacoes.length === 0) avisos.push('Não há processamentos com nº de ordem neste ficheiro.');
-  return { operacoes, avisos };
+  if (operacoes.length === 0 && dcIgnorados === 0) avisos.push('Não há processamentos com nº de ordem neste ficheiro.');
+  return { operacoes, avisos, dcIgnorados };
+}
+
+/** Uma operação DC guardada pelo worker (a cópia da GBAPL): a data de início e o registo em bruto. */
+export interface RegistoDc {
+  data: string;
+  empresa: string;
+  seq: number;
+  n_operacao: string;
+  linha: LinhaBruta;
+}
+
+/**
+ * Os DC da cópia da GBAPL, no mesmo formato dos outros processamentos. Cada registo traz a empresa, o nº de operação e os
+ * movimentos. Um lote sem nenhum movimento aplicado (0 aplicados) é só uma validação e fica marcado como tal (tipo V).
+ */
+export function operacoesDeDc(registos: RegistoDc[]): OperacaoAplicada[] {
+  const i = (c: (typeof CODIGOS_GBAPL)[number]) => CODIGOS_GBAPL.indexOf(c);
+  const out: OperacaoAplicada[] = [];
+  for (const r of registos) {
+    const l = r.linha;
+    if (!Array.isArray(l) || l.length <= i('ACNOPR')) continue;
+    const aplicados = numero(l[i('ACTAPL')]);
+    out.push({
+      data: dataDoCore(l[i('ACDTIN')]) || r.data,
+      hora: horaDoCore(l[i('ACHORA')]),
+      ficheiro: texto(l[i('ACFILE')]),
+      referencia: '',
+      modulo: 'DC',
+      utilizador: texto(l[i('ACUSER')]),
+      tipo: aplicados > 0 ? 'A' : 'V',
+      nOrdem: '',
+      empresa: texto(l[i('ACEMP')]) || r.empresa,
+      nOperacao: texto(l[i('ACNOPR')]) || r.n_operacao,
+      movimentos: numero(l[i('ACNMOV')]),
+      aplicados,
+    });
+  }
+  return out;
+}
+
+/** Chave única de uma operação (para a lista): os DC pelo nº de operação, os outros pelo nº de ordem. */
+export function chaveDaOperacao(o: OperacaoAplicada): string {
+  return o.nOperacao ? `dc-${o.empresa ?? ''}-${o.nOperacao}` : `log-${o.nOrdem}`;
+}
+
+/** As duas fontes juntas, por data e hora. */
+export function juntarOperacoes(log: OperacaoAplicada[], dc: OperacaoAplicada[]): OperacaoAplicada[] {
+  return [...log, ...dc].sort(
+    (a, b) => a.data.localeCompare(b.data) || a.hora.localeCompare(b.hora) || chaveDaOperacao(a).localeCompare(chaveDaOperacao(b), undefined, { numeric: true }),
+  );
 }
 
 /**
@@ -151,15 +228,23 @@ export const COLUNAS_EXCEL_OPERACOES = [
   'Referência p/ tratamento', // $PLOREFT
   'Módulo', // $PLOMOD
   'Utilizador processamento', // $PLOUSPR
-  'Número ordem', // $PLONORD
+  'Número ordem', // $PLONORD (só no log)
+  'Empresa', // ACEMP (só nos DC)
+  'Nº operação', // ACNOPR (só nos DC)
+  'Movimentos', // ACNMOV (só nos DC)
+  'Aplicados', // ACTAPL (só nos DC)
 ] as const;
 
 /** O Excel tratado: só os processamentos que se passam e só as colunas úteis, por ordem de hora. */
 export async function excelDasOperacoes(operacoes: OperacaoAplicada[]): Promise<Blob> {
   const XLSX = await import('xlsx');
-  const linhas = operacoes.map((o) => [o.data, o.hora, o.ficheiro, o.referencia, o.modulo, o.utilizador, Number(o.nOrdem)]);
+  const linhas = operacoes.map((o) => [
+    o.data, o.hora, o.ficheiro, o.referencia, o.modulo, o.utilizador,
+    o.nOrdem ? Number(o.nOrdem) : null,
+    o.empresa ?? null, o.nOperacao ? Number(o.nOperacao) : null, o.movimentos ?? null, o.aplicados ?? null,
+  ]);
   const ws = XLSX.utils.aoa_to_sheet([[...COLUNAS_EXCEL_OPERACOES], ...linhas]);
-  ws['!cols'] = [18, 16, 16, 24, 10, 24, 14].map((wch) => ({ wch }));
+  ws['!cols'] = [18, 16, 16, 24, 10, 24, 14, 14, 14, 12, 12].map((wch) => ({ wch }));
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Processamentos');
   const bytes: ArrayBuffer = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
@@ -200,7 +285,7 @@ export async function lerExcelAplicacoes(ficheiro: ArrayBuffer): Promise<{ colun
 /** A ficha do dia D cobre das 07:00 de D às 07:00 de D+1 (manhã, tarde, noite e madrugada): é o que se valida no dia seguinte. */
 export const HORA_INICIO_FICHA = 7;
 
-function diaSeguinte(iso: string): string {
+export function diaSeguinte(iso: string): string {
   const [a, m, d] = iso.split('-').map(Number);
   return new Date(Date.UTC(a, m - 1, d + 1)).toISOString().slice(0, 10);
 }

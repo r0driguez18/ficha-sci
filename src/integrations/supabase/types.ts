@@ -363,6 +363,36 @@ export type Database = {
         }
         Relationships: []
       }
+      aplicacoes_dc: {
+        Row: {
+          atualizada_em: string
+          data: string
+          empresa: string
+          linha: Json
+          n_operacao: string
+          primeira_copia: string
+          seq: number
+        }
+        Insert: {
+          atualizada_em?: string
+          data: string
+          empresa: string
+          linha: Json
+          n_operacao: string
+          primeira_copia?: string
+          seq: number
+        }
+        Update: {
+          atualizada_em?: string
+          data?: string
+          empresa?: string
+          linha?: Json
+          n_operacao?: string
+          primeira_copia?: string
+          seq?: number
+        }
+        Relationships: []
+      }
       pedidos_aplicacoes: {
         Row: {
           aplicacao_id: string | null

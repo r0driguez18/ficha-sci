@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  CODIGOS_GBAPL,
   CODIGOS_PLOGITF,
   COLUNAS_EXCEL_OPERACOES,
   dataDoCore,
@@ -11,7 +12,9 @@ import {
   janelaDaFicha,
   lerExcelAplicacoes,
   lerOperacoes,
+  juntarOperacoes,
   nomeExcelAplicacoes,
+  operacoesDeDc,
   selecionarOperacoes,
   situacaoDoPedido,
   type LinhaBruta,
@@ -40,7 +43,7 @@ function registo(c: Campos = {}): LinhaBruta {
     $PLOTIPR: 'R',
     $PLOAPTR: c.tipo ?? 'A',
     $PLONORD: c.ordem ?? ++seq,
-    $PLOMOD: c.modulo ?? 'DC',
+    $PLOMOD: c.modulo ?? 'TE',
   };
   for (const [k, v] of Object.entries(por)) l[CODIGOS_PLOGITF.indexOf(k as (typeof CODIGOS_PLOGITF)[number])] = v;
   return l;
@@ -198,11 +201,12 @@ describe('só os processamentos dos operadores', () => {
   });
 
   it('o Excel tratado só tem as colunas úteis e os processamentos dados', async () => {
-    const um = lerOperacoes([registo({ ficheiro: 'SACERM11A', ref: 'PS2', modulo: 'DC', hora: 103821, ordem: 225083 })]).operacoes;
+    const um = lerOperacoes([registo({ ficheiro: 'SACERM11A', ref: 'PS2', modulo: 'TE', hora: 103821, ordem: 225083 })]).operacoes;
     const lido = await lerExcelAplicacoes(await (await excelDasOperacoes(um)).arrayBuffer());
     expect(lido.colunas).toEqual([...COLUNAS_EXCEL_OPERACOES]);
-    expect(lido.colunas).toHaveLength(7);
-    expect(lido.linhas).toEqual([['2026-11-11', '10:38', 'SACERM11A', 'PS2', 'DC', 'NALVES', 225083]]);
+    expect(lido.colunas).toHaveLength(11);
+    expect(lido.linhas).toHaveLength(1);
+    expect(lido.linhas[0].slice(0, 7)).toEqual(['2026-11-11', '10:38', 'SACERM11A', 'PS2', 'TE', 'NALVES', 225083]);
   });
 });
 
@@ -270,5 +274,76 @@ describe('validações (só validado, sem aplicar) ficam de fora', () => {
   it('o mesmo ficheiro aplicado duas vezes no dia fica as duas vezes (reprocessamento)', () => {
     const ops = lerOperacoes([registo({ ficheiro: 'CBE260107', hora: 90000 }), registo({ ficheiro: 'CBE260107', hora: 91500 })]).operacoes;
     expect(selecionarOperacoes(ops, dia, ['nalves']).selecionadas).toHaveLength(2);
+  });
+});
+
+describe('DC: vêm da cópia da GBAPL (com nº de operação), não do log', () => {
+  /** Um registo da GBAPL pela ordem conhecida, como o worker o guarda. */
+  const dcRegisto = (c: Record<string, string | number> = {}) => {
+    const linha: LinhaBruta = CODIGOS_GBAPL.map(() => '');
+    const por: Record<string, string | number> = {
+      ACEMP: 'ORD_PS2_01', ACSQAP: 1, ACFILE: 'SACERM11A', ACHORA: 103752, ACDTIN: 20261111, ACNOPR: 123456789, ACUSER: 'NALVES',
+      ACNMOV: 12, ACTAPL: 12, ...c,
+    };
+    for (const [k, v] of Object.entries(por)) linha[CODIGOS_GBAPL.indexOf(k as (typeof CODIGOS_GBAPL)[number])] = v;
+    return { data: '2026-11-11', empresa: String(por.ACEMP), seq: Number(por.ACSQAP), n_operacao: String(por.ACNOPR), linha };
+  };
+
+  it('os DC do log ignoram-se (e contam-se)', () => {
+    const r = lerOperacoes([CODIGOS, registo({ modulo: 'DC' }), registo({ modulo: 'TE', ficheiro: 'RTR2611111' }), registo({ modulo: 'dc' })]);
+    expect(r.operacoes.map((o) => o.ficheiro)).toEqual(['RTR2611111']);
+    expect(r.dcIgnorados).toBe(2);
+  });
+
+  it('um ficheiro só com DC não dá o aviso «não há processamentos»', () => {
+    expect(lerOperacoes([CODIGOS, registo({ modulo: 'DC' })]).avisos).toEqual([]);
+  });
+
+  it('operacoesDeDc: empresa, nº de operação, movimentos e aplicados', () => {
+    const [o] = operacoesDeDc([dcRegisto()]);
+    expect(o).toMatchObject({
+      data: '2026-11-11', hora: '10:37', ficheiro: 'SACERM11A', modulo: 'DC', utilizador: 'NALVES', tipo: 'A',
+      empresa: 'ORD_PS2_01', nOperacao: '123456789', movimentos: 12, aplicados: 12,
+    });
+  });
+
+  it('um lote com 0 aplicados é só uma validação (tipo V) e não entra na seleção', () => {
+    const ops = operacoesDeDc([dcRegisto({ ACTAPL: 0 }), dcRegisto({ ACNOPR: 123456790, ACHORA: 110000 })]);
+    expect(ops.map((o) => o.tipo)).toEqual(['V', 'A']);
+    const sel = selecionarOperacoes(ops, '2026-11-11', ['nalves']);
+    expect(sel.selecionadas.map((o) => o.nOperacao)).toEqual(['123456790']);
+    expect(sel.validacoes).toHaveLength(1);
+  });
+
+  it('um registo curto ou que não é uma lista fica de fora', () => {
+    expect(operacoesDeDc([{ ...dcRegisto(), linha: [1, 2, 3] }])).toEqual([]);
+  });
+
+  it('juntar: DC e log por data e hora; a janela e os operadores aplicam-se a todos', () => {
+    const log = lerOperacoes([registo({ ficheiro: 'RTR2611111', hora: 85656, user: 'NALVES' }), registo({ ficheiro: 'ETR2611112', data: 20261112, hora: 30000, user: 'NALVES' })]).operacoes;
+    const dc = operacoesDeDc([
+      dcRegisto({ ACHORA: 103752 }),
+      { ...dcRegisto({ ACNOPR: 555, ACDTIN: 20261112, ACHORA: 123000 }), data: '2026-11-12' }, // 12/11 12:30: já é da ficha seguinte
+      dcRegisto({ ACNOPR: 556, ACUSER: 'SISP', ACHORA: 140000 }),
+    ]);
+    const todas = juntarOperacoes(log, dc);
+    expect(todas.map((o) => `${o.data} ${o.hora}`)).toEqual(['2026-11-11 08:56', '2026-11-11 10:37', '2026-11-11 14:00', '2026-11-12 03:00', '2026-11-12 12:30']);
+    const sel = selecionarOperacoes(todas, '2026-11-11', ['nalves', 'etavares']);
+    expect(sel.selecionadas.map((o) => o.ficheiro)).toEqual(['RTR2611111', 'SACERM11A', 'ETR2611112']);
+    expect(sel.deOutros.map((o) => o.utilizador)).toEqual(['SISP']);
+    expect(sel.foraDaJanela.map((o) => o.nOperacao)).toEqual(['555']);
+  });
+
+  it('o Excel tratado leva empresa, nº de operação e movimentos dos DC (e vazio nos outros)', async () => {
+    const log = lerOperacoes([registo({ ficheiro: 'RTR2611111', hora: 85656 })]).operacoes;
+    const todas = juntarOperacoes(log, operacoesDeDc([dcRegisto()]));
+    const lido = await lerExcelAplicacoes(await (await excelDasOperacoes(todas)).arrayBuffer());
+    expect(lido.colunas).toEqual([...COLUNAS_EXCEL_OPERACOES]);
+    expect(lido.colunas.slice(-4)).toEqual(['Empresa', 'Nº operação', 'Movimentos', 'Aplicados']);
+    const dcLinha = lido.linhas.find((l) => l[2] === 'SACERM11A');
+    expect(dcLinha?.slice(-4)).toEqual(['ORD_PS2_01', 123456789, 12, 12]);
+    expect(dcLinha?.[6]).toBeNull(); // sem nº de ordem
+    const logLinha = lido.linhas.find((l) => l[2] === 'RTR2611111');
+    expect(logLinha?.[7]).toBeNull();
   });
 });
