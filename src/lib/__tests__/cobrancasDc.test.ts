@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cobrancasParaRetorno, EMPRESAS_COBRANCAS, ehEmpresaDeCobranca } from '../cobrancasDc';
+import { cobrancasParaRetorno, EMPRESAS_COBRANCAS, ehEmpresaDeCobranca, ROTULO_TIPO, tipoDaOperacao } from '../cobrancasDc';
 import type { OperacaoAplicada } from '../aplicacoesDia';
 
 const dc = (c: Partial<OperacaoAplicada> = {}): OperacaoAplicada => ({
@@ -37,5 +37,14 @@ describe('cobranças dentro dos DC', () => {
 
   it('o que não é DC não conta, mesmo com o nome igual', () => {
     expect(cobrancasParaRetorno([dc({ modulo: 'TE', empresa: 'IMPAR' })])).toEqual([]);
+  });
+
+  it('tipo: fora do DC é Compensação; DC de empresa de cobrança é Cobranças; os outros DC são Salário', () => {
+    expect(tipoDaOperacao({ modulo: 'TE' })).toBe('compensacao');
+    expect(tipoDaOperacao({ modulo: 'CD', empresa: 'IMPAR' })).toBe('compensacao'); // o módulo manda
+    expect(tipoDaOperacao({ modulo: 'DC', empresa: 'CVT_MOVEL' })).toBe('cobrancas');
+    expect(tipoDaOperacao({ modulo: 'DC', empresa: 'ORD_PS2_01' })).toBe('salario');
+    expect(tipoDaOperacao({ modulo: 'DC' })).toBe('salario');
+    expect(ROTULO_TIPO.compensacao).toBe('Compensação');
   });
 });

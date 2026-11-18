@@ -204,7 +204,7 @@ describe('só os processamentos dos operadores', () => {
     const um = lerOperacoes([registo({ ficheiro: 'SACERM11A', ref: 'PS2', modulo: 'TE', hora: 103821, ordem: 225083 })]).operacoes;
     const lido = await lerExcelAplicacoes(await (await excelDasOperacoes(um)).arrayBuffer());
     expect(lido.colunas).toEqual([...COLUNAS_EXCEL_OPERACOES]);
-    expect(lido.colunas).toHaveLength(11);
+    expect(lido.colunas).toHaveLength(12);
     expect(lido.linhas).toHaveLength(1);
     expect(lido.linhas[0].slice(0, 7)).toEqual(['2026-11-11', '10:38', 'SACERM11A', 'PS2', 'TE', 'NALVES', 225083]);
   });
@@ -339,11 +339,47 @@ describe('DC: vêm da cópia da GBAPL (com nº de operação), não do log', () 
     const todas = juntarOperacoes(log, operacoesDeDc([dcRegisto()]));
     const lido = await lerExcelAplicacoes(await (await excelDasOperacoes(todas)).arrayBuffer());
     expect(lido.colunas).toEqual([...COLUNAS_EXCEL_OPERACOES]);
-    expect(lido.colunas.slice(-4)).toEqual(['Empresa', 'Nº operação', 'Movimentos', 'Aplicados']);
+    expect(lido.colunas.slice(-5)).toEqual(['Empresa', 'Nº operação', 'Movimentos', 'Aplicados', 'Tipo']);
     const dcLinha = lido.linhas.find((l) => l[2] === 'SACERM11A');
-    expect(dcLinha?.slice(-4)).toEqual(['ORD_PS2_01', 123456789, 12, 12]);
+    expect(dcLinha?.slice(-5)).toEqual(['ORD_PS2_01', 123456789, 12, 12, 'Salário']);
     expect(dcLinha?.[6]).toBeNull(); // sem nº de ordem
     const logLinha = lido.linhas.find((l) => l[2] === 'RTR2611111');
     expect(logLinha?.[7]).toBeNull();
+    expect(logLinha?.[11]).toBe('Compensação');
+  });
+
+  it('o mesmo ficheiro nos dois sítios (RTR, RCB… são compensação, não DC): fica só a linha do log, com a empresa e o nº de operação', () => {
+    const log = lerOperacoes([
+      registo({ ficheiro: 'RTR2611181', ref: 'RTR', modulo: 'TE', hora: 85400, data: 20261118, user: 'ETAVARES', ordem: 225453 }),
+      registo({ ficheiro: 'RCB2611181', ref: 'RCB', modulo: 'CD', hora: 85400, data: 20261118, user: 'ETAVARES', ordem: 225455 }),
+    ]).operacoes;
+    const dc = operacoesDeDc([
+      { ...dcRegisto({ ACFILE: 'RTR2611181', ACEMP: 'TEIS', ACNOPR: 584414942, ACHORA: 85400, ACDTIN: 20261118, ACUSER: 'ETAVARES', ACNMOV: 2438, ACTAPL: 2438 }), data: '2026-11-18' },
+      { ...dcRegisto({ ACFILE: 'RCB2611181', ACEMP: 'TELECOMP', ACNOPR: 584414993, ACHORA: 85400, ACDTIN: 20261118, ACUSER: 'ETAVARES', ACNMOV: 210, ACTAPL: 210 }), data: '2026-11-18' },
+      { ...dcRegisto({ ACFILE: 'INP2611181', ACEMP: 'INPS', ACNOPR: 584447214, ACHORA: 143900, ACDTIN: 20261118, ACUSER: 'NALVES' }), data: '2026-11-18' },
+    ]);
+    const todas = juntarOperacoes(log, dc);
+    expect(todas.map((o) => o.ficheiro).sort()).toEqual(['INP2611181', 'RCB2611181', 'RTR2611181']); // sem repetidos
+    const rtr = todas.find((o) => o.ficheiro === 'RTR2611181');
+    expect(rtr).toMatchObject({ modulo: 'TE', empresa: 'TEIS', nOperacao: '584414942', movimentos: 2438 });
+    expect(todas.find((o) => o.ficheiro === 'INP2611181')?.modulo).toBe('DC'); // o que só está na GBAPL continua DC
+  });
+
+  it('o mesmo nome noutro dia não conta como duplicado', () => {
+    const log = lerOperacoes([registo({ ficheiro: 'RTR2611181', modulo: 'TE', data: 20261118 })]).operacoes;
+    const dc = operacoesDeDc([{ ...dcRegisto({ ACFILE: 'RTR2611181', ACDTIN: 20261119 }), data: '2026-11-19' }]);
+    expect(juntarOperacoes(log, dc)).toHaveLength(2);
+  });
+
+  it('um ficheiro com validação e aplicação no log: a empresa vai para a aplicação, não para a validação', () => {
+    const log = lerOperacoes([
+      registo({ ficheiro: 'RCT2611181', modulo: 'TE', tipo: 'V', hora: 85300 }),
+      registo({ ficheiro: 'RCT2611181', modulo: 'TE', tipo: 'A', hora: 85400 }),
+    ]).operacoes;
+    const dc = operacoesDeDc([{ ...dcRegisto({ ACFILE: 'RCT2611181', ACEMP: 'TEIS', ACDTIN: 20261111 }), data: '2026-11-11' }]);
+    const r = juntarOperacoes(log, dc);
+    expect(r).toHaveLength(2);
+    expect(r.find((o) => o.tipo === 'A')?.empresa).toBe('TEIS');
+    expect(r.find((o) => o.tipo === 'V')?.empresa).toBeUndefined();
   });
 });
