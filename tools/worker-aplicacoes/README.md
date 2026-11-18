@@ -60,6 +60,22 @@ schtasks /Create /SC ONLOGON /TN "Worker Aplicacoes" /TR "C:\fichas\ficha-sci\to
 O registo fica em `worker.log`, ao lado do `worker.py` (ex.: `C:\fichas\ficha-sci\tools\worker-aplicacoes\worker.log`), no PC onde o worker corre — não no servidor. O PC tem de estar ligado e com sessão iniciada; para não depender
 de um PC, o mesmo worker passa para o servidor (precisa do driver ODBC do IBM i para Linux e de chegar ao core).
 
+## Cópia dos DC (débitos/créditos por lotes)
+
+Além de responder aos pedidos, o worker **copia as aplicações DC** da tabela «em curso» do core (`GBANCA0003.GBAPL`) para a
+app: logo ao arrancar, de 10 em 10 minutos e às 23:55 e 23:59. É a única tabela com o nº de operação, a empresa e os
+movimentos, mas só guarda o dia atual (à meia-noite esvazia-se); sem esta cópia perdiam-se os DC de cada dia. O PC tem de
+estar ligado (não precisa de sessão iniciada, se o worker arranca como tarefa do sistema).
+
+O registo de ficheiros processados (`$PLOGITF`) já não traz os DC (`AND $PLOMOD <> 'DC'`): vêm só da cópia. A app junta as duas
+fontes na ficha.
+
+    venv\Scripts\python worker.py --copiar      faz já uma cópia e diz quantas operações gravou (para testar)
+
+Depois de um `git pull` **reinicia a tarefa** (o Python só carrega o código ao arrancar):
+`Stop-ScheduledTask -TaskName "Worker Aplicacoes"` e `Start-ScheduledTask -TaskName "Worker Aplicacoes"`. No `worker.log`, a
+linha `Cópia dos DC (...)` ao arrancar mostra que é o código novo. Testes (sem core nem rede): `python test_worker.py`.
+
 ## Ver que dias tem a tabela do core
 
 Diagnóstico só de leitura (não entrega nada à app): mostra os dias (`$PLODTPR`) que o registo do core tem e quantos registos cada um.

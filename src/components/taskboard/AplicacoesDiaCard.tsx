@@ -6,9 +6,23 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { guardarFicheiro } from '@/lib/guardarFicheiro';
 import { ZonaLargarFicheiro } from '@/components/ZonaLargarFicheiro';
-import { excelDasOperacoes, janelaDaFicha, lerExcelAplicacoes, lerOperacoes, nomeExcelAplicacoes, selecionarOperacoes, situacaoDoPedido } from '@/lib/aplicacoesDia';
+import {
+  chaveDaOperacao,
+  diaSeguinte,
+  excelDasOperacoes,
+  janelaDaFicha,
+  juntarOperacoes,
+  lerExcelAplicacoes,
+  lerOperacoes,
+  nomeExcelAplicacoes,
+  operacoesDeDc,
+  selecionarOperacoes,
+  situacaoDoPedido,
+  type RegistoDc,
+} from '@/lib/aplicacoesDia';
 import {
   getAplicacoesDia,
+  getCopiaDc,
   getUltimoPedido,
   pedirAplicacoesDia,
   registarAplicacoesManual,
@@ -33,21 +47,24 @@ const fmt = (iso?: string | null) => {
 export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean; operadores?: string[]; embutido?: boolean }> = ({ data, disabled, operadores, embutido }) => {
   const [aplicacao, setAplicacao] = useState<AplicacoesDia | null>(null);
   const [pedido, setPedido] = useState<PedidoAplicacoes | null>(null);
+  const [dc, setDc] = useState<RegistoDc[]>([]); // os DC guardados pelo worker (cópia da GBAPL), dias D e D+1
   const [busy, setBusy] = useState<string | null>(null);
   const [aberta, setAberta] = useState(!!embutido); // embutido numa janela (Histórico): já vem aberto
   const input = useRef<HTMLInputElement>(null);
   const estadoAnterior = useRef<string | null>(null);
 
   const carregar = useCallback(async () => {
-    const [a, p] = await Promise.all([getAplicacoesDia(data), getUltimoPedido(data)]);
+    const [a, p, d] = await Promise.all([getAplicacoesDia(data), getUltimoPedido(data), getCopiaDc([data, diaSeguinte(data)])]);
     setAplicacao(a.data);
     setPedido(p.data);
+    setDc(d.data);
     return { aplicacao: a.data, pedido: p.data };
   }, [data]);
 
   useEffect(() => {
     setAplicacao(null);
     setPedido(null);
+    setDc([]);
     estadoAnterior.current = null;
     void carregar();
   }, [carregar]);
@@ -115,7 +132,7 @@ export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean; ope
   };
 
   const descarregar = async () => {
-    if (!aplicacao) return;
+    if (!temDados) return;
     setBusy('baixar');
     try {
       const blob = await excelDasOperacoes(filtradas);
@@ -132,11 +149,15 @@ export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean; ope
   };
 
   const leitura = useMemo(() => (aplicacao ? lerOperacoes(aplicacao.linhas) : null), [aplicacao, data]);
+  // Duas fontes: o registo de ficheiros processados (tudo menos DC) e a cópia da GBAPL (só DC, com nº de operação).
+  const todas = useMemo(() => juntarOperacoes(leitura?.operacoes ?? [], operacoesDeDc(dc)), [leitura, dc]);
+  const temDados = !!aplicacao || dc.length > 0;
+  const dcDoDia = dc.filter((r) => r.data === data).length;
   // Só as operações da janela da ficha (07:00 → 07:00), dos operadores e já aplicadas (SISP, quem não é operador e as
   // validações — 0 aplicados — não entram no Excel).
   const { selecionadas: filtradas, deOutros, validacoes, foraDaJanela, aviso: avisoJanela } = useMemo(
-    () => selecionarOperacoes(leitura?.operacoes ?? [], data, operadores),
-    [leitura, data, operadores],
+    () => selecionarOperacoes(todas, data, operadores),
+    [todas, data, operadores],
   );
   const pedidoComErro = pedido?.estado === 'erro' && (!aplicacao || pedido.pedido_em > aplicacao.gerado_em);
 
@@ -152,7 +173,7 @@ export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean; ope
         >
           <ChevronRight className="rodar-seta h-4 w-4" data-aberto={aberta} />
           Aplicações do dia (core)
-          {leitura && <span className="text-sm font-normal text-muted-foreground">({filtradas.length} operações)</span>}
+          {temDados && <span className="text-sm font-normal text-muted-foreground">({filtradas.length} operações)</span>}
         </button>
         <div className="flex flex-wrap items-center gap-2">
           <Button type="button" size="sm" onClick={gerar} disabled={disabled || aCorrer || busy === 'gerar'} className="gap-1.5">
@@ -164,7 +185,7 @@ export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean; ope
             Carregar Excel
           </Button>
           <input ref={input} type="file" accept=".xlsx" className="hidden" onChange={(e) => void carregarExcel(e.target.files?.[0])} />
-          {aplicacao && (
+          {temDados && (
             <Button type="button" size="sm" variant="outline" onClick={descarregar} disabled={busy === 'baixar' || filtradas.length === 0} className="gap-1.5">
               <Download className="h-4 w-4" />
               Descarregar Excel
@@ -202,7 +223,16 @@ export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean; ope
           <Badge variant="outline">{aplicacao.origem === 'worker' ? 'Lido do core' : 'Excel carregado'}</Badge>
         </p>
       ) : (
-        !aCorrer && <p className="text-sm text-muted-foreground">Ainda não há aplicações para {data}.</p>
+        !aCorrer && !temDados && <p className="text-sm text-muted-foreground">Ainda não há aplicações para {data}.</p>
+      )}
+      {temDados && !aCorrer && dcDoDia === 0 && (
+        <p className="mb-2 flex items-start gap-2 text-sm text-amber-600 dark:text-amber-400" role="alert">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>
+            Não há DC (débitos/créditos por lotes) guardados para {data}. O worker copia-os de 10 em 10 minutos: se esteve
+            desligado nesse dia, ou se não houve DC, não aparecem aqui. O resto dos processamentos vem do registo de ficheiros.
+          </span>
+        </p>
       )}
       {avisoJanela && (
         <p className="mb-2 flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400" role="alert">
@@ -234,7 +264,7 @@ export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean; ope
           {[...new Set(deOutros.map((o) => o.utilizador))].join(', ')}) não entram no Excel nem na lista.
         </p>
       )}
-      {aberta && leitura && filtradas.length > 0 && (
+      {aberta && temDados && filtradas.length > 0 && (
         <div className="overflow-x-auto rounded-lg border">
           <Table>
             <TableHeader>
@@ -246,18 +276,24 @@ export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean; ope
                 <TableHead className="text-xs uppercase">Módulo</TableHead>
                 <TableHead className="text-xs uppercase">Processado por</TableHead>
                 <TableHead className="text-xs uppercase">Nº ordem</TableHead>
+                <TableHead className="text-xs uppercase">Empresa</TableHead>
+                <TableHead className="text-xs uppercase">Nº operação</TableHead>
+                <TableHead className="text-right text-xs uppercase">Mov. / aplic.</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtradas.map((o) => (
-                <TableRow key={o.nOrdem}>
+                <TableRow key={chaveDaOperacao(o)}>
                   <TableCell className="tabular-nums">{o.data}</TableCell>
                   <TableCell className="tabular-nums">{o.hora}</TableCell>
                   <TableCell className="font-mono text-xs">{o.ficheiro || '—'}</TableCell>
                   <TableCell>{o.referencia}</TableCell>
                   <TableCell>{o.modulo}</TableCell>
                   <TableCell>{o.utilizador}</TableCell>
-                  <TableCell className="font-mono text-xs">{o.nOrdem}</TableCell>
+                  <TableCell className="font-mono text-xs">{o.nOrdem || '—'}</TableCell>
+                  <TableCell>{o.empresa || '—'}</TableCell>
+                  <TableCell className="font-mono text-xs">{o.nOperacao || '—'}</TableCell>
+                  <TableCell className="text-right tabular-nums">{o.nOperacao ? `${o.movimentos ?? 0} / ${o.aplicados ?? 0}` : '—'}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

@@ -1,6 +1,6 @@
 import type { PostgrestError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import type { LinhaBruta } from '@/lib/aplicacoesDia';
+import type { LinhaBruta, RegistoDc } from '@/lib/aplicacoesDia';
 
 export interface AplicacoesDia {
   id: string;
@@ -37,6 +37,19 @@ export async function getAplicacoesDia(data: string): Promise<{ data: Aplicacoes
     .limit(1);
   if (error) return { data: null, error };
   return { data: ((rows ?? [])[0] as unknown as AplicacoesDia | undefined) ?? null, error: null };
+}
+
+/**
+ * Os DC guardados pelo worker (cópia da GBAPL) para estes dias de início. A ficha do dia D cobre D e D+1, por isso pedem-se
+ * os dois. Sem cópia (worker desligado nesse dia) a lista vem vazia.
+ */
+export async function getCopiaDc(datas: string[]): Promise<{ data: RegistoDc[]; error: PostgrestError | null }> {
+  const { data: rows, error } = await supabase
+    .from('aplicacoes_dc')
+    .select('data, empresa, seq, n_operacao, linha')
+    .in('data', datas);
+  if (error) return { data: [], error };
+  return { data: (rows ?? []) as unknown as RegistoDc[], error: null };
 }
 
 /** O pedido mais recente para a data (para mostrar «a gerar…» ou o erro). */
