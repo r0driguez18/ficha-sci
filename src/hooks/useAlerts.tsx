@@ -97,7 +97,14 @@ export function useAlerts() {
       }
     }, 30000);
 
-    return () => clearInterval(interval);
+    // Retornos novos (criados ao gerar as aplicações): a notificação aparece já, sem esperar pelos 30 s.
+    const aoHaverRetornos = () => void fetchAlerts();
+    window.addEventListener('update-returns-badge', aoHaverRetornos);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('update-returns-badge', aoHaverRetornos);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 

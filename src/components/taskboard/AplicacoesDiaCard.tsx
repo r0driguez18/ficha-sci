@@ -5,6 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { guardarFicheiro } from '@/lib/guardarFicheiro';
+import { useAuth } from '@/components/auth/AuthProvider';
+import { cobrancasParaRetorno } from '@/lib/cobrancasDc';
+import { createCobrancaRetorno } from '@/services/cobrancasRetornoService';
 import { ZonaLargarFicheiro } from '@/components/ZonaLargarFicheiro';
 import {
   chaveDaOperacao,
@@ -47,6 +50,8 @@ const fmt = (iso?: string | null) => {
 export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean; operadores?: string[]; embutido?: boolean }> = ({ data, disabled, operadores, embutido }) => {
   const [aplicacao, setAplicacao] = useState<AplicacoesDia | null>(null);
   const [pedido, setPedido] = useState<PedidoAplicacoes | null>(null);
+  const { user } = useAuth();
+  const [criarRetornos, setCriarRetornos] = useState(false); // ligado quando um pedido acaba de ser concluído aqui
   const [dc, setDc] = useState<RegistoDc[]>([]); // os DC guardados pelo worker (cópia da GBAPL), dias D e D+1
   const [busy, setBusy] = useState<string | null>(null);
   const [aberta, setAberta] = useState(!!embutido); // embutido numa janela (Histórico): já vem aberto
@@ -87,9 +92,13 @@ export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean; ope
     const antes = estadoAnterior.current;
     estadoAnterior.current = pedido.estado;
     if (antes !== 'pendente' && antes !== 'a-correr') return;
-    if (pedido.estado === 'concluido') toast.success('Aplicações do dia recebidas.');
+    if (pedido.estado === 'concluido') {
+      toast.success('Aplicações do dia recebidas.');
+      // Só ao gerar nesta ficha (não ao abrir o Histórico de um dia antigo): evita criar retornos já em atraso.
+      if (!embutido && !disabled) setCriarRetornos(true);
+    }
     else if (pedido.estado === 'erro') toast.error(pedido.erro || 'O worker não conseguiu ler o core.');
-  }, [pedido]);
+  }, [pedido]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const gerar = async () => {
     setBusy('gerar');
@@ -159,6 +168,33 @@ export const AplicacoesDiaCard: React.FC<{ data: string; disabled?: boolean; ope
     () => selecionarOperacoes(todas, data, operadores),
     [todas, data, operadores],
   );
+  // Cobranças aplicadas (empresas da lista; validações não): criam o retorno logo que aparecem, sem esperar pela exportação
+  // da ficha. Repetir não duplica: a base de dados só aceita um retorno por ficheiro e data.
+  useEffect(() => {
+    if (!criarRetornos) return;
+    setCriarRetornos(false);
+    const nomes = cobrancasParaRetorno(filtradas);
+    if (nomes.length === 0 || !user?.id) return;
+    void (async () => {
+      let criados = 0;
+      let falhas = 0;
+      for (const nome of nomes) {
+        try {
+          const r = await createCobrancaRetorno(user.id, data, nome);
+          if (r.error) falhas++;
+          else if (r.data) criados++;
+        } catch {
+          falhas++;
+        }
+      }
+      if (criados > 0) {
+        toast.success(`${criados} retorno${criados === 1 ? '' : 's'} de cobrança registado${criados === 1 ? '' : 's'}: já aparece${criados === 1 ? '' : 'm'} em Retornos de Cobranças.`);
+        window.dispatchEvent(new Event('update-returns-badge'));
+      }
+      if (falhas > 0) toast.error(`${falhas} retorno(s) de cobrança não foram registados — confirma em Retornos de Cobranças.`);
+    })();
+  }, [criarRetornos, filtradas, user?.id, data]);
+
   const pedidoComErro = pedido?.estado === 'erro' && (!aplicacao || pedido.pedido_em > aplicacao.gerado_em);
 
   return (
