@@ -14,6 +14,7 @@ export interface MonthlyStat {
   salario: number;
   cobrancas: number;
   compensacao: number;
+  sisp: number;
   outros: number;
   total: number;
 }
@@ -48,7 +49,7 @@ export function buildMonthlyStats(
 
     let stat = byMonth.get(key);
     if (!stat) {
-      stat = { month: label, key, salario: 0, cobrancas: 0, compensacao: 0, outros: 0, total: 0 };
+      stat = { month: label, key, salario: 0, cobrancas: 0, compensacao: 0, sisp: 0, outros: 0, total: 0 };
       byMonth.set(key, stat);
     }
 
@@ -56,6 +57,7 @@ export function buildMonthlyStats(
       case 'salario': stat.salario += 1; break;
       case 'cobrancas': stat.cobrancas += 1; break;
       case 'compensacao': stat.compensacao += 1; break;
+      case 'sisp': stat.sisp += 1; break;
       default: stat.outros += 1; break;
     }
     stat.total += 1;

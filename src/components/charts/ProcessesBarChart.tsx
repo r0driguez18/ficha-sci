@@ -18,6 +18,7 @@ interface ProcessesChartProps {
     salario: number;
     cobrancas: number;
     compensacao: number;
+    sisp: number;
     outros: number;
   }>;
   title?: string;
@@ -27,6 +28,7 @@ const SERIES = [
   { key: 'salario', label: 'Salário', color: '#f59f0a' },
   { key: 'cobrancas', label: 'Cobranças', color: '#3b82f6' },
   { key: 'compensacao', label: 'Compensação', color: '#16a249' },
+  { key: 'sisp', label: 'SISP', color: '#a855f7' },
   { key: 'outros', label: 'Outros', color: '#64748b' },
 ] as const;
 

@@ -402,6 +402,17 @@ export function useTaskboard(formType: FormType) {
   }, []);
 
   /** Remove a linha indicada (nunca a última que sobrar) — nunca a "última da lista" por omissão. */
+  /** Acrescenta várias linhas de uma vez (as vindas das aplicações do dia); a única linha vazia do início é substituída. */
+  const addTableRowsWith = useCallback((linhas: Omit<TaskTableRow, 'id'>[]) => {
+    if (linhas.length === 0) return;
+    setTableRows((rows) => {
+      const vazia = (r: TaskTableRow) => !r.tarefa && !r.nomeAs && !r.operacao && !r.tipo;
+      const base = rows.length === 1 && vazia(rows[0]) ? [] : rows;
+      let id = nextRowId(rows);
+      return [...base, ...linhas.map((l) => ({ ...l, id: id++ }))];
+    });
+  }, []);
+
   const removeTableRow = useCallback((id: number) => {
     setTableRows((rows) => (rows.length > 1 ? rows.filter((r) => r.id !== id) : rows));
   }, []);
@@ -464,6 +475,8 @@ export function useTaskboard(formType: FormType) {
   /** Uma linha da tabela conta como processamento a registar? */
   const isSavableRow = (row: (typeof tableRows)[number]) => {
     const common = row.hora.trim() !== '' && row.executado.trim() !== '';
+    // As linhas vindas do core não têm «Tarefa» (e as compensações não têm nº de operação): contam na mesma.
+    if (common && row.origem === 'core' && row.tipo.trim() !== '') return true;
     const taskOnly = common && row.tarefa.trim() !== '';
     const asWithOp = common && row.nomeAs.trim() !== '' && row.operacao.trim() !== '';
     return taskOnly || asWithOp;
@@ -820,6 +833,7 @@ export function useTaskboard(formType: FormType) {
     currentOperatorValue: currentOperator?.value ?? '',
     addTableRow,
     addTableRowWith,
+    addTableRowsWith,
     removeTableRow,
     handleInputChange,
     exportToPDF,

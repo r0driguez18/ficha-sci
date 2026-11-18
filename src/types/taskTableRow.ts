@@ -9,6 +9,8 @@ export interface TaskTableRow {
   operacao: string;
   executado: string;
   tipo: string;
+  /** «core»: acrescentada a partir das aplicações do dia (a «Tarefa» fica vazia). Sem isto, foi escrita à mão. */
+  origem?: 'core';
 }
 
 // This ensures compatibility with Supabase's Json type

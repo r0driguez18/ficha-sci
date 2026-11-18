@@ -2,6 +2,7 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { TaskTableRow } from '@/types/taskTableRow';
+import { ROTULO_TIPO, type TipoProcessamento } from '@/lib/cobrancasDc';
 import { addBCALogo, BCA_COLORS } from './pdfCommon';
 
 export const renderTaskTable = (doc: jsPDF, tableRows: TaskTableRow[]): void => {
@@ -33,7 +34,7 @@ export const renderTaskTable = (doc: jsPDF, tableRows: TaskTableRow[]): void => 
       row.tarefa, 
       row.nomeAs, 
       row.operacao, 
-      row.tipo || 'N/A',
+      ROTULO_TIPO[row.tipo as TipoProcessamento] ?? (row.tipo || 'N/A'),
       row.executado
     ]);
     

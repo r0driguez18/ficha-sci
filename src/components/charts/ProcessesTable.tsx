@@ -16,6 +16,7 @@ const TIPO: Record<string, { label: string; classes: string }> = {
   salario: { label: 'Salário', classes: 'bg-warning/20 text-foreground' },
   cobrancas: { label: 'Cobranças', classes: 'bg-primary/15 text-primary' },
   compensacao: { label: 'Compensação', classes: 'bg-success/15 text-success' },
+  sisp: { label: 'SISP', classes: 'bg-accent text-accent-foreground' },
 };
 
 function typeBadge(process: FileProcess) {

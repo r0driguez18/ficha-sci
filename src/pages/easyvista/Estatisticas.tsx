@@ -16,15 +16,16 @@ import { useOperators } from '@/hooks/useOperators';
 import ProcessesTable from '@/components/charts/ProcessesTable';
 import ProcessesBarChart from '@/components/charts/ProcessesBarChart';
 
-type TabKey = 'all' | 'salary' | 'cobrancas' | 'compensacao' | 'outros';
-const TABS: TabKey[] = ['all', 'salary', 'cobrancas', 'compensacao', 'outros'];
-const TIPOS_CONHECIDOS = ['salario', 'cobrancas', 'compensacao'];
+type TabKey = 'all' | 'salary' | 'cobrancas' | 'compensacao' | 'sisp' | 'outros';
+const TABS: TabKey[] = ['all', 'salary', 'cobrancas', 'compensacao', 'sisp', 'outros'];
+const TIPOS_CONHECIDOS = ['salario', 'cobrancas', 'compensacao', 'sisp'];
 
 const TAB_TITLES: Record<TabKey, string> = {
   all: 'Todos os Processamentos',
   salary: 'Processamentos de Salário',
   cobrancas: 'Cobranças',
   compensacao: 'Compensação',
+  sisp: 'SISP',
   outros: 'Outros',
 };
 
@@ -91,6 +92,7 @@ const EasyVistaEstatisticas = () => {
   const salaryProcesses = useMemo(() => noPeriodo.filter((p) => p.tipo === 'salario'), [noPeriodo]);
   const cobrancasProcesses = useMemo(() => noPeriodo.filter((p) => p.tipo === 'cobrancas'), [noPeriodo]);
   const compensacaoProcesses = useMemo(() => noPeriodo.filter((p) => p.tipo === 'compensacao'), [noPeriodo]);
+  const sispProcesses = useMemo(() => noPeriodo.filter((p) => p.tipo === 'sisp'), [noPeriodo]);
   const outrosProcesses = useMemo(() => noPeriodo.filter((p) => !TIPOS_CONHECIDOS.includes(p.tipo ?? '')), [noPeriodo]);
 
   const monthly = useMemo(
@@ -107,9 +109,10 @@ const EasyVistaEstatisticas = () => {
           salario: acc.salario + m.salario,
           cobrancas: acc.cobrancas + m.cobrancas,
           compensacao: acc.compensacao + m.compensacao,
+          sisp: acc.sisp + m.sisp,
           outros: acc.outros + m.outros,
         }),
-        { total: 0, salario: 0, cobrancas: 0, compensacao: 0, outros: 0 },
+        { total: 0, salario: 0, cobrancas: 0, compensacao: 0, sisp: 0, outros: 0 },
       ),
     [monthly],
   );
@@ -119,6 +122,7 @@ const EasyVistaEstatisticas = () => {
     salary: salaryProcesses,
     cobrancas: cobrancasProcesses,
     compensacao: compensacaoProcesses,
+    sisp: sispProcesses,
     outros: outrosProcesses,
   };
   const currentTitle = TAB_TITLES[activeTab];
@@ -217,12 +221,13 @@ const EasyVistaEstatisticas = () => {
           </Card>
 
           {/* Cartões de contagem (no período): clicar mostra os processamentos por baixo */}
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
             {([
               { tab: 'all', label: 'Total no período', value: periodTotals.total },
               { tab: 'salary', label: 'Salário', value: periodTotals.salario },
               { tab: 'cobrancas', label: 'Cobranças', value: periodTotals.cobrancas },
               { tab: 'compensacao', label: 'Compensação', value: periodTotals.compensacao },
+              { tab: 'sisp', label: 'SISP', value: periodTotals.sisp },
               { tab: 'outros', label: 'Outros', value: periodTotals.outros },
             ] as Array<{ tab: TabKey; label: string; value: number }>).map((c) => {
               const ativo = activeTab === c.tab;
@@ -255,11 +260,12 @@ const EasyVistaEstatisticas = () => {
           {/* Detalhe (por tipo, dentro do intervalo escolhido) */}
           <div ref={detalheRef} className="scroll-mt-4">
             <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
-              <TabsList className="grid grid-cols-2 gap-2 md:grid-cols-5">
+              <TabsList className="grid grid-cols-2 gap-2 md:grid-cols-6">
                 <TabsTrigger value="all">Todos ({noPeriodo.length})</TabsTrigger>
                 <TabsTrigger value="salary">Salário ({salaryProcesses.length})</TabsTrigger>
                 <TabsTrigger value="cobrancas">Cobranças ({cobrancasProcesses.length})</TabsTrigger>
                 <TabsTrigger value="compensacao">Compensação ({compensacaoProcesses.length})</TabsTrigger>
+                <TabsTrigger value="sisp">SISP ({sispProcesses.length})</TabsTrigger>
                 <TabsTrigger value="outros">Outros ({outrosProcesses.length})</TabsTrigger>
               </TabsList>
 

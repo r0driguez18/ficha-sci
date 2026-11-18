@@ -17,6 +17,7 @@ const TIPO_LABEL: Record<string, string> = {
   salario: 'Salário',
   cobrancas: 'Cobranças',
   compensacao: 'Compensação',
+  sisp: 'SISP',
 };
 
 const HEADERS = ['Data', 'Hora', 'Tarefa', 'Nome AS/400', 'Operação', 'Executado por', 'Tipo'];

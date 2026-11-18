@@ -277,7 +277,13 @@ export default function FichaProcedimentos({ formType }: FichaProcedimentosProps
             onInputChange={tb.handleInputChange}
           />
 
-          <AplicacoesDiaCard data={tb.date} disabled={!!tb.desatualizada} operadores={operatorsList.map((o) => o.value)} />
+          <AplicacoesDiaCard
+            data={tb.date}
+            disabled={!!tb.desatualizada}
+            operadores={operatorsList.map((o) => o.value)}
+            tabela={tb.tableRows}
+            onPreencherTabela={tb.addTableRowsWith}
+          />
 
           {tb.showTapeVerification && (
             <VerificacaoTapesSection
