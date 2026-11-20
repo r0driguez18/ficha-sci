@@ -185,12 +185,12 @@ describe('situação do pedido', () => {
 });
 
 describe('só os processamentos dos operadores', () => {
-  const ops = lerOperacoes([CODIGOS, registo({ user: 'NALVES' }), registo({ user: 'XPTO' })]).operacoes;
+  const ops = lerOperacoes([CODIGOS, registo({ user: 'NALVES' }), registo({ user: 'SISP' })]).operacoes;
 
   it('fica com os operadores (sem distinguir maiúsculas) e põe os outros à parte', () => {
     const r = filtrarPorOperadores(ops, ['nalves', 'etavares']);
     expect(r.dosOperadores.map((o) => o.utilizador)).toEqual(['NALVES']);
-    expect(r.deOutros.map((o) => o.utilizador)).toEqual(['XPTO']);
+    expect(r.deOutros.map((o) => o.utilizador)).toEqual(['SISP']);
   });
 
   it('sem lista de operadores não filtra (para não esconder tudo se ainda não carregou)', () => {
@@ -222,7 +222,7 @@ describe('janela da ficha: 07:00 do dia → 07:00 do dia seguinte', () => {
     registo({ data: 20261112, hora: 332 }), // 00:03 de 12 -> madrugada: ainda é a ficha de 11
     registo({ data: 20261112, hora: 65959 }), // 06:59 de 12 -> ainda de 11
     registo({ data: 20261112, hora: 70000 }), // 07:00 de 12 -> já é da ficha de 12 (fim excluído)
-    registo({ data: 20261111, hora: 90000, user: 'XPTO' }),
+    registo({ data: 20261111, hora: 90000, user: 'SISP' }),
   ]).operacoes;
 
   it('a janela vai das 07:00 de D às 07:00 de D+1', () => {
@@ -236,7 +236,7 @@ describe('janela da ficha: 07:00 do dia → 07:00 do dia seguinte', () => {
       '2026-11-11 07:00', '2026-11-11 08:57', '2026-11-11 23:59', '2026-11-12 00:03', '2026-11-12 06:59',
     ]);
     expect(r.foraDaJanela.map((o) => `${o.data} ${o.hora}`).sort()).toEqual(['2026-11-11 02:59', '2026-11-12 07:00']);
-    expect(r.deOutros.map((o) => o.utilizador)).toEqual(['XPTO']);
+    expect(r.deOutros.map((o) => o.utilizador)).toEqual(['SISP']);
     expect(r.aviso).toBeNull();
   });
 
@@ -326,13 +326,13 @@ describe('DC: vêm da cópia da GBAPL (com nº de operação), não do log', () 
     const dc = operacoesDeDc([
       dcRegisto({ ACHORA: 103752 }),
       { ...dcRegisto({ ACNOPR: 555, ACDTIN: 20261112, ACHORA: 123000 }), data: '2026-11-12' }, // 12/11 12:30: já é da ficha seguinte
-      dcRegisto({ ACNOPR: 556, ACUSER: 'XPTO', ACHORA: 140000 }),
+      dcRegisto({ ACNOPR: 556, ACUSER: 'SISP', ACHORA: 140000 }),
     ]);
     const todas = juntarOperacoes(log, dc);
     expect(todas.map((o) => `${o.data} ${o.hora}`)).toEqual(['2026-11-11 08:56', '2026-11-11 10:37', '2026-11-11 14:00', '2026-11-12 03:00', '2026-11-12 12:30']);
     const sel = selecionarOperacoes(todas, '2026-11-11', ['nalves', 'etavares']);
     expect(sel.selecionadas.map((o) => o.ficheiro)).toEqual(['RTR2611111', 'SACERM11A', 'ETR2611112']);
-    expect(sel.deOutros.map((o) => o.utilizador)).toEqual(['XPTO']);
+    expect(sel.deOutros.map((o) => o.utilizador)).toEqual(['SISP']);
     expect(sel.foraDaJanela.map((o) => o.nOperacao)).toEqual(['555']);
   });
 
@@ -401,14 +401,5 @@ describe('gerar as aplicações antes de exportar', () => {
     expect(geracaoRecente(ha(VALIDADE_GERACAO_MIN), agora)).toBe(true); // no limite ainda passa
     expect(geracaoRecente(ha(VALIDADE_GERACAO_MIN + 1), agora)).toBe(false);
     expect(geracaoRecente(ha(600), agora)).toBe(false);
-  });
-});
-
-describe('utilizador SISP', () => {
-  it('os processamentos do SISP contam mesmo não sendo operadores da app', () => {
-    const mk = (utilizador: string) => ({ data: '2026-11-19', hora: '03:20', ficheiro: 'EDST2611191', referencia: '', modulo: 'SP', utilizador, tipo: 'A', nOrdem: '1' });
-    const r = filtrarPorOperadores([mk('SISP'), mk('sisp'), mk('XPTO'), mk('NALVES')], ['nalves']);
-    expect(r.dosOperadores.map((o) => o.utilizador)).toEqual(['SISP', 'sisp', 'NALVES']);
-    expect(r.deOutros.map((o) => o.utilizador)).toEqual(['XPTO']);
   });
 });
