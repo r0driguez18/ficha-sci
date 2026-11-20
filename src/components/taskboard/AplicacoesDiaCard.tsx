@@ -352,13 +352,13 @@ export const AplicacoesDiaCard: React.FC<Props> = ({ data, disabled, operadores,
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50">
-                <TableHead className="text-xs uppercase">Data</TableHead>
+                <TableHead className="hidden text-xs uppercase sm:table-cell">Data</TableHead>
                 <TableHead className="text-xs uppercase">Hora</TableHead>
                 <TableHead className="text-xs uppercase">Nome AS400</TableHead>
-                <TableHead className="text-xs uppercase">Referência</TableHead>
+                <TableHead className="hidden text-xs uppercase md:table-cell">Referência</TableHead>
                 <TableHead className="text-xs uppercase">Módulo</TableHead>
                 <TableHead className="text-xs uppercase">Processado por</TableHead>
-                <TableHead className="text-xs uppercase">Empresa</TableHead>
+                <TableHead className="hidden text-xs uppercase sm:table-cell">Empresa</TableHead>
                 <TableHead className="text-xs uppercase">Nº operação</TableHead>
                 <TableHead className="text-xs uppercase">Tipo</TableHead>
               </TableRow>
@@ -366,15 +366,15 @@ export const AplicacoesDiaCard: React.FC<Props> = ({ data, disabled, operadores,
             <TableBody>
               {filtradas.map((o) => (
                 <TableRow key={chaveDaOperacao(o)}>
-                  <TableCell className="tabular-nums">{o.data}</TableCell>
-                  <TableCell className="tabular-nums">{o.hora}</TableCell>
-                  <TableCell className="font-mono text-xs">{o.ficheiro || '—'}</TableCell>
-                  <TableCell>{o.referencia}</TableCell>
+                  <TableCell className="hidden whitespace-nowrap tabular-nums sm:table-cell">{o.data}</TableCell>
+                  <TableCell className="whitespace-nowrap tabular-nums">{o.hora}</TableCell>
+                  <TableCell className="whitespace-nowrap font-mono text-xs">{o.ficheiro || '—'}</TableCell>
+                  <TableCell className="hidden md:table-cell">{o.referencia}</TableCell>
                   <TableCell>{o.modulo}</TableCell>
                   <TableCell>{o.utilizador}</TableCell>
-                  <TableCell>{o.empresa || '—'}</TableCell>
-                  <TableCell className="font-mono text-xs">{o.nOperacao || '—'}</TableCell>
-                  <TableCell>{ROTULO_TIPO[tipoDaOperacao(o)]}</TableCell>
+                  <TableCell className="hidden sm:table-cell">{o.empresa || '—'}</TableCell>
+                  <TableCell className="whitespace-nowrap font-mono text-xs">{o.nOperacao || '—'}</TableCell>
+                  <TableCell className="whitespace-nowrap">{ROTULO_TIPO[tipoDaOperacao(o)]}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
