@@ -234,12 +234,16 @@ export function juntarOperacoes(log: OperacaoAplicada[], dc: OperacaoAplicada[])
  * Só os processamentos dos operadores da app (o `value` do operador, ex. «nalves», é o mesmo utilizador do core, ex.
  * «NALVES»). Ficam de fora os de outros utilizadores. Sem lista de operadores não se filtra.
  */
+/** Utilizadores do core que não são operadores mas cujos processamentos também contam na ficha (ex.: ficheiros EDST do SISP, feitos de madrugada). */
+export const UTILIZADORES_AUTOMATICOS = ['SISP'];
+
 export function filtrarPorOperadores(
   operacoes: OperacaoAplicada[],
   operadores: string[] | undefined,
 ): { dosOperadores: OperacaoAplicada[]; deOutros: OperacaoAplicada[] } {
   const validos = new Set((operadores ?? []).map((o) => o.trim().toUpperCase()).filter(Boolean));
   if (validos.size === 0) return { dosOperadores: operacoes, deOutros: [] };
+  for (const u of UTILIZADORES_AUTOMATICOS) validos.add(u);
   const dosOperadores: OperacaoAplicada[] = [];
   const deOutros: OperacaoAplicada[] = [];
   for (const o of operacoes) (validos.has(o.utilizador.trim().toUpperCase()) ? dosOperadores : deOutros).push(o);

@@ -215,6 +215,10 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
                           {op.label}
                         </SelectItem>
                       ))}
+                      {/* quem executou e não é operador da lista (ex.: o utilizador SISP do core) */}
+                      {row.executado && !operatorsList.some((op) => op.value === row.executado) && (
+                        <SelectItem value={row.executado}>{row.executado.toUpperCase()}</SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </TableCell>
