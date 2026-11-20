@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { linhasParaTabela } from '../tabelaProcessamentos';
+import { linhasParaTabela, ordenarPorHora } from '../tabelaProcessamentos';
 import type { OperacaoAplicada } from '../aplicacoesDia';
 import type { TaskTableRow } from '@/types/taskTableRow';
 
@@ -97,5 +97,11 @@ describe('das aplicações para a tabela de Processamentos', () => {
     const r = linhasParaTabela([op()], existentes, OPERADORES);
     expect(r.jaExistiam).toBe(1);
     expect(r.manuaisSemCorrespondencia).toBe(1);
+  });
+
+  it('ordena por hora: a madrugada (antes das 07:00) vem depois da noite, sem hora vai para o fim, e é estável', () => {
+    const r = (id: number, hora: string) => linha({ id, hora });
+    const ord = ordenarPorHora([r(1, '23:30'), r(2, ''), r(3, '03:20'), r(4, '17:00'), r(5, '08:00'), r(6, '17:00')]);
+    expect(ord.map((x) => x.id)).toEqual([5, 4, 6, 1, 3, 2]);
   });
 });

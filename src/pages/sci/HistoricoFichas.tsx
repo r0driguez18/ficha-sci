@@ -767,7 +767,7 @@ export default function HistoricoFichas() {
 
       {/* Anexar display de tapes */}
       <Dialog open={!!aplicacoesTarget} onOpenChange={(open) => { if (!open) setAplicacoesTarget(null); }}>
-        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="w-[calc(100vw-1.5rem)] max-w-4xl max-h-[85vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>Aplicações do dia — ficha de {aplicacoesTarget?.date}</DialogTitle>
             <DialogDescription>

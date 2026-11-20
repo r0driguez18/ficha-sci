@@ -11,6 +11,25 @@ import type { TaskTableRow } from '@/types/taskTableRow';
 
 const norm = (s: string | null | undefined) => (s ?? '').trim().toUpperCase();
 
+/**
+ * Ordem das linhas na ficha: a ficha corre das 07:00 às 07:00 do dia seguinte, por isso a madrugada (antes das 07:00) vem
+ * depois da noite. Sem hora válida, a linha vai para o fim.
+ */
+function minutosNaFicha(hora: string): number {
+  const m = /^(\d{1,2}):(\d{2})/.exec((hora ?? '').trim());
+  if (!m) return Number.MAX_SAFE_INTEGER;
+  const h = Number(m[1]);
+  return (h < 7 ? h + 24 : h) * 60 + Number(m[2]);
+}
+
+/** Ordena por hora (estável: à mesma hora, mantém a ordem em que estavam). */
+export function ordenarPorHora<T extends { hora: string }>(linhas: T[]): T[] {
+  return linhas
+    .map((l, i) => ({ l, i, k: minutosNaFicha(l.hora) }))
+    .sort((a, b) => a.k - b.k || a.i - b.i)
+    .map((x) => x.l);
+}
+
 /** O texto fala deste ficheiro como uma palavra inteira (ex.: «ECI2611181», ou «Aplicação ECI2611181 ok»)? */
 function mencionaFicheiro(texto: string | null | undefined, ficheiro: string): boolean {
   const t = norm(texto);
@@ -63,8 +82,8 @@ export function linhasParaTabela(operacoes: OperacaoAplicada[], existentes: Task
     }
     novas.push({ hora: o.hora, tarefa: '', nomeAs: o.ficheiro, operacao: o.nOperacao ?? '', executado, tipo, origem: 'core' });
   }
-  novas.sort((a, b) => a.hora.localeCompare(b.hora));
+  const ordenadas = ordenarPorHora(novas);
   const comConteudo = (r: TaskTableRow) => !!(r.tarefa.trim() || r.nomeAs.trim() || r.operacao.trim() || r.tipo.trim());
   const manuaisSemCorrespondencia = existentes.filter((r, idx) => !usadas.has(idx) && r.origem !== 'core' && comConteudo(r)).length;
-  return { novas, jaExistiam, manuaisSemCorrespondencia };
+  return { novas: ordenadas, jaExistiam, manuaisSemCorrespondencia };
 }
