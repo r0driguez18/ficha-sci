@@ -12,7 +12,9 @@ import { cobrancasParaRetorno, ROTULO_TIPO, tipoDaOperacao } from '@/lib/cobranc
 import { createCobrancaRetorno } from '@/services/cobrancasRetornoService';
 import { ZonaLargarFicheiro } from '@/components/ZonaLargarFicheiro';
 import {
+  ATUALIZAR_SOZINHO_MIN,
   chaveDaOperacao,
+  deveAtualizarSozinho,
   diaSeguinte,
   excelDasOperacoes,
   juntarOperacoes,
@@ -71,12 +73,16 @@ export const AplicacoesDiaCard: React.FC<Props> = ({ data, disabled, operadores,
   const [aberta, setAberta] = useState(!!embutido); // embutido numa janela (Histórico): já vem aberto
   const input = useRef<HTMLInputElement>(null);
   const estadoAnterior = useRef<string | null>(null);
+  const ultimoAuto = useRef(0); // quando se pediu sozinho pela última vez (worker em baixo: não insiste a cada 3 min)
+  const automatico = useRef(false); // o pedido em curso foi feito sozinho (sem avisos de sucesso/erro a cada 10 min)
+  const [carregado, setCarregado] = useState(false);
 
   const carregar = useCallback(async () => {
     const [a, p, d] = await Promise.all([getAplicacoesDia(data), getUltimoPedido(data), getCopiaDc([data, diaSeguinte(data)])]);
     setAplicacao(a.data);
     setPedido(p.data);
     setDc(d.data);
+    setCarregado(true);
     return { aplicacao: a.data, pedido: p.data };
   }, [data]);
 
@@ -85,6 +91,7 @@ export const AplicacoesDiaCard: React.FC<Props> = ({ data, disabled, operadores,
     setPedido(null);
     setDc([]);
     estadoAnterior.current = null;
+    setCarregado(false);
     void carregar();
   }, [carregar]);
 
@@ -107,27 +114,46 @@ export const AplicacoesDiaCard: React.FC<Props> = ({ data, disabled, operadores,
     estadoAnterior.current = pedido.estado;
     if (antes !== 'pendente' && antes !== 'a-correr') return;
     if (pedido.estado === 'concluido') {
-      toast.success('Aplicações do dia recebidas.');
+      if (!automatico.current) toast.success('Aplicações do dia recebidas.');
       // Só ao gerar nesta ficha (não ao abrir o Histórico de um dia antigo): evita criar retornos já em atraso.
       if (!embutido && !disabled) setCriarRetornos(true);
     }
-    else if (pedido.estado === 'erro') toast.error(pedido.erro || 'O worker não conseguiu ler o core.');
+    else if (pedido.estado === 'erro' && !automatico.current) toast.error(pedido.erro || 'O worker não conseguiu ler o core.');
   }, [pedido]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const gerar = async () => {
-    setBusy('gerar');
+  const gerar = async (sozinho = false) => {
+    automatico.current = sozinho;
+    if (!sozinho) setBusy('gerar');
     try {
       const { data: p, error } = await pedirAplicacoesDia(data);
       if (error || !p) {
-        toast.error(error?.message || 'Não foi possível pedir as aplicações.');
+        if (!sozinho) toast.error(error?.message || 'Não foi possível pedir as aplicações.');
         return;
       }
       estadoAnterior.current = p.estado;
       setPedido(p);
     } finally {
-      setBusy(null);
+      if (!sozinho) setBusy(null);
     }
   };
+
+  // Na ficha em curso o pedido faz-se sozinho: ao abrir e de 10 em 10 min (com a página à vista), para a tabela de
+  // Processamentos ir enchendo sem ninguém carregar em «Gerar». Só com o worker a responder; sem ele fica como estava.
+  const geradoEm = aplicacao?.gerado_em;
+  useEffect(() => {
+    if (embutido || disabled || !onPreencherTabela || !carregado || aCorrer) return;
+    const verificar = () => {
+      if (document.visibilityState !== 'visible') return;
+      if (Date.now() - ultimoAuto.current < ATUALIZAR_SOZINHO_MIN * 60_000) return;
+      if (deveAtualizarSozinho(data, geradoEm)) {
+        ultimoAuto.current = Date.now();
+        void gerar(true);
+      }
+    };
+    verificar();
+    const t = setInterval(verificar, 60_000);
+    return () => clearInterval(t);
+  }, [embutido, disabled, onPreencherTabela, carregado, aCorrer, data, geradoEm]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const carregarExcel = async (f: File | undefined) => {
     if (!f) return;
@@ -254,7 +280,7 @@ export const AplicacoesDiaCard: React.FC<Props> = ({ data, disabled, operadores,
           {temDados && <span className="text-sm font-normal text-muted-foreground">({filtradas.length} operações)</span>}
         </button>
         <div className="flex flex-wrap items-center gap-2">
-          <Button type="button" size="sm" onClick={gerar} disabled={disabled || aCorrer || busy === 'gerar'} className="gap-1.5">
+          <Button type="button" size="sm" onClick={() => void gerar()} disabled={disabled || aCorrer || busy === 'gerar'} className="gap-1.5">
             {aCorrer || busy === 'gerar' ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
             {aCorrer ? 'A gerar…' : aplicacao ? 'Gerar de novo' : 'Gerar aplicações do dia'}
           </Button>

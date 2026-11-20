@@ -12,6 +12,7 @@ import {
   janelaDaFicha,
   lerExcelAplicacoes,
   lerOperacoes,
+  deveAtualizarSozinho,
   geracaoRecente,
   juntarOperacoes,
   nomeExcelAplicacoes,
@@ -401,5 +402,28 @@ describe('gerar as aplicações antes de exportar', () => {
     expect(geracaoRecente(ha(VALIDADE_GERACAO_MIN), agora)).toBe(true); // no limite ainda passa
     expect(geracaoRecente(ha(VALIDADE_GERACAO_MIN + 1), agora)).toBe(false);
     expect(geracaoRecente(ha(600), agora)).toBe(false);
+  });
+});
+
+describe('a ficha em curso pede sozinha as aplicações do dia', () => {
+  const local = (s: string) => new Date(s); // 'AAAA-MM-DDTHH:MM' em hora local
+  const ha = (agora: Date, min: number) => new Date(agora.getTime() - min * 60000).toISOString();
+
+  it('durante a ficha (inclusive a madrugada seguinte) e com a geração antiga ou inexistente, sim', () => {
+    const agora = local('2026-11-20T04:30');
+    expect(deveAtualizarSozinho('2026-11-19', null, agora)).toBe(true);
+    expect(deveAtualizarSozinho('2026-11-19', ha(agora, 15), agora)).toBe(true);
+    expect(deveAtualizarSozinho('2026-11-19', 'lixo', agora)).toBe(true);
+  });
+
+  it('com a geração recente, não', () => {
+    const agora = local('2026-11-20T04:30');
+    expect(deveAtualizarSozinho('2026-11-19', ha(agora, 3), agora)).toBe(false);
+  });
+
+  it('fora da janela da ficha (antiga ou futura), não', () => {
+    expect(deveAtualizarSozinho('2026-11-18', null, local('2026-11-20T04:30'))).toBe(false);
+    expect(deveAtualizarSozinho('2026-11-19', null, local('2026-11-20T07:00'))).toBe(false);
+    expect(deveAtualizarSozinho('2026-11-21', null, local('2026-11-20T04:30'))).toBe(false);
   });
 });
