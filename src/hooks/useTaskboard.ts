@@ -19,6 +19,7 @@ import { createCobrancaRetorno } from '@/services/cobrancasRetornoService';
 import { saveExportedTaskboard, checkDuplicateOperations } from '@/services/exportedTaskboardService';
 import { consumirTokenAssinatura } from '@/services/operatorPinService';
 import { getAplicacoesDia } from '@/services/aplicacoesDiaService';
+import { ordenarPorHora } from '@/lib/tabelaProcessamentos';
 import { geracaoRecente, VALIDADE_GERACAO_MIN } from '@/lib/aplicacoesDia';
 import { generateTaskboardPDF } from '@/utils/pdfGenerator';
 import { computeFichaHash } from '@/lib/signatureHash';
@@ -411,8 +412,13 @@ export function useTaskboard(formType: FormType) {
       const vazia = (r: TaskTableRow) => !r.tarefa && !r.nomeAs && !r.operacao && !r.tipo;
       const base = rows.length === 1 && vazia(rows[0]) ? [] : rows;
       let id = nextRowId(rows);
-      return [...base, ...linhas.map((l) => ({ ...l, id: id++ }))];
+      return ordenarPorHora([...base, ...linhas.map((l) => ({ ...l, id: id++ }))]);
     });
+  }, []);
+
+  /** Põe as linhas por ordem de hora (chamado quando se acaba de editar uma hora). */
+  const sortTableRows = useCallback(() => {
+    setTableRows((rows) => ordenarPorHora(rows));
   }, []);
 
   /** Tira as linhas acrescentadas a partir do core (as escritas à mão ficam). */
@@ -877,6 +883,7 @@ export function useTaskboard(formType: FormType) {
     addTableRowsWith,
     removeTableRow,
     removeCoreRows,
+    sortTableRows,
     handleInputChange,
     exportToPDF,
     resetForm,

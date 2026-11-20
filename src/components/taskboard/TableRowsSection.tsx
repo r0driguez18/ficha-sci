@@ -14,6 +14,8 @@ interface TableRowsSectionProps {
   onAddRow: () => void;
   onRemoveRow: (id: number) => void;
   onInputChange: (id: number, field: keyof TaskTableRow, value: string) => void;
+  /** Ordena as linhas por hora (ao sair do campo da hora). */
+  onSortRows?: () => void;
 }
 
 export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
@@ -22,6 +24,7 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
   onAddRow,
   onRemoveRow,
   onInputChange,
+  onSortRows,
 }) => {
   const focarNova = useRef(false);
   // Blocos de 20 linhas (uma folha A4): os já cheios minimizam-se sozinhos; qualquer folha se abre ou minimiza à mão.
@@ -145,6 +148,7 @@ export const TableRowsSection: React.FC<TableRowsSectionProps> = ({
                     type="time" 
                     value={row.hora} 
                     onChange={(e) => onInputChange(row.id, 'hora', e.target.value)}
+                    onBlur={() => onSortRows?.()}
                     className="h-9"
                   />
                 </TableCell>

@@ -275,6 +275,7 @@ export default function FichaProcedimentos({ formType }: FichaProcedimentosProps
             onAddRow={tb.addTableRow}
             onRemoveRow={tb.removeTableRow}
             onInputChange={tb.handleInputChange}
+            onSortRows={tb.sortTableRows}
           />
 
           <AplicacoesDiaCard
