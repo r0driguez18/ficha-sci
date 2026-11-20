@@ -379,6 +379,24 @@ export function selecionarOperacoes(
  */
 export const VALIDADE_GERACAO_MIN = 60;
 
+/** De quanto em quanto tempo a ficha aberta volta a pedir sozinha as aplicações do dia (o mesmo ritmo da cópia dos DC). */
+export const ATUALIZAR_SOZINHO_MIN = 10;
+
+/**
+ * A ficha aberta deve pedir sozinha as aplicações do dia? Só enquanto a ficha está a decorrer (das 07:00 de D às 07:00 de D+1,
+ * hora local) e se a última geração tem mais de ATUALIZAR_SOZINHO_MIN minutos (ou nunca houve). Fichas antigas não se tocam.
+ */
+export function deveAtualizarSozinho(dataFicha: string, geradoEm: string | null | undefined, agora: Date = new Date()): boolean {
+  const p = (n: number) => String(n).padStart(2, '0');
+  const local = `${agora.getFullYear()}-${p(agora.getMonth() + 1)}-${p(agora.getDate())} ${p(agora.getHours())}:${p(agora.getMinutes())}`;
+  const { inicio, fim } = janelaDaFicha(dataFicha);
+  if (local < inicio || local >= fim) return false;
+  if (!geradoEm) return true;
+  const t = new Date(geradoEm).getTime();
+  if (Number.isNaN(t)) return true;
+  return agora.getTime() - t >= ATUALIZAR_SOZINHO_MIN * 60 * 1000;
+}
+
 /** A última geração (instante ISO) é recente o bastante para exportar? Sem geração, não. */
 export function geracaoRecente(geradoEm: string | null | undefined, agora: number = Date.now()): boolean {
   if (!geradoEm) return false;
